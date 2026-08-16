@@ -17,8 +17,10 @@ Linux-inspired GPL-2.0-only contribution model and a BSD-inspired coherent
 base-system engineering discipline; “BSD-inspired” describes how the whole
 system evolves, not a BSD software license.
 
-## Paper, author, and video
+## Project links
 
+- 🌐 **Website:** [www.md-os.org](https://www.md-os.org)
+- ✉️ **Email:** [labs@md-os.org](mailto:labs@md-os.org)
 - 📄 **Zenodo paper:** [Markdown Operating System for Robotic Agents (MD-OS
   CORTEX): Artificial Prefrontal Cortex
   (APFC)](https://zenodo.org/records/21960027)
