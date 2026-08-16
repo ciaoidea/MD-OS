@@ -989,7 +989,7 @@ documented as equally compatible with Codex unless the Codex bootstrap behavior,
 working-directory handling, command forwarding, permission prompts, and runtime
 readback have been explicitly tested for OpenCode.
 
-## Quick start
+## Runtime initialization
 
 Published-package path:
 
