@@ -1,0 +1,109 @@
+\begin{tikzpicture}[
+  font=\sffamily,
+  >=Latex,
+  panel/.style={
+    rounded corners=3pt,
+    draw=Slate!28,
+    fill=white,
+    minimum width=4.20cm,
+    minimum height=5.20cm,
+    inner sep=0pt
+  },
+  paneltitle/.style={font=\bfseries\scriptsize\sffamily,text=Slate},
+  metric/.style={font=\bfseries\fontsize{21}{22}\selectfont\sffamily,text=Slate},
+  label/.style={font=\scriptsize\sffamily,text=Slate!86,align=center},
+  micro/.style={font=\tiny\sffamily,text=Slate!78,align=center}
+]
+
+% Panel 1: test and build observations.
+\node[panel] (tests) at (0,0) {};
+\fill[SensorBlue] ([xshift=0.01cm,yshift=-0.01cm]tests.north west)
+  rectangle ([xshift=-0.01cm,yshift=-0.12cm]tests.north east);
+\node[paneltitle,anchor=north] at ([yshift=-0.32cm]tests.north)
+  {REPOSITORY CHECK};
+\node[metric] at ([yshift=0.82cm]tests.center) {194/194};
+\node[label] at ([yshift=0.22cm]tests.center)
+  {tests passed};
+\draw[Slate!14,line width=5.2pt,line cap=round]
+  ([xshift=0.52cm,yshift=-0.55cm]tests.west) --
+  ([xshift=-0.52cm,yshift=-0.55cm]tests.east);
+\draw[ActionGreen,line width=5.2pt,line cap=round]
+  ([xshift=0.52cm,yshift=-0.55cm]tests.west) --
+  ([xshift=-0.52cm,yshift=-0.55cm]tests.east);
+\node[micro] at ([yshift=-1.10cm]tests.center)
+  {0 failed \enspace$\cdot$\enspace 0 skipped};
+\node[
+  rounded corners=2pt,draw=ActionGreen!65!black,fill=ActionGreen!7,
+  font=\bfseries\tiny\sffamily,text=ActionGreen!72!black,
+  minimum width=2.84cm,minimum height=0.54cm
+] at ([yshift=-1.72cm]tests.center) {DECLARED BUILD: PASS};
+\node[micro,text=APFCRed!86!black] at ([yshift=-2.23cm]tests.center)
+  {release: not publishable};
+
+% Panel 2: controlled candidate discrimination.
+\node[panel] (verifier) at (4.60,0) {};
+\fill[APFCRed] ([xshift=0.01cm,yshift=-0.01cm]verifier.north west)
+  rectangle ([xshift=-0.01cm,yshift=-0.12cm]verifier.north east);
+\node[paneltitle,anchor=north] at ([yshift=-0.32cm]verifier.north)
+  {INDEPENDENT VERIFIER};
+\node[metric] at ([yshift=0.98cm]verifier.center) {1/3};
+\node[label] at ([yshift=0.38cm]verifier.center)
+  {candidate patches verified};
+\node[
+  rounded corners=1.5pt,draw=ActionGreen!70!black,fill=ActionGreen!9,
+  font=\bfseries\tiny\sffamily,text=ActionGreen!75!black,
+  minimum width=3.12cm,minimum height=0.50cm
+] at ([yshift=-0.36cm]verifier.center) {NARROW REPAIR \quad VERIFIED};
+\node[
+  rounded corners=1.5pt,draw=APFCRed!65!black,fill=APFCRed!6,
+  font=\bfseries\tiny\sffamily,text=APFCRed!82!black,
+  minimum width=3.12cm,minimum height=0.50cm
+] at ([yshift=-1.00cm]verifier.center) {TEST GAMING \quad REJECTED};
+\node[
+  rounded corners=1.5pt,draw=APFCRed!65!black,fill=APFCRed!6,
+  font=\bfseries\tiny\sffamily,text=APFCRed!82!black,
+  minimum width=3.12cm,minimum height=0.50cm
+] at ([yshift=-1.64cm]verifier.center) {OVERBROAD \quad REJECTED};
+\node[micro] at ([yshift=-2.23cm]verifier.center)
+  {oracle + regression + diff policy};
+
+% Panel 3: bounded finite-family transfer.
+\node[panel] (learning) at (9.20,0) {};
+\fill[SafetyOrange] ([xshift=0.01cm,yshift=-0.01cm]learning.north west)
+  rectangle ([xshift=-0.01cm,yshift=-0.12cm]learning.north east);
+\node[paneltitle,anchor=north] at ([yshift=-0.32cm]learning.north)
+  {BOUNDED TRANSFER};
+\node[metric] at ([yshift=1.06cm]learning.center) {0/2 $\rightarrow$ 2/2};
+\node[label] at ([yshift=0.45cm]learning.center)
+  {sealed holdout successes};
+\foreach \x/\v in {0.0/16,0.67/8,1.34/4,2.01/2,2.68/1}{
+  \fill[SafetyOrange!86!black]
+    ([xshift={0.82cm+\x cm},yshift=-0.26cm]learning.west) circle (2.15pt);
+  \node[font=\tiny\sffamily,text=Slate!88]
+    at ([xshift={0.82cm+\x cm},yshift=-0.62cm]learning.west) {\v};
+}
+\draw[->,draw=SafetyOrange!85!black,line width=0.75pt]
+  ([xshift=0.86cm,yshift=-0.26cm]learning.west) --
+  ([xshift=3.49cm,yshift=-0.26cm]learning.west);
+\node[
+  rounded corners=2pt,draw=SafetyOrange!72!black,fill=SafetyOrange!7,
+  font=\bfseries\scriptsize\sffamily,text=SafetyOrange!90!black,
+  minimum width=2.70cm,minimum height=0.58cm
+] at ([yshift=-1.30cm]learning.center) {$I=4$ bits};
+\node[micro] at ([yshift=-1.86cm]learning.center)
+  {16 hypotheses $\rightarrow$ 1};
+\node[micro] at ([yshift=-2.23cm]learning.center)
+  {equal one-attempt budgets};
+
+\node[
+  rounded corners=2pt,
+  draw=Slate!24,
+  fill=PaperGray,
+  font=\scriptsize\sffamily,
+  text=Slate,
+  minimum width=13.38cm,
+  minimum height=0.55cm,
+  align=center
+] at (4.60,-3.02)
+  {Replay reaches an eventual fixed point for the evaluated state; the experiment does not establish open-world generalization.};
+\end{tikzpicture}

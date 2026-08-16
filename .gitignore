@@ -24,6 +24,15 @@ token.json
 *.out
 *.toc
 *.pdf
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Version the reviewed Zenodo deliverables, not the LaTeX scratch state.
+!docs/papers/zenodo/paper.pdf
+!docs/papers/zenodo/figures/standalone/*_standalone.pdf
 __pycache__/
 *.pyc
 .DS_Store

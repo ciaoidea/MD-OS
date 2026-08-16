@@ -4,6 +4,8 @@
 
 MD-OS (Artificial Prefrontal Cortex) was originally created by **Alessandro Rizzo**.
 
+ORCID: [0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
+
 The original repository work is identified by:
 
 ```text

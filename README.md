@@ -10,11 +10,22 @@ MD-OS (Artificial Prefrontal Cortex), abbreviated **MD-OS APFC**, is the
 repository-resident agentic operating identity and control plane for persistent
 AI agents, robotic systems, devices, and host runtimes.
 
-MD-OS was originally created by **Alessandro Rizzo**. The official repository
+MD-OS was originally created by **Alessandro Rizzo**
+([ORCID 0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)). The official repository
 is [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS). The project uses a
 Linux-inspired GPL-2.0-only contribution model and a BSD-inspired coherent
 base-system engineering discipline; “BSD-inspired” describes how the whole
 system evolves, not a BSD software license.
+
+## Paper, author, and video
+
+- 📄 **Zenodo paper:** [Markdown Operating System for Robotic Agents (MD-OS
+  CORTEX): Artificial Prefrontal Cortex
+  (APFC)](https://zenodo.org/records/21960027)
+- 🧑‍🔬 **ORCID:** [Alessandro Rizzo —
+  0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
+- ▶️ **YouTube:** [Watch the MD-OS CORTEX
+  video](https://www.youtube.com/watch?v=Y8ErJOV8DI4)
 
 The APFC is the system's OS-like executive layer. It allocates context and
 attention budgets, maintains task-scoped working state, schedules and
@@ -1645,6 +1656,13 @@ md-os/examples/                     Versioned templates and demo seeds
   Natural-Language Robotic-Agentic Programming".
 - `docs/papers/text_native_agentic_os_paper.pdf`: optional generated paper PDF
   for review and presentation; it may be absent from a clean source checkout.
+- [docs/papers/zenodo/README.md](docs/papers/zenodo/README.md): reproducible
+  Zenodo manuscript package, editable figures, manifest, and build commands for
+  "Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial
+  Prefrontal Cortex (APFC)".
+- [docs/papers/zenodo/paper.pdf](docs/papers/zenodo/paper.pdf): reviewed PDF
+  built from the versioned Zenodo manuscript source and linked to the official
+  [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS) repository.
 - [docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md](docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md):
   explicit layer between MD-OS and OS, hardware, applications, services, and
   robots.
