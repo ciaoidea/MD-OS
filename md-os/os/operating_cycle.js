@@ -90,6 +90,7 @@ function cyclePhases() {
     { phase_id: 'build_markdown_graph', script: 'build_markdown_graph.js', args: [] },
     { phase_id: 'build_runtime_lifecycle_index', script: 'build_runtime_lifecycle_index.js', args: [] },
     { phase_id: 'build_semantic_knowledge_graph', script: 'build_semantic_knowledge_graph.js', args: [] },
+    { phase_id: 'build_semantic_commitment_gate', script: 'build_semantic_commitment_gate.js', args: ['status'] },
     { phase_id: 'build_self_release_index', script: 'build_self_release_index.js', args: [] },
     { phase_id: 'agi_loop_eval', script: 'agi_loop.js', args: ['eval'] },
     { phase_id: 'build_runtime_compiler', script: 'build_runtime_compiler.js', args: [] },

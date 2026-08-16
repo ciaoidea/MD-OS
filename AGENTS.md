@@ -92,6 +92,9 @@ Document hierarchy:
 - `md-os/kb/SEMANTIC_OPERATIONAL_COMPILER_MODEL.md`: runtime compiler for
   semantic nodes, claim graph, capability graph, context packs, eval readback,
   and epistemic health
+- `md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md`: possibility-versus-commitment
+  boundary, provenance classes, before/after semantic delta, foundational
+  invariants, challenge path, authority gates, and canonical-promotion readback
 - `md-os/kb/VERIFIED_AGI_LOOP_MODEL.md`: bounded single-cycle learning loop for
   verified task episodes, failure analysis, skill distillation, evals,
   promotion gates, and runtime recompilation
@@ -144,8 +147,25 @@ Hard operating rules for coding hosts:
   and separately gated
 - never modify host-local, unsafe, secret, credential, publication-sensitive,
   or append-only audit files unless explicitly requested
+- before every commit, push, pull request, release, site deployment, or other
+  publication, audit the exact staged paths and added content; never publish
+  secrets, credentials, private data, host-local paths, local caches, or
+  `md-os/ops/local/*` runtime state
 - never promote a claim, skill, capability, identity element, connector, or
   permission expansion without verifier readback
+- never infer semantic authority from fluency, agreement, recency, critique, or
+  editorial intent; classify provenance and compare the before/after
+  propositions before canonical promotion
+- treat editorial correction as reasoned semantic work; `editorial` describes
+  a verified preserving or clarifying effect, not an absence or lower degree
+  of reasoning
+- challenge remains admissible and must retain its source and non-canonical
+  status; replacement requires the authority appropriate to the affected claim
+- No critique, inference, or editorial proposal becomes an authorized project
+  interpretation without the semantic commitment gate and required approval.
+- identity or design foundations require explicit author approval for
+  replacement; empirical claims require verifier evidence rather than author
+  authority alone; safety rules remain active while challenged
 - every new runtime artifact must be schema-valid when a schema exists, or must
   be accompanied by a schema/proposal when it creates a new runtime class
 - every operation must produce readback
@@ -209,6 +229,7 @@ Operational continuity rules:
   - `md-os/kb/RUNTIME_STATE_LIFECYCLE_MODEL.md`
   - `md-os/ops/global_index.md`
   - `md-os/ops/semantic_knowledge_summary.md`
+  - `md-os/ops/semantic/commitment_gate_status.md`
   - `md-os/ops/releases/self_release_index.md`
   - `md-os/ops/health_classification.md`
   - `md-os/ops/agi/loop_status.md`
@@ -228,6 +249,7 @@ Operational continuity rules:
   - `node md-os/os/build_workspace_inventory.js`
   - `node md-os/os/build_markdown_graph.js`
   - `node md-os/os/build_semantic_knowledge_graph.js`
+  - `node md-os/os/build_semantic_commitment_gate.js status`
   - `node md-os/os/build_conceptual_boot_summary.js`
   - `node md-os/os/agi_loop.js eval`
   - `mdos agi run-once --task "<task>"`

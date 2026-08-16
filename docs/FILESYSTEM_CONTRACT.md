@@ -76,6 +76,8 @@ audit, replay, package, and move between machines.
 | `md-os/ops/markdown_graph.*` | generated state | no | no | yes | no | no |
 | `md-os/ops/semantic_knowledge_graph.*` | generated semantic-epistemic graph | no | no | yes | no | no |
 | `md-os/ops/semantic_knowledge_summary.*` | generated compact semantic-epistemic readback | no | no | yes | no | no |
+| `md-os/ops/semantic/commitment_gate_status.*` | generated semantic-invariant and canonical-promotion readback | no | no | yes | no | no |
+| `md-os/ops/semantic/commitment_decisions/*` | live semantic proposal decisions | evidence | case-dependent | no | no | maybe |
 | `md-os/ops/releases/self_release_index.*` | generated self-release readback | no | no | yes | no | no |
 | `md-os/ops/agi/{loop_status,promotion_gate}.*` | generated verified learning-loop readback | no | no | yes | no | no |
 | `md-os/ops/agi/neuromorphic_learning_status.*` | generated aggregate learning-experiment readback | no | no | yes | no | no |
@@ -154,6 +156,7 @@ audit, replay, package, and move between machines.
 | `mdos graphify connector-map` | `graphify-out/{connector_topology.json,connector_topology.html,connector_topology.md}` |
 | `mdos graphify orient <question>` | `graphify-out/{orientation.json,orientation.md}` |
 | `node md-os/os/build_semantic_knowledge_graph.js` | `md-os/ops/semantic_knowledge_graph.*` and `md-os/ops/semantic_knowledge_summary.*` |
+| `node md-os/os/build_semantic_commitment_gate.js status` | `md-os/ops/semantic/commitment_gate_status.*` |
 | `node md-os/os/agi_loop.js eval` | `md-os/ops/agi/{loop_status,promotion_gate}.*`, `md-os/ops/skills/skill_registry.*`, `md-os/ops/evals/agi_eval_report.*`, `md-os/ops/failures/failure_index.*`, `md-os/ops/world/world_model.*`, and `md-os/ops/benchmarks/agi_benchmarks.*` |
 | `mdos cognition run-once --task-spec md-os/ops/tasks/<id>.json` (`mdos agi` compatibility alias) | live TaskSpecs, ActionReceipts, VerificationResults, episodes, trajectories, verified skill candidates, opt-in promoted skills when all gates pass, eval readback, and runtime compiler rebuild |
 | `mdos benchmark software-repair generate --case <case.json> --provider <provider.json>` | append-only CandidateProvider request, result, receipt, PlanGraphs, patch snapshots, CandidateSet, and journal readback |

@@ -104,7 +104,7 @@ output. Hidden conversational memory is not a pipeline interface.
 | Term | Meaning |
 | --- | --- |
 | **MD-OS** | the project and its file-native agent control plane, implemented as a Markdown-native Operating Filesystem |
-| **APFC** | the Artificial Prefrontal Cortex executive control architecture; a functional engineering metaphor, not a biological claim |
+| **APFC** | a deliberately biologically inspired engineering architecture based on functional principles of prefrontal executive control, without claiming anatomical replication or literal biological equivalence |
 | **v5.0** | the current identity and repository compatibility release line |
 
 In this README and throughout the repository, the short name is **MD-OS**.
@@ -121,8 +121,23 @@ The APFC is the system's OS-like executive layer. It allocates context and
 attention budgets, maintains task-scoped working state, schedules and
 interrupts bounded work, mediates connector I/O, enforces permissions and
 response inhibition, and compares expected with observed outcomes for error
-correction. This is a functional engineering metaphor, not a claim that a
-biological prefrontal cortex is literally a digital operating system.
+correction.
+
+> **Nature is the model. MD-OS APFC studies the functional principles of
+> prefrontal executive control and reconstructs them on an artificial
+> substrate. It is not an anatomical copy of the brain; it is deliberately
+> biologically inspired.**
+
+The natural model includes goal maintenance, selective attention, working
+memory, planning, action inhibition, error monitoring, behavioral correction,
+and experience consolidation. MD-OS translates these functions into persistent
+state, scheduling, policies, permissions, deterministic verifiers, ledgers,
+memory, and episodes.
+
+This is the scientific boundary: biological inspiration without a claim of
+literal anatomical equivalence. Scientific caution may delimit the claim; it
+must not rewrite the project as non-biological or sever the natural lineage of
+the model.
 
 The canonical model is
 [Artificial Prefrontal Cortex Operating Model](md-os/kb/ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md).
@@ -261,10 +276,11 @@ profile, host-runtime execution-layer status, and current canonical `md-os/` bou
 There is no `mcp/` filesystem alias in the complete migration state; MCP names
 only the external Model Context Protocol adapter.
 
-The MD-OS APFC identity is an operating frame, not a claim of literal
-personhood, consciousness, biological equivalence, AGI, resurrection, or
-factual authority. Imported historical and scientific claims remain
-review-bound unless promoted through explicit epistemic gates.
+The MD-OS APFC identity carries this biologically inspired design lineage. It
+does not assert literal personhood, consciousness, anatomical replication,
+literal biological equivalence, AGI, resurrection, or automatic factual
+authority. Imported historical and scientific claims remain review-bound
+unless promoted through explicit epistemic gates.
 
 It is not a chatbot, a web app, a browser automation project, or a traditional
 hardware operating system. It is an Operating Filesystem for agent continuity:

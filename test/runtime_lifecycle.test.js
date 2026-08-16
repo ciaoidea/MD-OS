@@ -35,6 +35,9 @@ test('runtime lifecycle index classifies source, generated, local, demo, and liv
   fs.writeFileSync(path.join(workspace, 'md-os/kb/README.md'), '# KB\n', 'utf8');
   fs.writeFileSync(path.join(workspace, 'md-os/examples/connectors/demo.json'), '{}\n', 'utf8');
   fs.writeFileSync(path.join(workspace, 'md-os/ops/global_index.md'), '# Index\n', 'utf8');
+  fs.mkdirSync(path.join(workspace, 'md-os/ops/semantic/commitment_decisions'), { recursive: true });
+  fs.writeFileSync(path.join(workspace, 'md-os/ops/semantic/commitment_gate_status.md'), '# Semantic Gate\n', 'utf8');
+  fs.writeFileSync(path.join(workspace, 'md-os/ops/semantic/commitment_decisions/semdec_0123456789abcdef01234567.json'), '{}\n', 'utf8');
   fs.mkdirSync(path.join(workspace, 'md-os/ops/releases/self/proposals'), { recursive: true });
   fs.writeFileSync(path.join(workspace, 'md-os/ops/releases/self/proposals/mdos_5_1_test.json'), '{}\n', 'utf8');
   fs.writeFileSync(path.join(workspace, 'md-os/ops/releases/self_release_index.md'), '# Self Release\n', 'utf8');
@@ -99,6 +102,8 @@ test('runtime lifecycle index classifies source, generated, local, demo, and liv
   assert.equal(byPath.get('README.md').lifecycle_class, 'source');
   assert.equal(byPath.get('md-os/examples/connectors/demo.json').lifecycle_class, 'demo');
   assert.equal(byPath.get('md-os/ops/global_index.md').lifecycle_class, 'generated');
+  assert.equal(byPath.get('md-os/ops/semantic/commitment_gate_status.md').owner, 'build_semantic_commitment_gate');
+  assert.equal(byPath.get('md-os/ops/semantic/commitment_decisions/semdec_0123456789abcdef01234567.json').scope, 'live_semantic_commitment_decision');
   assert.equal(byPath.get('md-os/ops/releases/self_release_index.md').lifecycle_class, 'generated');
   assert.equal(byPath.get('md-os/ops/releases/self/proposals/mdos_5_1_test.json').lifecycle_class, 'source');
   assert.equal(byPath.get('md-os/ops/releases/self/proposals/mdos_5_1_test.json').owner, 'self_release_proposal');

@@ -53,6 +53,8 @@ const GLOBAL_COMPILED_FILES = [
   path.join(OPS_DIR, 'semantic_knowledge_graph.md'),
   path.join(OPS_DIR, 'semantic_knowledge_summary.json'),
   path.join(OPS_DIR, 'semantic_knowledge_summary.md'),
+  path.join(OPS_DIR, 'semantic', 'commitment_gate_status.json'),
+  path.join(OPS_DIR, 'semantic', 'commitment_gate_status.md'),
   path.join(OPS_DIR, 'releases', 'self_release_index.json'),
   path.join(OPS_DIR, 'releases', 'self_release_index.md'),
   path.join(OPS_DIR, 'agi', 'loop_status.json'),
@@ -374,6 +376,7 @@ function replayFingerprint(projectIds) {
   const globalIndex = readJsonSafe(path.join(OPS_DIR, 'global_index.json'));
   const markdownGraph = readJsonSafe(path.join(OPS_DIR, 'markdown_graph.json'));
   const semanticSummary = readJsonSafe(path.join(OPS_DIR, 'semantic_knowledge_summary.json'));
+  const semanticCommitment = readJsonSafe(path.join(OPS_DIR, 'semantic', 'commitment_gate_status.json'));
   const selfRelease = readJsonSafe(path.join(OPS_DIR, 'releases', 'self_release_index.json'));
   const agiLoop = readJsonSafe(path.join(OPS_DIR, 'agi', 'loop_status.json'));
   const agiEval = readJsonSafe(path.join(OPS_DIR, 'evals', 'agi_eval_report.json'));
@@ -414,6 +417,9 @@ function replayFingerprint(projectIds) {
     semantic_knowledge_epistemic_profile_complete: semanticSummary ? semanticSummary.epistemic_profile_complete === true : null,
     semantic_knowledge_concept_count: semanticSummary && Number.isFinite(semanticSummary.concept_count) ? semanticSummary.concept_count : null,
     semantic_knowledge_concept_relation_count: semanticSummary && Number.isFinite(semanticSummary.concept_relation_count) ? semanticSummary.concept_relation_count : null,
+    semantic_commitment_status: semanticCommitment && semanticCommitment.status || null,
+    semantic_commitment_source_hash: semanticCommitment && semanticCommitment.source_hash || null,
+    semantic_commitment_finding_count: semanticCommitment && Number.isFinite(semanticCommitment.finding_count) ? semanticCommitment.finding_count : null,
     self_release_status: selfRelease && selfRelease.status || null,
     self_release_readback_status: selfRelease && selfRelease.readback_status || null,
     self_release_unified_identity: selfRelease && selfRelease.current_release && selfRelease.current_release.unified_identity || null,
@@ -497,6 +503,7 @@ function replayRuntime() {
   builderResults.push(runNodeScript('build_markdown_graph.js'));
   builderResults.push(runNodeScript('build_runtime_lifecycle_index.js'));
   builderResults.push(runNodeScript('build_semantic_knowledge_graph.js'));
+  builderResults.push(runNodeScript('build_semantic_commitment_gate.js', ['status']));
   builderResults.push(runNodeScript('build_self_release_index.js'));
   builderResults.push(runNodeScript('agi_loop.js', ['eval']));
   builderResults.push(runNodeScript('build_software_repair_benchmark_index.js'));

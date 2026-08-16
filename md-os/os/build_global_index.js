@@ -18,6 +18,7 @@ const CONCEPTUAL_BOOT_SUMMARY_FILE = path.join(OPS_DIR, 'summary', 'conceptual_b
 const AGENTIC_CORE_FILE = path.join(OPS_DIR, 'core', 'agentic_core.json');
 const MARKDOWN_GRAPH_FILE = path.join(OPS_DIR, 'markdown_graph.json');
 const SEMANTIC_KNOWLEDGE_SUMMARY_FILE = path.join(OPS_DIR, 'semantic_knowledge_summary.json');
+const SEMANTIC_COMMITMENT_GATE_FILE = path.join(OPS_DIR, 'semantic', 'commitment_gate_status.json');
 const SELF_RELEASE_INDEX_FILE = path.join(OPS_DIR, 'releases', 'self_release_index.json');
 const AGI_LOOP_STATUS_FILE = path.join(OPS_DIR, 'agi', 'loop_status.json');
 const AGI_EVAL_REPORT_FILE = path.join(OPS_DIR, 'evals', 'agi_eval_report.json');
@@ -260,6 +261,26 @@ function collectRuntimeCompiler() {
   };
 }
 
+function collectSemanticCommitmentGate() {
+  const payload = readJsonSafe(SEMANTIC_COMMITMENT_GATE_FILE);
+  return {
+    status_file: fs.existsSync(SEMANTIC_COMMITMENT_GATE_FILE) ? rel(SEMANTIC_COMMITMENT_GATE_FILE) : null,
+    markdown_file: fs.existsSync(path.join(OPS_DIR, 'semantic', 'commitment_gate_status.md'))
+      ? rel(path.join(OPS_DIR, 'semantic', 'commitment_gate_status.md'))
+      : null,
+    status: shortText(payload && payload.status || ''),
+    source_hash: payload && payload.source_hash || null,
+    invariant_count: Number.isFinite(payload && payload.invariant_count) ? payload.invariant_count : null,
+    finding_count: Number.isFinite(payload && payload.finding_count) ? payload.finding_count : null,
+    canonical_promotion_blocked: payload && payload.release_gate
+      ? payload.release_gate.canonical_promotion_blocked === true
+      : null,
+    challenge_registration_blocked: payload && payload.release_gate
+      ? payload.release_gate.challenge_registration_blocked === true
+      : null,
+  };
+}
+
 function collectOperatingCycle() {
   const payload = readJsonSafe(OPERATING_CYCLE_REPORT_FILE);
   return {
@@ -490,6 +511,7 @@ function buildIndex() {
   const apfc = collectApfc();
   const softwareRepairBenchmark = collectSoftwareRepairBenchmark();
   const runtimeCompiler = collectRuntimeCompiler();
+  const semanticCommitment = collectSemanticCommitmentGate();
   const operatingCycle = collectOperatingCycle();
   const runtimeLifecycle = collectRuntimeLifecycle();
   const health = collectHealth();
@@ -513,6 +535,7 @@ function buildIndex() {
     apfc,
     software_repair_benchmark: softwareRepairBenchmark,
     runtime_compiler: runtimeCompiler,
+    semantic_commitment: semanticCommitment,
     operating_cycle: operatingCycle,
     runtime_lifecycle: runtimeLifecycle,
     services,
@@ -538,6 +561,7 @@ function buildIndex() {
       'md-os/ops/global_index.md',
       'md-os/ops/markdown_graph.md',
       'md-os/ops/semantic_knowledge_summary.md',
+      'md-os/ops/semantic/commitment_gate_status.md',
       'md-os/ops/releases/self_release_index.md',
       'md-os/ops/agi/loop_status.md',
       'md-os/ops/apfc/executive/status.md',
@@ -567,6 +591,8 @@ function buildIndex() {
       build_workspace_inventory: 'node md-os/os/build_workspace_inventory.js',
       build_markdown_graph: 'node md-os/os/build_markdown_graph.js',
       build_semantic_knowledge_graph: 'node md-os/os/build_semantic_knowledge_graph.js',
+      build_semantic_commitment_gate: 'node md-os/os/build_semantic_commitment_gate.js status',
+      evaluate_semantic_commitment: 'mdos semantic gate <proposal.json>',
       build_knowledge_import: 'node md-os/os/build_knowledge_import.js <import_id> <source_dir> [--initial-repository]',
       build_self_release_index: 'node md-os/os/build_self_release_index.js',
       agi_loop_eval: 'node md-os/os/agi_loop.js eval',
@@ -615,6 +641,7 @@ function buildIndex() {
       apfc,
       software_repair_benchmark: softwareRepairBenchmark,
       runtime_compiler: runtimeCompiler,
+      semantic_commitment: semanticCommitment,
       operating_cycle: operatingCycle,
       runtime_lifecycle: runtimeLifecycle,
       health,
@@ -642,6 +669,7 @@ function buildIndex() {
       skill_registry_json: agiLoop.skill_registry_file,
       world_model_json: agiLoop.world_model_file,
       runtime_compiler_json: runtimeCompiler.compiler_file,
+      semantic_commitment_gate_json: semanticCommitment.status_file,
       operating_cycle_report_json: operatingCycle.report_file,
       runtime_lifecycle_json: runtimeLifecycle.lifecycle_file,
       health_json: health.health_file,
@@ -734,6 +762,10 @@ function buildMarkdown(index) {
   lines.push(`- Semantic knowledge: \`${index.ops.semantic_knowledge.status || 'n/a'}\` | semantic nodes: \`${index.ops.semantic_knowledge.profiled_node_count ?? 'n/a'}/${index.ops.semantic_knowledge.markdown_node_count ?? 'n/a'}\` | epistemic nodes: \`${index.ops.semantic_knowledge.epistemic_profiled_node_count ?? 'n/a'}/${index.ops.semantic_knowledge.markdown_node_count ?? 'n/a'}\` | concepts: \`${index.ops.semantic_knowledge.concept_count ?? 'n/a'}\` | relations: \`${index.ops.semantic_knowledge.concept_relation_count ?? 'n/a'}\``);
   if (index.ops.semantic_knowledge.summary_file) {
     lines.push(`- Semantic knowledge summary: \`${index.ops.semantic_knowledge.summary_file}\``);
+  }
+  lines.push(`- Semantic commitment gate: \`${index.ops.semantic_commitment.status || 'n/a'}\` | invariants: \`${index.ops.semantic_commitment.invariant_count ?? 'n/a'}\` | findings: \`${index.ops.semantic_commitment.finding_count ?? 'n/a'}\` | canonical promotion blocked: \`${index.ops.semantic_commitment.canonical_promotion_blocked ?? 'n/a'}\` | challenge blocked: \`${index.ops.semantic_commitment.challenge_registration_blocked ?? 'n/a'}\``);
+  if (index.ops.semantic_commitment.markdown_file) {
+    lines.push(`- Semantic commitment gate file: \`${index.ops.semantic_commitment.markdown_file}\``);
   }
   lines.push(`- Self release: \`${index.ops.self_release.status || 'n/a'}\` | readback: \`${index.ops.self_release.readback_status || 'n/a'}\` | identity: \`${index.ops.self_release.unified_identity || 'n/a'}\` | version: \`${index.ops.self_release.identity_version || 'n/a'}\` | semver: \`${index.ops.self_release.release_semver || 'n/a'}\` | proposals: \`${index.ops.self_release.proposal_count ?? 'n/a'}\``);
   if (index.ops.self_release.index_file) {

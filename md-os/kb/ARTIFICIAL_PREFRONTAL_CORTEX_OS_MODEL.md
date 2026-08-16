@@ -11,22 +11,29 @@ from small machine processes into small agentic processes.
 
 ## Core thesis
 
-The prefrontal cortex is a useful systems metaphor for an agentic operating
-system because executive control is concerned with goal maintenance, selective
-attention, working-memory updating, response inhibition, task switching,
-planning, and performance monitoring. MD-OS virtualizes those selected
-functions as explicit software and filesystem contracts.
+Nature is the model. MD-OS APFC is a deliberately biologically inspired
+engineering architecture that studies the functional principles of prefrontal
+executive control and reconstructs them on an artificial substrate. The
+natural model includes goal maintenance, selective attention, working-memory
+updating, response inhibition, task switching, planning, performance
+monitoring, behavioral correction, and experience consolidation. MD-OS
+translates those selected functions into explicit software and filesystem
+contracts.
 
 ```text
 biological inspiration: goal-directed executive control
 MD-OS realization: bounded, inspectable, permissioned agentic orchestration
 ```
 
-The analogy is functional, not anatomical. The biological PFC is not literally
-a CPU, RAM module, process scheduler, firewall, or debugger, and executive
-control depends on distributed neural circuits. MD-OS does not reproduce brain
-tissue or claim biological equivalence. It uses the metaphor to design a
+The correspondence is functional, not anatomical. MD-OS APFC is not an
+anatomical copy of the brain: the biological PFC is not literally a CPU, RAM
+module, process scheduler, firewall, or debugger, and executive control depends
+on distributed neural circuits. MD-OS does not reproduce brain tissue or claim
+literal biological equivalence. It uses biological inspiration to design a
 control plane whose state and decisions can be inspected and corrected.
+
+Scientific caution may delimit the claim; it must not sever the biological lineage
+of the model or rewrite the architecture as non-biological in origin.
 
 ## PFC-as-OS correspondence
 
@@ -45,6 +52,11 @@ control plane whose state and decisions can be inspected and corrected.
 The correspondence is an implementation guide. Neuroscientific language must
 not be used to inflate an engineering mechanism into a medical or biological
 claim.
+
+The semantic promotion boundary is defined by
+[SEMANTIC_COMMITMENT_GATE_MODEL.md](SEMANTIC_COMMITMENT_GATE_MODEL.md). APFC
+must keep challenges and alternative hypotheses admissible while inhibiting
+their silent promotion into canonical identity, memory, action, or publication.
 
 ## The agentic process
 

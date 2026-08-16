@@ -24,6 +24,7 @@ const INPUT_FILES = {
   lifecycle: 'md-os/ops/runtime_lifecycle_index.json',
   markdownGraph: 'md-os/ops/markdown_graph.json',
   semanticKnowledge: 'md-os/ops/semantic_knowledge_summary.json',
+  semanticCommitment: 'md-os/ops/semantic/commitment_gate_status.json',
   selfRelease: 'md-os/ops/releases/self_release_index.json',
   agiLoop: 'md-os/ops/agi/loop_status.json',
   agiEval: 'md-os/ops/evals/agi_eval_report.json',
@@ -230,6 +231,7 @@ function buildFindings(inputs) {
     lifecycle,
     markdownGraph,
     semanticKnowledge,
+    semanticCommitment,
     selfRelease,
     agiLoop,
     agiEval,
@@ -297,6 +299,20 @@ function buildFindings(inputs) {
       suggested_action: 'Run semantic graph rebuild and profile uncovered claims.',
     }));
   }
+  addStatusFinding(findings, {
+    finding_id: 'semantic_commitment_gate_status',
+    status: semanticCommitment && semanticCommitment.status,
+    scope: 'semantic_integrity',
+    source: INPUT_FILES.semanticCommitment,
+    release_blocking: semanticCommitment && semanticCommitment.status !== 'ok',
+    publication_blocking: semanticCommitment && semanticCommitment.status !== 'ok',
+    reason: 'Semantic commitment gate found missing foundational anchors or a known contradiction.',
+    suggested_action: 'Inspect semantic commitment findings and repair canonical meaning before promotion or publication.',
+    evidence: {
+      invariant_count: countOf(semanticCommitment && semanticCommitment.invariant_count),
+      finding_count: countOf(semanticCommitment && semanticCommitment.finding_count),
+    },
+  });
   const selfReleaseFindings = listOf(selfRelease && selfRelease.findings);
   const selfReleaseCriticalFindingCount = selfReleaseFindings.filter((finding) => finding && finding.severity === 'critical').length;
   const selfReleaseInheritsGlobalHealthCritical = Boolean(
@@ -605,6 +621,7 @@ function buildClassification() {
     compiler_health: buildScope('compiler', 'Semantic Operational Compiler and epistemic runtime readback', findings),
     agi_loop_health: buildScope('agi_loop', 'Verified AGI loop, evals, skills, and regressions', findings),
     apfc_health: buildScope('apfc', 'Artificial prefrontal cortex graph, causal event chain, learning gates, and recovery state', findings),
+    semantic_integrity_health: buildScope('semantic_integrity', 'Foundational invariants, semantic delta, authority, and commitment gates', findings),
     publication_health: buildScope('publication', 'Publishable package and distributable artifact readiness', findings, (finding) => (
       finding.scope === 'publication' || finding.publication_blocking
     )),
@@ -726,6 +743,7 @@ function main() {
     compiler_health: classification.health.compiler_health.status,
     agi_loop_health: classification.health.agi_loop_health.status,
     apfc_health: classification.health.apfc_health.status,
+    semantic_integrity_health: classification.health.semantic_integrity_health.status,
     publication_health: classification.health.publication_health.status,
     security_health: classification.health.security_health.status,
     local_hygiene_health: classification.health.local_hygiene_health.status,
@@ -741,6 +759,7 @@ function main() {
     compiler_health: classification.health.compiler_health.status,
     agi_loop_health: classification.health.agi_loop_health.status,
     apfc_health: classification.health.apfc_health.status,
+    semantic_integrity_health: classification.health.semantic_integrity_health.status,
     publication_health: classification.health.publication_health.status,
     security_health: classification.health.security_health.status,
     local_hygiene_health: classification.health.local_hygiene_health.status,

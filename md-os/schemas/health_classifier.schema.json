@@ -25,6 +25,7 @@
         "runtime_health",
         "compiler_health",
         "agi_loop_health",
+        "semantic_integrity_health",
         "publication_health",
         "security_health",
         "local_hygiene_health"
@@ -33,6 +34,7 @@
         "runtime_health": { "$ref": "#/$defs/scope" },
         "compiler_health": { "$ref": "#/$defs/scope" },
         "agi_loop_health": { "$ref": "#/$defs/scope" },
+        "semantic_integrity_health": { "$ref": "#/$defs/scope" },
         "publication_health": { "$ref": "#/$defs/scope" },
         "security_health": { "$ref": "#/$defs/scope" },
         "local_hygiene_health": { "$ref": "#/$defs/scope" }
@@ -133,6 +135,7 @@
             "runtime",
             "compiler",
             "agi_loop",
+            "semantic_integrity",
             "publication",
             "security",
             "local_hygiene"

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/semantic_commitment_gate_status.schema.json",
+  "title": "MD-OS Semantic Commitment Gate Status",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "status",
+    "source_hash",
+    "invariant_count",
+    "checked_source_count",
+    "finding_count",
+    "findings",
+    "release_gate"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "critical"] },
+    "source_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "invariant_count": { "type": "integer", "minimum": 1 },
+    "checked_source_count": { "type": "integer", "minimum": 1 },
+    "finding_count": { "type": "integer", "minimum": 0 },
+    "findings": { "type": "array" },
+    "release_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_promotion_blocked", "publication_blocked", "challenge_registration_blocked"],
+      "properties": {
+        "canonical_promotion_blocked": { "type": "boolean" },
+        "publication_blocked": { "type": "boolean" },
+        "challenge_registration_blocked": { "const": false }
+      }
+    }
+  }
+}
