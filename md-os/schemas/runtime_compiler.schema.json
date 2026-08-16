@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/runtime_compiler.schema.json",
+  "title": "MD-OS Semantic Operational Compiler Readback",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "updated_at",
+    "status",
+    "compiler_name",
+    "compiled_from",
+    "outputs",
+    "counts"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "compiler_name": { "const": "semantic_operational_compiler" },
+    "compiled_from": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "semantic_nodes",
+        "claims",
+        "capabilities",
+        "links",
+        "context_packs",
+        "epistemic_findings"
+      ],
+      "properties": {
+        "semantic_nodes": { "type": "integer", "minimum": 0 },
+        "claims": { "type": "integer", "minimum": 0 },
+        "capabilities": { "type": "integer", "minimum": 0 },
+        "links": { "type": "integer", "minimum": 0 },
+        "context_packs": { "type": "integer", "minimum": 0 },
+        "epistemic_findings": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

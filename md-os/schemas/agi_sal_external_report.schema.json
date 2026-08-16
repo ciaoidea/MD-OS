@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_sal_external_report.schema.json",
+  "title": "MD-OS SAL AGI externally signed evaluation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_type",
+    "report_id",
+    "created_at",
+    "system",
+    "evaluator",
+    "protocol",
+    "results",
+    "evidence",
+    "signature"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "report_type": { "const": "mdos_agi_external_evaluation" },
+    "report_id": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system_id", "source_digest", "source_frozen_at", "host_model_id", "configuration"],
+      "properties": {
+        "system_id": { "type": "string", "minLength": 1 },
+        "source_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "source_frozen_at": { "type": "string", "minLength": 1 },
+        "host_model_id": { "type": "string", "minLength": 1 },
+        "configuration": { "const": "mdos_full" }
+      }
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluator_id", "organization", "key_id", "independent"],
+      "properties": {
+        "evaluator_id": { "type": "string", "minLength": 1 },
+        "organization": { "type": "string", "minLength": 1 },
+        "key_id": { "type": "string", "minLength": 1 },
+        "independent": { "const": true }
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol_id",
+        "task_manifest_digest",
+        "task_manifest_created_at",
+        "sealed_before_run",
+        "evaluator_owned_hidden_tests",
+        "post_freeze_tasks",
+        "matched_budget",
+        "task_outputs_scored_outside_agent_workspace",
+        "ablation_configurations",
+        "run_started_at",
+        "run_completed_at"
+      ],
+      "properties": {
+        "protocol_id": { "const": "mdos_sal_agi_v2" },
+        "task_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "task_manifest_created_at": { "type": "string", "minLength": 1 },
+        "sealed_before_run": { "const": true },
+        "evaluator_owned_hidden_tests": { "const": true },
+        "post_freeze_tasks": { "const": true },
+        "matched_budget": { "const": true },
+        "task_outputs_scored_outside_agent_workspace": { "const": true },
+        "ablation_configurations": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "same_host_base",
+              "same_host_prompted",
+              "same_host_mdos_no_learning",
+              "same_host_mdos_full"
+            ]
+          }
+        },
+        "run_started_at": { "type": "string", "minLength": 1 },
+        "run_completed_at": { "type": "string", "minLength": 1 }
+      }
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domains", "continual_learning", "memory_continuity", "autonomy", "robustness"],
+      "properties": {
+        "domains": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "domain_id",
+              "domain_family",
+              "task_count",
+              "baseline_successes",
+              "prompted_successes",
+              "mdos_no_learning_successes",
+              "mdos_full_successes",
+              "human_reference_successes",
+              "open_world_task_count",
+              "autonomous_discovery_successes",
+              "agent_actions",
+              "human_reference_actions"
+            ],
+            "properties": {
+              "domain_id": { "type": "string", "minLength": 1 },
+              "domain_family": { "type": "string", "minLength": 1 },
+              "task_count": { "type": "integer", "minimum": 1 },
+              "baseline_successes": { "type": "integer", "minimum": 0 },
+              "prompted_successes": { "type": "integer", "minimum": 0 },
+              "mdos_no_learning_successes": { "type": "integer", "minimum": 0 },
+              "mdos_full_successes": { "type": "integer", "minimum": 0 },
+              "human_reference_successes": { "type": "integer", "minimum": 0 },
+              "open_world_task_count": { "type": "integer", "minimum": 0 },
+              "autonomous_discovery_successes": { "type": "integer", "minimum": 0 },
+              "agent_actions": { "type": "integer", "minimum": 1 },
+              "human_reference_actions": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "continual_learning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["episodes", "learning_gain", "average_forgetting", "promoted_regressions"],
+          "properties": {
+            "episodes": { "type": "integer", "minimum": 1 },
+            "learning_gain": { "type": "number", "minimum": -1, "maximum": 1 },
+            "average_forgetting": { "type": "number", "minimum": 0, "maximum": 1 },
+            "promoted_regressions": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "memory_continuity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "memory_on_tasks",
+            "memory_on_successes",
+            "memory_off_tasks",
+            "memory_off_successes",
+            "checkpoint_reloads",
+            "successful_resumptions",
+            "semantic_policies_promoted",
+            "causal_memory_reuses",
+            "corruption_trials",
+            "corruption_recoveries",
+            "retention_after_interference"
+          ],
+          "properties": {
+            "memory_on_tasks": { "type": "integer", "minimum": 1 },
+            "memory_on_successes": { "type": "integer", "minimum": 0 },
+            "memory_off_tasks": { "type": "integer", "minimum": 1 },
+            "memory_off_successes": { "type": "integer", "minimum": 0 },
+            "checkpoint_reloads": { "type": "integer", "minimum": 0 },
+            "successful_resumptions": { "type": "integer", "minimum": 0 },
+            "semantic_policies_promoted": { "type": "integer", "minimum": 0 },
+            "causal_memory_reuses": { "type": "integer", "minimum": 0 },
+            "corruption_trials": { "type": "integer", "minimum": 0 },
+            "corruption_recoveries": { "type": "integer", "minimum": 0 },
+            "retention_after_interference": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "autonomy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "attempted_projects",
+            "completed_projects",
+            "longest_human_equivalent_minutes",
+            "human_interventions",
+            "clean_restarts",
+            "curriculum_decisions",
+            "persisted_skill_reuses"
+          ],
+          "properties": {
+            "attempted_projects": { "type": "integer", "minimum": 1 },
+            "completed_projects": { "type": "integer", "minimum": 0 },
+            "longest_human_equivalent_minutes": { "type": "number", "minimum": 0 },
+            "human_interventions": { "type": "integer", "minimum": 0 },
+            "clean_restarts": { "type": "integer", "minimum": 0 },
+            "curriculum_decisions": { "type": "integer", "minimum": 0 },
+            "persisted_skill_reuses": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "robustness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "perturbation_trials",
+            "perturbation_successes",
+            "injected_faults",
+            "recovered_faults",
+            "critical_safety_violations",
+            "contamination_findings"
+          ],
+          "properties": {
+            "perturbation_trials": { "type": "integer", "minimum": 1 },
+            "perturbation_successes": { "type": "integer", "minimum": 0 },
+            "injected_faults": { "type": "integer", "minimum": 0 },
+            "recovered_faults": { "type": "integer", "minimum": 0 },
+            "critical_safety_violations": { "type": "integer", "minimum": 0 },
+            "contamination_findings": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_results_digest", "logs_digest", "source_manifest_digest"],
+      "properties": {
+        "raw_results_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "logs_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "source_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "type": "string", "minLength": 1 },
+        "value": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

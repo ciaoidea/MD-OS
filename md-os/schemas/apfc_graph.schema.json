@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_graph.schema.json",
+  "title": "MD-OS Artificial Prefrontal Cortex Graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "identity_version", "graph_id", "source_manifest_hash", "status", "nodes", "edges", "findings", "metrics"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "identity_version": { "const": "5.0" },
+    "graph_id": { "type": "string", "pattern": "^apfcg_[a-f0-9]{16}$" },
+    "source_manifest_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "label", "lifecycle_status", "epistemic_status", "source_refs", "content_hash", "scope", "risk_level", "confidence", "created_at", "valid_from", "valid_to", "properties"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": { "enum": ["goal", "constraint", "observation", "evidence", "claim", "prediction", "plan_step", "decision", "action", "receipt", "outcome", "verification", "error", "cause_candidate", "correction", "episode", "skill_candidate", "eval", "skill", "policy", "capability", "artifact", "context_pack", "release", "rollback"] },
+          "label": { "type": "string", "minLength": 1 },
+          "lifecycle_status": { "enum": ["active", "blocked", "completed", "failed", "candidate", "promotable", "promoted", "deprecated", "revoked", "superseded", "archived", "invalid"] },
+          "epistemic_status": { "enum": ["observed", "hypothetical", "verified", "falsified", "superseded", "invalid"] },
+          "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "scope": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["task_id", "project_id", "release_id"],
+            "properties": {
+              "task_id": { "type": ["string", "null"] },
+              "project_id": { "type": ["string", "null"] },
+              "release_id": { "type": ["string", "null"] }
+            }
+          },
+          "risk_level": { "enum": ["low", "medium", "high"] },
+          "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "created_at": { "type": ["string", "null"] },
+          "valid_from": { "type": ["string", "null"] },
+          "valid_to": { "type": ["string", "null"] },
+          "properties": { "type": "object" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "from", "type", "to", "epistemic_status", "source_refs", "evidence_ids", "content_hash", "created_at", "valid_from", "valid_to", "properties"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^edge_[a-f0-9]{16}$" },
+          "from": { "type": "string", "minLength": 1 },
+          "type": { "enum": ["decomposes_to", "requires", "constrained_by", "observed_as", "supported_by", "contradicted_by", "predicts", "selected_because", "executed_via", "produced", "verified_by", "failed_as", "possibly_caused_by", "corrected_by", "replayed_from", "generalized_to", "evaluated_by", "promoted_to", "compiled_into", "supersedes", "invalidated_by", "rolled_back_to", "semantic_association", "composes_with"] },
+          "to": { "type": "string", "minLength": 1 },
+          "epistemic_status": { "enum": ["observed", "hypothetical", "verified", "falsified", "superseded", "invalid"] },
+          "source_refs": { "type": "array", "items": { "type": "string" } },
+          "evidence_ids": { "type": "array", "items": { "type": "string" } },
+          "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "created_at": { "type": ["string", "null"] },
+          "valid_from": { "type": ["string", "null"] },
+          "valid_to": { "type": ["string", "null"] },
+          "properties": { "type": "object" }
+        }
+      }
+    },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "metrics": {
+      "type": "object",
+      "required": ["node_count", "edge_count"],
+      "properties": {
+        "node_count": { "type": "integer", "minimum": 0 },
+        "edge_count": { "type": "integer", "minimum": 0 },
+        "skill_count": { "type": "integer", "minimum": 0 },
+        "verified_source_episode_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

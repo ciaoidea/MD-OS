@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_loop_cycle.schema.json",
+  "title": "APFC bounded open-world loop-cycle receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_type", "protocol_id", "experiment_id",
+    "created_at", "cycle_sequence", "mode", "processed_task_ids", "before", "after", "status",
+    "next_task_id", "continuous_execution",
+    "external_action_requires_explicit_invocation", "cycle_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "receipt_type": { "const": "apfc_open_world_loop_cycle" },
+    "protocol_id": { "const": "apfc_open_world_streaming_crossover_v1" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "cycle_sequence": { "type": "integer", "minimum": 1 },
+    "mode": { "const": "bounded_run_once" },
+    "processed_task_ids": { "type": "array", "maxItems": 30, "items": { "type": "string", "minLength": 1 } },
+    "before": { "type": "object" },
+    "after": { "type": "object" },
+    "status": { "enum": ["promotion_eligible", "not_promotion_eligible", "preflight_complete", "preflight_in_progress", "in_progress"] },
+    "next_task_id": { "type": ["string", "null"] },
+    "continuous_execution": { "const": false },
+    "external_action_requires_explicit_invocation": { "const": true },
+    "cycle_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

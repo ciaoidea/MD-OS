@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/permission_model.schema.json",
+  "title": "MD-OS Permission Model",
+  "type": "object",
+  "required": ["schema_version", "profiles", "risk_levels"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["profile_id", "capabilities", "requires_approval"],
+        "properties": {
+          "profile_id": { "type": "string" },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "risk_level": { "type": "string" },
+          "requires_approval": { "type": "boolean" },
+          "dry_run_required": { "type": "boolean" },
+          "audit_required": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "risk_levels": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

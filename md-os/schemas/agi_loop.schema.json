@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_loop.schema.json",
+  "title": "MD-OS Verified AGI Loop Status",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "updated_at",
+    "status",
+    "kernel_name",
+    "definition",
+    "non_claims",
+    "commands",
+    "directories",
+    "metrics"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "kernel_name": { "enum": ["cognitive_transaction_loop", "verified_agi_loop"] },
+    "definition": { "type": "string", "minLength": 1 },
+    "non_claims": { "type": "array", "items": { "type": "string" } },
+    "commands": { "type": "array", "items": { "type": "string" } },
+    "directories": { "type": "array", "items": { "type": "string" } },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "episode_count",
+        "success_rate",
+        "promoted_skill_count",
+        "candidate_skill_count",
+        "regression_count"
+      ]
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/candidate_comparison.schema.json",
+  "title": "MD-OS Software Repair CandidateComparison",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "comparison_id",
+    "benchmark_run_id",
+    "benchmark_case_id",
+    "configuration_id",
+    "selection_policy",
+    "ranking",
+    "selected_candidate_id",
+    "no_selection_reason",
+    "metrics"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "comparison_id": {
+      "type": "string",
+      "pattern": "^comparison_[a-zA-Z0-9_]+$"
+    },
+    "benchmark_run_id": {
+      "type": "string",
+      "pattern": "^benchmark_run_[a-zA-Z0-9_]+$"
+    },
+    "benchmark_case_id": {
+      "type": "string",
+      "pattern": "^software_repair_[a-z0-9_]+$"
+    },
+    "configuration_id": {
+      "enum": [
+        "baseline_a_single_attempt",
+        "baseline_b_retrieval",
+        "mdos_learning_exploration",
+        "mdos_neuromorphic_skill",
+        "mdos_verified_runtime"
+      ]
+    },
+    "selection_policy": {
+      "const": "verified_then_no_regression_then_diff_size_then_total_latency_then_candidate_id"
+    },
+    "ranking": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rank",
+          "candidate_id",
+          "plan_graph_id",
+          "strategy_class",
+          "verdict",
+          "regression_failures",
+          "diff_bytes",
+          "total_latency_ms",
+          "eligible"
+        ],
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "candidate_id": {
+            "type": "string"
+          },
+          "plan_graph_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "strategy_class": {
+            "type": "string"
+          },
+          "verdict": {
+            "enum": [
+              "verified",
+              "failed",
+              "blocked"
+            ]
+          },
+          "regression_failures": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "diff_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_latency_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eligible": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "selected_candidate_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "no_selection_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "eligible_count",
+        "regression_failure_count"
+      ],
+      "properties": {
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "eligible_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "regression_failure_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/task_spec.schema.json",
+  "title": "MD-OS Cognitive TaskSpec",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "task_spec_id",
+    "created_at",
+    "goal",
+    "constraints",
+    "acceptance_tests",
+    "risk_budget",
+    "resource_budget",
+    "required_evidence",
+    "unknowns",
+    "success_definition",
+    "actions",
+    "observation_targets"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "task_spec_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "goal": { "type": "string", "minLength": 1 },
+    "task_type": { "type": "string" },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "acceptance_tests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/commandReference" }
+    },
+    "risk_budget": { "type": "object" },
+    "resource_budget": { "type": "object" },
+    "required_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["evidence_id", "path", "must_exist"],
+        "properties": {
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "pattern": "^md-os/" },
+          "must_exist": { "type": "boolean" },
+          "sha256": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "unknowns": { "type": "array", "items": { "type": "string" } },
+    "success_definition": {
+      "type": "object",
+      "required": [
+        "acceptance_tests_required",
+        "all_acceptance_tests_must_pass",
+        "observed_delta_required",
+        "required_evidence_must_exist"
+      ],
+      "properties": {
+        "acceptance_tests_required": { "const": true },
+        "all_acceptance_tests_must_pass": { "const": true },
+        "observed_delta_required": { "type": "boolean" },
+        "required_evidence_must_exist": { "type": "boolean" }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/commandReference" }
+    },
+    "observation_targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["target_id", "path", "required_change"],
+        "properties": {
+          "target_id": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "pattern": "^md-os/" },
+          "required_change": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "commandReference": {
+      "type": "object",
+      "required": ["connector_id", "project_id", "command_id", "expected_exit_status"],
+      "properties": {
+        "connector_id": { "const": "terminal_executor" },
+        "project_id": { "type": "string", "minLength": 1 },
+        "command_id": { "type": "string", "minLength": 1 },
+        "expected_exit_status": { "type": "integer" }
+      }
+    }
+  }
+}

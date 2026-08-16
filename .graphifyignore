@@ -1,0 +1,16 @@
+node_modules/
+graphify-out/
+.cache/
+.venv/
+.venv-*/
+venv/
+env/
+__pycache__/
+*.pyc
+*.log
+*.pid
+*.tgz
+*.zip
+
+md-os/ops/
+software/

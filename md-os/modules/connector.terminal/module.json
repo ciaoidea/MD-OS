@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "module_id": "connector.terminal",
+  "kind": "connector",
+  "version": "27.0.0-alpha",
+  "status": "experimental",
+  "entrypoint": "md-os/modules/connector.terminal/index.js",
+  "summary": "Allowlisted bounded terminal connector module.",
+  "owns": [
+    "md-os/ops/connectors/terminal_connector.json"
+  ],
+  "reads": [
+    "md-os/ops/policies/permission_model.json"
+  ],
+  "writes": [
+    "md-os/ops/sources/connectors/*.json",
+    "md-os/ops/artifacts/terminal/*.txt",
+    "md-os/ops/journal.ndjson"
+  ],
+  "capabilities": [
+    {
+      "capability_id": "terminal.run_allowlisted",
+      "summary": "Run a predeclared terminal command with bounded cwd, timeout, output limit, and readback.",
+      "risk": "medium",
+      "side_effects": [
+        "host_process",
+        "runtime_observation_write"
+      ],
+      "requires": [
+        "explicit_user_intent",
+        "allowlist_match",
+        "bounded_workspace_cwd",
+        "readback"
+      ]
+    }
+  ],
+  "commands": {
+    "list": {
+      "summary": "List terminal connector profiles and allowlisted commands.",
+      "argv": [
+        "node",
+        "md-os/modules/connector.terminal/index.js",
+        "list"
+      ],
+      "cli": [
+        "connector",
+        "terminal",
+        "list"
+      ],
+      "mcp_tool": {
+        "name": "mdos_connector_terminal_list",
+        "description": "List terminal connector profiles and allowlisted commands from the module registry.",
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "argument_order": []
+      }
+    },
+    "run": {
+      "summary": "Run an allowlisted terminal command by project_id and command_id.",
+      "argv": [
+        "node",
+        "md-os/modules/connector.terminal/index.js",
+        "run"
+      ],
+      "cli": [
+        "connector",
+        "terminal",
+        "run"
+      ],
+      "mcp_tool": {
+        "name": "mdos_connector_terminal_run",
+        "description": "Run an allowlisted terminal command by project_id and command_id through the module registry.",
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "Safe MD-OS project id."
+            },
+            "command_id": {
+              "type": "string",
+              "description": "Allowlisted terminal command id."
+            }
+          },
+          "required": [
+            "project_id",
+            "command_id"
+          ]
+        },
+        "argument_order": [
+          "project_id",
+          "command_id"
+        ]
+      }
+    }
+  },
+  "verifiers": [
+    "terminal.allowlist.valid",
+    "terminal.exit_code_captured",
+    "terminal.snapshot.schema.valid",
+    "journal.event.appended"
+  ],
+  "evals": [
+    "node --test test/terminal_connector.test.js"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/world_model.schema.json",
+  "title": "MD-OS AGI World Model",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "updated_at",
+    "status",
+    "entity_count",
+    "entities"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "entity_count": { "type": "integer", "minimum": 0 },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entity_id", "type", "affordances", "constraints", "risks", "readback"],
+        "properties": {
+          "entity_id": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "minLength": 1 },
+          "affordances": { "type": "array", "items": { "type": "string" } },
+          "constraints": { "type": "array", "items": { "type": "string" } },
+          "risks": { "type": "array", "items": { "type": "string" } },
+          "readback": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

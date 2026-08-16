@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/connector.schema.json",
+  "title": "MD-OS Connector Registry",
+  "type": "object",
+  "required": ["schema_version", "registry_name", "connectors"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "registry_name": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "connectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["connector_id", "name", "kind", "status", "implemented", "execution_mode"],
+        "properties": {
+          "connector_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$" },
+          "name": { "type": "string" },
+          "kind": { "type": "string" },
+          "status": { "type": "string" },
+          "implemented": { "type": "boolean" },
+          "execution_mode": { "type": "string" },
+          "permission_profile": { "type": "string" },
+          "risk_level": { "type": "string" },
+          "requires_approval": { "type": "boolean" },
+          "read_capabilities": { "type": "array", "items": { "type": "string" } },
+          "write_capabilities": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

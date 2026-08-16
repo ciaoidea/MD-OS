@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "connector_id": "ticketing_connector",
+  "tickets": [
+    {
+      "ticket_id": "runtime_lifecycle_001",
+      "project_id": "demo_general_system",
+      "title": "Classify runtime state lifecycle",
+      "summary": "Separate source, generated, local, demo, live, and archived state in the MD-OS runtime tree.",
+      "status": "open",
+      "priority": "high",
+      "assignee": "Platform Operations",
+      "tags": ["runtime", "lifecycle", "operating_filesystem"],
+      "entities": ["mcp_ops", "runtime_lifecycle_index"],
+      "next_step": "Run the lifecycle builder and inspect findings."
+    }
+  ]
+}

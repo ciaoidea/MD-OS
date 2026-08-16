@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "project_id": "demo_general_system",
+  "title": "Demo General System",
+  "owner": "Platform Operations",
+  "description": "Generic project showing how text-native signals are compiled into canonical runtime state.",
+  "default_timezone": "Europe/Rome",
+  "status": "active"
+}

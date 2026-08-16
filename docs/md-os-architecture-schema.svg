@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
+  <title id="title">MD-OS (Artificial Prefrontal Cortex) v5.0 Natural-Language Robotic-Agentic Programming Stack</title>
+  <desc id="desc">A stack diagram of MD-OS (Artificial Prefrontal Cortex) v5.0 as a natural-language programming control plane for complex agentic and robotic ecosystems, showing human supervision, Codex host runtime, MD-OS operating filesystem, deterministic runtime, protocol adapters, bounded connectors, host operating system, applications, enterprise tools, and physical or external substrates.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f7f8fa; }
+      .stack { fill: #ffffff; stroke: #1f2937; stroke-width: 1.4; }
+      .human { fill: #f8fafc; stroke: #334155; stroke-width: 1.5; }
+      .codex { fill: #ecfdf5; stroke: #047857; stroke-width: 1.8; }
+      .mdos { fill: #eef2ff; stroke: #3730a3; stroke-width: 2.2; }
+      .runtime { fill: #f0f9ff; stroke: #0369a1; stroke-width: 1.7; }
+      .adapter { fill: #fff7ed; stroke: #c2410c; stroke-width: 1.8; }
+      .substrate { fill: #ffffff; stroke: #4b5563; stroke-width: 1.3; }
+      .note { fill: #fef2f2; stroke: #b91c1c; stroke-width: 1.4; }
+      .side { fill: #f9fafb; stroke: #6b7280; stroke-width: 1.2; }
+      .text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; fill: #111827; }
+      .title { font-size: 36px; font-weight: 780; }
+      .subtitle { font-size: 16px; fill: #374151; }
+      .h { font-size: 21px; font-weight: 760; }
+      .p { font-size: 14.5px; fill: #374151; }
+      .small { font-size: 12.5px; fill: #4b5563; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 12.5px; fill: #1f2937; }
+      .arrow { stroke: #111827; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .arrow-up { stroke: #111827; stroke-width: 1.8; fill: none; marker-end: url(#arrow); }
+      .arrow-soft { stroke: #64748b; stroke-width: 1.6; fill: none; marker-end: url(#arrow-soft); stroke-dasharray: 6 6; }
+      .label { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1; }
+      .android-fill { fill: #e0f2fe; stroke: #0369a1; stroke-width: 2; }
+      .android-line { fill: none; stroke: #0369a1; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .android-soft { fill: #ffffff; stroke: #0369a1; stroke-width: 1.6; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827"/>
+    </marker>
+    <marker id="arrow-soft" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2.5" stdDeviation="2.4" flood-color="#111827" flood-opacity="0.11"/>
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1600" height="1050"/>
+
+  <text class="text title" x="70" y="62">MD-OS (Artificial Prefrontal Cortex) v5.0: Natural-Language Robotic-Agentic Programming</text>
+  <text class="text subtitle" x="70" y="92">Core paradigm: program complex agentic and robotic ecosystems through natural-language operating artifacts.</text>
+  <text class="text subtitle" x="70" y="118">Codex is the execution host. Bounded connectors and protocol adapters bind MD-OS to OS, applications, APIs, and devices.</text>
+
+  <!-- Subtle embodied-agent marker; decorative, not a separate architectural layer. -->
+  <g id="android-marker" transform="translate(1428 96) scale(0.42)">
+    <path class="android-line" d="M 36 20 L 22 5"/>
+    <path class="android-line" d="M 74 20 L 88 5"/>
+    <rect class="android-fill" x="22" y="18" width="74" height="54" rx="17"/>
+    <circle class="android-soft" cx="45" cy="45" r="5"/>
+    <circle class="android-soft" cx="73" cy="45" r="5"/>
+    <path class="android-line" d="M 48 62 C 55 68, 63 68, 70 62"/>
+    <rect class="android-fill" x="32" y="78" width="54" height="70" rx="14"/>
+    <path class="android-line" d="M 32 96 L 14 120"/>
+    <path class="android-line" d="M 86 96 L 104 120"/>
+    <path class="android-line" d="M 48 148 L 48 174"/>
+    <path class="android-line" d="M 70 148 L 70 174"/>
+    <path class="android-line" d="M 38 174 L 52 174"/>
+    <path class="android-line" d="M 66 174 L 80 174"/>
+  </g>
+
+  <!-- Main stack frame -->
+  <rect class="stack" filter="url(#shadow)" x="430" y="160" width="740" height="760" rx="12"/>
+  <text class="text h" x="460" y="198">Natural-Language Ecosystem Programming Stack</text>
+
+  <!-- Human layer -->
+  <rect class="human" x="490" y="230" width="620" height="82" rx="9"/>
+  <text class="text h" x="520" y="262">Human Supervision Layer</text>
+  <text class="text p" x="520" y="287">new hire, expert, operator, or supervisor</text>
+  <text class="text small" x="520" y="306">intent, approval, correction, accountability</text>
+
+  <!-- Codex layer -->
+  <rect class="codex" x="490" y="340" width="620" height="92" rx="9"/>
+  <text class="text h" x="520" y="373">Codex Host Runtime</text>
+  <text class="text p" x="520" y="398">LLM reasoning, chat, tool orchestration</text>
+  <text class="text small" x="520" y="417">execution layer, not canonical long-term memory</text>
+
+  <!-- MD-OS layer -->
+  <rect class="mdos" x="490" y="462" width="620" height="124" rx="10"/>
+  <text class="text h" x="520" y="497">MD-OS Operating Filesystem</text>
+  <text class="text mono" x="520" y="523">active boundary: md-os/</text>
+  <text class="text p" x="520" y="549">persistent identity, role context, state, audit, replay</text>
+  <text class="text small" x="520" y="570">md-os/kb knowledge | md-os/ops state | MD / JSON / NDJSON</text>
+
+  <!-- deterministic runtime -->
+  <rect class="runtime" x="490" y="616" width="620" height="86" rx="9"/>
+  <text class="text h" x="520" y="648">Deterministic Runtime and Builders</text>
+  <text class="text p" x="520" y="674">compilers, validators, replay, indexes</text>
+  <text class="text mono" x="520" y="692">md-os/os/*.js</text>
+
+  <!-- Connector and protocol adapter layer -->
+  <rect class="adapter" x="490" y="732" width="620" height="96" rx="9"/>
+  <text class="text h" x="520" y="765">Connector and Protocol Adapter Boundary</text>
+  <text class="text p" x="520" y="791">resources, tools, snapshots, permissions</text>
+  <text class="text small" x="520" y="811">bounded access to authorized work sessions</text>
+
+  <!-- arrows between stack layers -->
+  <path class="arrow" d="M 800 312 L 800 340"/>
+  <path class="arrow" d="M 800 432 L 800 462"/>
+  <path class="arrow" d="M 800 586 L 800 616"/>
+  <path class="arrow" d="M 800 702 L 800 732"/>
+
+  <rect class="label" x="820" y="321" width="84" height="24" rx="4"/>
+  <text class="text small" x="831" y="338">intent / chat</text>
+  <rect class="label" x="820" y="443" width="90" height="24" rx="4"/>
+  <text class="text small" x="831" y="460">state readback</text>
+  <rect class="label" x="820" y="596" width="68" height="24" rx="4"/>
+  <text class="text small" x="831" y="613">compile</text>
+  <rect class="label" x="820" y="712" width="86" height="24" rx="4"/>
+  <text class="text small" x="831" y="729">tool surface</text>
+
+  <!-- Left side: role onboarding inputs -->
+  <rect class="side" filter="url(#shadow)" x="70" y="235" width="280" height="338" rx="10"/>
+  <text class="text h" x="100" y="270">Role Onboarding Inputs</text>
+  <text class="text p" x="100" y="306">ROLE.md contract</text>
+  <text class="text p" x="100" y="336">messy raw folder</text>
+  <text class="text p" x="100" y="366">PDF, CSV, Excel, email exports</text>
+  <text class="text p" x="100" y="396">examples of past work</text>
+  <text class="text p" x="100" y="426">expert corrections</text>
+  <text class="text mono" x="100" y="468">md-os/ops/roles/&lt;role_id&gt;</text>
+  <text class="text mono" x="100" y="492">/intake/raw/</text>
+  <text class="text small" x="100" y="535">Output: cases, relation graph,</text>
+  <text class="text small" x="100" y="555">work patterns, expert questions</text>
+
+  <path class="arrow-soft" d="M 350 400 C 405 400, 410 520, 490 520"/>
+  <rect class="label" x="365" y="414" width="94" height="24" rx="4"/>
+  <text class="text small" x="376" y="431">role grounding</text>
+
+  <!-- Right side: substrates -->
+  <rect class="side" filter="url(#shadow)" x="1250" y="205" width="280" height="680" rx="10"/>
+  <text class="text h" x="1280" y="240">External Substrates</text>
+  <text class="text small" x="1280" y="266">Protocol adapters and connectors bind here</text>
+
+  <rect class="substrate" x="1280" y="300" width="220" height="74" rx="8"/>
+  <text class="text h" x="1300" y="330">Host OS</text>
+  <text class="text small" x="1300" y="354">Linux, macOS, Windows, shell</text>
+
+  <rect class="substrate" x="1280" y="398" width="220" height="74" rx="8"/>
+  <text class="text h" x="1300" y="428">Applications</text>
+  <text class="text small" x="1300" y="452">desktop apps, browser, terminals</text>
+
+  <rect class="substrate" x="1280" y="496" width="220" height="100" rx="8"/>
+  <text class="text h" x="1300" y="526">Work Systems</text>
+  <text class="text small" x="1300" y="550">mail, calendar, agenda, planning</text>
+  <text class="text small" x="1300" y="572">tickets, documents, internal apps</text>
+
+  <rect class="substrate" x="1280" y="620" width="220" height="74" rx="8"/>
+  <text class="text h" x="1300" y="650">Network / APIs</text>
+  <text class="text small" x="1300" y="674">services, queues, databases</text>
+
+  <rect class="substrate" x="1280" y="718" width="220" height="86" rx="8"/>
+  <text class="text h" x="1300" y="748">Devices / Robots</text>
+  <text class="text small" x="1300" y="772">sensors, controllers, telemetry</text>
+  <text class="text small" x="1300" y="790">safety loop remains external</text>
+
+  <path class="arrow" d="M 1110 780 C 1170 780, 1190 330, 1280 330"/>
+  <path class="arrow" d="M 1110 780 C 1170 780, 1190 430, 1280 430"/>
+  <path class="arrow" d="M 1110 780 C 1170 780, 1190 548, 1280 548"/>
+  <path class="arrow" d="M 1110 780 C 1170 780, 1190 657, 1280 657"/>
+  <path class="arrow" d="M 1110 780 C 1170 780, 1190 762, 1280 762"/>
+
+  <path class="arrow-soft" d="M 1280 835 C 1190 835, 1170 860, 1110 805"/>
+
+  <!-- Bottom operating loop -->
+  <rect class="side" x="70" y="940" width="1460" height="58" rx="10"/>
+  <text class="text p" x="100" y="965">Operating loop: human intent -> Codex reasoning -> MD-OS state -> builders -> bounded connectors -> external substrates.</text>
+  <text class="text small" x="100" y="986">Returned snapshots become replayable MD-OS memory for the next session.</text>
+
+  <!-- Production boundary note -->
+  <rect class="note" x="70" y="810" width="280" height="98" rx="10"/>
+  <text class="text h" x="100" y="842">Boundary</text>
+  <text class="text small" x="100" y="870">MD-OS is not AGI, Linux, ROS,</text>
+  <text class="text small" x="100" y="890">firmware, or a hard security layer.</text>
+
+  <rect class="note" x="430" y="830" width="740" height="82" rx="10"/>
+  <text class="text h" x="460" y="862">Production Rule</text>
+  <text class="text p" x="460" y="885">Hard security and credentials stay outside MD-OS.</text>
+  <text class="text small" x="460" y="902">Host, protocol broker, and infrastructure enforce hard controls.</text>
+</svg>

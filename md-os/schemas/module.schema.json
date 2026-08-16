@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/module.schema.json",
+  "title": "MD-OS Module Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "module_id",
+    "kind",
+    "version",
+    "status",
+    "entrypoint",
+    "capabilities",
+    "commands"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "module_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "kernel",
+        "connector",
+        "cortical_module",
+        "compiler",
+        "memory",
+        "planner",
+        "policy",
+        "eval",
+        "runtime"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9_.-]+)?$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "experimental",
+        "draft",
+        "stable",
+        "deprecated"
+      ]
+    },
+    "entrypoint": {
+      "type": "string",
+      "pattern": "^md-os/modules/[a-zA-Z0-9_.-]+/index\\.js$"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "owns": {
+      "$ref": "#/$defs/pathList"
+    },
+    "reads": {
+      "$ref": "#/$defs/pathList"
+    },
+    "writes": {
+      "$ref": "#/$defs/pathList"
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/capability"
+      },
+      "uniqueItems": true
+    },
+    "commands": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/command"
+      }
+    },
+    "verifiers": {
+      "$ref": "#/$defs/idList"
+    },
+    "evals": {
+      "$ref": "#/$defs/commandLineList"
+    }
+  },
+  "$defs": {
+    "pathList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "idList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "commandLineList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "risk",
+        "side_effects",
+        "requires"
+      ],
+      "properties": {
+        "capability_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "risk": {
+          "type": "string",
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "side_effects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "argv"
+      ],
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "cli": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        },
+        "mcp_tool": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "description",
+            "input_schema",
+            "argument_order"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "description": {
+              "type": "string"
+            },
+            "input_schema": {
+              "type": "object"
+            },
+            "argument_order": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            }
+          }
+        }
+      }
+    }
+  }
+}

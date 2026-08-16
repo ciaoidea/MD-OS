@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_loop_status.schema.json",
+  "title": "APFC bounded open-world loop status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status_type", "protocol_id", "experiment_id", "state",
+    "continuous_execution", "bounded_tasks_per_cycle", "holdout_task_count",
+    "completed_task_count", "preflight_task_count", "model_session_count",
+    "model_sessions_remaining", "image_lifecycle_receipt_count", "next_task_id",
+    "next_action", "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "status_type": { "const": "apfc_open_world_loop_status" },
+    "protocol_id": { "const": "apfc_open_world_streaming_crossover_v1" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "state": { "enum": ["awaiting_remote_image_manifest", "ready", "in_progress", "campaign_complete"] },
+    "continuous_execution": { "const": false },
+    "bounded_tasks_per_cycle": { "const": 1 },
+    "holdout_task_count": { "const": 30 },
+    "completed_task_count": { "type": "integer", "minimum": 0, "maximum": 30 },
+    "preflight_task_count": { "type": "integer", "minimum": 0, "maximum": 30 },
+    "model_session_count": { "type": "integer", "minimum": 0, "maximum": 90 },
+    "model_sessions_remaining": { "type": "integer", "minimum": 0, "maximum": 90 },
+    "image_lifecycle_receipt_count": { "type": "integer", "minimum": 0, "maximum": 30 },
+    "next_task_id": { "type": ["string", "null"] },
+    "next_action": { "enum": ["freeze_remote_image_digests", "run_once", "evaluate_promotion_gates"] },
+    "claim_boundary": { "type": "string", "minLength": 1 }
+  }
+}

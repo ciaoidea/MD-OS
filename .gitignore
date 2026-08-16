@@ -1,0 +1,51 @@
+node_modules/
+.cache/
+graphify-out/
+coverage/
+.nyc_output/
+.venv/
+.venv-*/
+venv/
+env/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+credentials.json
+token.json
+*.log
+*.pid
+*.aux
+*.out
+*.toc
+*.pdf
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Host-local editor state and test scratch workspaces.
+.obsidian/
+task-spec-outside-mdos-*/
+
+# MD-OS local, generated, and live runtime state.
+# Demo seeds live under md-os/examples/.
+md-os/ops/*
+!md-os/ops/.gitkeep
+!md-os/ops/releases/
+md-os/ops/releases/*
+!md-os/ops/releases/self/
+md-os/ops/releases/self/*
+!md-os/ops/releases/self/proposals/
+!md-os/ops/releases/self/proposals/*.json
+
+# Legacy pre-md-os boundary, kept only to prevent stale local state commits.
+mcp/ops/*
+!mcp/ops/.gitkeep

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/journal.schema.json",
+  "title": "MD-OS Journal Event",
+  "type": "object",
+  "required": ["event", "timestamp"],
+  "properties": {
+    "event": { "type": "string" },
+    "timestamp": { "type": "string" },
+    "project_id": { "type": "string" },
+    "connector_id": { "type": "string" },
+    "risk_level": { "type": "string" },
+    "snapshot_file": { "type": "string" },
+    "artifact_file": { "type": "string" }
+  },
+  "additionalProperties": true
+}

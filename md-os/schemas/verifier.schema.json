@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/verifier.schema.json",
+  "title": "MD-OS Verifier Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "verifier_id",
+    "status",
+    "checks",
+    "outcome"
+  ],
+  "properties": {
+    "verifier_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "outcome": { "enum": ["verified", "unverified", "failed"] },
+    "independent_from_planner": { "type": "boolean" },
+    "acceptance_results": { "type": "array", "items": { "type": "object" } },
+    "action_receipt_ids": { "type": "array", "items": { "type": "string" } },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check_id", "status", "message"],
+        "properties": {
+          "check_id": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["ok", "attention", "critical"] },
+          "message": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

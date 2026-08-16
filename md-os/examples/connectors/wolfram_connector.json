@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "connector_id": "wolfram_connector",
+  "engine_argv": [
+    "wolframscript",
+    "-local"
+  ],
+  "default_timeout_ms": 30000,
+  "max_source_bytes": 200000,
+  "max_output_bytes": 200000,
+  "allowed_script_roots": [
+    "md-os/ops/local/wolfram",
+    "md-os/ops/calculations/wolfram/scripts"
+  ],
+  "calculation_registry_dir": "md-os/ops/calculations/wolfram",
+  "redact_patterns": [],
+  "calculations": [
+    {
+      "calculation_id": "wolfram_smoke_symbolic_derivative",
+      "wolfram_code": "FullSimplify[D[x^2, x] == 2 x]",
+      "summary": "Smoke-test symbolic differentiation through the bounded Wolfram connector.",
+      "timeout_ms": 10000,
+      "max_output_bytes": 20000,
+      "epistemic_status": "derived",
+      "expected_gates": [
+        "symbolicDerivativeGate"
+      ],
+      "tags": [
+        "wolfram",
+        "smoke_test",
+        "symbolic"
+      ],
+      "entities": [
+        "wolfram_engine"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "connector_name": "example_connector",
+  "connector_kind": "api",
+  "project_id": "example_project",
+  "captured_at": "2026-04-24T18:00:00Z",
+  "signals": [
+    {
+      "source_id": "example_signal_001",
+      "captured_at": "2026-04-24T18:00:00Z",
+      "summary": "Example operational signal",
+      "status_hint": "open",
+      "priority": "high",
+      "owner_hint": "Operator Name",
+      "entities": [
+        "entity_a"
+      ],
+      "tags": [
+        "generic"
+      ],
+      "suspected_causes": [
+        "unknown_state"
+      ],
+      "depends_on": [],
+      "next_step": "Investigate and normalize runtime state",
+      "due_at": "2026-04-25T09:00:00Z",
+      "external_parties": [
+        "vendor_x"
+      ]
+    }
+  ]
+}
+

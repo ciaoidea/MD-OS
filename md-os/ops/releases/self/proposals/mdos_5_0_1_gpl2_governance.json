@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "release_id": "mdos_5_0_1_gpl2_governance",
+  "target_identity_name": "MD-OS (Artificial Prefrontal Cortex)",
+  "target_identity_version": "5.0",
+  "target_personality_profile": "Existing APFC identity with an explicit reciprocal open-source and coherent-base governance policy.",
+  "personality_continuity_rule": "Preserve the MD-OS APFC identity, active md-os/ boundary, non-claims, host-runtime distinction, and bounded operating stance.",
+  "identity_epistemic_gates": [
+    "unified_identity_check",
+    "identity_version_continuity_check",
+    "non_claim_preservation_check"
+  ],
+  "target_release_label": "5.0",
+  "target_release_semver": "5.0.1",
+  "target_release_version": "5.0",
+  "target_release_name": "MD-OS (Artificial Prefrontal Cortex)",
+  "release_type": "patch",
+  "status": "proposed",
+  "objective": "Establish GPL-2.0-only distribution, Alessandro Rizzo original authorship, contributor-owned copyright, DCO provenance, official-mainline governance, and a precise UNIX/Linux/BSD-to-agentic-OS policy.",
+  "improvement_hypothesis": "A complete legal and governance surface makes open collaboration reciprocal, attributable, auditable, and coherent with the repository's operating philosophy.",
+  "semantic_epistemic_impact": "Adds explicit legal, authorship, contributor, governance, citation, project-name, historical MIT-transition, and connector-boundary knowledge without changing the APFC identity or permission model.",
+  "scope": [
+    "LICENSE",
+    "AUTHORS.md",
+    "CITATION.cff",
+    "CONTRIBUTING.md",
+    "DeveloperCertificateOfOrigin.txt",
+    "GOVERNANCE.md",
+    "TRADEMARKS.md",
+    "README.md",
+    "package.json",
+    "docs/LICENSING.md",
+    "docs/ARCHITECTURE.md",
+    "docs/FILESYSTEM_CONTRACT.md",
+    "docs/PUBLISHING.md",
+    "md-os/kb/OPEN_SOURCE_GOVERNANCE_MODEL.md",
+    "md-os/kb/AGENTIC_OPERATIONAL_RELEASE_MODEL.md",
+    "md-os/kb/RELEASE_VERSION_NAMING_MODEL.md",
+    "test/licensing_policy.test.js"
+  ],
+  "forbidden_paths": [
+    "md-os/ops/local/**",
+    "third-party license files",
+    "historical copies already distributed under MIT"
+  ],
+  "non_goals": [
+    "No claim that Alessandro Rizzo owns contributor-authored work.",
+    "No retroactive revocation of historical MIT permissions.",
+    "No Linux syscall exception or undeclared connector exception.",
+    "No BSD software license.",
+    "No change to the 5.0 APFC identity, active boundary, or runtime permissions.",
+    "No autonomous continuous execution."
+  ],
+  "migration_plan": [
+    "Replace the root MIT license with a GPL-2.0-only application notice and verbatim GPLv2 body.",
+    "Add author, DCO, governance, project-name, citation, and licensing-scope artifacts.",
+    "Update package semver and canonical version readback to 5.0.1.",
+    "Bind UNIX decomposition, Linux reciprocity, BSD coherence, and APFC verification in canonical knowledge.",
+    "Run focused licensing tests, full verification, generated readback, and replay twice.",
+    "Publish the exact verified source state to the official GitHub repository."
+  ],
+  "compatibility_policy": "The APFC identity and 5.0 operating boundary remain stable. Historical MIT copies retain their received permissions. The 5.0.1 tree and later covered contributions use GPL-2.0-only. Third-party and external material keep their own terms.",
+  "epistemic_rules": [
+    "Do not report remote alignment before the verified commit is read back from GitHub.",
+    "Do not describe GPL as automatic ownership of generated outputs, user inputs, or external state.",
+    "Do not describe BSD architectural inheritance as BSD licensing.",
+    "Do not report acceptance while any required verifier is failing."
+  ],
+  "execution_rules": [
+    "Edit canonical source only through reviewed patches.",
+    "Rebuild generated runtime outputs through deterministic builders.",
+    "Keep host-local and third-party material unchanged.",
+    "Commit and push only the verified publishable source surface."
+  ],
+  "acceptance_criteria": [
+    "The GPLv2 body matches the canonical text byte-for-byte.",
+    "Package, citation, runtime server, and release metadata report 5.0.1 and GPL-2.0-only.",
+    "Creator, contributor ownership, DCO, governance, project-name, licensing-scope, and official repository artifacts are present.",
+    "Focused licensing tests and the full test suite pass.",
+    "Build and semantic-operational readback complete.",
+    "Replay matches twice.",
+    "The verified commit is present on https://github.com/ciaoidea/MD-OS."
+  ],
+  "required_gates": [
+    "npm_run_check",
+    "focused_licensing_test",
+    "npm_test",
+    "build_all",
+    "mdos_replay_matched_twice",
+    "semantic_knowledge_ok",
+    "health_readback",
+    "github_commit_readback"
+  ],
+  "master_closure": {
+    "objective": "Publish a coherent GPL-2.0-only MD-OS 5.0.1 baseline whose legal, contributor, governance, architectural, runtime, and remote states agree.",
+    "forbidden_shortcuts": [
+      "Do not replace the GPL body with a URL-only notice.",
+      "Do not claim sole founder ownership over contributor work.",
+      "Do not hand-edit generated readback.",
+      "Do not push before local verification."
+    ],
+    "dependency_edges": [
+      {
+        "edge": "legal_text_to_package_metadata",
+        "verifier": "node --test test/licensing_policy.test.js"
+      },
+      {
+        "edge": "governance_policy_to_canonical_knowledge",
+        "verifier": "node md-os/os/build_semantic_knowledge_graph.js"
+      },
+      {
+        "edge": "source_change_to_generated_readback",
+        "verifier": "npm run build:all"
+      },
+      {
+        "edge": "generated_readback_to_reconstructibility",
+        "verifier": "npm run replay twice"
+      },
+      {
+        "edge": "verified_local_state_to_official_remote",
+        "verifier": "GitHub commit and file readback"
+      }
+    ],
+    "stop_or_refactor_condition": "Stop publication if canonical GPL integrity, contributor ownership boundaries, tests, build, replay, authentication, or remote fast-forward safety cannot be verified.",
+    "final_readback": "Local licensing test, generated release/health state, two replay reports, and GitHub commit/file verification."
+  },
+  "rollback_plan": [
+    "Before publication, withhold or correct the 5.0.1 migration if a gate fails.",
+    "After publication, use a new reviewed commit rather than rewriting public history.",
+    "Preserve the fact that licenses already granted for distributed copies cannot be revoked by a repository edit."
+  ]
+}

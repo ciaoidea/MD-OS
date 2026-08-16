@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/plan_graph.schema.json",
+  "title": "MD-OS Software Repair PlanGraph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_graph_id",
+    "benchmark_case_id",
+    "configuration_id",
+    "strategy_class",
+    "mechanism",
+    "hypothesis",
+    "applicability",
+    "preconditions",
+    "nodes",
+    "predicted_outcome",
+    "verification",
+    "rollback",
+    "risk_level",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "plan_graph_id": {
+      "type": "string",
+      "pattern": "^plan_[a-zA-Z0-9_]+$"
+    },
+    "benchmark_case_id": {
+      "type": "string",
+      "pattern": "^software_repair_[a-z0-9_]+$"
+    },
+    "configuration_id": {
+      "enum": [
+        "baseline_a_single_attempt",
+        "baseline_b_retrieval",
+        "mdos_learning_exploration",
+        "mdos_neuromorphic_skill",
+        "mdos_verified_runtime"
+      ]
+    },
+    "strategy_class": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mechanism": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hypothesis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "defect_classes",
+        "required_paths"
+      ],
+      "properties": {
+        "defect_classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "precondition_id",
+          "statement",
+          "evidence_refs"
+        ],
+        "properties": {
+          "precondition_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_id",
+          "kind",
+          "operation",
+          "target_paths",
+          "depends_on",
+          "expected_effects",
+          "reversible"
+        ],
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "inspect",
+              "edit",
+              "verify",
+              "rollback"
+            ]
+          },
+          "operation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target_paths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "expected_effects": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "reversible": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "predicted_outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_delta",
+        "success_probability",
+        "information_gain",
+        "risk",
+        "uncertainty",
+        "cost_units",
+        "latency_ms"
+      ],
+      "properties": {
+        "state_delta": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "success_probability": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "information_gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "uncertainty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "cost_units": {
+          "type": "number",
+          "minimum": 0
+        },
+        "latency_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visible_test_ids",
+        "requires_independent_verification",
+        "postconditions"
+      ],
+      "properties": {
+        "visible_test_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requires_independent_verification": {
+          "const": true
+        },
+        "postconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available",
+        "procedure"
+      ],
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "procedure": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "risk_level": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id",
+        "provider_run_id",
+        "source",
+        "input_hash",
+        "model_call_id"
+      ],
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "enum": [
+            "fixture",
+            "model",
+            "planner",
+            "skill",
+            "human"
+          ]
+        },
+        "input_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "model_call_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

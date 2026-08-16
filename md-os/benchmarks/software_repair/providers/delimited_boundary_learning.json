@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "provider_id": "provider_delimited_boundary_learning",
+  "kind": "bounded_skill_program",
+  "implementation": {
+    "executable": "node",
+    "script_path": "md-os/benchmarks/software_repair/providers/delimited_boundary_skill_provider.js",
+    "timeout_ms": 5000
+  },
+  "supported_cases": [
+    "software_repair_missing_boundary_validation",
+    "software_repair_api_key_boundary",
+    "software_repair_session_handle_boundary",
+    "software_repair_route_descriptor_boundary",
+    "software_repair_envelope_address_boundary"
+  ],
+  "case_ground_truth_disclosed": false,
+  "skill_family": "delimited_boundary_validation_v1"
+}

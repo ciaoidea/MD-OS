@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/benchmark_run.schema.json",
+  "title": "MD-OS Software Repair BenchmarkRun",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "benchmark_run_id",
+    "benchmark_case_id",
+    "case_hash",
+    "candidate_set_id",
+    "candidate_set_hash",
+    "split",
+    "configuration",
+    "started_at",
+    "completed_at",
+    "status",
+    "empirical_claim_scope",
+    "repository_receipt",
+    "reproduction_before",
+    "candidate_results",
+    "metrics",
+    "candidate_comparison_file",
+    "cleanup"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "benchmark_run_id": {
+      "type": "string",
+      "pattern": "^benchmark_run_[a-zA-Z0-9_]+$"
+    },
+    "benchmark_case_id": {
+      "type": "string",
+      "pattern": "^software_repair_[a-z0-9_]+$"
+    },
+    "case_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "candidate_set_id": {
+      "type": "string",
+      "pattern": "^candidate_set_[a-z0-9_]+$"
+    },
+    "candidate_set_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "benchmark_case_snapshot_file": {
+      "type": "string",
+      "pattern": "^md-os/ops/benchmarks/software_repair/runs/"
+    },
+    "candidate_set_snapshot_file": {
+      "type": "string",
+      "pattern": "^md-os/ops/benchmarks/software_repair/runs/"
+    },
+    "split": {
+      "enum": [
+        "development",
+        "validation",
+        "holdout"
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "required": [
+        "configuration_id",
+        "retrieval",
+        "episodic_memory",
+        "skills",
+        "candidate_skills",
+        "candidate_limit"
+      ],
+      "properties": {
+        "configuration_id": {
+          "enum": [
+            "baseline_a_single_attempt",
+            "baseline_b_retrieval",
+            "mdos_learning_exploration",
+            "mdos_neuromorphic_skill",
+            "mdos_verified_runtime"
+          ]
+        },
+        "retrieval": {
+          "type": "boolean"
+        },
+        "episodic_memory": {
+          "type": "boolean"
+        },
+        "skills": {
+          "type": "boolean"
+        },
+        "candidate_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "candidate_skills": {
+          "type": "boolean"
+        }
+      }
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "empirical_claim_scope": {
+      "enum": [
+        "runner_validation_only",
+        "development_measurement",
+        "baseline_measurement",
+        "holdout_measurement"
+      ]
+    },
+    "repository_receipt": {
+      "type": "object",
+      "required": [
+        "fixture_path",
+        "source_tree_sha256",
+        "base_commit",
+        "base_commit_verified",
+        "isolation"
+      ],
+      "properties": {
+        "fixture_path": {
+          "type": "string"
+        },
+        "source_tree_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "base_commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "base_commit_verified": {
+          "type": "boolean"
+        },
+        "base_bundle_file": {
+          "type": "string",
+          "pattern": "^md-os/ops/benchmarks/software_repair/runs/"
+        },
+        "base_bundle_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "isolation": {
+          "const": "git_worktree_process"
+        }
+      }
+    },
+    "reproduction_before": {
+      "$ref": "#/$defs/commandResult"
+    },
+    "candidate_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "strategy_class",
+          "origin",
+          "plan_graph_id",
+          "plan_graph_sha256",
+          "verdict",
+          "failure_reasons",
+          "worktree_receipt",
+          "patch_receipt",
+          "reproduction_after",
+          "targeted_results",
+          "regression_results",
+          "oracle_results",
+          "diff_receipt",
+          "resource_usage"
+        ],
+        "properties": {
+          "candidate_id": {
+            "type": "string"
+          },
+          "strategy_class": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "plan_graph_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan_graph_sha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "verdict": {
+            "enum": [
+              "verified",
+              "failed",
+              "blocked"
+            ]
+          },
+          "failure_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "worktree_receipt": {
+            "type": "object"
+          },
+          "patch_receipt": {
+            "type": "object"
+          },
+          "reproduction_after": {
+            "$ref": "#/$defs/commandResult"
+          },
+          "targeted_results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/commandResult"
+            }
+          },
+          "regression_results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/commandResult"
+            }
+          },
+          "oracle_results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/commandResult"
+            }
+          },
+          "diff_receipt": {
+            "type": "object"
+          },
+          "resource_usage": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "provider_evidence": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "provider_id": {
+          "type": "string"
+        },
+        "provider_run_id": {
+          "type": "string"
+        },
+        "configuration_id": {
+          "type": "string"
+        },
+        "configuration_fidelity_passed": {
+          "type": "boolean"
+        },
+        "strategy_diversity_passed": {
+          "type": "boolean"
+        },
+        "empirical_eligibility": {
+          "type": "object"
+        },
+        "files": {
+          "type": "array"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "candidate_count",
+        "verified_candidate_count",
+        "candidate_verified_success_rate",
+        "verified_success_rate_holdout",
+        "total_latency_ms",
+        "total_tokens",
+        "total_cost",
+        "human_interventions",
+        "regression_count"
+      ],
+      "properties": {
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "verified_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidate_verified_success_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verified_success_rate_holdout": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "total_latency_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "total_cost": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "human_interventions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "regression_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "candidate_comparison_file": {
+      "type": "string",
+      "pattern": "^md-os/ops/benchmarks/software_repair/runs/"
+    },
+    "cleanup": {
+      "type": "object",
+      "required": [
+        "sandbox_removed",
+        "worktrees_pruned"
+      ],
+      "properties": {
+        "sandbox_removed": {
+          "type": "boolean"
+        },
+        "worktrees_pruned": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "commandResult": {
+      "type": "object",
+      "required": [
+        "command_id",
+        "argv",
+        "expected_exit_status",
+        "exit_status",
+        "passed",
+        "duration_ms",
+        "output_hash"
+      ],
+      "properties": {
+        "command_id": {
+          "type": "string"
+        },
+        "argv": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_exit_status": {
+          "type": "integer"
+        },
+        "exit_status": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  }
+}

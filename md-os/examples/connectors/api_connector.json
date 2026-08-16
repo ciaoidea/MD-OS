@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "connector_id": "api_adapter",
+  "allowed_hosts": ["api.github.com", "localhost", "127.0.0.1"],
+  "default_timeout_ms": 15000,
+  "max_response_bytes": 200000,
+  "redact_patterns": ["token=", "api_key=", "secret=", "authorization:"],
+  "requests": [
+    {
+      "request_id": "github_rate_limit",
+      "method": "GET",
+      "url": "https://api.github.com/rate_limit",
+      "summary": "Capture GitHub API rate limit metadata as a bounded API connector smoke test.",
+      "priority": "low",
+      "tags": ["api", "github", "smoke_test"],
+      "entities": ["github_api"]
+    }
+  ]
+}

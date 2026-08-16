@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_seal.schema.json",
+  "title": "APFC open-world corpus seal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "experiment_id", "dataset_id", "dataset_revision", "public_manifest_file", "public_manifest_digest", "hidden_manifest_file", "hidden_manifest_digest", "development_task_count", "holdout_task_count", "development_repository_count", "holdout_repository_count", "repository_overlap_count", "temporal_development_split_precedes_holdout_split", "sealed_before_learning", "evaluator_answers_excluded_from_learner_manifest", "seal_digest"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "manifest_type": { "const": "apfc_open_world_seal" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "dataset_id": { "type": "string", "minLength": 1 },
+    "dataset_revision": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "public_manifest_file": { "const": "public_corpus.json" },
+    "public_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "hidden_manifest_file": { "const": "verifier_vault.json" },
+    "hidden_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "development_task_count": { "const": 12 },
+    "holdout_task_count": { "const": 30 },
+    "development_repository_count": { "const": 12 },
+    "holdout_repository_count": { "const": 30 },
+    "repository_overlap_count": { "const": 0 },
+    "temporal_development_split_precedes_holdout_split": { "const": true },
+    "sealed_before_learning": { "const": true },
+    "evaluator_answers_excluded_from_learner_manifest": { "const": true },
+    "seal_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

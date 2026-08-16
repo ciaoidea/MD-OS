@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_public_repository_context.schema.json",
+  "title": "APFC deterministic public repository context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "context_type", "protocol_id", "task_id", "repository",
+    "base_commit", "public_task_hash", "public_only", "hidden_artifacts_present",
+    "deterministic_selection", "byte_limit", "selected_content_bytes", "search_terms",
+    "repository_tree", "files", "selection_policy", "context_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "context_type": { "const": "apfc_public_repository_context" },
+    "protocol_id": { "const": "apfc_public_repository_context_v1" },
+    "task_id": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "minLength": 3 },
+    "base_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "public_task_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "public_only": { "const": true },
+    "hidden_artifacts_present": { "const": false },
+    "deterministic_selection": { "const": true },
+    "byte_limit": { "type": "integer", "minimum": 1000 },
+    "selected_content_bytes": { "type": "integer", "minimum": 0 },
+    "search_terms": { "type": "array", "items": { "type": "string" }, "maxItems": 40 },
+    "repository_tree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paths", "total_file_count", "truncated"],
+      "properties": {
+        "paths": { "type": "array", "items": { "type": "string" } },
+        "total_file_count": { "type": "integer", "minimum": 0 },
+        "truncated": { "type": "boolean" }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "relevance_score", "matched_terms", "original_bytes", "content_bytes", "selection_mode", "content_truncated", "content_hash", "content"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "relevance_score": { "type": "number" },
+          "matched_terms": { "type": "array", "items": { "type": "string" } },
+          "original_bytes": { "type": "integer", "minimum": 0 },
+          "content_bytes": { "type": "integer", "minimum": 0 },
+          "selection_mode": { "enum": ["full", "matched_windows"] },
+          "content_truncated": { "type": "boolean" },
+          "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "content": { "type": "string" }
+        }
+      }
+    },
+    "selection_policy": { "type": "string", "minLength": 1 },
+    "context_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/software_repair_benchmark_index.schema.json",
+  "title": "MD-OS Software Repair Benchmark Index",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "updated_at",
+    "source_hash",
+    "status",
+    "case_count",
+    "run_count",
+    "provider_run_count",
+    "provider_completed_run_count",
+    "provider_integrity_passed_run_count",
+    "provider_empirical_eligible_run_count",
+    "provider_plan_graph_count",
+    "provider_backed_benchmark_run_count",
+    "plan_graph_verified_benchmark_run_count",
+    "runner_validation_run_count",
+    "runner_validation_verified_run_count",
+    "runner_validation_no_selection_run_count",
+    "empirical_run_count",
+    "configurations",
+    "learning_delta",
+    "findings"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "source_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "case_count": { "type": "integer", "minimum": 0 },
+    "run_count": { "type": "integer", "minimum": 0 },
+    "provider_run_count": { "type": "integer", "minimum": 0 },
+    "provider_completed_run_count": { "type": "integer", "minimum": 0 },
+    "provider_integrity_passed_run_count": { "type": "integer", "minimum": 0 },
+    "provider_empirical_eligible_run_count": { "type": "integer", "minimum": 0 },
+    "provider_plan_graph_count": { "type": "integer", "minimum": 0 },
+    "provider_backed_benchmark_run_count": { "type": "integer", "minimum": 0 },
+    "plan_graph_verified_benchmark_run_count": { "type": "integer", "minimum": 0 },
+    "runner_validation_run_count": { "type": "integer", "minimum": 0 },
+    "runner_validation_verified_run_count": { "type": "integer", "minimum": 0 },
+    "runner_validation_no_selection_run_count": { "type": "integer", "minimum": 0 },
+    "empirical_run_count": { "type": "integer", "minimum": 0 },
+    "configurations": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "configuration_id",
+          "run_count",
+          "empirical_run_count",
+          "holdout_run_count",
+          "verified_holdout_count",
+          "verified_success_rate_holdout",
+          "regression_count",
+          "total_tokens",
+          "total_cost"
+        ]
+      }
+    },
+    "learning_delta": {
+      "type": "object",
+      "required": ["status", "delta_verified_success_rate_holdout", "reason"],
+      "properties": {
+        "status": { "enum": ["measured", "not_measured"] },
+        "delta_verified_success_rate_holdout": { "type": ["number", "null"] },
+        "reason": { "type": ["string", "null"] }
+      }
+    },
+    "findings": { "type": "array", "items": { "type": "object" } }
+  }
+}

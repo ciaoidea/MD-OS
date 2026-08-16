@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/eval.schema.json",
+  "title": "MD-OS AGI Eval Report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "updated_at",
+    "status",
+    "metrics"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "episode_count",
+        "success_rate",
+        "unverified_count",
+        "failure_recovery_rate",
+        "promoted_skill_count",
+        "candidate_skill_count",
+        "regression_count"
+      ],
+      "properties": {
+        "episode_count": { "type": "integer", "minimum": 0 },
+        "success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "unverified_count": { "type": "integer", "minimum": 0 },
+        "failure_recovery_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "promoted_skill_count": { "type": "integer", "minimum": 0 },
+        "candidate_skill_count": { "type": "integer", "minimum": 0 },
+        "regression_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

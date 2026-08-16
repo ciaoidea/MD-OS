@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "source_id": "bmct_architecture_request",
+  "modality": "text",
+  "trust": "direct_user_input",
+  "observed_at": "2026-07-08T21:00:00+02:00",
+  "text": "Design the Bio-Multimodal Cortical Transformer architecture for MD-OS (Artificial Prefrontal Cortex). Focus on experience tokens, binding graph, global workspace, action gate, prediction loop, schemas, runtime, and tests.",
+  "metadata": {
+    "purpose": "bmct_roundtrip_eval",
+    "expected_runtime": "apfc_cognitive_runtime"
+  }
+}

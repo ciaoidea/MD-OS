@@ -1,0 +1,12 @@
+# Local runtime state intentionally excluded from hygiene findings.
+# Stability checks still verify required md-os/ops files separately.
+.cache/
+graphify-out/
+.venv/
+.venv-*/
+venv/
+env/
+.env
+.env.*
+md-os/ops/
+docs/papers/*.pdf

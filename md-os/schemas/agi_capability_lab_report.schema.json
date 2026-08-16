@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_capability_lab_report.schema.json",
+  "title": "MD-OS AGI capability lab v5 report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "report_type",
+    "protocol_id",
+    "experiment_id",
+    "created_at",
+    "completed_at",
+    "status",
+    "criteria",
+    "measurements",
+    "ablations",
+    "memory_ablation",
+    "persistence",
+    "contamination_audit",
+    "external_proof_readiness",
+    "claim_state"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "report_type": { "const": "mdos_agi_capability_lab_report" },
+    "protocol_id": { "const": "mdos_agi_capability_lab_v1" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "completed_at": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "failed"] },
+    "criteria": {
+      "type": "object",
+      "required": [
+        "far_semantic_transfer",
+        "continual_learning",
+        "persistent_memory",
+        "cognitive_memory_continuity",
+        "autonomous_curriculum",
+        "measurable_improvement",
+        "bounded_long_horizon_autonomy",
+        "sealed_hidden_evaluation"
+      ]
+    },
+    "measurements": {
+      "type": "object",
+      "required": [
+        "training_episodes",
+        "holdout_tasks",
+        "structural_families",
+        "full_holdout_success_rate",
+        "best_control_success_rate",
+        "added_value_delta",
+        "learning_gain",
+        "average_forgetting",
+        "memory_on_success_rate",
+        "memory_off_success_rate",
+        "memory_added_value_delta",
+        "semantic_policies_promoted",
+        "checkpoint_reloads",
+        "causal_memory_reuses",
+        "promoted_regressions",
+        "human_interventions",
+        "real_wall_clock_minutes",
+        "real_eight_hour_horizon_proven"
+      ],
+      "properties": {
+        "training_episodes": { "type": "integer", "minimum": 1 },
+        "holdout_tasks": { "type": "integer", "minimum": 1 },
+        "structural_families": { "type": "integer", "minimum": 5 },
+        "full_holdout_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "best_control_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "added_value_delta": { "type": "number", "minimum": -1, "maximum": 1 },
+        "learning_gain": { "type": "number", "minimum": -1, "maximum": 1 },
+        "average_forgetting": { "type": "number", "minimum": 0, "maximum": 1 },
+        "memory_on_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "memory_off_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "memory_added_value_delta": { "type": "number", "minimum": -1, "maximum": 1 },
+        "semantic_policies_promoted": { "type": "integer", "minimum": 0 },
+        "checkpoint_reloads": { "type": "integer", "minimum": 0 },
+        "causal_memory_reuses": { "type": "integer", "minimum": 0 },
+        "promoted_regressions": { "type": "integer", "minimum": 0 },
+        "human_interventions": { "type": "integer", "minimum": 0 },
+        "real_wall_clock_minutes": { "type": "number", "minimum": 0 },
+        "real_eight_hour_horizon_proven": { "type": "boolean" }
+      }
+    },
+    "ablations": {
+      "type": "object",
+      "required": [
+        "same_host_base",
+        "same_host_prompted",
+        "same_host_mdos_no_learning",
+        "same_host_mdos_full"
+      ]
+    },
+    "memory_ablation": {
+      "type": "object",
+      "required": ["same_architecture_memory_on", "same_architecture_memory_off", "causal_delta", "matched_attempt_budget", "matched_strategy_engine"]
+    },
+    "persistence": { "type": "object" },
+    "contamination_audit": {
+      "type": "object",
+      "required": ["status", "request_count", "findings", "hidden_answers_absent", "oracle_strategy_absent", "generator_seed_absent"],
+      "properties": {
+        "status": { "enum": ["ok", "failed"] },
+        "request_count": { "type": "integer", "minimum": 1 },
+        "findings": { "type": "array" },
+        "hidden_answers_absent": { "type": "boolean" },
+        "oracle_strategy_absent": { "type": "boolean" },
+        "generator_seed_absent": { "type": "boolean" }
+      }
+    },
+    "external_proof_readiness": { "type": "object" },
+    "claim_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "internal_capabilities_supported",
+        "external_proofs_complete",
+        "operational_agi_claim_supported",
+        "agi_achieved",
+        "reason"
+      ],
+      "properties": {
+        "internal_capabilities_supported": { "type": "boolean" },
+        "external_proofs_complete": { "const": false },
+        "operational_agi_claim_supported": { "const": false },
+        "agi_achieved": { "const": "not_ontologically_attestable" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

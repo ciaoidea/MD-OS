@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/health_classifier.schema.json",
+  "title": "MD-OS Granular Health Classification",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "updated_at",
+    "status",
+    "classifier_name",
+    "health",
+    "release_gate",
+    "finding_summary",
+    "findings"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "classifier_name": { "const": "mdos_granular_health_classifier" },
+    "health": {
+      "type": "object",
+      "required": [
+        "runtime_health",
+        "compiler_health",
+        "agi_loop_health",
+        "publication_health",
+        "security_health",
+        "local_hygiene_health"
+      ],
+      "properties": {
+        "runtime_health": { "$ref": "#/$defs/scope" },
+        "compiler_health": { "$ref": "#/$defs/scope" },
+        "agi_loop_health": { "$ref": "#/$defs/scope" },
+        "publication_health": { "$ref": "#/$defs/scope" },
+        "security_health": { "$ref": "#/$defs/scope" },
+        "local_hygiene_health": { "$ref": "#/$defs/scope" }
+      }
+    },
+    "release_gate": {
+      "type": "object",
+      "required": [
+        "runtime_operable",
+        "runtime_blocked",
+        "publishable",
+        "release_blocked",
+        "publication_blocked",
+        "security_blocked",
+        "local_only_blocked"
+      ],
+      "properties": {
+        "runtime_operable": { "type": "boolean" },
+        "runtime_blocked": { "type": "boolean" },
+        "publishable": { "type": "boolean" },
+        "release_blocked": { "type": "boolean" },
+        "publication_blocked": { "type": "boolean" },
+        "security_blocked": { "type": "boolean" },
+        "local_only_blocked": { "type": "boolean" }
+      }
+    },
+    "finding_summary": {
+      "type": "object",
+      "required": [
+        "finding_count",
+        "critical_finding_count",
+        "attention_finding_count",
+        "runtime_blocking_count",
+        "release_blocking_count",
+        "publication_blocking_count",
+        "security_blocking_count",
+        "local_only_count"
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    }
+  },
+  "$defs": {
+    "scope": {
+      "type": "object",
+      "required": [
+        "status",
+        "label",
+        "finding_count",
+        "critical_finding_count",
+        "attention_finding_count",
+        "runtime_blocking",
+        "release_blocking",
+        "publication_blocking",
+        "security_blocking",
+        "local_only",
+        "finding_ids"
+      ],
+      "properties": {
+        "status": { "enum": ["ok", "attention", "critical"] },
+        "label": { "type": "string" },
+        "finding_count": { "type": "integer", "minimum": 0 },
+        "critical_finding_count": { "type": "integer", "minimum": 0 },
+        "attention_finding_count": { "type": "integer", "minimum": 0 },
+        "runtime_blocking": { "type": "boolean" },
+        "release_blocking": { "type": "boolean" },
+        "publication_blocking": { "type": "boolean" },
+        "security_blocking": { "type": "boolean" },
+        "local_only": { "type": "boolean" },
+        "finding_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "finding_id",
+        "severity",
+        "scope",
+        "source",
+        "runtime_blocking",
+        "release_blocking",
+        "publication_blocking",
+        "security_blocking",
+        "local_only",
+        "reason",
+        "suggested_action"
+      ],
+      "properties": {
+        "finding_id": { "type": "string", "minLength": 1 },
+        "severity": { "enum": ["attention", "critical"] },
+        "scope": {
+          "enum": [
+            "runtime",
+            "compiler",
+            "agi_loop",
+            "publication",
+            "security",
+            "local_hygiene"
+          ]
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "runtime_blocking": { "type": "boolean" },
+        "release_blocking": { "type": "boolean" },
+        "publication_blocking": { "type": "boolean" },
+        "security_blocking": { "type": "boolean" },
+        "local_only": { "type": "boolean" },
+        "reason": { "type": "string", "minLength": 1 },
+        "suggested_action": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "object" }
+      }
+    }
+  }
+}

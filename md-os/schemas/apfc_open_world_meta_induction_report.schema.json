@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_meta_induction_report.schema.json",
+  "title": "APFC open-world meta-skill induction report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "status", "verified_episode_count"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "status": { "enum": ["ok", "critical"] },
+    "verified_episode_count": { "type": "integer", "minimum": 0, "maximum": 12 },
+    "distinct_repository_count": { "type": "integer", "minimum": 0 },
+    "mechanism_count": { "type": "integer", "minimum": 0 },
+    "supported_mechanisms": { "type": "array", "items": { "type": "string" } },
+    "workflow_hypotheses": { "type": "array" },
+    "selected_hypothesis_id": { "type": "string" },
+    "candidate_skill_id": { "type": "string", "pattern": "^skill_[a-z0-9_]+$" },
+    "candidate_skill_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "procedure_graph_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "literal_gold_patches_in_skill": { "const": false },
+    "source_seal_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ok" } } },
+      "then": { "required": ["experiment_id", "distinct_repository_count", "mechanism_count", "supported_mechanisms", "workflow_hypotheses", "selected_hypothesis_id", "candidate_skill_id", "candidate_skill_hash", "procedure_graph_hash", "literal_gold_patches_in_skill", "source_seal_digest"] },
+      "else": { "required": ["failed_episode_ids", "skill_induced"] }
+    }
+  ]
+}

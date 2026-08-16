@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_development_episodes.schema.json",
+  "title": "APFC open-world verified development episodes",
+  "type": "array",
+  "minItems": 12,
+  "items": {
+    "type": "object",
+    "additionalProperties": true,
+    "required": ["schema_version", "episode_id", "created_at", "task_id", "repository", "base_commit", "source_split", "public_task_hash", "verifier_outcome", "evidence", "structural_trace", "observed_procedure_ids", "literal_patch_excluded_from_learning_artifact"],
+    "properties": {
+      "schema_version": { "const": 1 },
+      "episode_id": { "type": "string", "pattern": "^ep_[a-z0-9_]+$" },
+      "repository": { "type": "string", "minLength": 1 },
+      "verifier_outcome": { "enum": ["verified", "failed"] },
+      "evidence": { "type": "object" },
+      "structural_trace": { "type": "object" },
+      "observed_procedure_ids": { "type": "array", "minItems": 9, "items": { "type": "string" } },
+      "literal_patch_excluded_from_learning_artifact": { "const": true }
+    }
+  }
+}

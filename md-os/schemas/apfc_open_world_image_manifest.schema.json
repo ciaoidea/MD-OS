@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_image_manifest.schema.json",
+  "title": "APFC open-world immutable environment image manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "experiment_id", "source_seal_digest", "created_at", "frozen_before_holdout_model_calls", "image_count", "images", "manifest_hash"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "manifest_type": { "const": "apfc_open_world_environment_images" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "source_seal_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "frozen_before_holdout_model_calls": { "const": true },
+    "image_count": { "const": 30 },
+    "images": {
+      "type": "array",
+      "minItems": 30,
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "image_name", "image_id", "repo_digests", "architecture", "operating_system"],
+        "properties": {
+          "task_id": { "type": "string", "minLength": 1 },
+          "image_name": { "type": "string", "minLength": 1 },
+          "image_id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "repo_digests": { "type": "array", "items": { "type": "string" } },
+          "architecture": { "type": "string", "minLength": 1 },
+          "operating_system": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "manifest_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

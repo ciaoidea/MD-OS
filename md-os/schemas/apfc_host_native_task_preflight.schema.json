@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_host_native_task_preflight.schema.json",
+  "title": "APFC host-native task-environment preflight receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_type", "backend_id", "evaluator_protocol_id",
+    "task_id", "repository", "base_commit", "started_at", "completed_at",
+    "checkout", "environment", "hidden_test_patch_hash", "gold_patch_hash",
+    "test_command_hash", "baseline", "gold", "verified",
+    "laboratory_disposed", "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "receipt_type": { "const": "apfc_host_native_task_preflight" },
+    "backend_id": {
+      "enum": ["host_native_ephemeral_v1", "host_native_no_tool_ephemeral_v2"]
+    },
+    "evaluator_protocol_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "minLength": 1 },
+    "base_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "started_at": { "type": "string", "minLength": 1 },
+    "completed_at": { "type": "string", "minLength": 1 },
+    "checkout": { "type": "object" },
+    "environment": { "type": "object" },
+    "hidden_test_patch_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gold_patch_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "test_command_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "baseline": { "type": "object" },
+    "gold": { "type": "object" },
+    "verified": { "type": "boolean" },
+    "laboratory_disposed": { "type": "boolean" },
+    "receipt_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

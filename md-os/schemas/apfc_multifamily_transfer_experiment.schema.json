@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_multifamily_transfer_experiment.schema.json",
+  "title": "MD-OS APFC Multi-Family Compositional Transfer Experiment",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "experiment_id", "experiment_type", "created_at",
+    "completed_at", "status", "objective", "model", "design",
+    "source_manifest", "induction", "graph", "transfer_measurement",
+    "family_measurements", "cold_start", "contamination_audit", "safety",
+    "claim_state", "master_closure", "evidence"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "experiment_id": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,100}$" },
+    "experiment_type": { "const": "apfc_multifamily_compositional_transfer_v1" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "completed_at": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "objective": { "type": "string", "minLength": 1 },
+    "model": { "type": "object" },
+    "design": {
+      "type": "object",
+      "required": ["source_family_count", "held_out_family_count", "holdout_case_count", "trial_count", "conditions", "total_model_invocations"],
+      "properties": {
+        "source_family_count": { "type": "integer", "minimum": 6 },
+        "held_out_family_count": { "type": "integer", "minimum": 6 },
+        "holdout_case_count": { "type": "integer", "minimum": 30 },
+        "trial_count": { "type": "integer", "minimum": 3 },
+        "conditions": { "const": ["memory_disabled", "flat_memory", "apfcg_composed"] },
+        "total_model_invocations": { "type": "integer", "minimum": 270 },
+        "infrastructure_failure_policy": { "const": "fail_closed_counted_as_incorrect_without_retry" },
+        "max_infrastructure_failure_rate": { "type": "number", "minimum": 0, "maximum": 0.05 }
+      }
+    },
+    "source_manifest": { "type": "object" },
+    "induction": { "type": "object" },
+    "graph": { "type": "object" },
+    "transfer_measurement": { "type": "object" },
+    "family_measurements": { "type": "array", "minItems": 6 },
+    "cold_start": { "type": "object" },
+    "contamination_audit": { "type": "object" },
+    "safety": { "type": "object" },
+    "execution_reliability": { "type": "object" },
+    "claim_state": {
+      "type": "object",
+      "required": ["bounded_multifamily_compositional_transfer_supported", "apfcg_retrieval_advantage_supported", "universal_learning_supported", "agi_claim_supported", "claim_boundary"],
+      "properties": {
+        "bounded_multifamily_compositional_transfer_supported": { "type": "boolean" },
+        "apfcg_retrieval_advantage_supported": { "type": "boolean" },
+        "universal_learning_supported": { "const": false },
+        "agi_claim_supported": { "const": false },
+        "claim_boundary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "master_closure": { "type": "object" },
+    "evidence": { "type": "object" }
+  }
+}

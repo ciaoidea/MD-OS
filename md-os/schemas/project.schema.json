@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/project.schema.json",
+  "title": "MD-OS Project Definition",
+  "type": "object",
+  "required": ["schema_version", "project_id", "title"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "project_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$" },
+    "title": { "type": "string" },
+    "owner": { "type": "string" },
+    "description": { "type": "string" }
+  },
+  "additionalProperties": true
+}

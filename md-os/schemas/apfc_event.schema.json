@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_event.schema.json",
+  "title": "MD-OS APFC Hash-Chained Cognitive Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "event_id", "sequence", "timestamp", "transaction_id",
+    "task_spec_id", "episode_id", "phase", "actor", "epistemic_status",
+    "outcome_polarity", "source_refs", "payload", "payload_hash",
+    "previous_event_hash", "event_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "event_id": { "type": "string", "pattern": "^apfc_event_[a-f0-9]{20}$" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "timestamp": { "type": "string", "minLength": 1 },
+    "transaction_id": { "type": "string", "minLength": 1 },
+    "task_spec_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
+    "episode_id": { "type": ["string", "null"], "pattern": "^ep_[a-zA-Z0-9_]+$" },
+    "phase": {
+      "enum": [
+        "task_opened", "context_loaded", "prediction_recorded",
+        "decision_selected", "action_requested", "action_receipt_recorded",
+        "outcome_observed", "verification_recorded", "correction_recorded",
+        "episode_closed"
+      ]
+    },
+    "actor": { "enum": ["user", "host_model", "mdos_runtime", "connector", "verifier", "consolidator"] },
+    "epistemic_status": { "enum": ["observed", "hypothetical", "verified", "falsified", "superseded", "invalid"] },
+    "outcome_polarity": { "enum": ["positive", "negative", "partial", "blocked", "neutral"] },
+    "source_refs": { "type": "array", "items": { "type": "string", "pattern": "^md-os/" } },
+    "payload": { "type": "object" },
+    "payload_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "previous_event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "event_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

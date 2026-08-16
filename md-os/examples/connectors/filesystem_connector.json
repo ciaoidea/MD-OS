@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "connector_id": "filesystem_connector",
+  "allowed_roots": ["."],
+  "scans": [
+    {
+      "scan_id": "repo_operating_files",
+      "path": "mcp",
+      "summary": "Capture the MD-OS operating filesystem tree as a bounded filesystem snapshot.",
+      "priority": "medium",
+      "risk_level": "low",
+      "max_files": 200,
+      "max_file_bytes": 250000,
+      "exclude_prefixes": [".git/", "node_modules/"],
+      "tags": ["filesystem", "operating_context"],
+      "entities": ["mcp_runtime"]
+    }
+  ]
+}

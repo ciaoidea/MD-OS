@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_meta_graph.schema.json",
+  "title": "APFC open-world typed meta-procedure graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "graph_type", "nodes", "edges", "supported_mechanisms", "graph_hash"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "graph_type": { "const": "apfc_open_world_meta_procedure_graph" },
+    "nodes": {
+      "type": "array",
+      "minItems": 9,
+      "items": {
+        "type": "object",
+        "required": ["node_id", "node_type", "input_type", "output_type", "procedure", "source_episode_ids"],
+        "properties": {
+          "node_id": { "type": "string", "minLength": 1 },
+          "node_type": { "enum": ["verified_procedure", "verified_mechanism_procedure", "online_candidate_mechanism_procedure"] },
+          "input_type": { "type": "string", "minLength": 1 },
+          "output_type": { "type": "string", "minLength": 1 },
+          "procedure": { "type": "string", "minLength": 1 },
+          "source_episode_ids": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": { "type": "array", "items": { "type": "object" } },
+    "supported_mechanisms": { "type": "array", "minItems": 5, "items": { "type": "string" } },
+    "graph_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/state.schema.json",
+  "title": "MD-OS Runtime State",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "mode", "boundary"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "mode": { "type": "string" },
+    "boundary": { "const": "md-os" },
+    "architecture": { "type": "string" },
+    "runtime_profile": { "type": "string" }
+  },
+  "additionalProperties": true
+}

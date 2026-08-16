@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_external_sealed_task_bundle.schema.json",
+  "title": "MD-OS external evaluator sealed task bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_type",
+    "created_at",
+    "source_digest",
+    "source_frozen_at",
+    "task_manifest_digest",
+    "public_manifest_file",
+    "public_manifest_digest",
+    "hidden_manifest_file",
+    "hidden_manifest_digest",
+    "sealed_before_run",
+    "evaluator_owned_hidden_tests",
+    "post_freeze_tasks",
+    "task_outputs_scored_outside_agent_workspace"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "manifest_type": { "const": "mdos_external_sealed_task_bundle" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "source_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "source_frozen_at": { "type": "string", "minLength": 1 },
+    "task_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "public_manifest_file": { "type": "string", "minLength": 1 },
+    "public_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "hidden_manifest_file": { "type": "string", "minLength": 1 },
+    "hidden_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "sealed_before_run": { "const": true },
+    "evaluator_owned_hidden_tests": { "const": true },
+    "post_freeze_tasks": { "const": true },
+    "task_outputs_scored_outside_agent_workspace": { "const": true }
+  }
+}

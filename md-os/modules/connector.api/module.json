@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "module_id": "connector.api",
+  "kind": "connector",
+  "version": "27.0.0-alpha",
+  "status": "experimental",
+  "entrypoint": "md-os/modules/connector.api/index.js",
+  "summary": "Allowlisted bounded API connector module.",
+  "owns": [
+    "md-os/ops/connectors/api_connector.json"
+  ],
+  "reads": [
+    "md-os/ops/policies/permission_model.json"
+  ],
+  "writes": [
+    "md-os/ops/sources/connectors/*.json",
+    "md-os/ops/artifacts/api/*.json",
+    "md-os/ops/journal.ndjson"
+  ],
+  "capabilities": [
+    {
+      "capability_id": "api.request_allowlisted",
+      "summary": "Run a predeclared HTTP request profile with allowlisted URL, timeout, body limit, and readback.",
+      "risk": "medium",
+      "side_effects": [
+        "network_request",
+        "runtime_observation_write"
+      ],
+      "requires": [
+        "explicit_user_intent",
+        "allowlist_match",
+        "bounded_request",
+        "readback"
+      ]
+    }
+  ],
+  "commands": {
+    "list": {
+      "summary": "List API connector profiles and allowlisted requests.",
+      "argv": [
+        "node",
+        "md-os/modules/connector.api/index.js",
+        "list"
+      ],
+      "cli": [
+        "connector",
+        "api",
+        "list"
+      ],
+      "mcp_tool": {
+        "name": "mdos_connector_api_list",
+        "description": "List API connector profiles and allowlisted requests from the module registry.",
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "argument_order": []
+      }
+    },
+    "run": {
+      "summary": "Run an allowlisted API request by project_id and request_id.",
+      "argv": [
+        "node",
+        "md-os/modules/connector.api/index.js",
+        "run"
+      ],
+      "cli": [
+        "connector",
+        "api",
+        "run"
+      ],
+      "mcp_tool": {
+        "name": "mdos_connector_api_run",
+        "description": "Run an allowlisted API request by project_id and request_id through the module registry.",
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "description": "Safe MD-OS project id."
+            },
+            "request_id": {
+              "type": "string",
+              "description": "Allowlisted API request id."
+            }
+          },
+          "required": [
+            "project_id",
+            "request_id"
+          ]
+        },
+        "argument_order": [
+          "project_id",
+          "request_id"
+        ]
+      }
+    }
+  },
+  "verifiers": [
+    "api.allowlist.valid",
+    "api.status_captured",
+    "api.snapshot.schema.valid",
+    "journal.event.appended"
+  ],
+  "evals": [
+    "node --test test/api_connector.test.js"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_multifamily_transfer_response.schema.json",
+  "title": "APFC Multi-Family Transfer Trial Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result"],
+  "properties": {
+    "result": { "type": "string" }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_external_evaluator_attestation.schema.json",
+  "title": "Independent evaluator attestation used to finalize a SAL report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["evaluator_id", "organization", "host_model_id", "independent", "domains", "autonomy", "robustness"],
+  "properties": {
+    "evaluator_id": { "type": "string", "minLength": 1 },
+    "organization": { "type": "string", "minLength": 1 },
+    "host_model_id": { "type": "string", "minLength": 1 },
+    "independent": { "const": true },
+    "domains": { "type": "object" },
+    "autonomy": { "type": "object" },
+    "robustness": { "type": "object" }
+  }
+}

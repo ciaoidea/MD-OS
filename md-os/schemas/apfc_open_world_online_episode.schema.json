@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_online_episode.schema.json",
+  "title": "APFC open-world post-verification online episode",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "episode_type", "protocol_id", "experiment_id",
+    "episode_id", "sequence", "created_at", "task_id", "repository",
+    "public_task_hash", "prior_memory_snapshot_hash", "prior_episode_count",
+    "inferred_mechanisms", "recognition_evidence", "trial_outcomes",
+    "outcome_class", "successful_conditions", "verified_success_any_condition",
+    "executable_learning_eligible", "negative_evidence_only",
+    "learning_boundary", "episode_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "episode_type": { "const": "apfc_open_world_online_outcome" },
+    "protocol_id": { "const": "apfc_open_world_verified_online_learning_v1" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "episode_id": { "type": "string", "pattern": "^ep_apfc_online_[a-zA-Z0-9_]+$" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "minLength": 1 },
+    "public_task_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prior_memory_snapshot_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prior_episode_count": { "type": "integer", "minimum": 0, "maximum": 30 },
+    "inferred_mechanisms": { "type": "array", "items": { "type": "string" } },
+    "recognition_evidence": { "type": "array", "items": { "type": "object" } },
+    "trial_outcomes": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "object" } },
+    "outcome_class": { "type": "string", "minLength": 1 },
+    "successful_conditions": { "type": "array", "items": { "type": "string" } },
+    "verified_success_any_condition": { "type": "boolean" },
+    "executable_learning_eligible": { "type": "boolean" },
+    "negative_evidence_only": { "type": "boolean" },
+    "learning_boundary": { "type": "object" },
+    "episode_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

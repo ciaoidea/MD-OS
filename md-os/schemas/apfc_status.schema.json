@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_status.schema.json",
+  "title": "MD-OS APFC Runtime Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "updated_at", "status", "identity_version",
+    "active_graph_id", "active_graph_hash", "last_valid_graph_id",
+    "source_manifest_hash", "counts", "checks", "findings",
+    "release_gate", "outputs"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "identity_version": { "const": "5.0" },
+    "active_graph_id": { "type": ["string", "null"], "pattern": "^apfcg_[a-f0-9]{16}$" },
+    "active_graph_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "last_valid_graph_id": { "type": ["string", "null"], "pattern": "^apfcg_[a-f0-9]{16}$" },
+    "source_manifest_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "counts": { "type": "object" },
+    "checks": { "type": "array", "items": { "type": "object" } },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "release_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_operable", "apfc_action_blocked", "promotion_blocked", "publishable"],
+      "properties": {
+        "runtime_operable": { "type": "boolean" },
+        "apfc_action_blocked": { "type": "boolean" },
+        "promotion_blocked": { "type": "boolean" },
+        "publishable": { "type": "boolean" }
+      }
+    },
+    "outputs": { "type": "array", "items": { "type": "string", "pattern": "^md-os/" } }
+  }
+}

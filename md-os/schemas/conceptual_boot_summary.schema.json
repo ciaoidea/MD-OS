@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/conceptual_boot_summary.schema.json",
+  "title": "MD-OS Conceptual Cold Boot Summary",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "status",
+    "source_hash",
+    "identity",
+    "semantic",
+    "operating",
+    "closure",
+    "boot_read_order",
+    "missing_inputs"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "generated_at": { "type": "string" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "source_hash": { "type": "string" },
+    "identity": { "type": "object" },
+    "semantic": { "type": "object" },
+    "operating": { "type": "object" },
+    "closure": { "type": "object" },
+    "boot_read_order": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "input_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "missing_inputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

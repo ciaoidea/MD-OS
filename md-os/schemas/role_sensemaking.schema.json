@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/role_sensemaking.schema.json",
+  "title": "MD-OS Role Operational Sensemaking",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "updated_at",
+    "role_id",
+    "role_profile",
+    "case_count",
+    "case_quality",
+    "cases",
+    "relation_graph",
+    "root_cause_candidates",
+    "work_patterns",
+    "questions_for_expert"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "role_id": { "type": "string" },
+    "role_profile": {
+      "type": "object",
+      "required": [
+        "role_id",
+        "role_file",
+        "mission",
+        "expected_outputs",
+        "systems",
+        "hard_boundaries",
+        "escalation"
+      ],
+      "properties": {
+        "role_id": { "type": "string" },
+        "role_file": { "type": "string" },
+        "mission": { "type": "string" },
+        "expected_outputs": { "type": "array", "items": { "type": "string" } },
+        "systems": { "type": "array", "items": { "type": "string" } },
+        "hard_boundaries": { "type": "array", "items": { "type": "string" } },
+        "escalation": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "case_count": { "type": "integer", "minimum": 0 },
+    "case_quality": {
+      "type": "object",
+      "required": [
+        "high_confidence",
+        "medium_confidence",
+        "low_confidence",
+        "average_role_relevance"
+      ],
+      "properties": {
+        "high_confidence": { "type": "integer", "minimum": 0 },
+        "medium_confidence": { "type": "integer", "minimum": 0 },
+        "low_confidence": { "type": "integer", "minimum": 0 },
+        "average_role_relevance": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "role_id",
+          "source_files",
+          "operation_signals",
+          "systems",
+          "symptoms",
+          "actions",
+          "outcomes",
+          "cause_signals",
+          "role_relevance",
+          "confidence"
+        ],
+        "properties": {
+          "case_id": { "type": "string" },
+          "role_id": { "type": "string" },
+          "source_files": { "type": "array", "items": { "type": "string" } },
+          "source_locator": { "type": "string" },
+          "source_case_ref": { "type": "string" },
+          "operation_signals": { "type": "array", "items": { "type": "string" } },
+          "systems": { "type": "array", "items": { "type": "string" } },
+          "symptoms": { "type": "array", "items": { "type": "string" } },
+          "actions": { "type": "array", "items": { "type": "string" } },
+          "outcomes": { "type": "array", "items": { "type": "string" } },
+          "cause_signals": { "type": "array", "items": { "type": "string" } },
+          "extracted_fields": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "role_relevance": {
+            "type": "object",
+            "required": ["score", "reasons"],
+            "properties": {
+              "score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "reasons": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] }
+        }
+      }
+    },
+    "relation_graph": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": { "type": "array" },
+        "edges": { "type": "array" }
+      }
+    },
+    "root_cause_candidates": { "type": "array" },
+    "work_patterns": { "type": "array" },
+    "questions_for_expert": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

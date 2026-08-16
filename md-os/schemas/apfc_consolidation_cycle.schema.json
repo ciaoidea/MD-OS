@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_consolidation_cycle.schema.json",
+  "title": "MD-OS APFC Bounded Consolidation Cycle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "cycle_id", "state", "created_at", "completed_at",
+    "graph_id", "graph_content_hash", "budget", "selected_episode_ids",
+    "replay_records", "hypotheses", "skill_candidates", "eval_refs",
+    "gate_vector", "promotion_receipt", "rollback_receipt",
+    "external_action_count", "findings", "readback"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "cycle_id": { "type": "string", "pattern": "^apfc_cycle_[a-f0-9]{20}$" },
+    "state": { "enum": ["created", "replayed", "candidate_ready", "evaluated", "promotable", "rejected", "blocked", "failed", "promoted"] },
+    "created_at": { "type": "string" },
+    "completed_at": { "type": ["string", "null"] },
+    "graph_id": { "type": "string", "pattern": "^apfcg_[a-f0-9]{16}$" },
+    "graph_content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_selected_episodes", "maximum_generated_hypotheses",
+        "maximum_candidate_skills", "maximum_wall_time_seconds",
+        "maximum_host_model_generations", "used_selected_episodes",
+        "used_generated_hypotheses", "used_candidate_skills",
+        "used_wall_time_ms", "used_host_model_generations"
+      ],
+      "properties": {
+        "maximum_selected_episodes": { "const": 32 },
+        "maximum_generated_hypotheses": { "const": 4 },
+        "maximum_candidate_skills": { "const": 2 },
+        "maximum_wall_time_seconds": { "const": 900 },
+        "maximum_host_model_generations": { "const": 8 },
+        "used_selected_episodes": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "used_generated_hypotheses": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "used_candidate_skills": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "used_wall_time_ms": { "type": "integer", "minimum": 0, "maximum": 900000 },
+        "used_host_model_generations": { "type": "integer", "minimum": 0, "maximum": 8 }
+      }
+    },
+    "selected_episode_ids": { "type": "array", "maxItems": 32, "items": { "type": "string", "pattern": "^ep_[a-zA-Z0-9_]+$" } },
+    "replay_records": { "type": "array", "items": { "type": "object" } },
+    "hypotheses": { "type": "array", "maxItems": 4, "items": { "type": "object" } },
+    "skill_candidates": { "type": "array", "maxItems": 2, "items": { "type": "object" } },
+    "eval_refs": { "type": "array", "items": { "type": "string" } },
+    "gate_vector": { "type": "object" },
+    "promotion_receipt": { "type": ["object", "null"] },
+    "rollback_receipt": { "type": ["object", "null"] },
+    "external_action_count": { "const": 0 },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "readback": { "type": "object" }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_streamed_image_receipt.schema.json",
+  "title": "APFC streamed image lifecycle receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_type", "protocol_id", "task_id", "image_name",
+    "remote_digest", "pinned_reference", "local_image_id", "local_size_bytes",
+    "digest_verified", "image_preexisting", "image_pulled_for_task",
+    "image_removed_after_task", "completed_at", "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "receipt_type": { "const": "apfc_open_world_streamed_image_lifecycle" },
+    "protocol_id": { "const": "apfc_open_world_streaming_crossover_v1" },
+    "task_id": { "type": "string", "minLength": 1 },
+    "image_name": { "type": "string", "minLength": 1 },
+    "remote_digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "pinned_reference": { "type": "string", "pattern": "@sha256:[a-f0-9]{64}$" },
+    "local_image_id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "local_size_bytes": { "type": "integer", "minimum": 0 },
+    "digest_verified": { "const": true },
+    "image_preexisting": { "type": "boolean" },
+    "image_pulled_for_task": { "type": "boolean" },
+    "image_removed_after_task": { "type": "boolean" },
+    "completed_at": { "type": "string", "minLength": 1 },
+    "receipt_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

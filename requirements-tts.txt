@@ -1,0 +1,4 @@
+# Optional local text-to-speech stack.
+gTTS
+kokoro-onnx
+soundfile

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/work_item.schema.json",
+  "title": "MD-OS Work Item",
+  "type": "object",
+  "required": ["work_item_id", "project_id", "summary", "state"],
+  "properties": {
+    "work_item_id": { "type": "string" },
+    "project_id": { "type": "string" },
+    "summary": { "type": "string" },
+    "state": { "type": "string" },
+    "priority": { "type": "string" },
+    "source_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "next_step": { "type": "string" }
+  },
+  "additionalProperties": true
+}

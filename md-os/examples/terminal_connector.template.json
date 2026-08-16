@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "connector_id": "terminal_executor",
+  "default_timeout_ms": 15000,
+  "max_stdout_bytes": 200000,
+  "max_stderr_bytes": 200000,
+  "redact_patterns": ["token=", "api_key=", "secret="],
+  "commands": [
+    {
+      "command_id": "node_version",
+      "argv": ["node", "--version"],
+      "cwd": ".",
+      "summary": "Capture the local Node.js version.",
+      "priority": "low",
+      "tags": ["terminal", "runtime", "version"],
+      "entities": ["node_runtime"]
+    }
+  ]
+}

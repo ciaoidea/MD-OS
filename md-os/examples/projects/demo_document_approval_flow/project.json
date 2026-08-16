@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "project_id": "demo_document_approval_flow",
+  "title": "Demo Document Approval Flow",
+  "owner": "Knowledge Operations",
+  "description": "Generic non-IT workflow showing how document review, approvals, and stakeholder messaging can be modeled through text-native state.",
+  "default_timezone": "Europe/Rome",
+  "status": "active"
+}

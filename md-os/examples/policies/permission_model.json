@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-04-26T00:00:00Z",
+  "risk_levels": ["low", "medium", "high", "critical"],
+  "profiles": [
+    {
+      "profile_id": "read_only_snapshot",
+      "capabilities": ["read-only"],
+      "risk_level": "low",
+      "requires_approval": false,
+      "dry_run_required": false,
+      "audit_required": true
+    },
+    {
+      "profile_id": "local_runtime_write",
+      "capabilities": ["write-local", "write-project"],
+      "risk_level": "medium",
+      "requires_approval": false,
+      "dry_run_required": false,
+      "audit_required": true
+    },
+    {
+      "profile_id": "network_read",
+      "capabilities": ["network-read", "read-only"],
+      "risk_level": "medium",
+      "requires_approval": false,
+      "dry_run_required": false,
+      "audit_required": true
+    },
+    {
+      "profile_id": "shell_safe",
+      "capabilities": ["shell-safe"],
+      "risk_level": "medium",
+      "requires_approval": false,
+      "dry_run_required": false,
+      "audit_required": true
+    },
+    {
+      "profile_id": "network_write",
+      "capabilities": ["network-write"],
+      "risk_level": "high",
+      "requires_approval": true,
+      "dry_run_required": true,
+      "audit_required": true
+    },
+    {
+      "profile_id": "hardware_write",
+      "capabilities": ["hardware-write"],
+      "risk_level": "high",
+      "requires_approval": true,
+      "dry_run_required": true,
+      "audit_required": true,
+      "recovery_note_required": true
+    },
+    {
+      "profile_id": "destructive",
+      "capabilities": ["destructive"],
+      "risk_level": "critical",
+      "requires_approval": true,
+      "dry_run_required": true,
+      "audit_required": true,
+      "recovery_note_required": true
+    }
+  ]
+}

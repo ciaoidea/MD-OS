@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "benchmark_case_id": "software_repair_api_key_boundary",
+  "domain": "software_repair",
+  "split": "development",
+  "title": "Learn payload completeness and alphabet constraints at an API-key boundary",
+  "issue": {
+    "goal": "Reject malformed API keys while preserving valid client and root keys.",
+    "defect_class": "missing_boundary_validation",
+    "acceptance_claims": [
+      "Malformed delimited inputs are rejected.",
+      "Valid API-key inputs and the privileged branch preserve their behavior.",
+      "The patch changes only the narrow source boundary."
+    ]
+  },
+  "repository": {
+    "kind": "controlled_fixture",
+    "fixture_path": "md-os/benchmarks/software_repair/fixtures/api_key_boundary",
+    "source_tree_sha256": "974797bc4e25ee42896deb47d081001f8cbb6ed113a614cd763cfb2fae215b3a",
+    "expected_base_commit": "a5e720cc0b17b7f8c1c6f66870b1bd895dfd3541"
+  },
+  "execution_policy": {
+    "isolation": "git_worktree_process",
+    "allowed_executables": [
+      "node"
+    ],
+    "network": "disabled_by_contract",
+    "third_party_repositories": "not_supported"
+  },
+  "reproduction": {
+    "command_id": "reproduce_api_key_boundary",
+    "argv": [
+      "node",
+      "checks/targeted.check.js"
+    ],
+    "cwd": "candidate",
+    "expected_before_exit_status": 1,
+    "expected_after_exit_status": 0
+  },
+  "targeted_tests": [
+    {
+      "command_id": "targeted_api_key_boundary_test",
+      "argv": [
+        "node",
+        "checks/targeted.check.js"
+      ],
+      "cwd": "candidate",
+      "expected_before_exit_status": 1,
+      "expected_after_exit_status": 0
+    }
+  ],
+  "regression_tests": [
+    {
+      "command_id": "regression_api_key_boundary_test",
+      "argv": [
+        "node",
+        "checks/regression.check.js"
+      ],
+      "cwd": "candidate",
+      "expected_before_exit_status": 0,
+      "expected_after_exit_status": 0
+    }
+  ],
+  "oracle_tests": [
+    {
+      "command_id": "independent_api_key_boundary_oracle",
+      "argv": [
+        "node",
+        "md-os/benchmarks/software_repair/oracles/api_key_boundary_oracle.js",
+        "{candidate_root}"
+      ],
+      "cwd": "workspace",
+      "expected_before_exit_status": 1,
+      "expected_after_exit_status": 0,
+      "independent": true
+    }
+  ],
+  "diff_policy": {
+    "allowed_paths": [
+      "src/**"
+    ],
+    "forbidden_paths": [
+      "checks/**"
+    ],
+    "max_files_changed": 1,
+    "max_diff_bytes": 4096,
+    "require_non_empty_diff": true
+  },
+  "resource_budget": {
+    "max_candidates": 5,
+    "command_timeout_ms": 5000
+  },
+  "ground_truth": {
+    "owner": "independent_benchmark_verifier",
+    "oracle_access": "verifier_only",
+    "candidate_disclosure": "public_development_case",
+    "specification_validity_checks": [
+      "The defect is reproduced by a failing test before patching.",
+      "An oracle outside the candidate worktree checks valid and invalid boundary cases.",
+      "Regression tests preserve valid and privileged behavior.",
+      "Diff policy prevents a candidate from changing visible tests."
+    ]
+  },
+  "learning_observation": {
+    "hypothesis_family": "delimited_boundary_validation_v1",
+    "split": "development",
+    "parameters": {
+      "delimiter": "|",
+      "prefix": "client"
+    },
+    "examples": [
+      {
+        "input": "client|delta",
+        "valid": true
+      },
+      {
+        "input": "client|",
+        "valid": false
+      },
+      {
+        "input": "client|bad.value",
+        "valid": false
+      }
+    ]
+  }
+}

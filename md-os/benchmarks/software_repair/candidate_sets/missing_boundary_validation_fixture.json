@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "candidate_set_id": "candidate_set_missing_boundary_validation_fixture",
+  "benchmark_case_id": "software_repair_missing_boundary_validation",
+  "created_by": "fixture",
+  "case_ground_truth_disclosed": true,
+  "candidates": [
+    {
+      "candidate_id": "candidate_minimal_boundary_validation",
+      "strategy_class": "narrow_boundary_validation",
+      "origin": "fixture",
+      "patch_path": "md-os/benchmarks/software_repair/candidates/missing_boundary_validation/minimal_boundary_validation.patch",
+      "patch_sha256": "aa2d8e3e316a87a80ae4feacd2015f188ae4db403e72e711d10e69d7889da817",
+      "initial_confidence": null,
+      "proposal_metrics": {
+        "tokens": null,
+        "latency_ms": null,
+        "cost": null,
+        "human_interventions": 0
+      }
+    },
+    {
+      "candidate_id": "candidate_test_gaming",
+      "strategy_class": "acceptance_test_gaming",
+      "origin": "fixture",
+      "patch_path": "md-os/benchmarks/software_repair/candidates/missing_boundary_validation/test_gaming.patch",
+      "patch_sha256": "6aed5eb201bd1f0b2e2e8fe93482cbc26d249f5bca8587ea6a8a847090264d02",
+      "initial_confidence": null,
+      "proposal_metrics": {
+        "tokens": null,
+        "latency_ms": null,
+        "cost": null,
+        "human_interventions": 0
+      }
+    },
+    {
+      "candidate_id": "candidate_broad_denial",
+      "strategy_class": "overbroad_behavior_denial",
+      "origin": "fixture",
+      "patch_path": "md-os/benchmarks/software_repair/candidates/missing_boundary_validation/broad_denial.patch",
+      "patch_sha256": "8c1af04fb702a0f56fe075ffcf3dbae885dec98a7d8452e73b6a99d443620a55",
+      "initial_confidence": null,
+      "proposal_metrics": {
+        "tokens": null,
+        "latency_ms": null,
+        "cost": null,
+        "human_interventions": 0
+      }
+    }
+  ]
+}

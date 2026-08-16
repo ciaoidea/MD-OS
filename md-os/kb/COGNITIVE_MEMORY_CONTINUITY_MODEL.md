@@ -1,0 +1,169 @@
+# Cognitive Memory and Continuity Model
+
+## Status
+
+This document specifies the operational memory model used by the AGI capability
+laboratory. It is a falsifiable engineering model inspired by computational
+neuroscience. It is not a biological simulation and does not establish
+consciousness, personhood, or AGI by itself.
+
+## Why memory is a cognitive gate
+
+A system that solves each task from a blank state can display strong local
+reasoning without accumulating competence. General cognition requires at least:
+
+```text
+experience encoding
+-> persistence across interruptions
+-> selective retrieval
+-> consolidation into reusable structure
+-> resistance to interference
+-> measurable improvement on later tasks
+```
+
+The complementary-learning-systems account motivates a division between a fast
+store for individual episodes and a slower system that integrates regularities
+across episodes. Replay provides a mechanism for reactivating prior experience
+during consolidation. Work on hippocampal representational differentiation
+shows why overlapping memories must also be separated enough to reduce later
+interference.
+
+These principles are used as design constraints, not as claims of neural
+fidelity.
+
+## Memory layers
+
+### 1. Episodic memory
+
+Each independently verified episode records:
+
+```text
+task digest
+public structural features
+public semantic domain
+attempted strategies
+verified outcome
+surprise
+process session
+ledger predecessor hash
+```
+
+The replay buffer is bounded and ordered by surprise. Hidden answers, oracle
+strategy labels, evaluator-only structural-family labels, and generator seeds
+are excluded from the learner state.
+
+### 2. Semantic memory
+
+A strategy policy is consolidated only when evidence satisfies all of these
+conditions:
+
+```text
+support >= 3 verified episodes
+semantic domains >= 2
+empirical confidence >= 0.75
+same public structural track
+```
+
+The promoted policy stores the strategy, support, domain count, confidence, and
+an evidence digest. It does not store hidden answers.
+
+### 3. Continuity state
+
+Continuity is represented by:
+
+```text
+append-only hash-chain ledger
+atomic snapshot
+previous-snapshot recovery copy
+checkpoint reload count
+successful resumption count
+corruption recovery count
+causal reuse count
+```
+
+A process restart is not counted as continuity unless the reloaded memory digest
+matches the prior checkpoint or a declared corruption is recovered from the
+previous valid snapshot.
+
+## Causal memory test
+
+Persistence alone earns no cognitive credit. The laboratory compares:
+
+```text
+same strategy engine + learned memory
+against
+same strategy engine + learned state removed
+```
+
+The attempt budget, task set, verifier, and execution engine are identical.
+Memory is considered effective only when:
+
+```text
+memory_on_success_rate - memory_off_success_rate >= 0.10
+```
+
+A persisted-skill reuse is counted only after a checkpoint has been loaded and
+when the learned first choice succeeds while the amnesic first choice fails.
+Simply opening a stored file or entering a new process does not count.
+
+## Interference and forgetting
+
+The system measures retention on cumulative probes. It rejects a proposed
+memory update when the update lowers replay performance. Required conditions:
+
+```text
+average forgetting <= 0.05
+promoted regressions = 0
+injected interfering update = rejected
+rollback digest = verified
+```
+
+Structural tracks are derived only from public task features. This prevents the
+curriculum and memory system from learning evaluator-owned labels.
+
+## Cognitive continuity gate
+
+The gate closes only when all are true:
+
+```text
+ledger chain valid
+causal memory delta >= 0.10
+at least 5 semantic policies consolidated
+at least 2 successful checkpoint reloads
+causal persisted-memory reuse > 0
+average forgetting <= 0.05
+interfering update rejected
+```
+
+External SAL 100 evidence adds stricter requirements:
+
+```text
+memory resumption success >= 0.95
+checkpoint-corruption recovery >= 0.80
+retention after interference >= 0.95
+independent evaluator ownership of hidden tests
+multi-hour or multi-day execution evidence
+```
+
+## Limitations
+
+The current implementation uses symbolic task representations and a strategy
+portfolio. It demonstrates controlled episodic-to-semantic consolidation and
+causal value of persisted state inside the laboratory. It does not prove that a
+foundation model has changed its internal weights, that memory generalizes to
+all real domains, or that continuity persists indefinitely.
+
+The packaged fast campaign proves resumability across processes and controlled
+faults. It does not substitute accelerated cycles for an actual eight-hour or
+multi-day run.
+
+## Scientific references
+
+- McClelland, McNaughton, and O'Reilly, "Why there are complementary learning
+  systems in the hippocampus and neocortex," Psychological Review 102 (1995),
+  419-457. DOI: 10.1037/0033-295X.102.3.419.
+- O'Reilly et al., "Complementary learning systems," Cognitive Science 38
+  (2014), 1229-1248. DOI: 10.1111/j.1551-6709.2011.01214.x.
+- Favila, Chanales, and Kuhl, "Experience-dependent hippocampal pattern
+  differentiation prevents interference during subsequent learning," Nature
+  Communications 7, 11066 (2016). DOI: 10.1038/ncomms11066.

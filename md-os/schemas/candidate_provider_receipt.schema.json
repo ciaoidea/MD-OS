@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/candidate_provider_receipt.schema.json",
+  "title": "MD-OS CandidateProvider Receipt",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "provider_run_id",
+    "provider_id",
+    "benchmark_case_id",
+    "configuration_id",
+    "started_at",
+    "completed_at",
+    "status",
+    "request_hash",
+    "result_hash",
+    "process",
+    "configuration_fidelity",
+    "strategy_diversity",
+    "empirical_eligibility",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "provider_run_id": {
+      "type": "string",
+      "pattern": "^provider_run_"
+    },
+    "provider_id": {
+      "type": "string",
+      "pattern": "^provider_"
+    },
+    "benchmark_case_id": {
+      "type": "string",
+      "pattern": "^software_repair_"
+    },
+    "configuration_id": {
+      "enum": [
+        "baseline_a_single_attempt",
+        "baseline_b_retrieval",
+        "mdos_learning_exploration",
+        "mdos_neuromorphic_skill",
+        "mdos_verified_runtime"
+      ]
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "request_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "result_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "process": {
+      "type": "object"
+    },
+    "configuration_fidelity": {
+      "type": "object"
+    },
+    "strategy_diversity": {
+      "type": "object"
+    },
+    "empirical_eligibility": {
+      "type": "object"
+    },
+    "artifacts": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_preflight_receipt.schema.json",
+  "title": "APFC open-world holdout preflight receipt",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "receipt_type", "evaluator_protocol_id", "task_id",
+    "baseline_all_fail_to_pass_failed", "gold_all_expected_passed",
+    "verified", "completed_at", "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "receipt_type": { "const": "apfc_open_world_holdout_preflight" },
+    "evaluator_protocol_id": { "const": "sealed_expected_test_groups_v4" },
+    "task_id": { "type": "string", "minLength": 1 },
+    "baseline_all_fail_to_pass_failed": { "type": "boolean" },
+    "gold_all_expected_passed": { "type": "boolean" },
+    "verified": { "type": "boolean" },
+    "completed_at": { "type": "string", "minLength": 1 },
+    "receipt_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

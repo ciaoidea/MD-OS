@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/hardware_snapshot.schema.json",
+  "title": "MD-OS Hardware Snapshot",
+  "type": "object",
+  "required": ["schema_version", "captured_at", "locality"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "captured_at": { "type": "string" },
+    "locality": { "type": "object" },
+    "devices": { "type": "array", "items": { "type": "object" } },
+    "capabilities": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": true
+}

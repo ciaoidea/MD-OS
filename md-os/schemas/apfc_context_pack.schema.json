@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_context_pack.schema.json",
+  "title": "MD-OS APFC Task Context Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "context_pack_id", "graph_id", "graph_content_hash",
+    "task_spec_id", "task_spec_hash", "status", "mandatory_node_ids",
+    "selected_node_ids", "nodes", "edges", "omissions", "selection_trace",
+    "source_hashes", "serialized_bytes", "findings"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "context_pack_id": { "type": "string", "pattern": "^apfc_ctx_[a-zA-Z0-9_-]+_[a-f0-9]{10}$" },
+    "graph_id": { "type": "string", "pattern": "^apfcg_[a-f0-9]{16}$" },
+    "graph_content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "task_spec_id": { "type": "string", "minLength": 1 },
+    "task_spec_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "mandatory_node_ids": { "type": "array", "items": { "type": "string" } },
+    "selected_node_ids": { "type": "array", "items": { "type": "string" } },
+    "nodes": { "type": "array", "items": { "type": "object" } },
+    "edges": { "type": "array", "items": { "type": "object" } },
+    "omissions": { "type": "array", "items": { "type": "object" } },
+    "selection_trace": { "type": "array", "items": { "type": "object" } },
+    "source_hashes": { "type": "array", "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" } },
+    "serialized_bytes": { "type": "integer", "minimum": 0 },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family_id", "start_type", "goal_type", "path_node_ids", "path_skill_ids", "path_types", "unique_shortest_path", "target_specific_skill_present"],
+      "properties": {
+        "family_id": { "type": "string", "minLength": 1 },
+        "start_type": { "type": "string", "minLength": 1 },
+        "goal_type": { "type": "string", "minLength": 1 },
+        "path_node_ids": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+        "path_skill_ids": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+        "path_types": { "type": "array", "minItems": 3, "items": { "type": "string" } },
+        "unique_shortest_path": { "const": true },
+        "target_specific_skill_present": { "const": false }
+      }
+    }
+  }
+}

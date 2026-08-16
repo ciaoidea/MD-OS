@@ -1,0 +1,378 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/benchmark_case.schema.json",
+  "title": "MD-OS Software Repair BenchmarkCase",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "benchmark_case_id",
+    "domain",
+    "split",
+    "title",
+    "issue",
+    "repository",
+    "execution_policy",
+    "reproduction",
+    "targeted_tests",
+    "regression_tests",
+    "oracle_tests",
+    "diff_policy",
+    "resource_budget",
+    "ground_truth"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "benchmark_case_id": {
+      "type": "string",
+      "pattern": "^software_repair_[a-z0-9_]+$"
+    },
+    "domain": {
+      "const": "software_repair"
+    },
+    "split": {
+      "enum": [
+        "development",
+        "validation",
+        "holdout"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "defect_class",
+        "acceptance_claims"
+      ],
+      "properties": {
+        "goal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "defect_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acceptance_claims": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "fixture_path",
+        "source_tree_sha256",
+        "expected_base_commit"
+      ],
+      "properties": {
+        "kind": {
+          "const": "controlled_fixture"
+        },
+        "fixture_path": {
+          "type": "string",
+          "pattern": "^md-os/benchmarks/software_repair/fixtures/"
+        },
+        "source_tree_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "expected_base_commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        }
+      }
+    },
+    "execution_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "isolation",
+        "allowed_executables",
+        "network",
+        "third_party_repositories"
+      ],
+      "properties": {
+        "isolation": {
+          "const": "git_worktree_process"
+        },
+        "allowed_executables": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "node"
+            ]
+          }
+        },
+        "network": {
+          "const": "disabled_by_contract"
+        },
+        "third_party_repositories": {
+          "const": "not_supported"
+        }
+      }
+    },
+    "reproduction": {
+      "$ref": "#/$defs/candidateCommand"
+    },
+    "targeted_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/candidateCommand"
+      }
+    },
+    "regression_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/candidateCommand"
+      }
+    },
+    "oracle_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/oracleCommand"
+      }
+    },
+    "diff_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_paths",
+        "forbidden_paths",
+        "max_files_changed",
+        "max_diff_bytes",
+        "require_non_empty_diff"
+      ],
+      "properties": {
+        "allowed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "max_files_changed": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_diff_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "require_non_empty_diff": {
+          "const": true
+        }
+      }
+    },
+    "resource_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_candidates",
+        "command_timeout_ms"
+      ],
+      "properties": {
+        "max_candidates": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "command_timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000
+        }
+      }
+    },
+    "ground_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "oracle_access",
+        "candidate_disclosure",
+        "specification_validity_checks"
+      ],
+      "properties": {
+        "owner": {
+          "const": "independent_benchmark_verifier"
+        },
+        "oracle_access": {
+          "const": "verifier_only"
+        },
+        "candidate_disclosure": {
+          "enum": [
+            "public_development_case",
+            "validation_case_withheld_from_learning",
+            "withheld_until_verification"
+          ]
+        },
+        "specification_validity_checks": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "learning_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_family",
+        "split",
+        "parameters",
+        "examples"
+      ],
+      "properties": {
+        "hypothesis_family": {
+          "const": "delimited_boundary_validation_v1"
+        },
+        "split": {
+          "const": "development"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delimiter",
+            "prefix"
+          ],
+          "properties": {
+            "delimiter": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4
+            },
+            "prefix": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "examples": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "input",
+              "valid"
+            ],
+            "properties": {
+              "input": {
+                "type": "string"
+              },
+              "valid": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "candidateCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "argv",
+        "cwd",
+        "expected_before_exit_status",
+        "expected_after_exit_status"
+      ],
+      "properties": {
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "argv": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "cwd": {
+          "const": "candidate"
+        },
+        "expected_before_exit_status": {
+          "type": "integer"
+        },
+        "expected_after_exit_status": {
+          "type": "integer"
+        }
+      }
+    },
+    "oracleCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "argv",
+        "cwd",
+        "expected_before_exit_status",
+        "expected_after_exit_status",
+        "independent"
+      ],
+      "properties": {
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "argv": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "cwd": {
+          "const": "workspace"
+        },
+        "expected_before_exit_status": {
+          "type": "integer"
+        },
+        "expected_after_exit_status": {
+          "type": "integer"
+        },
+        "independent": {
+          "const": true
+        }
+      }
+    }
+  }
+}

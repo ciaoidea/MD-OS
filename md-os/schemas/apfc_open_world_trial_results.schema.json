@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_trial_results.schema.json",
+  "title": "APFC open-world sealed trial result collection",
+  "type": "array",
+  "minItems": 360,
+  "maxItems": 360,
+  "items": { "$ref": "apfc_open_world_trial_receipt.schema.json" }
+}

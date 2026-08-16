@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/skill.schema.json",
+  "title": "MD-OS Verified Skill",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "skill_id",
+    "title",
+    "description",
+    "status",
+    "domain",
+    "inputs",
+    "tools",
+    "preconditions",
+    "procedure",
+    "success_criteria",
+    "failure_modes",
+    "rollback",
+    "evals",
+    "source_episodes"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "skill_id": { "type": "string", "pattern": "^skill_[a-z0-9_]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["candidate", "promotable", "promoted", "deprecated", "revoked"] },
+    "domain": { "type": "string", "minLength": 1 },
+    "inputs": { "type": "array", "items": { "type": "string" } },
+    "tools": { "type": "array", "items": { "type": "string" } },
+    "preconditions": { "type": "array", "items": { "type": "string" } },
+    "procedure": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "success_criteria": { "type": "array", "items": { "type": "string" } },
+    "failure_modes": { "type": "array", "items": { "type": "string" } },
+    "rollback": { "type": "string", "minLength": 1 },
+    "evals": { "type": "array", "items": { "type": "string" } },
+    "source_episodes": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_autonomous_campaign.schema.json",
+  "title": "MD-OS Persistent Autonomous Curriculum Campaign",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "campaign_id",
+    "created_at",
+    "updated_at",
+    "cycle",
+    "frontier_depth",
+    "difficulty_stats",
+    "skills",
+    "novelty_archive",
+    "human_interventions",
+    "session_count",
+    "session_ids",
+    "ledger_event_count",
+    "ledger_head"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "campaign_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$"
+    },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "cycle": { "type": "integer", "minimum": 0 },
+    "frontier_depth": { "type": "integer", "minimum": 1, "maximum": 4 },
+    "difficulty_stats": { "type": "object" },
+    "skills": { "type": "array" },
+    "novelty_archive": { "type": "array", "items": { "type": "string" } },
+    "human_interventions": { "const": 0 },
+    "session_count": { "type": "integer", "minimum": 0 },
+    "session_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "ledger_event_count": { "type": "integer", "minimum": 0 },
+    "ledger_head": { "type": "string", "minLength": 1 }
+  }
+}

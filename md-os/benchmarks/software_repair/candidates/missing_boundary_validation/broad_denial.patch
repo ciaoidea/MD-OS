@@ -1,0 +1,13 @@
+diff --git a/src/authenticate.js b/src/authenticate.js
+index 4e66854..ac63d60 100644
+--- a/src/authenticate.js
++++ b/src/authenticate.js
+@@ -8,7 +8,7 @@ function authenticate(token) {
+   if (!normalized) {
+     return { allowed: false, reason: 'missing_token' };
+   }
+-  return { allowed: true, user: normalized.split(':').at(-1) };
++  return { allowed: false, reason: 'invalid_token' };
+ }
+ 
+ module.exports = { authenticate };

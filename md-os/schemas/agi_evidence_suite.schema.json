@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_evidence_suite.schema.json",
+  "title": "MD-OS AGI Prerequisite Evidence Suite",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "created_at",
+    "completed_at",
+    "status",
+    "architecture",
+    "criteria",
+    "master_closure",
+    "contamination_audit",
+    "aggregate_measurements",
+    "claim_state",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "experiment_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$"
+    },
+    "created_at": { "type": "string" },
+    "completed_at": { "type": "string" },
+    "status": { "enum": ["ok", "critical"] },
+    "architecture": {
+      "type": "object",
+      "required": [
+        "name",
+        "fast_episodic_memory",
+        "slow_semantic_memory",
+        "novelty_signal",
+        "curriculum_signal",
+        "consolidation",
+        "metaplasticity",
+        "homeostasis"
+      ],
+      "properties": {
+        "name": { "const": "neuromorphic_open_ended_continual_learning_system_v3" }
+      }
+    },
+    "criteria": {
+      "type": "object",
+      "required": [
+        "cross_domain_transfer",
+        "open_ended_invention",
+        "persistent_autonomous_curriculum",
+        "continual_learning_without_regressions",
+        "long_horizon_autonomy"
+      ],
+      "properties": {
+        "cross_domain_transfer": { "$ref": "#/$defs/criterion" },
+        "open_ended_invention": { "$ref": "#/$defs/criterion" },
+        "persistent_autonomous_curriculum": { "$ref": "#/$defs/criterion" },
+        "continual_learning_without_regressions": { "$ref": "#/$defs/criterion" },
+        "long_horizon_autonomy": { "$ref": "#/$defs/criterion" }
+      }
+    },
+    "master_closure": {
+      "type": "object",
+      "required": ["status", "edges"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "edges": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["edge", "status"],
+            "properties": {
+              "edge": { "type": "string", "minLength": 1 },
+              "status": { "enum": ["ok", "critical"] }
+            }
+          }
+        }
+      }
+    },
+    "contamination_audit": {
+      "type": "object",
+      "required": [
+        "status",
+        "learner_process_permission_model_enforced",
+        "learner_filesystem_write_denied",
+        "target_programs_absent_from_requests",
+        "hidden_tests_absent_from_requests",
+        "oracle_runs_after_candidate_generation"
+      ],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "learner_process_permission_model_enforced": { "type": "boolean" },
+        "learner_filesystem_write_denied": { "type": "boolean" },
+        "target_programs_absent_from_requests": { "type": "boolean" },
+        "hidden_tests_absent_from_requests": { "type": "boolean" },
+        "oracle_runs_after_candidate_generation": { "type": "boolean" }
+      }
+    },
+    "aggregate_measurements": {
+      "type": "object",
+      "required": [
+        "cross_domain_holdout_success_before",
+        "cross_domain_holdout_success_after",
+        "invented_verified_programs",
+        "novel_structural_sketches",
+        "continual_final_average_accuracy",
+        "continual_average_forgetting",
+        "promoted_regressions",
+        "autonomous_cycles",
+        "clean_process_restarts",
+        "autonomous_retained_accuracy",
+        "human_interventions"
+      ],
+      "properties": {
+        "cross_domain_holdout_success_before": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cross_domain_holdout_success_after": { "type": "number", "minimum": 0, "maximum": 1 },
+        "invented_verified_programs": { "type": "integer", "minimum": 0 },
+        "novel_structural_sketches": { "type": "integer", "minimum": 0 },
+        "continual_final_average_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "continual_average_forgetting": { "type": "number", "minimum": 0 },
+        "promoted_regressions": { "type": "integer", "minimum": 0 },
+        "autonomous_cycles": { "type": "integer", "minimum": 1 },
+        "clean_process_restarts": { "type": "integer", "minimum": 1 },
+        "autonomous_retained_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "human_interventions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "claim_state": {
+      "type": "object",
+      "required": [
+        "operational_agi_prerequisites_supported",
+        "agi_achieved",
+        "agi_claim_supported",
+        "reason",
+        "externally_replicated",
+        "open_world_validation",
+        "indefinite_operation_proven"
+      ],
+      "properties": {
+        "operational_agi_prerequisites_supported": { "type": "boolean" },
+        "agi_achieved": { "const": false },
+        "agi_claim_supported": { "const": false },
+        "reason": { "type": "string", "minLength": 1 },
+        "externally_replicated": { "const": false },
+        "open_world_validation": { "const": false },
+        "indefinite_operation_proven": { "const": false }
+      }
+    },
+    "evidence": { "type": "object" }
+  },
+  "$defs": {
+    "criterion": {
+      "type": "object",
+      "required": ["status", "evidence_file", "primary_metric"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "evidence_file": { "type": "string", "minLength": 1 },
+        "primary_metric": { "type": "number" }
+      }
+    }
+  }
+}

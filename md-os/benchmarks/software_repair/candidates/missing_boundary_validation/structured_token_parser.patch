@@ -1,0 +1,19 @@
+diff --git a/src/authenticate.js b/src/authenticate.js
+index 4e66854..7d5084b 100644
+--- a/src/authenticate.js
++++ b/src/authenticate.js
+@@ -8,7 +8,13 @@ function authenticate(token) {
+   if (!normalized) {
+     return { allowed: false, reason: 'missing_token' };
+   }
+-  return { allowed: true, user: normalized.split(':').at(-1) };
++  const parts = normalized.split(':');
++  const role = String(parts[0] || '').toLowerCase();
++  const user = String(parts[1] || '');
++  if (parts.length !== 2 || role !== 'user' || !/^[a-z0-9_-]+$/i.test(user)) {
++    return { allowed: false, reason: 'invalid_token' };
++  }
++  return { allowed: true, user: user.toLowerCase() };
+ }
+ 
+ module.exports = { authenticate };

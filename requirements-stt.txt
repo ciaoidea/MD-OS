@@ -1,0 +1,4 @@
+# Optional local speech-to-text stack.
+# PyAudio may require PortAudio development packages on Linux.
+faster-whisper
+PyAudio

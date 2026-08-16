@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/action_receipt.schema.json",
+  "title": "MD-OS Cognitive ActionReceipt",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "action_receipt_id",
+    "episode_id",
+    "action_id",
+    "tool",
+    "input_hash",
+    "started_at",
+    "completed_at",
+    "status",
+    "exit_status",
+    "artifacts",
+    "state_before",
+    "state_after",
+    "observed_delta",
+    "rollback",
+    "readback"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "action_receipt_id": { "type": "string", "pattern": "^receipt_[a-zA-Z0-9_]+$" },
+    "episode_id": { "type": "string", "pattern": "^ep_[a-zA-Z0-9_]+$" },
+    "action_id": { "type": "string", "minLength": 1 },
+    "tool": { "type": "string", "minLength": 1 },
+    "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "started_at": { "type": "string" },
+    "completed_at": { "type": "string" },
+    "status": { "enum": ["completed", "failed", "blocked"] },
+    "exit_status": { "type": ["integer", "null"] },
+    "expected_exit_status": { "type": "integer" },
+    "artifacts": { "type": "array", "items": { "type": "string" } },
+    "state_before": { "$ref": "#/$defs/stateSnapshot" },
+    "state_after": { "$ref": "#/$defs/stateSnapshot" },
+    "observed_delta": {
+      "type": "object",
+      "required": ["changed", "targets"],
+      "properties": {
+        "changed": { "type": "boolean" },
+        "targets": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "rollback": { "type": "object" },
+    "readback": { "type": "object" }
+  },
+  "$defs": {
+    "stateSnapshot": {
+      "type": "object",
+      "required": ["hash", "targets"],
+      "properties": {
+        "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "targets": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}

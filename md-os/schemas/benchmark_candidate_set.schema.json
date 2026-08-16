@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/benchmark_candidate_set.schema.json",
+  "title": "MD-OS Software Repair Benchmark CandidateSet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_set_id",
+    "benchmark_case_id",
+    "created_by",
+    "case_ground_truth_disclosed",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "candidate_set_id": {
+      "type": "string",
+      "pattern": "^candidate_set_[a-z0-9_]+$"
+    },
+    "benchmark_case_id": {
+      "type": "string",
+      "pattern": "^software_repair_[a-z0-9_]+$"
+    },
+    "created_by": {
+      "enum": [
+        "fixture",
+        "model",
+        "planner",
+        "skill",
+        "human"
+      ]
+    },
+    "case_ground_truth_disclosed": {
+      "type": "boolean"
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id",
+        "provider_run_id",
+        "provider_receipt_file",
+        "provider_receipt_sha256",
+        "configuration_id",
+        "configuration_fidelity_passed",
+        "strategy_diversity_passed",
+        "empirical_eligibility"
+      ],
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "pattern": "^provider_"
+        },
+        "provider_run_id": {
+          "type": "string",
+          "pattern": "^provider_run_"
+        },
+        "provider_receipt_file": {
+          "type": "string",
+          "pattern": "^md-os/ops/benchmarks/software_repair/candidate_sets/"
+        },
+        "provider_receipt_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "configuration_id": {
+          "enum": [
+            "baseline_a_single_attempt",
+            "baseline_b_retrieval",
+            "mdos_learning_exploration",
+            "mdos_neuromorphic_skill",
+            "mdos_verified_runtime"
+          ]
+        },
+        "configuration_fidelity_passed": {
+          "const": true
+        },
+        "strategy_diversity_passed": {
+          "const": true
+        },
+        "empirical_eligibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "eligible",
+            "reason_codes"
+          ],
+          "properties": {
+            "eligible": {
+              "type": "boolean"
+            },
+            "reason_codes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_id",
+          "strategy_class",
+          "origin",
+          "patch_path",
+          "patch_sha256",
+          "proposal_metrics"
+        ],
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^candidate_[a-z0-9_]+$"
+          },
+          "strategy_class": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "enum": [
+              "fixture",
+              "model",
+              "planner",
+              "skill",
+              "human"
+            ]
+          },
+          "plan_graph_id": {
+            "type": "string",
+            "pattern": "^plan_"
+          },
+          "plan_graph_path": {
+            "type": "string",
+            "pattern": "^md-os/ops/benchmarks/software_repair/candidate_sets/"
+          },
+          "plan_graph_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "patch_path": {
+            "type": "string",
+            "pattern": "^md-os/(?:benchmarks/software_repair/candidates|ops/benchmarks/software_repair/candidate_sets)/"
+          },
+          "patch_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "initial_confidence": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "proposal_metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tokens",
+              "latency_ms",
+              "cost",
+              "human_interventions"
+            ],
+            "properties": {
+              "tokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "latency_ms": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "cost": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "human_interventions": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "provider"
+        ],
+        "properties": {
+          "candidates": {
+            "items": {
+              "required": [
+                "plan_graph_id",
+                "plan_graph_path",
+                "plan_graph_sha256"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

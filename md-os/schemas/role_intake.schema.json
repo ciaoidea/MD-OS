@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/role_intake.schema.json",
+  "title": "MD-OS Role Chaos Intake",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "updated_at",
+    "role_id",
+    "raw_dir",
+    "file_count",
+    "files",
+    "format_summary",
+    "entities",
+    "candidate_operations",
+    "open_questions"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "role_id": { "type": "string" },
+    "raw_dir": { "type": "string" },
+    "file_count": { "type": "integer", "minimum": 0 },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "basename", "extension", "size_bytes", "sha256", "read_mode"],
+        "properties": {
+          "path": { "type": "string" },
+          "basename": { "type": "string" },
+          "extension": { "type": "string" },
+          "size_bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string" },
+          "read_mode": {
+            "type": "string",
+            "enum": ["text_sampled", "extractor_required", "empty"]
+          },
+          "signals": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "format_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["extension", "count", "size_bytes"],
+        "properties": {
+          "extension": { "type": "string" },
+          "count": { "type": "integer", "minimum": 0 },
+          "size_bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "entities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "candidate_operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operation_id", "label", "evidence_count", "evidence"],
+        "properties": {
+          "operation_id": { "type": "string" },
+          "label": { "type": "string" },
+          "evidence_count": { "type": "integer", "minimum": 0 },
+          "evidence": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

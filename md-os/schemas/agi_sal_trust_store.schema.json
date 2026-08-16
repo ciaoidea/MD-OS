@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_sal_trust_store.schema.json",
+  "title": "MD-OS SAL AGI external evaluator trust store",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "trust_store_id", "evaluators"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "trust_store_id": { "type": "string", "minLength": 1 },
+    "evaluators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evaluator_id", "organization", "key_id", "public_key_pem", "active"],
+        "properties": {
+          "evaluator_id": { "type": "string", "minLength": 1 },
+          "organization": { "type": "string", "minLength": 1 },
+          "key_id": { "type": "string", "minLength": 1 },
+          "public_key_pem": { "type": "string", "minLength": 1 },
+          "active": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

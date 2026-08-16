@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "provider_id": "provider_missing_boundary_validation_controlled",
+  "kind": "controlled_fixture",
+  "implementation": {
+    "executable": "node",
+    "script_path": "md-os/benchmarks/software_repair/providers/controlled_fixture_provider.js",
+    "timeout_ms": 5000
+  },
+  "supported_cases": [
+    "software_repair_missing_boundary_validation"
+  ],
+  "case_ground_truth_disclosed": true,
+  "strategy_catalog": [
+    {
+      "candidate_id": "candidate_provider_minimal_boundary_validation",
+      "strategy_class": "narrow_boundary_validation",
+      "mechanism": "anchored_regular_expression_guard",
+      "hypothesis": "The defect is caused by accepting every non-empty token after the privileged special case; an anchored boundary grammar should reject malformed values while preserving valid user tokens.",
+      "patch_path": "md-os/benchmarks/software_repair/candidates/missing_boundary_validation/minimal_boundary_validation.patch",
+      "patch_sha256": "aa2d8e3e316a87a80ae4feacd2015f188ae4db403e72e711d10e69d7889da817",
+      "priority": 1,
+      "risk_level": "low",
+      "preconditions": [
+        {
+          "precondition_id": "precondition_nonempty_fallback_accepts_input",
+          "statement": "The final authentication branch accepts arbitrary non-empty normalized input.",
+          "evidence_refs": ["repository:src/authenticate.js", "visible_test:reproduce_malformed_token_acceptance"]
+        }
+      ],
+      "nodes": [
+        {
+          "node_id": "inspect_boundary_fallback",
+          "kind": "inspect",
+          "operation": "Locate the broad non-empty-token acceptance branch after explicit administrator and missing-token handling.",
+          "target_paths": ["src/authenticate.js"],
+          "depends_on": [],
+          "expected_effects": ["Identify the narrowest boundary at which malformed tokens become accepted."],
+          "reversible": true
+        },
+        {
+          "node_id": "edit_anchored_user_grammar",
+          "kind": "edit",
+          "operation": "Replace broad fallback acceptance with an anchored user-token grammar and extract the validated user component.",
+          "target_paths": ["src/authenticate.js"],
+          "depends_on": ["inspect_boundary_fallback"],
+          "expected_effects": ["Malformed tokens are rejected without changing the privileged administrator branch."],
+          "reversible": true
+        },
+        {
+          "node_id": "verify_boundary_and_regression",
+          "kind": "verify",
+          "operation": "Execute visible targeted and regression procedures; leave final certification to the independent oracle.",
+          "target_paths": ["checks/targeted.check.js", "checks/regression.check.js"],
+          "depends_on": ["edit_anchored_user_grammar"],
+          "expected_effects": ["Visible defect reproduction is corrected and known-valid access remains unchanged."],
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "state_delta": ["src/authenticate.js rejects inputs outside the declared user-token grammar."],
+        "success_probability": null,
+        "information_gain": 0.2,
+        "risk": 0.2,
+        "uncertainty": 1,
+        "cost_units": 1,
+        "latency_ms": null
+      },
+      "postconditions": [
+        "Malformed tokens are rejected.",
+        "Valid user and administrator tokens retain their behavior.",
+        "Only the authentication source boundary is modified."
+      ]
+    },
+    {
+      "candidate_id": "candidate_provider_structured_token_parser",
+      "strategy_class": "structured_token_parsing",
+      "mechanism": "delimiter_arity_and_component_validation",
+      "hypothesis": "The defect is caused by extracting the last colon-delimited component without validating token structure; parsing role, arity, and user characters explicitly should preserve valid cases and reject malformed structures.",
+      "patch_path": "md-os/benchmarks/software_repair/candidates/missing_boundary_validation/structured_token_parser.patch",
+      "patch_sha256": "09932cf21f959a75bdf50d5b44b7da29da0cc081f76aa99e2509e19966bb6b7c",
+      "priority": 2,
+      "risk_level": "low",
+      "preconditions": [
+        {
+          "precondition_id": "precondition_delimiter_structure_unchecked",
+          "statement": "The fallback extracts a user with split(':').at(-1) but does not validate role, component count, or user characters.",
+          "evidence_refs": ["repository:src/authenticate.js", "visible_test:reproduce_malformed_token_acceptance"]
+        }
+      ],
+      "nodes": [
+        {
+          "node_id": "inspect_token_components",
+          "kind": "inspect",
+          "operation": "Trace how the normalized token is split and which structural assumptions are unchecked.",
+          "target_paths": ["src/authenticate.js"],
+          "depends_on": [],
+          "expected_effects": ["Expose unchecked role, arity, and user-component assumptions."],
+          "reversible": true
+        },
+        {
+          "node_id": "edit_structured_token_parser",
+          "kind": "edit",
+          "operation": "Parse exactly two components, validate the user role and component grammar, then return only the validated user.",
+          "target_paths": ["src/authenticate.js"],
+          "depends_on": ["inspect_token_components"],
+          "expected_effects": ["Tokens with missing or extra components are rejected before authentication succeeds."],
+          "reversible": true
+        },
+        {
+          "node_id": "verify_parser_boundaries",
+          "kind": "verify",
+          "operation": "Run visible boundary and valid-access checks, with independent postcondition verification still required.",
+          "target_paths": ["checks/targeted.check.js", "checks/regression.check.js"],
+          "depends_on": ["edit_structured_token_parser"],
+          "expected_effects": ["Malformed structural variants fail and valid tokens keep their expected result."],
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "state_delta": ["src/authenticate.js validates delimiter arity, role, and user characters."],
+        "success_probability": null,
+        "information_gain": 0.3,
+        "risk": 0.25,
+        "uncertainty": 1,
+        "cost_units": 1.5,
+        "latency_ms": null
+      },
+      "postconditions": [
+        "Malformed or structurally ambiguous tokens are rejected.",
+        "Valid user and administrator tokens retain their behavior.",
+        "Only the authentication source boundary is modified."
+      ]
+    },
+    {
+      "candidate_id": "candidate_provider_strict_default_denial",
+      "strategy_class": "strict_default_denial",
+      "mechanism": "replace_fallback_accept_with_deny",
+      "hypothesis": "The broad fallback is unsafe; replacing it with default denial will stop malformed-token acceptance, although it may also reject legitimate non-administrator tokens.",
+      "patch_path": "md-os/benchmarks/software_repair/candidates/missing_boundary_validation/broad_denial.patch",
+      "patch_sha256": "8c1af04fb702a0f56fe075ffcf3dbae885dec98a7d8452e73b6a99d443620a55",
+      "priority": 3,
+      "risk_level": "medium",
+      "preconditions": [
+        {
+          "precondition_id": "precondition_default_allow_is_root_cause",
+          "statement": "The final branch defaults to successful authentication for every remaining input.",
+          "evidence_refs": ["repository:src/authenticate.js", "visible_test:reproduce_malformed_token_acceptance"]
+        }
+      ],
+      "nodes": [
+        {
+          "node_id": "inspect_default_allow",
+          "kind": "inspect",
+          "operation": "Confirm that the final branch is a default-allow path.",
+          "target_paths": ["src/authenticate.js"],
+          "depends_on": [],
+          "expected_effects": ["Identify the fallback branch responsible for malformed-token acceptance."],
+          "reversible": true
+        },
+        {
+          "node_id": "edit_default_deny",
+          "kind": "edit",
+          "operation": "Replace final fallback acceptance with an invalid-token denial.",
+          "target_paths": ["src/authenticate.js"],
+          "depends_on": ["inspect_default_allow"],
+          "expected_effects": ["All non-special-case tokens are rejected."],
+          "reversible": true
+        },
+        {
+          "node_id": "verify_default_deny_regression",
+          "kind": "verify",
+          "operation": "Run the visible defect and regression procedures to test whether default denial is too broad.",
+          "target_paths": ["checks/targeted.check.js", "checks/regression.check.js"],
+          "depends_on": ["edit_default_deny"],
+          "expected_effects": ["The defect check passes; regression evidence determines whether valid user access was lost."],
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "state_delta": ["src/authenticate.js denies every token not handled by earlier branches."],
+        "success_probability": null,
+        "information_gain": 0.5,
+        "risk": 0.8,
+        "uncertainty": 1,
+        "cost_units": 0.5,
+        "latency_ms": null
+      },
+      "postconditions": [
+        "Malformed tokens are rejected.",
+        "Valid user access must remain unchanged despite default denial.",
+        "Independent verification determines whether the strategy is overbroad."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_public_corpus.schema.json",
+  "title": "APFC open-world learner-visible corpus",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "manifest_type", "experiment_id", "dataset", "selection_policy", "development_tasks", "holdout_tasks"],
+  "$defs": {
+    "public_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "source_split", "instance_id", "repository", "base_commit", "created_at", "problem_statement", "image_name", "public_task_hash"],
+      "properties": {
+        "task_id": { "type": "string", "minLength": 1 },
+        "source_split": { "type": "string", "minLength": 1 },
+        "instance_id": { "type": "string", "minLength": 1 },
+        "repository": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+        "base_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "created_at": { "type": "string", "minLength": 1 },
+        "problem_statement": { "type": "string", "minLength": 1 },
+        "image_name": { "type": "string", "minLength": 1 },
+        "public_task_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": { "const": 1 },
+    "manifest_type": { "const": "apfc_open_world_public_corpus" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "dataset": { "type": "object" },
+    "selection_policy": { "type": "object" },
+    "development_tasks": { "type": "array", "minItems": 12, "items": { "$ref": "#/$defs/public_task" } },
+    "holdout_tasks": { "type": "array", "minItems": 30, "items": { "$ref": "#/$defs/public_task" } }
+  }
+}

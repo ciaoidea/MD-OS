@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "connector_name": "generic_multi_surface_connector",
+  "connector_kind": "hybrid",
+  "project_id": "demo_document_approval_flow",
+  "captured_at": "2026-04-24T18:15:00Z",
+  "signals": [
+    {
+      "source_id": "doc_flow_pending_legal_review",
+      "captured_at": "2026-04-24T18:15:00Z",
+      "summary": "Draft policy package is ready but still waiting for legal review before publication.",
+      "status_hint": "waiting_external",
+      "priority": "high",
+      "owner_hint": "Knowledge Operations",
+      "entities": [
+        "policy_package_q2",
+        "legal_review"
+      ],
+      "tags": [
+        "documents",
+        "approval",
+        "review"
+      ],
+      "suspected_causes": [
+        "missing_reviewer_feedback"
+      ],
+      "depends_on": [],
+      "next_step": "Collect legal review feedback and register the decision in canonical state.",
+      "due_at": "2026-04-28T09:00:00Z",
+      "external_parties": [
+        "legal_team"
+      ]
+    },
+    {
+      "source_id": "doc_flow_stakeholder_alignment",
+      "captured_at": "2026-04-24T18:18:00Z",
+      "summary": "Stakeholder requested a concise change log before signing off the final package.",
+      "status_hint": "open",
+      "priority": "medium",
+      "owner_hint": "Knowledge Operations",
+      "entities": [
+        "policy_package_q2",
+        "change_log"
+      ],
+      "tags": [
+        "documents",
+        "stakeholder_alignment"
+      ],
+      "suspected_causes": [
+        "missing_executive_summary"
+      ],
+      "depends_on": [
+        "doc_flow_pending_legal_review"
+      ],
+      "next_step": "Prepare a one-page change log aligned with the latest reviewed draft.",
+      "due_at": "2026-04-29T10:00:00Z",
+      "external_parties": [
+        "business_stakeholder"
+      ]
+    }
+  ]
+}

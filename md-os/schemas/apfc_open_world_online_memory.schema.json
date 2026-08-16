@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_online_memory.schema.json",
+  "title": "APFC open-world append-only online memory state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "memory_type", "protocol_id", "base_candidate_skill_id",
+    "base_candidate_skill_hash", "episode_ids", "positive_episode_ids",
+    "negative_episode_ids", "graph", "negative_evidence", "promotion_policy",
+    "memory_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "memory_type": { "const": "apfc_open_world_online_memory" },
+    "protocol_id": { "const": "apfc_open_world_verified_online_learning_v1" },
+    "base_candidate_skill_id": { "type": "string", "minLength": 1 },
+    "base_candidate_skill_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "episode_ids": { "type": "array", "maxItems": 30, "items": { "type": "string" } },
+    "positive_episode_ids": { "type": "array", "maxItems": 30, "items": { "type": "string" } },
+    "negative_episode_ids": { "type": "array", "maxItems": 30, "items": { "type": "string" } },
+    "graph": { "type": "object" },
+    "negative_evidence": { "type": "array", "maxItems": 30, "items": { "type": "object" } },
+    "promotion_policy": { "type": "string", "minLength": 1 },
+    "memory_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

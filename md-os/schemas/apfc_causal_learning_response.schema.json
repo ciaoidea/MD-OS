@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_causal_learning_response.schema.json",
+  "title": "MD-OS APFC Causal Learning Trial Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "route",
+    "normalized_payload"
+  ],
+  "properties": {
+    "route": {
+      "enum": ["amber", "cobalt", "ivory", "vault"]
+    },
+    "normalized_payload": {
+      "type": ["string", "null"]
+    }
+  }
+}

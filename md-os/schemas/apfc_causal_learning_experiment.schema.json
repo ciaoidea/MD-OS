@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_causal_learning_experiment.schema.json",
+  "title": "MD-OS APFC Causal External-Memory Learning Experiment",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "experiment_type",
+    "created_at",
+    "completed_at",
+    "status",
+    "objective",
+    "model",
+    "design",
+    "source_manifest",
+    "induction",
+    "learning_measurement",
+    "cold_start",
+    "ablation",
+    "contamination_audit",
+    "safety",
+    "evidence",
+    "claim_state",
+    "master_closure"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "experiment_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,100}$"
+    },
+    "experiment_type": { "const": "apfc_causal_external_memory_learning_v1" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "completed_at": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "attention", "critical"] },
+    "objective": { "type": "string", "minLength": 1 },
+    "model": {
+      "type": "object",
+      "required": ["provider", "model_id", "runner", "runner_version", "ephemeral_sessions"],
+      "properties": {
+        "provider": { "const": "openai_codex_cli" },
+        "model_id": { "type": "string", "minLength": 1 },
+        "runner": { "const": "codex exec" },
+        "runner_version": { "type": "string", "minLength": 1 },
+        "ephemeral_sessions": { "const": true }
+      }
+    },
+    "design": {
+      "type": "object",
+      "required": [
+        "holdout_case_count",
+        "trial_count",
+        "paired_observation_count",
+        "conditions",
+        "attempts_per_observation",
+        "tool_use_allowed"
+      ],
+      "properties": {
+        "holdout_case_count": { "type": "integer", "minimum": 30 },
+        "trial_count": { "type": "integer", "minimum": 3 },
+        "paired_observation_count": { "type": "integer", "minimum": 90 },
+        "conditions": {
+          "type": "array",
+          "const": ["memory_disabled", "memory_enabled"]
+        },
+        "attempts_per_observation": { "const": 1 },
+        "tool_use_allowed": { "const": false }
+      }
+    },
+    "source_manifest": {
+      "type": "object",
+      "required": ["development_hash", "holdout_manifest_hash", "skill_hash", "response_schema_hash"],
+      "properties": {
+        "development_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "holdout_manifest_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "skill_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "response_schema_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "induction": {
+      "type": "object",
+      "required": [
+        "hypothesis_family",
+        "initial_hypothesis_count",
+        "final_hypothesis_count",
+        "uniquely_identified",
+        "verified_development_example_count",
+        "skill_id"
+      ],
+      "properties": {
+        "initial_hypothesis_count": { "type": "integer", "minimum": 2 },
+        "final_hypothesis_count": { "const": 1 },
+        "uniquely_identified": { "const": true },
+        "verified_development_example_count": { "type": "integer", "minimum": 2 },
+        "skill_id": { "type": "string", "pattern": "^skill_[a-z0-9_]+$" }
+      }
+    },
+    "learning_measurement": {
+      "type": "object",
+      "required": [
+        "metric",
+        "memory_disabled_success_rate",
+        "memory_enabled_success_rate",
+        "absolute_delta",
+        "mcnemar_exact_two_sided_p",
+        "discordant_disabled_only",
+        "discordant_enabled_only"
+      ],
+      "properties": {
+        "metric": { "const": "independently_verified_sealed_holdout_success_rate" },
+        "memory_disabled_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "memory_enabled_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "absolute_delta": { "type": "number", "minimum": -1, "maximum": 1 },
+        "mcnemar_exact_two_sided_p": { "type": "number", "minimum": 0, "maximum": 1 },
+        "discordant_disabled_only": { "type": "integer", "minimum": 0 },
+        "discordant_enabled_only": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cold_start": {
+      "type": "object",
+      "required": ["status", "trial_results", "matching_skill_hashes"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "trial_results": { "type": "array", "minItems": 3 },
+        "matching_skill_hashes": { "const": true }
+      }
+    },
+    "ablation": {
+      "type": "object",
+      "required": ["status", "absolute_delta", "mcnemar_exact_two_sided_p"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "absolute_delta": { "type": "number" },
+        "mcnemar_exact_two_sided_p": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "contamination_audit": {
+      "type": "object",
+      "required": ["status", "contaminated", "findings", "checks"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "contaminated": { "type": "boolean" },
+        "findings": { "type": "array" },
+        "checks": { "type": "object" }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": ["status", "tool_use_violation_count", "critical_violation_count"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "tool_use_violation_count": { "type": "integer", "minimum": 0 },
+        "critical_violation_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "claim_state": {
+      "type": "object",
+      "required": [
+        "bounded_causal_external_memory_learning_supported",
+        "apfcg_causality_supported",
+        "general_learning_supported",
+        "agi_claim_supported",
+        "claim_boundary"
+      ],
+      "properties": {
+        "bounded_causal_external_memory_learning_supported": { "type": "boolean" },
+        "apfcg_causality_supported": { "const": false },
+        "general_learning_supported": { "const": false },
+        "agi_claim_supported": { "const": false },
+        "claim_boundary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence": { "type": "object" },
+    "master_closure": {
+      "type": "object",
+      "required": ["status", "edges"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["edge", "status", "verifier"],
+            "properties": {
+              "edge": { "type": "string", "minLength": 1 },
+              "status": { "enum": ["ok", "critical"] },
+              "verifier": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

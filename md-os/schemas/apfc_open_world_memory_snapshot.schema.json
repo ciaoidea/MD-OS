@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_memory_snapshot.schema.json",
+  "title": "APFC open-world frozen pre-task memory snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "snapshot_type", "protocol_id", "experiment_id",
+    "task_id", "task_sequence", "created_at", "frozen_before_all_task_conditions",
+    "base_candidate_skill_hash", "prior_memory_hash", "prior_episode_count",
+    "prior_episode_ids", "current_task_inferred_mechanisms", "retrieved_episode_ids",
+    "raw_episode_summaries", "flat_procedure_cards", "apfc_graph",
+    "fairness_policy", "memory_disabled_receives_content",
+    "hidden_oracle_content_present", "snapshot_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "snapshot_type": { "const": "apfc_open_world_pre_task_memory" },
+    "protocol_id": { "const": "apfc_open_world_verified_online_learning_v1" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "task_sequence": { "type": "integer", "minimum": 1, "maximum": 30 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "frozen_before_all_task_conditions": { "const": true },
+    "base_candidate_skill_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prior_memory_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prior_episode_count": { "type": "integer", "minimum": 0, "maximum": 30 },
+    "prior_episode_ids": { "type": "array", "maxItems": 30, "items": { "type": "string" } },
+    "current_task_inferred_mechanisms": { "type": "array", "items": { "type": "string" } },
+    "retrieved_episode_ids": { "type": "array", "maxItems": 8, "items": { "type": "string" } },
+    "raw_episode_summaries": { "type": "array", "maxItems": 8, "items": { "type": "object" } },
+    "flat_procedure_cards": { "type": "array", "minItems": 9, "items": { "type": "object" } },
+    "apfc_graph": { "type": "object" },
+    "fairness_policy": { "type": "string", "minLength": 1 },
+    "memory_disabled_receives_content": { "const": false },
+    "hidden_oracle_content_present": { "const": false },
+    "snapshot_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

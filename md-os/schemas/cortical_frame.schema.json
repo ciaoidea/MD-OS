@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/cortical_frame.schema.json",
+  "title": "MD-OS Cortical Frame",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "frame_id",
+    "created_at",
+    "sources",
+    "experience_tokens",
+    "binding_graph",
+    "workspace",
+    "salience",
+    "predictions",
+    "action_candidates",
+    "memory_candidates",
+    "verbalization_candidates"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "frame_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "modality",
+          "trust"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "modality": {
+            "type": "string"
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trust": {
+            "type": "string"
+          },
+          "observed_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "experience_tokens": {
+      "type": "array",
+      "items": {
+        "$ref": "experience_token.schema.json"
+      }
+    },
+    "binding_graph": {
+      "$ref": "binding_graph.schema.json"
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "active_tokens",
+        "attention_budget"
+      ],
+      "properties": {
+        "active_tokens": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "active_concepts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attention_budget": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "selection_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "salience": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "novelty",
+        "urgency",
+        "risk",
+        "user_relevance",
+        "operational_value",
+        "uncertainty"
+      ],
+      "properties": {
+        "novelty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "urgency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "user_relevance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "operational_value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "uncertainty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "predictions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "concept_dynamics": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "action_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "selected_action": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "memory_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "verbalization_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

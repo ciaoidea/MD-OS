@@ -1,0 +1,394 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/experience_token.schema.json",
+  "title": "MD-OS Experience Token",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "token_id",
+    "token_type",
+    "label",
+    "modalities",
+    "source_refs",
+    "salience",
+    "confidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "token_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "token_type": {
+      "type": "string",
+      "enum": [
+        "entity",
+        "event",
+        "relation",
+        "intent",
+        "state",
+        "affordance",
+        "risk",
+        "memory",
+        "action_candidate",
+        "prediction",
+        "error_signal"
+      ]
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_id": {
+      "type": "string"
+    },
+    "modalities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "text",
+          "vision",
+          "audio",
+          "video",
+          "document",
+          "tool",
+          "memory",
+          "filesystem",
+          "sensor"
+        ]
+      }
+    },
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "observed_at": {
+          "type": "string"
+        },
+        "sequence_index": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "concept_embedding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "embedding_id",
+        "encoder",
+        "encoder_version",
+        "requested_backend",
+        "backend_id",
+        "backend_type",
+        "backend_status",
+        "vector_space",
+        "dimensions",
+        "values",
+        "learned",
+        "fallback_used"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "embedding_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "encoder": {
+          "type": "string",
+          "minLength": 1
+        },
+        "encoder_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requested_backend": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vector_space": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dimensions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "norm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "source_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "learned": {
+          "type": "boolean"
+        },
+        "multimodal_ready": {
+          "type": "boolean"
+        },
+        "fallback_used": {
+          "type": "boolean"
+        },
+        "fallback_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "temporal_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "sequence_index",
+        "normalized_position",
+        "phase"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "observed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sequence_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "normalized_position": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "recency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "observed",
+            "predicted",
+            "consolidated"
+          ]
+        }
+      }
+    },
+    "prediction_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "target_type",
+        "horizon",
+        "loss"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "target_type": {
+          "type": "string",
+          "enum": [
+            "next_concept_embedding",
+            "terminal_sequence"
+          ]
+        },
+        "horizon": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "target_token_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_canonical_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_embedding": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          }
+        },
+        "loss": {
+          "type": "string",
+          "enum": [
+            "cosine_distance",
+            "none"
+          ]
+        }
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "target"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "affordances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "risk": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "requires": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "salience": {
+      "$ref": "#/$defs/salience"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "$defs": {
+    "salience": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score",
+        "novelty",
+        "urgency",
+        "risk",
+        "user_relevance",
+        "operational_value",
+        "uncertainty"
+      ],
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "novelty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "urgency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "user_relevance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "operational_value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "uncertainty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

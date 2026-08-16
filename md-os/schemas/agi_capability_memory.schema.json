@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/agi_capability_memory.schema.json",
+  "title": "MD-OS AGI capability persistent memory snapshot",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "memory_id",
+    "created_at",
+    "updated_at",
+    "sequence",
+    "ledger_head",
+    "episodes",
+    "verified_successes",
+    "total_attempts",
+    "feature_strategy_stats",
+    "global_strategy_stats",
+    "cluster_strategy_stats",
+    "curriculum",
+    "replay_buffer",
+    "skill_versions",
+    "semantic_memory",
+    "continuity",
+    "rejected_updates",
+    "promoted_regressions",
+    "persisted_skill_reuses",
+    "process_sessions"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "memory_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "updated_at": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "ledger_head": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "episodes": { "type": "integer", "minimum": 0 },
+    "verified_successes": { "type": "integer", "minimum": 0 },
+    "total_attempts": { "type": "integer", "minimum": 0 },
+    "feature_strategy_stats": { "type": "object" },
+    "global_strategy_stats": { "type": "object" },
+    "cluster_strategy_stats": { "type": "object" },
+    "curriculum": { "type": "object" },
+    "replay_buffer": { "type": "array", "maxItems": 128 },
+    "skill_versions": { "type": "array", "maxItems": 256 },
+    "semantic_memory": {
+      "type": "object",
+      "required": ["consolidation_runs", "promoted_policies", "promotion_history"],
+      "properties": {
+        "consolidation_runs": { "type": "integer", "minimum": 0 },
+        "promoted_policies": { "type": "object" },
+        "promotion_history": { "type": "array", "maxItems": 256 }
+      }
+    },
+    "continuity": {
+      "type": "object",
+      "required": [
+        "checkpoint_reloads",
+        "recovery_events",
+        "causal_memory_trials",
+        "causal_memory_reuses",
+        "memory_off_successes",
+        "memory_on_first_attempt_successes"
+      ],
+      "properties": {
+        "checkpoint_reloads": { "type": "integer", "minimum": 0 },
+        "recovery_events": { "type": "integer", "minimum": 0 },
+        "causal_memory_trials": { "type": "integer", "minimum": 0 },
+        "causal_memory_reuses": { "type": "integer", "minimum": 0 },
+        "memory_off_successes": { "type": "integer", "minimum": 0 },
+        "memory_on_first_attempt_successes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "rejected_updates": { "type": "integer", "minimum": 0 },
+    "promoted_regressions": { "type": "integer", "minimum": 0 },
+    "persisted_skill_reuses": { "type": "integer", "minimum": 0 },
+    "process_sessions": { "type": "array", "uniqueItems": true }
+  }
+}

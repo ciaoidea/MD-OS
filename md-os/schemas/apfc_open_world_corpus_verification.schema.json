@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_corpus_verification.schema.json",
+  "title": "APFC open-world sealed-corpus verification readback",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "verification_type", "ok", "mode", "checks",
+    "failed_checks", "public_manifest_digest", "hidden_manifest_digest",
+    "seal_digest", "development_task_count", "holdout_task_count",
+    "excluded_prior_task_count", "excluded_prior_repository_count"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "verification_type": { "const": "apfc_open_world_corpus_verification" },
+    "ok": { "type": "boolean" },
+    "mode": { "const": "apfc_open_world_corpus_verify" },
+    "checks": { "type": "object", "additionalProperties": { "type": "boolean" } },
+    "failed_checks": { "type": "array", "items": { "type": "string" } },
+    "public_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "hidden_manifest_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "seal_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "development_task_count": { "type": "integer", "minimum": 1 },
+    "holdout_task_count": { "type": "integer", "minimum": 1 },
+    "excluded_prior_task_count": { "type": "integer", "minimum": 0 },
+    "excluded_prior_repository_count": { "type": "integer", "minimum": 0 }
+  }
+}

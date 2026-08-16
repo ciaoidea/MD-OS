@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/concept_dynamics.schema.json",
+  "title": "MD-OS Concept Dynamics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "model_id",
+    "frame_id",
+    "model_type",
+    "training_status",
+    "learned",
+    "encoder",
+    "vector_space",
+    "embedding_backends",
+    "transition_count",
+    "loss",
+    "transitions",
+    "readback"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frame_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "training_status": {
+      "type": "string",
+      "enum": [
+        "untrained_baseline",
+        "trained_adapter",
+        "external_model"
+      ]
+    },
+    "learned": {
+      "type": "boolean"
+    },
+    "encoder": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vector_space": {
+      "type": "string",
+      "minLength": 1
+    },
+    "embedding_backends": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "transition_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "loss": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "count",
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "transition_id",
+          "from_token_id",
+          "horizon",
+          "loss_name"
+        ],
+        "properties": {
+          "transition_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "from_token_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "from_canonical_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to_token_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to_canonical_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "horizon": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "predicted_embedding": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "number"
+            }
+          },
+          "target_embedding": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "number"
+            }
+          },
+          "loss": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "loss_name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "readback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "limitation"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limitation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

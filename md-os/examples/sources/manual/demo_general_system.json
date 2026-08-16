@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "connector_name": "manual",
+  "connector_kind": "manual",
+  "project_id": "demo_general_system",
+  "captured_at": "2026-04-24T18:00:00Z",
+  "signals": [
+    {
+      "source_id": "demo_manual_connector_bootstrap",
+      "captured_at": "2026-04-24T18:00:00Z",
+      "summary": "Create a generic connector registry and classify substrate types before adding live adapters.",
+      "status_hint": "open",
+      "priority": "high",
+      "owner_hint": "Platform operator",
+      "entities": [
+        "connector_registry",
+        "substrate_model"
+      ],
+      "tags": [
+        "bootstrap",
+        "connectors",
+        "generic"
+      ],
+      "suspected_causes": [
+        "missing_connector_taxonomy"
+      ],
+      "depends_on": [],
+      "next_step": "Define connector categories and minimal adapter contract.",
+      "due_at": "2026-04-25T09:00:00Z",
+      "external_parties": []
+    },
+    {
+      "source_id": "demo_manual_runtime_hygiene",
+      "captured_at": "2026-04-24T18:05:00Z",
+      "summary": "Validate that the file-based runtime can rebuild state, agenda, and hygiene status without application-specific dependencies.",
+      "status_hint": "waiting_external",
+      "priority": "medium",
+      "owner_hint": "Platform operator",
+      "entities": [
+        "filesystem_runtime",
+        "builder_stack"
+      ],
+      "tags": [
+        "runtime",
+        "validation"
+      ],
+      "suspected_causes": [
+        "unverified_generalization"
+      ],
+      "depends_on": [
+        "demo_manual_connector_bootstrap"
+      ],
+      "next_step": "Run all generic builders and inspect generated outputs.",
+      "due_at": "2026-04-26T09:00:00Z",
+      "external_parties": [
+        "human_reviewer"
+      ]
+    }
+  ]
+}

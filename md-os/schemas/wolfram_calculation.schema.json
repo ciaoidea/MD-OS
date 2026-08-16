@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/wolfram_calculation.schema.json",
+  "title": "MD-OS Wolfram Calculation Profile",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "calculation_id",
+    "summary",
+    "epistemic_status"
+  ],
+  "oneOf": [
+    {
+      "required": ["wolfram_code"],
+      "not": { "required": ["script_path"] }
+    },
+    {
+      "required": ["script_path"],
+      "not": { "required": ["wolfram_code"] }
+    }
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "calculation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,80}$"
+    },
+    "script_path": {
+      "type": "string",
+      "pattern": "^md-os/ops/(local/wolfram|calculations/wolfram/scripts)/.*\\.wl$"
+    },
+    "wolfram_code": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "timeout_ms": { "type": "integer", "minimum": 1 },
+    "max_source_bytes": { "type": "integer", "minimum": 1 },
+    "max_output_bytes": { "type": "integer", "minimum": 1 },
+    "epistemic_status": {
+      "enum": [
+        "heuristic",
+        "conditional",
+        "derived",
+        "retrodictive",
+        "predictive",
+        "open",
+        "falsified"
+      ]
+    },
+    "expected_gates": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "entities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "owner_hint": { "type": "string" },
+    "next_step": { "type": "string" }
+  },
+  "additionalProperties": true
+}

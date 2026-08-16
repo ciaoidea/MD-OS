@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "connector_id": "openwa_whatsapp_gateway",
+  "project_id": "whatsapp_gateway",
+  "openwa": {
+    "base_url_env": "OPENWA_BASE_URL",
+    "api_key_env": "OPENWA_API_KEY",
+    "session_id_env": "OPENWA_SESSION_ID",
+    "webhook_url_env": "OPENWA_WEBHOOK_URL",
+    "webhook_secret_env": "OPENWA_WEBHOOK_SECRET"
+  },
+  "security": {
+    "mode": "allowlist_and_command_prefix",
+    "allowed_chat_ids": [],
+    "command_prefix": "@mdos",
+    "require_command_prefix": true,
+    "max_text_chars": 20000,
+    "redact_patterns": [
+      "api_key=",
+      "token=",
+      "secret=",
+      "authorization:",
+      "password="
+    ],
+    "notes": "Example profile only. Add allowed_chat_ids in ops/connectors/openwa_whatsapp_connector.json before live use."
+  },
+  "paths": {
+    "local_runtime_dir": "md-os/ops/local/openwa_whatsapp",
+    "connector_snapshots_dir": "md-os/ops/sources/connectors"
+  },
+  "routing": {
+    "schema_version": 1,
+    "role": "example_profile",
+    "local_workspace_root_env": "OPENWA_LOCAL_WORKSPACE_ROOT",
+    "local_mdos_root_env": "OPENWA_LOCAL_MDOS_ROOT",
+    "gateway_workspace_root_env": "OPENWA_GATEWAY_WORKSPACE_ROOT",
+    "gateway_mdos_root_env": "OPENWA_GATEWAY_MDOS_ROOT",
+    "default_route_alias": "workspace",
+    "runtime_note": "Example profile only. Private absolute workspace and gateway roots must be supplied through environment variables or local-only state, not committed release files."
+  }
+}

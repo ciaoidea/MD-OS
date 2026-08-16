@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "connector_id": "terminal_executor",
+  "default_timeout_ms": 15000,
+  "max_stdout_bytes": 200000,
+  "max_stderr_bytes": 200000,
+  "redact_patterns": ["token=", "api_key=", "secret="],
+  "commands": [
+    {
+      "command_id": "node_version",
+      "argv": ["node", "--version"],
+      "cwd": ".",
+      "summary": "Capture the local Node.js version.",
+      "priority": "low",
+      "tags": ["terminal", "runtime", "version"],
+      "entities": ["node_runtime"]
+    },
+    {
+      "command_id": "repo_root_listing",
+      "argv": ["ls", "-la"],
+      "cwd": ".",
+      "summary": "List the repository root for runtime inspection.",
+      "priority": "low",
+      "tags": ["terminal", "filesystem", "inspection"],
+      "entities": ["repository_root"]
+    },
+    {
+      "command_id": "ops_tree_listing",
+      "argv": ["find", "md-os/ops", "-maxdepth", "2", "-type", "f"],
+      "cwd": ".",
+      "summary": "Inspect the top levels of the persistent runtime tree.",
+      "priority": "medium",
+      "tags": ["terminal", "ops", "inspection"],
+      "entities": ["ops_tree"]
+    }
+  ]
+}

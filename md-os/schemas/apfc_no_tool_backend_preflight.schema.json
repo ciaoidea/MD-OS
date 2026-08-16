@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_no_tool_backend_preflight.schema.json",
+  "title": "APFC no-tool host-native backend preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_type", "preflight_id", "backend_id", "created_at",
+    "task_id", "model", "task_environment_receipt_hash", "task_environment_verified",
+    "codex_canary_receipt_hash", "codex_canary_verified", "laboratory_empty_after_run",
+    "verified", "claim_boundary", "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "receipt_type": { "const": "apfc_no_tool_backend_preflight" },
+    "preflight_id": { "type": "string", "minLength": 1 },
+    "backend_id": { "const": "host_native_no_tool_ephemeral_v2" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "model": { "type": "string", "minLength": 1 },
+    "task_environment_receipt_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "task_environment_verified": { "type": "boolean" },
+    "codex_canary_receipt_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "codex_canary_verified": { "type": "boolean" },
+    "laboratory_empty_after_run": { "type": "boolean" },
+    "verified": { "type": "boolean" },
+    "claim_boundary": { "type": "string", "minLength": 1 },
+    "receipt_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "benchmark_case_id": "software_repair_missing_boundary_validation",
+  "domain": "software_repair",
+  "split": "development",
+  "title": "Reject malformed authentication tokens without breaking valid access",
+  "issue": {
+    "goal": "Add validation at the authentication input boundary while preserving valid user and administrator tokens.",
+    "defect_class": "missing_boundary_validation",
+    "acceptance_claims": [
+      "Malformed tokens are rejected.",
+      "Valid user and administrator tokens keep their behavior.",
+      "The patch changes only the narrow authentication source boundary."
+    ]
+  },
+  "repository": {
+    "kind": "controlled_fixture",
+    "fixture_path": "md-os/benchmarks/software_repair/fixtures/missing_boundary_validation",
+    "source_tree_sha256": "6cf69090ede1ff14aa84da9829b96ffe903997a3fd8c8a4564ab5331e5fc24b1",
+    "expected_base_commit": "ab09e8a77f3f75a65497299f2fbf961460c64982"
+  },
+  "execution_policy": {
+    "isolation": "git_worktree_process",
+    "allowed_executables": [
+      "node"
+    ],
+    "network": "disabled_by_contract",
+    "third_party_repositories": "not_supported"
+  },
+  "reproduction": {
+    "command_id": "reproduce_malformed_token_acceptance",
+    "argv": [
+      "node",
+      "checks/targeted.check.js"
+    ],
+    "cwd": "candidate",
+    "expected_before_exit_status": 1,
+    "expected_after_exit_status": 0
+  },
+  "targeted_tests": [
+    {
+      "command_id": "targeted_authentication_boundary_test",
+      "argv": [
+        "node",
+        "checks/targeted.check.js"
+      ],
+      "cwd": "candidate",
+      "expected_before_exit_status": 1,
+      "expected_after_exit_status": 0
+    }
+  ],
+  "regression_tests": [
+    {
+      "command_id": "valid_authentication_regression_test",
+      "argv": [
+        "node",
+        "checks/regression.check.js"
+      ],
+      "cwd": "candidate",
+      "expected_before_exit_status": 0,
+      "expected_after_exit_status": 0
+    }
+  ],
+  "oracle_tests": [
+    {
+      "command_id": "independent_authentication_oracle",
+      "argv": [
+        "node",
+        "md-os/benchmarks/software_repair/oracles/missing_boundary_validation_oracle.js",
+        "{candidate_root}"
+      ],
+      "cwd": "workspace",
+      "expected_before_exit_status": 1,
+      "expected_after_exit_status": 0,
+      "independent": true
+    }
+  ],
+  "diff_policy": {
+    "allowed_paths": [
+      "src/**"
+    ],
+    "forbidden_paths": [
+      "checks/**"
+    ],
+    "max_files_changed": 1,
+    "max_diff_bytes": 4096,
+    "require_non_empty_diff": true
+  },
+  "resource_budget": {
+    "max_candidates": 5,
+    "command_timeout_ms": 5000
+  },
+  "ground_truth": {
+    "owner": "independent_benchmark_verifier",
+    "oracle_access": "verifier_only",
+    "candidate_disclosure": "public_development_case",
+    "specification_validity_checks": [
+      "The defect is reproduced by a failing test before patching.",
+      "An oracle outside the candidate worktree checks invalid and valid boundary cases.",
+      "Regression tests preserve valid authentication behavior.",
+      "Diff policy prevents a candidate from changing the visible tests."
+    ]
+  },
+  "learning_observation": {
+    "hypothesis_family": "delimited_boundary_validation_v1",
+    "split": "development",
+    "parameters": {
+      "delimiter": ":",
+      "prefix": "user"
+    },
+    "examples": [
+      {
+        "input": "user:alice",
+        "valid": true
+      },
+      {
+        "input": "user:alice:extra",
+        "valid": false
+      },
+      {
+        "input": "guest:alice",
+        "valid": false
+      }
+    ]
+  }
+}

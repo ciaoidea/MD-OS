@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "connector_id": "robot_mock_connector",
+  "missions": [
+    {
+      "mission_id": "warehouse_patrol_mock",
+      "robot_id": "robot_mock_001",
+      "intent": "Inspect a simulated warehouse aisle and report blocked path conditions.",
+      "summary": "Robot mock mission captures telemetry and proposes a safe stop action for review.",
+      "priority": "medium",
+      "risk_level": "high",
+      "safety_policy": "No physical actuation. Proposed actions require human approval.",
+      "telemetry": [
+        {
+          "captured_at": "2026-04-26T00:00:00Z",
+          "pose": { "x": 2.5, "y": 4.0, "theta": 90 },
+          "battery_percent": 87,
+          "obstacle_detected": true
+        }
+      ],
+      "proposed_actions": [
+        {
+          "action_id": "stop_and_request_clearance",
+          "kind": "safety_stop",
+          "requires_approval": true,
+          "description": "Stop mission and request human clearance before continuing."
+        }
+      ],
+      "tags": ["robot", "mock", "telemetry"],
+      "entities": ["robot_mock_001", "warehouse_aisle"]
+    }
+  ]
+}

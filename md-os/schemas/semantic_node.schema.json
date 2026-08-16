@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/semantic_node.schema.json",
+  "title": "MD-OS Runtime Semantic Node",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "path",
+    "title",
+    "type",
+    "semantic_layer",
+    "cognitive_role",
+    "epistemic_status",
+    "concept_terms",
+    "actionability",
+    "depends_on",
+    "enables",
+    "tools",
+    "risks",
+    "tests"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "path": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
+    "type": { "type": "string", "minLength": 1 },
+    "semantic_layer": { "type": "string", "minLength": 1 },
+    "cognitive_role": { "type": "string", "minLength": 1 },
+    "epistemic_status": { "type": "string", "minLength": 1 },
+    "concept_terms": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "actionability": { "type": "string", "minLength": 1 },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "enables": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "tools": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "tests": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "lifecycle_class": { "type": "string" }
+  }
+}

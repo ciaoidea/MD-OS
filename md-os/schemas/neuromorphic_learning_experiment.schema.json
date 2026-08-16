@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/neuromorphic_learning_experiment.schema.json",
+  "title": "MD-OS Neuromorphic Learning Experiment",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "created_at",
+    "status"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "experiment_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$"
+    },
+    "created_at": { "type": "string" },
+    "completed_at": { "type": "string" },
+    "failed_at": { "type": "string" },
+    "status": { "enum": ["ok", "critical"] },
+    "error": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "architecture": {
+      "type": "object",
+      "required": ["name", "fast_memory", "slow_memory", "plasticity", "competition", "replay", "homeostasis"],
+      "properties": {
+        "name": { "const": "neuromorphic_complementary_learning_system_v1" },
+        "fast_memory": { "type": "string" },
+        "slow_memory": { "type": "string" },
+        "plasticity": { "type": "string" },
+        "competition": { "type": "string" },
+        "replay": { "type": "string" },
+        "homeostasis": { "type": "string" }
+      }
+    },
+    "learning_measurement": {
+      "type": "object",
+      "required": [
+        "metric",
+        "before_success_rate",
+        "after_success_rate",
+        "absolute_delta",
+        "verified_source_episode_count",
+        "success_delta_per_verified_episode",
+        "information_gain_bits_per_episode",
+        "baseline_holdout_attempts",
+        "learned_holdout_attempts",
+        "regression_count",
+        "human_interventions"
+      ],
+      "properties": {
+        "metric": { "const": "verified_holdout_case_success_rate" },
+        "before_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "after_success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "absolute_delta": { "type": "number", "minimum": -1, "maximum": 1 },
+        "verified_source_episode_count": { "type": "integer", "minimum": 2 },
+        "success_delta_per_verified_episode": { "type": "number" },
+        "information_gain_bits_per_episode": { "type": "number", "minimum": 0 },
+        "baseline_holdout_attempts": { "type": "integer", "minimum": 1 },
+        "learned_holdout_attempts": { "type": "integer", "minimum": 1 },
+        "regression_count": { "type": "integer", "minimum": 0 },
+        "human_interventions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "induction": {
+      "type": "object",
+      "required": [
+        "hypothesis_family",
+        "initial_hypothesis_count",
+        "final_hypothesis_count",
+        "uniquely_identified",
+        "selected_constraints",
+        "learning_efficiency"
+      ],
+      "properties": {
+        "hypothesis_family": { "type": "string" },
+        "initial_hypothesis_count": { "type": "integer", "minimum": 2 },
+        "final_hypothesis_count": { "type": "integer", "minimum": 1 },
+        "uniquely_identified": { "type": "boolean" },
+        "selected_constraints": { "type": "array", "items": { "type": "string" } },
+        "learning_efficiency": { "type": "object" }
+      }
+    },
+    "neuromorphic_learning": {
+      "type": "object",
+      "required": [
+        "architecture",
+        "fast_episodic_encoding",
+        "event_driven_plasticity",
+        "sparse_engram",
+        "lateral_inhibition",
+        "replay_consolidation",
+        "metaplasticity",
+        "homeostatic_gate"
+      ],
+      "properties": {
+        "architecture": { "const": "complementary_learning_systems_v1" },
+        "fast_episodic_encoding": { "type": "object" },
+        "event_driven_plasticity": { "type": "object" },
+        "sparse_engram": {
+          "type": "object",
+          "required": ["representation", "active_unit_count", "available_unit_count", "density"],
+          "properties": {
+            "representation": { "type": "string" },
+            "active_unit_count": { "type": "integer", "minimum": 1 },
+            "available_unit_count": { "type": "integer", "minimum": 1 },
+            "density": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+          }
+        },
+        "lateral_inhibition": { "type": "object" },
+        "replay_consolidation": { "type": "object" },
+        "metaplasticity": { "type": "object" },
+        "homeostatic_gate": { "type": "object" }
+      }
+    },
+    "contamination_audit": {
+      "type": "object",
+      "required": ["status", "contaminated", "findings", "checks"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "contaminated": { "type": "boolean" },
+        "findings": { "type": "array" },
+        "checks": { "type": "object" }
+      }
+    },
+    "evidence": { "type": "object" },
+    "master_closure": {
+      "type": "object",
+      "required": ["status", "edges"],
+      "properties": {
+        "status": { "enum": ["ok", "critical"] },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["edge", "status"],
+            "properties": {
+              "edge": { "type": "string" },
+              "status": { "enum": ["ok", "critical"] }
+            }
+          }
+        }
+      }
+    },
+    "claim_state": {
+      "type": "object",
+      "required": ["narrow_learning_transfer_supported", "agi_achieved", "agi_claim_supported", "reason"],
+      "properties": {
+        "narrow_learning_transfer_supported": { "type": "boolean" },
+        "agi_achieved": { "const": false },
+        "agi_claim_supported": { "const": false },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "promotion": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ok" } }, "required": ["status"] },
+      "then": {
+        "required": [
+          "completed_at",
+          "objective",
+          "architecture",
+          "learning_measurement",
+          "induction",
+          "neuromorphic_learning",
+          "contamination_audit",
+          "evidence",
+          "master_closure",
+          "claim_state",
+          "promotion"
+        ]
+      },
+      "else": { "required": ["failed_at", "error"] }
+    }
+  ]
+}

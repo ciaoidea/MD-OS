@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_verifier_vault.schema.json",
+  "title": "APFC open-world private verifier vault",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "experiment_id", "dataset_id", "dataset_revision", "development_tasks", "holdout_tasks"],
+  "$defs": {
+    "hidden_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "source_split", "repository", "base_commit", "image_name", "gold_patch", "test_patch", "fail_to_pass", "pass_to_pass", "test_command", "hidden_task_hash"],
+      "properties": {
+        "task_id": { "type": "string", "minLength": 1 },
+        "source_split": { "type": "string", "minLength": 1 },
+        "repository": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+        "base_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "image_name": { "type": "string", "minLength": 1 },
+        "gold_patch": { "type": "string", "minLength": 1 },
+        "test_patch": { "type": "string", "minLength": 1 },
+        "fail_to_pass": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "pass_to_pass": { "type": "array", "items": { "type": "string" } },
+        "test_command": { "type": "string", "minLength": 1 },
+        "hidden_task_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": { "const": 1 },
+    "manifest_type": { "const": "apfc_open_world_verifier_vault" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "dataset_id": { "type": "string", "minLength": 1 },
+    "dataset_revision": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "development_tasks": { "type": "array", "minItems": 12, "items": { "$ref": "#/$defs/hidden_task" } },
+    "holdout_tasks": { "type": "array", "minItems": 30, "items": { "$ref": "#/$defs/hidden_task" } }
+  }
+}

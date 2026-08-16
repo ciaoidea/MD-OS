@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_no_tool_patch_response.schema.json",
+  "title": "APFC no-tool unified-diff model response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patch"],
+  "properties": {
+    "patch": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2097152,
+      "pattern": "^diff --git "
+    }
+  }
+}

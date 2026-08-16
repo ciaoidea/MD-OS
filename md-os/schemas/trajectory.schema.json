@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/trajectory.schema.json",
+  "title": "MD-OS AGI Trajectory",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "trajectory_id",
+    "episode_id",
+    "task",
+    "task_type",
+    "steps",
+    "verifier_status",
+    "verdict"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "trajectory_id": { "type": "string", "minLength": 1 },
+    "episode_id": { "type": "string", "minLength": 1 },
+    "task": { "type": "string", "minLength": 1 },
+    "task_type": { "type": "string", "minLength": 1 },
+    "steps": { "type": "array", "items": { "type": "object" } },
+    "verifier_status": { "enum": ["ok", "attention", "critical"] },
+    "verification_outcome": { "enum": ["verified", "unverified", "failed"] },
+    "verdict": { "enum": ["success", "unverified", "partial", "failed"] }
+  }
+}

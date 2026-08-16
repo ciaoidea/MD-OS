@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/operating_cycle_report.schema.json",
+  "title": "MD-OS Operating Cycle Report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "mode",
+    "ok",
+    "started_at",
+    "completed_at",
+    "phase_count",
+    "failed_phase_count",
+    "phases",
+    "outputs"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "mode": { "enum": ["operating_cycle_run_once", "operating_cycle_status"] },
+    "ok": { "type": "boolean" },
+    "started_at": { "type": "string" },
+    "completed_at": { "type": "string" },
+    "phase_count": { "type": "integer", "minimum": 0 },
+    "failed_phase_count": { "type": "integer", "minimum": 0 },
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["phase_id", "command", "ok", "status"],
+        "properties": {
+          "phase_id": { "type": "string" },
+          "command": { "type": "string" },
+          "ok": { "type": "boolean" },
+          "status": { "type": ["integer", "null"] },
+          "stdout_tail": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "stderr_tail": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "outputs": { "type": "object" }
+  },
+  "additionalProperties": true
+}

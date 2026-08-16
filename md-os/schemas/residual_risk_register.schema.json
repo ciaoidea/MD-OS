@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/residual_risk_register.schema.json",
+  "title": "MD-OS Residual Risk Register",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "register_id",
+    "register_type",
+    "scope",
+    "created_on",
+    "updated_on",
+    "status",
+    "epistemic_status",
+    "source_context",
+    "health_binding",
+    "evidence_refs",
+    "residual_risks",
+    "promotion_gates",
+    "next_actions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "register_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "register_type": {
+      "type": "string",
+      "const": "residual_risk_register"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_on": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_on": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "closed",
+        "superseded"
+      ]
+    },
+    "epistemic_status": {
+      "type": "string",
+      "enum": [
+        "risk_readback",
+        "risk_assessment",
+        "accepted_risk",
+        "closed_risk"
+      ]
+    },
+    "source_context": {
+      "type": "string",
+      "minLength": 1
+    },
+    "health_binding": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "residual_risks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/risk"
+      }
+    },
+    "promotion_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/promotion_gate"
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "risk_id",
+        "title",
+        "category",
+        "severity",
+        "status",
+        "promotion_blocker",
+        "risk_statement",
+        "current_control",
+        "mitigation",
+        "closure_gate",
+        "verifier_commands",
+        "evidence_refs"
+      ],
+      "properties": {
+        "risk_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "controlled",
+            "accepted",
+            "closed",
+            "superseded"
+          ]
+        },
+        "promotion_blocker": {
+          "type": "boolean"
+        },
+        "risk_statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current_control": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mitigation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closure_gate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verifier_commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "promotion_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "description",
+        "required_before"
+      ],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_before": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

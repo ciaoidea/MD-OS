@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.org/schemas/apfc_open_world_remote_image_manifest.schema.json",
+  "title": "APFC remote digest manifest for streamed task images",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "manifest_type", "protocol_id", "experiment_id",
+    "source_experiment_id", "source_seal_digest", "created_at",
+    "frozen_before_holdout_model_calls", "storage_policy", "image_count",
+    "images", "manifest_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "manifest_type": { "const": "apfc_open_world_remote_image_digests" },
+    "protocol_id": { "const": "apfc_open_world_streaming_crossover_v1" },
+    "experiment_id": { "type": "string", "minLength": 1 },
+    "source_experiment_id": { "type": "string", "minLength": 1 },
+    "source_seal_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "frozen_before_holdout_model_calls": { "const": true },
+    "storage_policy": { "const": "stream_one_image_then_remove_if_new" },
+    "image_count": { "const": 30 },
+    "images": {
+      "type": "array",
+      "minItems": 30,
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "image_name", "remote_digest", "pinned_reference"],
+        "properties": {
+          "task_id": { "type": "string", "minLength": 1 },
+          "image_name": { "type": "string", "minLength": 1 },
+          "remote_digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "pinned_reference": { "type": "string", "pattern": "@sha256:[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "manifest_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
