@@ -63,6 +63,19 @@ function setupOkRuntimeInputs(workspace) {
     epistemic_profile_complete: true,
     findings: [],
   });
+  writeJson(path.join(workspace, 'md-os/ops/semantic/commitment_gate_status.json'), {
+    schema_version: 1,
+    source_hash: 'semantic-commitment',
+    status: 'ok',
+    invariant_count: 7,
+    finding_count: 0,
+    findings: [],
+    release_gate: {
+      canonical_promotion_blocked: false,
+      publication_blocked: false,
+      challenge_registration_blocked: false,
+    },
+  });
   writeJson(path.join(workspace, 'md-os/ops/releases/self_release_index.json'), {
     schema_version: 1,
     source_hash: 'self-release',
@@ -181,6 +194,7 @@ test('health classifier separates runtime ok from publication, security, and loc
   assert.equal(classification.health.runtime_health.status, 'ok');
   assert.equal(classification.health.compiler_health.status, 'ok');
   assert.equal(classification.health.agi_loop_health.status, 'ok');
+  assert.equal(classification.health.semantic_integrity_health.status, 'ok');
   assert.equal(classification.health.publication_health.status, 'critical');
   assert.equal(classification.health.security_health.status, 'critical');
   assert.equal(classification.health.local_hygiene_health.status, 'critical');

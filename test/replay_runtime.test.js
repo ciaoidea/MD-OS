@@ -37,8 +37,10 @@ function runMdos(workspaceRoot, args) {
 }
 
 function setupReplayWorkspace(workspace) {
-  writeText(path.join(workspace, 'AGENTS.md'), '# Agents\n');
-  writeText(path.join(workspace, 'ME.md'), '# ME\n');
+  writeText(path.join(workspace, 'AGENTS.md'), fs.readFileSync(path.join(REPO_ROOT, 'AGENTS.md'), 'utf8'));
+  writeText(path.join(workspace, 'ME.md'), fs.readFileSync(path.join(REPO_ROOT, 'ME.md'), 'utf8'));
+  writeText(path.join(workspace, 'README.md'), fs.readFileSync(path.join(REPO_ROOT, 'README.md'), 'utf8'));
+  writeText(path.join(workspace, 'index.md'), fs.readFileSync(path.join(REPO_ROOT, 'index.md'), 'utf8'));
   writeText(path.join(workspace, 'package.json'), JSON.stringify({
     name: 'md-os-replay-test',
     version: '5.0.0',
@@ -58,6 +60,9 @@ function setupReplayWorkspace(workspace) {
     'SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md',
     'SEMANTIC_NEURAL_OVERLAY_MODEL.md',
     'SEMANTIC_OPERATIONAL_NETWORK_MODEL.md',
+    'SEMANTIC_COMMITMENT_GATE_MODEL.md',
+    'CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md',
+    'ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md',
     'ARCHIVE_COMPACTION_MODEL.md',
   ]) {
     const source = fs.readFileSync(path.join(REPO_ROOT, 'md-os/kb', file), 'utf8');

@@ -124,13 +124,15 @@ load this order:
 6. `md-os/kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md`
 7. `md-os/ops/core/agentic_core.md`
 8. `md-os/ops/summary/conceptual_boot_summary.md` if present
-9. `md-os/kb/RUNTIME_STATE_LIFECYCLE_MODEL.md`
-10. `md-os/ops/semantic_knowledge_summary.md`
-11. `md-os/ops/releases/self_release_index.md`
-12. `md-os/ops/health_classification.md`
-13. `md-os/ops/agi/loop_status.md`
-14. `md-os/ops/skills/skill_registry.md`
-15. current readable state under `md-os/ops/`
+9. `md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md`
+10. `md-os/ops/semantic/commitment_gate_status.md` if present
+11. `md-os/kb/RUNTIME_STATE_LIFECYCLE_MODEL.md`
+12. `md-os/ops/semantic_knowledge_summary.md`
+13. `md-os/ops/releases/self_release_index.md`
+14. `md-os/ops/health_classification.md`
+15. `md-os/ops/agi/loop_status.md`
+16. `md-os/ops/skills/skill_registry.md`
+17. current readable state under `md-os/ops/`
 
 This gives the host both:
 
@@ -234,6 +236,10 @@ After cognitive bootstrap, the host should:
   source, runtime, knowledge, or operating model changes
 - treat repeated user needs as candidates for stable growth through knowledge,
   natural-language programs, builders, connectors, tests, and runtime state
+- keep possibility space distinct from commitment space: permit exploration,
+  criticism, hypotheses, and challenges, but require the semantic commitment
+  gate before their promotion into consolidated memory, canonical identity,
+  decision, action, or publication
 
 ## Connector Capability Response
 

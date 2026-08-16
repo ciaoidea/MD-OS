@@ -8,6 +8,8 @@ The stable form is:
 ```text
 natural language intent
 -> bounded task frame
+-> provenance and before/after semantic delta
+-> semantic commitment gate when canonical state may change
 -> repository artifact
 -> schema or test
 -> command readback
@@ -96,6 +98,20 @@ clarifying question before editing.
 - Every build-relevant change must be covered by a focused test or an explicit
   verification command.
 - Runtime generated outputs should be rebuilt by builders, not edited by hand.
+- Challenge remains admissible and must retain its source and non-canonical
+  status; replacement requires the authority appropriate to the affected claim.
+- No critique, inference, or editorial proposal becomes an authorized project
+  interpretation without provenance, before/after semantic readback, invariant
+  comparison, and the required approval.
+- Classify an edit by its effective semantic delta, not by its stated editorial
+  intention. Added, removed, negated, broadened, or narrowed propositions must
+  be routed as semantic revisions.
+- Treat editorial correction as reasoned semantic work. `Editorial` means that
+  the verified before/after delta preserves or clarifies the supported thesis;
+  it does not mean unreasoned or merely mechanical wording work.
+- Do not constrain exploration, criticism, hypotheses, or drafts merely because
+  they conflict with a canonical thesis. Constrain their promotion into memory,
+  canonical knowledge, decision, action, identity, or publication.
 
 ## Verification Ladder
 
@@ -127,6 +143,7 @@ For documentation and knowledge-base changes that affect semantic or operating
 state:
 
 ```bash
+node md-os/os/build_semantic_commitment_gate.js status
 node md-os/os/build_markdown_graph.js
 node md-os/os/mdos.js graphify build . --no-viz
 node md-os/os/build_runtime_lifecycle_index.js
@@ -169,6 +186,16 @@ Required outputs:
 
 Acceptance criteria:
 [commands and readback that must pass]
+
+Semantic commitment frame when meaning may change:
+- provenance class
+- claim class
+- transition from possibility space to commitment space
+- propositions before and after
+- added, removed, negated, broadened, or narrowed propositions
+- affected and superseded invariants
+- authority and approval evidence
+- challenge status when no canonical effect is requested
 
 Epistemic rules:
 - every claim must have status

@@ -68,6 +68,8 @@ function usage() {
     `  ${cli} graphify orient <question>`,
     `  ${cli} graphify open`,
     `  ${cli} semantic graph build`,
+    `  ${cli} semantic status`,
+    `  ${cli} semantic gate <proposal.json>`,
     `  ${cli} boot-summary`,
     `  ${cli} cycle status`,
     `  ${cli} cycle run-once`,
@@ -392,6 +394,7 @@ function main() {
         ['build_markdown_graph.js'],
         ['build_runtime_lifecycle_index.js'],
         ['build_semantic_knowledge_graph.js'],
+        ['build_semantic_commitment_gate.js', ['status']],
         ['build_self_release_index.js'],
         ['agi_loop.js', ['eval']],
         ['build_software_repair_benchmark_index.js'],
@@ -447,6 +450,14 @@ function main() {
     usage();
   }
   if (command === 'semantic' || command === 'knowledge-graph' || command === 'semantic-graph') {
+    if (subcommand === 'status' || subcommand === 'commitment-status') {
+      runScript('build_semantic_commitment_gate.js', ['status', ...rest]);
+    }
+    if (subcommand === 'gate' || subcommand === 'evaluate') {
+      const [proposalPath] = rest;
+      if (!proposalPath) usage();
+      runScript('build_semantic_commitment_gate.js', ['evaluate', proposalPath]);
+    }
     if (!subcommand || subcommand === 'build' || subcommand === 'rebuild') runScript('build_semantic_knowledge_graph.js');
     if (subcommand === 'graph') {
       const [semanticGraphCommand] = rest;

@@ -29,6 +29,9 @@ Canonical correlation:
 - `md-os/kb/COGNITIVE_BOOTSTRAP.md` defines the host/runtime framing.
 - `md-os/kb/SEMANTIC_OPERATIONAL_NETWORK_MODEL.md` defines the required
   semantic, epistemic, operational, and readback cohesion for coherent action.
+- `md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md` distinguishes possibility space
+  from commitment space and defines provenance, semantic-delta, authority,
+  challenge, foundational-amendment, and publication gates.
 - `md-os/kb/SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md` defines whole-Markdown-node
   semantic profiling, concept relation, and compact health readback.
 - `md-os/kb/SEMANTIC_NEURAL_OVERLAY_MODEL.md` defines the semantic-runtime,
@@ -125,7 +128,10 @@ materializes it into runtime state.
     "Complex tasks must distinguish artifact progress, method progress, and master closure progress; closure progress changes only when a named master dependency edge closes with readback.",
     "Self-release work must be proposed, gated, built, tested, replayed, read back, and rollback-aware before it becomes a new MD-OS release.",
     "Connector capability, risk, permission, side effects, and recovery notes must be explicit before action.",
-    "Small agentic processes must compose through typed, verified artifacts; hidden chat memory is not a process interface."
+    "Small agentic processes must compose through typed, verified artifacts; hidden chat memory is not a process interface.",
+    "Nature is the model: MD-OS APFC is deliberately biologically inspired and reconstructs functional principles of prefrontal executive control on an artificial substrate without claiming literal anatomical replication or literal biological equivalence.",
+    "Possibility space remains open to exploration, criticism, hypotheses, alternatives, and challenges; commitment space requires provenance, before/after semantic delta, invariant comparison, appropriate authority, verification, and readback.",
+    "A critique, inference, or editorial proposal cannot become an authorized project interpretation merely because it is coherent or persuasive; classify the effective semantic delta and gate canonical promotion."
   ],
   "limits": [
     "MD-OS is an early reference implementation, not a mature production runtime.",
@@ -143,6 +149,7 @@ materializes it into runtime state.
     "md-os/kb/OPERATIONS.md",
     "md-os/ops/core/agentic_core.md",
     "md-os/ops/summary/conceptual_boot_summary.md",
+    "md-os/ops/semantic/commitment_gate_status.md",
     "md-os/kb/RUNTIME_STATE_LIFECYCLE_MODEL.md",
     "md-os/ops/global_index.md",
     "md-os/ops/semantic_knowledge_summary.md",
@@ -280,6 +287,7 @@ materializes it into runtime state.
     "md-os/kb/SELF_RELEASE_EVOLUTION_MODEL.md",
     "md-os/kb/COGNITIVE_BOOTSTRAP.md",
     "md-os/kb/SEMANTIC_OPERATIONAL_NETWORK_MODEL.md",
+    "md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md",
     "md-os/kb/SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md",
     "md-os/kb/SEMANTIC_NEURAL_OVERLAY_MODEL.md",
     "md-os/kb/CONCEPTUAL_COLD_BOOT_SUMMARY_MODEL.md",

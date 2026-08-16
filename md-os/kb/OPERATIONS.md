@@ -35,6 +35,8 @@ Canonical builders:
 - `node md-os/os/build_workspace_inventory.js`
 - `node md-os/os/build_markdown_graph.js`
 - `node md-os/os/build_semantic_knowledge_graph.js`
+- `node md-os/os/build_semantic_commitment_gate.js status`
+- `mdos semantic gate <proposal.json>`
 - `node md-os/os/build_conceptual_boot_summary.js`
 - `node md-os/os/agi_loop.js eval`
 - `mdos agi run-once --task "<task>"`
@@ -97,6 +99,12 @@ Ordinary operating rule:
   receive a semantic layer, cognitive role, epistemic status, actionability,
   concept terms, structural relation, and compact health readback; new concepts
   must be related automatically during rebuild
+- maintain the possibility-versus-commitment boundary through
+  `md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md`: exploration, criticism,
+  hypotheses, and challenges remain admissible, while consolidation, canonical
+  revision, foundational replacement, and publication require provenance,
+  before/after semantic delta, invariant comparison, appropriate authority,
+  and generated gate readback
 - for high-stakes reasoning, scientific derivation, referee-facing documents,
   nontrivial code behavior, architecture decisions, identity changes, or
   connector permission changes, use

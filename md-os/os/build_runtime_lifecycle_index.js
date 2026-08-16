@@ -90,6 +90,8 @@ function classify(filePath, ignored) {
     ['md-os/ops/semantic_knowledge_graph.md', 'build_semantic_knowledge_graph'],
     ['md-os/ops/semantic_knowledge_summary.json', 'build_semantic_knowledge_graph'],
     ['md-os/ops/semantic_knowledge_summary.md', 'build_semantic_knowledge_graph'],
+    ['md-os/ops/semantic/commitment_gate_status.json', 'build_semantic_commitment_gate'],
+    ['md-os/ops/semantic/commitment_gate_status.md', 'build_semantic_commitment_gate'],
     ['md-os/ops/workspace_inventory.json', 'build_workspace_inventory'],
     ['md-os/ops/workspace_inventory.md', 'build_workspace_inventory'],
     ['md-os/ops/system_hygiene_status.json', 'build_system_hygiene_status'],
@@ -245,6 +247,9 @@ function classify(filePath, ignored) {
   }
   if (/^md-os\/ops\/releases\/self\/proposals\/[^/]+\.json$/.test(filePath)) {
     return { lifecycle_class: 'source', owner: 'self_release_proposal', rebuildable: false, publishable: false, scope: 'release_proposal_state' };
+  }
+  if (/^md-os\/ops\/semantic\/commitment_decisions\/semdec_[a-f0-9]{24}\.(?:json|md)$/.test(filePath)) {
+    return { lifecycle_class: 'live', owner: 'semantic_commitment_gate', rebuildable: false, publishable: false, scope: 'live_semantic_commitment_decision' };
   }
   if (/^md-os\/ops\/episodes\/[^/]+\.(?:json|md)$/.test(filePath)) {
     return { lifecycle_class: 'live', owner: 'agi_episode_memory', rebuildable: false, publishable: false, scope: 'live_learning_episode' };

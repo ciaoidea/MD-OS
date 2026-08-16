@@ -35,9 +35,16 @@ MD-OS (Artificial Prefrontal Cortex) v5.0
 
 ## What “Artificial Prefrontal Cortex” means
 
-The name is a functional systems metaphor. In this architecture, the APFC is
-the OS-like executive control plane around reasoning models, deterministic
-programs, connectors, tools, devices, memory, and verified artifacts.
+Nature is the model. MD-OS APFC is a deliberately biologically inspired
+engineering architecture: it studies the functional principles of prefrontal
+executive control and reconstructs them on an artificial substrate. In this
+architecture, the APFC is the OS-like executive control plane around reasoning
+models, deterministic programs, connectors, tools, devices, memory, and
+verified artifacts.
+
+It is not an anatomical copy of the brain and does not claim literal biological
+equivalence. This boundary delimits the engineering claim without severing the
+biological lineage from which the model is deliberately derived.
 
 It performs five operating roles:
 
@@ -105,8 +112,8 @@ observation that would change the conclusion.
 
 This does not mean that a biological prefrontal cortex is literally a digital
 kernel, CPU, RAM module, scheduler, or firewall. Human executive control is
-distributed across interacting neural systems. MD-OS adopts the analogy as an
-engineering model for explicit, inspectable control.
+distributed across interacting neural systems. MD-OS translates selected
+functional principles of that natural model into explicit, inspectable control.
 
 ## From UNIX processes to agentic processes
 

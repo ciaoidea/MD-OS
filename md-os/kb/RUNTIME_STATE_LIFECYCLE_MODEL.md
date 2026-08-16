@@ -120,6 +120,7 @@ md-os/ops/imports/knowledge/*/extracted/**
 md-os/ops/markdown_graph.*
 md-os/ops/semantic_knowledge_graph.*
 md-os/ops/semantic_knowledge_summary.*
+md-os/ops/semantic/commitment_gate_status.*
 md-os/ops/releases/self_release_index.*
 md-os/ops/agi/{loop_status,promotion_gate}.*
 md-os/ops/agi/neuromorphic_learning_status.*
@@ -221,6 +222,7 @@ md-os/ops/tasks/**
 md-os/ops/action_receipts/**
 md-os/ops/verifications/**
 md-os/ops/trajectories/**
+md-os/ops/semantic/commitment_decisions/**
 md-os/ops/skills/candidates/**
 md-os/ops/skills/promoted/**
 md-os/ops/skills/history/**
@@ -278,6 +280,7 @@ md-os/ops/global_index.*
 md-os/ops/markdown_graph.*
 md-os/ops/semantic_knowledge_graph.*
 md-os/ops/semantic_knowledge_summary.*
+md-os/ops/semantic/commitment_gate_status.*
 md-os/ops/releases/self_release_index.*
 md-os/ops/runtime/**
 md-os/ops/system_hygiene_status.*

@@ -52,3 +52,10 @@ append-only proposal for ambiguous edits
 human or policy review before application
 ```
 
+Concurrency review is distinct from semantic authority. A contested change
+that may alter identity, a canonical thesis, a protected invariant,
+consolidated memory, or publication must also pass
+[SEMANTIC_COMMITMENT_GATE_MODEL.md](SEMANTIC_COMMITMENT_GATE_MODEL.md). A
+reasoned editorial proposal remains admissible, but its before/after
+propositions determine whether it is editorially preserving or a semantic
+revision.

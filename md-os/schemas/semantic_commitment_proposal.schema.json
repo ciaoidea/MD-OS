@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/semantic_commitment_proposal.schema.json",
+  "title": "MD-OS Semantic Commitment Proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "source_class",
+    "claim_class",
+    "transition",
+    "declared_delta_class",
+    "summary",
+    "target_paths",
+    "affected_invariant_ids",
+    "supersedes_invariant_ids",
+    "semantic_delta",
+    "semantic_review",
+    "authority",
+    "requested_epistemic_status",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "proposal_id": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$" },
+    "source_class": {
+      "enum": [
+        "author_thesis",
+        "author_correction",
+        "canonical_project_claim",
+        "verified_project_evidence",
+        "external_critique",
+        "observation",
+        "operator_inference",
+        "editorial_proposal"
+      ]
+    },
+    "claim_class": {
+      "enum": [
+        "identity_foundation",
+        "design_foundation",
+        "empirical_claim",
+        "safety_policy",
+        "editorial_surface"
+      ]
+    },
+    "transition": {
+      "enum": [
+        "explore",
+        "challenge",
+        "draft",
+        "consolidate_memory",
+        "amend_canonical_claim",
+        "modify_foundation",
+        "publish"
+      ]
+    },
+    "declared_delta_class": {
+      "enum": [
+        "editorial_preserving",
+        "editorial_clarifying",
+        "semantic_revision",
+        "foundational_amendment"
+      ]
+    },
+    "summary": { "type": "string", "minLength": 1 },
+    "target_paths": { "$ref": "#/$defs/string_array" },
+    "affected_invariant_ids": { "$ref": "#/$defs/string_array" },
+    "supersedes_invariant_ids": { "$ref": "#/$defs/string_array" },
+    "semantic_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before_propositions",
+        "after_propositions",
+        "added_propositions",
+        "removed_propositions",
+        "negated_propositions",
+        "scope_changes"
+      ],
+      "properties": {
+        "before_propositions": { "$ref": "#/$defs/string_array" },
+        "after_propositions": { "$ref": "#/$defs/string_array" },
+        "added_propositions": { "$ref": "#/$defs/string_array" },
+        "removed_propositions": { "$ref": "#/$defs/string_array" },
+        "negated_propositions": { "$ref": "#/$defs/string_array" },
+        "scope_changes": { "$ref": "#/$defs/string_array" }
+      }
+    },
+    "semantic_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewer_class", "evidence"],
+      "properties": {
+        "status": { "enum": ["not_run", "preserves_meaning", "changes_meaning", "uncertain"] },
+        "reviewer_class": { "enum": ["same_operator", "separate_model", "deterministic_verifier", "author"] },
+        "evidence": { "type": "string" }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "actor_id", "evidence"],
+      "properties": {
+        "status": { "enum": ["none", "claimed", "explicit_human_approval", "explicit_author_approval"] },
+        "actor_id": { "type": "string" },
+        "evidence": { "type": "string" }
+      }
+    },
+    "requested_epistemic_status": { "type": "string" },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "kind", "status", "summary"],
+        "properties": {
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

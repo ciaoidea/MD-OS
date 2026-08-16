@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/semantic_commitment_decision.schema.json",
+  "title": "MD-OS Semantic Commitment Decision",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "policy_id",
+    "proposal_id",
+    "decision",
+    "canonical_effect",
+    "declared_delta_class",
+    "effective_delta_class",
+    "source_class",
+    "claim_class",
+    "transition",
+    "protected_targets",
+    "affected_invariant_ids",
+    "supersedes_invariant_ids",
+    "detected_conflicts",
+    "requires_versioned_amendment",
+    "reason_codes",
+    "next_actions",
+    "proposal_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "decision_id": { "type": "string", "pattern": "^semdec_[a-f0-9]{24}$" },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "proposal_id": { "type": "string", "minLength": 1 },
+    "decision": { "enum": ["allow", "hold", "require_author_approval", "block"] },
+    "canonical_effect": { "enum": ["none", "permitted", "pending", "blocked"] },
+    "declared_delta_class": { "type": "string", "minLength": 1 },
+    "effective_delta_class": { "type": "string", "minLength": 1 },
+    "source_class": { "type": "string", "minLength": 1 },
+    "claim_class": { "type": "string", "minLength": 1 },
+    "transition": { "type": "string", "minLength": 1 },
+    "protected_targets": { "$ref": "#/$defs/string_array" },
+    "affected_invariant_ids": { "$ref": "#/$defs/string_array" },
+    "supersedes_invariant_ids": { "$ref": "#/$defs/string_array" },
+    "detected_conflicts": { "type": "array" },
+    "requires_versioned_amendment": { "type": "boolean" },
+    "reason_codes": { "$ref": "#/$defs/string_array" },
+    "next_actions": { "$ref": "#/$defs/string_array" },
+    "proposal_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
