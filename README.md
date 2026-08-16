@@ -99,6 +99,157 @@ Important edges are explicit: a knowledge artifact can require a contract, a
 contract can require a verifier, and a verifier can reject an executor's
 output. Hidden conversational memory is not a pipeline interface.
 
+## Six categories and typed agentic composition
+
+MD-OS keeps six canonical categories explicit. The first three are durable
+artifacts; the last three are operational roles that interact with causal
+reality and evidence.
+
+| Category | Function |
+| --- | --- |
+| **Markdown** | method and links: readable knowledge, instructions, semantic relations, and operating orientation |
+| **JSON** | contracts and state: machine-validatable intent, permissions, parameters, preconditions, current state, and expected outcomes |
+| **NDJSON** | event history: append-only chronology of actions, observations, receipts, and verdicts |
+| **Executors** | real action: bounded components that produce effects on filesystems, programs, APIs, devices, or other authorized substrates |
+| **Sensors** | observed effects: components that measure what actually happened, with provenance, time, units, freshness, uncertainty, and evidence references |
+| **Verifiers** | truth status of the outcome: components that compare intent, expected effects, receipts, observations, and acceptance criteria to issue an evidence-grounded verdict |
+
+In compact form:
+
+```text
+Markdown  orients
+JSON      constrains
+NDJSON    remembers
+Executor  acts
+Sensor    observes
+Verifier  judges
+```
+
+AI models, semantic dispatchers, policy and capability gates, execution
+brokers, ledgers, and consolidators coordinate these categories. They do not
+erase their boundaries. In particular, an Executor is not a Sensor, a Sensor
+is not a Verifier, and a valid JSON document is not by itself proof that its
+contents are true or authorized.
+
+### Strong semantic lanes
+
+A controlled output path routes meaning through a lane-specific contract and a
+deterministic consumer:
+
+```text
+AI candidate
+-> semantic tag
+-> lane-specific JSON contract
+-> deterministic validation
+-> authorized consumer
+```
+
+A semantic lane is therefore more than an output label:
+
+```text
+SemanticLane
+= Meaning
++ Tag
++ Schema
++ Authority
++ Capability
++ Consumer
++ ExpectedEffect
++ Verifier
+```
+
+`answer`, `native command`, `source code`, and `source plus execution` are
+possible example lanes, not universal MD-OS categories. New lanes may be
+defined, but each must declare its own contract, authority, consumer, expected
+effect, and verification route. When an AI chooses the lane, semantic
+classification remains probabilistic; after that choice, schema validation,
+authority checks, bounded consumers, receipts, observations, and verification
+can make the operational transition deterministic.
+
+### Full controlled-action path
+
+A strongly governed composition keeps proposal, authorization, action,
+observation, judgment, history, and consolidation separate:
+
+```text
+Human request
+-> Markdown method and intent
+-> AI candidate
+-> ActionSpec JSON
+-> semantic + policy + capability + approval gates
+-> Execution Broker
+-> Controlled Executor
+-> ActionReceipt JSON
+-> Sensor
+-> Observation JSON
+-> Verifier
+-> VERIFIED | FAILED | BLOCKED | UNCERTAIN
+-> NDJSON event
+-> gated consolidation into JSON state and Markdown knowledge
+```
+
+The contract becomes stricter as information approaches commitment and causal
+effect:
+
+```text
+exploration     -> flexible
+interpretation  -> structured
+proposal        -> typed
+authorization   -> strict
+execution       -> exact capability, target, parameters, and limits
+observation     -> provenance, time, units, freshness, and uncertainty
+verification    -> precommitted criteria and required evidence
+consolidation   -> explicit authority and semantic gate
+```
+
+JSON syntax alone does not create a strong contract. Operational strength
+comes from the combination of machine validation, bounded authority, target
+specificity, provenance, observability, and replayability.
+
+This grammar supports several compositions without confusing their roles:
+
+```text
+orientation:
+  Markdown -> AI -> JSON proposal -> gate
+
+controlled action:
+  Markdown -> AI -> ActionSpec JSON -> gates -> Executor
+  -> Sensor -> Verifier -> NDJSON
+
+sensor-grounded loop:
+  Sensor -> Observation JSON -> AI -> ActionSpec JSON -> gates
+  -> Executor -> Sensor -> Verifier -> NDJSON
+
+verified learning:
+  Executor -> Sensor -> Verifier -> NDJSON -> evaluation
+  -> gated consolidation into JSON and Markdown
+
+deterministic safety reflex:
+  Sensor -> deterministic safety gate -> Executor
+  -> Sensor -> Verifier -> NDJSON
+```
+
+The reflex path deliberately excludes an LLM from an urgent deterministic
+safety decision. Conversely, adding Sensors, action, memory, and feedback makes
+an agent sensor-grounded or operationally perceptive; it is not evidence of
+phenomenological sentience.
+
+The governing invariants are:
+
+```text
+model output is not an effect
+a candidate is not an authorization
+execution is not proof of success
+an observation is not yet a verdict
+a verdict is not canonical memory until authorized consolidation
+```
+
+MD-OS already implements parts of this composition through typed task
+specifications, policies, capabilities, executors, receipts, snapshots,
+verification, episodes, and append-only history. Contract strength still
+varies by connector and runtime; the complete path above is the architectural
+rail against which each implementation can be tested and hardened.
+
 ## Nomenclature
 
 | Term | Meaning |
