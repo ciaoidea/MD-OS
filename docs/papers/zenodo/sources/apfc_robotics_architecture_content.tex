@@ -1,0 +1,128 @@
+\begin{tikzpicture}[
+  font=\sffamily,
+  >=Latex,
+  sensor/.style={
+    rounded corners=2pt,
+    draw=SensorBlue!82!black,
+    fill=white,
+    minimum width=2.55cm,
+    minimum height=0.64cm,
+    align=center,
+    line width=0.72pt,
+    font=\scriptsize\sffamily
+  },
+  action/.style={
+    rounded corners=2pt,
+    draw=ActionGreen!82!black,
+    fill=white,
+    minimum width=2.55cm,
+    minimum height=0.64cm,
+    align=center,
+    line width=0.72pt,
+    font=\scriptsize\sffamily
+  },
+  sensory/.style={->,draw=SensorBlue!86!black,line width=0.75pt},
+  command/.style={->,draw=APFCRed!92!black,line width=1.15pt},
+  safe/.style={->,draw=SafetyOrange!92!black,line width=0.95pt},
+  feedback/.style={->,draw=SensorBlue!82!black,line width=0.70pt,dashed}
+]
+
+\node[inner sep=0] (robot) at (0,0)
+  {\includegraphics[height=7.60cm]{\RobotPlateAsset}};
+
+\node[
+  rounded corners=3pt,
+  draw=APFCRed!92!black,
+  fill=white,
+  minimum width=4.45cm,
+  minimum height=0.72cm,
+  align=center,
+  line width=0.95pt,
+  font=\scriptsize\sffamily
+] (apfc) at (0,4.30) {
+  \textbf{MD-OS APFC --- artificial prefrontal cortex}\\[-0.10em]
+  evidence $\cdot$ context $\cdot$ policy $\cdot$ coordination
+};
+\draw[command] (apfc.south) -- (0,3.10);
+
+\node[
+  rounded corners=7pt,
+  draw=APFCRed!82!black,
+  fill=white,
+  inner xsep=5pt,
+  inner ysep=2.5pt,
+  font=\scriptsize\sffamily
+] at (0,3.55) {ALLOW $\cdot$ CONFIRM $\cdot$ BLOCK $\cdot$ UNCERTAIN};
+
+\node[font=\bfseries\scriptsize\sffamily,text=SensorBlue!82!black]
+  at (-4.72,3.62) {SENSORY EVIDENCE};
+\node[font=\bfseries\scriptsize\sffamily,text=ActionGreen!76!black]
+  at (4.72,3.62) {MECHANICAL CHANNELS};
+
+\node[sensor] (vision) at (-4.72,2.80)
+  {\textbf{Vision}\\camera, depth};
+\node[sensor] (audio) at (-4.72,1.67)
+  {\textbf{Audio}\\microphones};
+\node[sensor] (touch) at (-4.72,0.54)
+  {\textbf{Touch / force}\\tactile, torque};
+\node[sensor] (proprio) at (-4.72,-0.59)
+  {\textbf{Proprioception}\\pose, velocity};
+\node[sensor] (telemetry) at (-4.72,-1.72)
+  {\textbf{Telemetry}\\battery, faults};
+
+\draw[sensory] (vision.east) -- (-0.56,2.24);
+\draw[sensory] (audio.east) -- (-2.08,1.98);
+\draw[sensory] (touch.east) -- ++(0.38,0) |- (-2.18,-2.92);
+\draw[sensory] (proprio.east) -- (-1.94,-0.22);
+\draw[sensory] (telemetry.east) -- (-1.45,-1.08);
+
+\node[action] (speech) at (4.72,2.80)
+  {\textbf{Speech / display}\\communication};
+\node[action] (arms) at (4.72,1.67)
+  {\textbf{Arms / grippers}\\motion, grasp};
+\node[action] (device) at (4.72,0.54)
+  {\textbf{Tools / device I/O}\\interfaces};
+\node[action] (locomotion) at (4.72,-0.59)
+  {\textbf{Locomotion}\\wheels, legs};
+
+\coordinate (safetyCore) at (0,-0.72);
+\draw[safe] (safetyCore) -- ++(2.85,0) |- (speech.west);
+\draw[safe] (safetyCore) -- ++(2.85,0) |- (arms.west);
+\draw[safe] (safetyCore) -- ++(2.85,0) |- (device.west);
+\draw[safe] (safetyCore) -- ++(2.85,0) |- (locomotion.west);
+
+\draw[APFCRed!90!black,line width=1.25pt,->]
+  (0,3.03) -- (0,-0.18);
+\draw[SafetyOrange!92!black,densely dotted,line width=0.90pt]
+  (-2.55,-0.16) -- (2.55,-0.16);
+\node[
+  fill=white,
+  inner sep=1.5pt,
+  font=\bfseries\tiny\sffamily,
+  text=SafetyOrange!92!black
+] at (-1.17,-0.16) {HARD AUTHORITY BOUNDARY};
+
+\node[
+  rounded corners=3pt,
+  draw=SafetyOrange!92!black,
+  fill=white,
+  minimum width=5.55cm,
+  minimum height=0.78cm,
+  align=center,
+  line width=0.90pt,
+  font=\scriptsize\sffamily
+] (safety) at (0,-4.34) {
+  \textbf{Independent safety + real-time controller}\\[-0.08em]
+  interlocks, limits, collision envelope, emergency stop
+};
+\draw[safe] (safety.north) -- (safetyCore);
+
+\draw[feedback] (locomotion.east) -- ++(0.52,0) |- (6.20,-4.92)
+  -- (-6.20,-4.92) |- (vision.west);
+\node[
+  fill=white,
+  inner sep=1.5pt,
+  font=\scriptsize\sffamily,
+  text=SensorBlue!82!black
+] at (0,-4.92) {observed consequences return through the sensory loop};
+\end{tikzpicture}
