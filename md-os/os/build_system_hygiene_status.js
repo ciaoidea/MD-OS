@@ -25,7 +25,7 @@ const AUTHORIZED_ELEVATED_LAUNCHERS = [
   {
     path: 'bootstrap-md-os-codex.sh',
     flag: `--${ELEVATED_CODEX_FLAG}`,
-    reason: 'Verified Codex launcher for MD-OS self-hosted bootstrap and runtime continuity.',
+    reason: 'Verified Codex launcher with an explicit opt-in unsafe mode for externally hardened environments.',
     required_markers: [
       'mdos_bootstrap_prompt',
       'mdos_bootstrap_prelude',

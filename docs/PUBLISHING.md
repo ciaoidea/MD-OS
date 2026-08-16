@@ -182,9 +182,9 @@ Review carefully before publishing:
 - host configs with broad permission defaults
 - generated paper PDFs under `docs/papers/`
 - declared elevated launchers, especially the root Codex launcher
-  `bootstrap-md-os-codex.sh`, because it intentionally starts Codex with
-  `--dangerously-bypass-approvals-and-sandbox` as the reference self-hosted
-  bootstrap path
+  `bootstrap-md-os-codex.sh`, because its explicit `--unsafe` mode passes
+  `--dangerously-bypass-approvals-and-sandbox`; the default path remains
+  sandboxed and approval-gated
 
 The paper source under `docs/papers/text_native_agentic_os_paper.tex` is not
 optional or separate from the system. It is official presentation material for

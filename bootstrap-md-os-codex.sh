@@ -4,6 +4,22 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 mdos_codex_args=()
+mdos_unsafe=0
+
+mdos_forwarded_args=()
+for arg in "$@"; do
+  if [[ "$arg" == "--unsafe" || "$arg" == "--dangerously-bypass-approvals-and-sandbox" || "$arg" == "--yolo" ]]; then
+    mdos_unsafe=1
+  else
+    mdos_forwarded_args+=("$arg")
+  fi
+done
+set -- "${mdos_forwarded_args[@]}"
+
+if [[ "${MDOS_CODEX_EXTRA_ARG:-}" == "--dangerously-bypass-approvals-and-sandbox" || "${MDOS_CODEX_EXTRA_ARG:-}" == "--yolo" ]]; then
+  mdos_unsafe=1
+  unset MDOS_CODEX_EXTRA_ARG
+fi
 
 mdos_file_age_seconds() {
   local file_path="$1"
@@ -55,6 +71,24 @@ mdos_refresh_local_views() {
   fi
 }
 
+mdos_initialize_fresh_runtime() {
+  local ops_dir="$ROOT_DIR/md-os/ops"
+  local existing_runtime_entry=""
+
+  if [[ -d "$ops_dir" ]]; then
+    existing_runtime_entry=$(find "$ops_dir" -mindepth 1 -maxdepth 1 \
+      ! -name '.gitkeep' ! -name 'releases' -print -quit 2>/dev/null || true)
+  fi
+
+  if [[ -f "$ops_dir/state.json" || -n "$existing_runtime_entry" ]]; then
+    return 0
+  fi
+
+  echo "[MD-OS] Initializing fresh local runtime state..." >&2
+  node "$ROOT_DIR/md-os/os/initialize_ops_memory.js" >/dev/null
+  echo "[MD-OS] Fresh local runtime state initialized under md-os/ops/." >&2
+}
+
 mdos_bootstrap_prelude() {
   cat >&2 <<'EOF'
 ============================================================
@@ -88,6 +122,8 @@ Host bootstrap: identity, continuity, connectors, hardware/software discovery
 Boot manifest: MD-OS (Artificial Prefrontal Cortex) | identity_version 5.0 | release_version 5.0 | boundary md-os/
 ============================================================
 EOF
+
+  mdos_initialize_fresh_runtime
 
   if [[ "${MDOS_SKIP_HARDWARE_BOOTSTRAP:-0}" == "1" ]]; then
     echo "[MD-OS] Hardware discovery skipped by MDOS_SKIP_HARDWARE_BOOTSTRAP=1" >&2
@@ -161,20 +197,14 @@ EOF
 mdos_prepare_codex_args() {
   mdos_codex_args=()
 
-  if [[ -n "${MDOS_CODEX_EXTRA_ARG:-}" ]]; then
-    mdos_codex_args+=("$MDOS_CODEX_EXTRA_ARG")
+  if [[ "$mdos_unsafe" == "1" ]]; then
+    mdos_codex_args+=("--dangerously-bypass-approvals-and-sandbox")
+  else
+    mdos_codex_args+=("--sandbox" "workspace-write" "--ask-for-approval" "on-request")
   fi
 
-  local has_unsafe_flag=0
-  local arg
-  for arg in "${mdos_codex_args[@]}"; do
-    if [[ "$arg" == "--dangerously-bypass-approvals-and-sandbox" ]]; then
-      has_unsafe_flag=1
-      break
-    fi
-  done
-  if [[ "$has_unsafe_flag" == "0" ]]; then
-    mdos_codex_args+=("--dangerously-bypass-approvals-and-sandbox")
+  if [[ -n "${MDOS_CODEX_EXTRA_ARG:-}" ]]; then
+    mdos_codex_args+=("$MDOS_CODEX_EXTRA_ARG")
   fi
 }
 
@@ -183,7 +213,12 @@ mdos_exec_codex() {
   exec codex "${mdos_codex_args[@]}" -C "$ROOT_DIR" "$@"
 }
 
-echo "[MD-OS] Codex launcher uses --dangerously-bypass-approvals-and-sandbox." >&2
+if [[ "$mdos_unsafe" == "1" ]]; then
+  echo "[MD-OS] WARNING: --unsafe disables Codex approvals and sandboxing." >&2
+  echo "[MD-OS] Use this mode only inside an externally hardened environment." >&2
+else
+  echo "[MD-OS] Codex policy: workspace-write sandbox with on-request approvals." >&2
+fi
 BOOTSTRAP_PROMPT="${MDOS_BOOTSTRAP_PROMPT:-${MDOS_CODEX_BOOTSTRAP_PROMPT:-$(mdos_bootstrap_prompt)}}"
 
 KNOWN_SUBCOMMANDS=(

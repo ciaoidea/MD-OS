@@ -2,58 +2,107 @@
 
 ![MD-OS Artificial Prefrontal Cortex v5.0 — Your agent, now with an Artificial Prefrontal Cortex](banner.png)
 
-> **Your agent, now with an Artificial Prefrontal Cortex.**
+> **The Agentic Operating Filesystem.**
+>
+> **The model reasons. MD-OS remembers, coordinates, constrains, and verifies.**
+
+LLMs can be brilliant in the moment, but they do not by themselves preserve
+method, memory, permissions, or verified progress across sessions. MD-OS
+externalizes that operational context into plain, readable files.
+
+```text
+md-os/ops/current_task.md  -> the active task and its boundaries
+md-os/ops/state.json       -> persistent operational state
+md-os/ops/journal.ndjson   -> append-only event history
+```
+
+These local runtime files are initialized inside `md-os/ops/`; they are not
+published as somebody else's session state. Goals, constraints, memory,
+actions, and verification become readable, versionable when appropriate, and
+reconstructible artifacts instead of remaining hidden inside a prompt window.
+
+## The core idea
+
+```text
+UNIX:  program -> text stream -> program
+MD-OS: agentic task -> verified artifact -> agentic task
+```
+
+Small bounded tasks, typed artifacts, and explicit composition: the UNIX
+philosophy applied to agentic work.
 
 ## Quick start
 
 **Prerequisites: [Codex CLI](https://developers.openai.com/codex/cli)
 installed and signed in, Node.js 20 or newer, and a Bash shell.**
 
-1. [Download the MD-OS ZIP](https://github.com/ciaoidea/MD-OS/archive/refs/heads/main.zip).
-2. Extract it and open a terminal inside the extracted `MD-OS-main` folder.
-3. Start MD-OS:
+Clone the repository:
+
+```bash
+git clone https://github.com/ciaoidea/MD-OS.git
+cd MD-OS
+./bootstrap-md-os-codex.sh
+```
+
+Or [download the ZIP](https://github.com/ciaoidea/MD-OS/archive/refs/heads/main.zip),
+extract it, open a terminal inside `MD-OS-main`, and run:
 
 ```bash
 ./bootstrap-md-os-codex.sh
 ```
 
-To resume the previous session later:
+The bootstrap initializes a fresh local runtime when needed, performs bounded
+read-only host discovery, and opens Codex inside the MD-OS workspace. Resume
+the most recent session later with:
 
 ```bash
 ./bootstrap-md-os-codex.sh resume
 ```
 
-The launcher opens Codex inside the MD-OS workspace and loads its persistent
-operating context.
+**The launcher is safe by default:** it requests a `workspace-write` sandbox
+with `on-request` approvals. Only inside an externally hardened environment,
+you can explicitly disable both protections:
 
-**Important: the bundled launcher currently runs Codex with approval prompts
-and sandbox restrictions bypassed. Use it only on a trusted machine and
-workspace.**
+```bash
+./bootstrap-md-os-codex.sh --unsafe
+```
 
-## Abstract
+The `--unsafe` mode passes Codex's
+[`--dangerously-bypass-approvals-and-sandbox`](https://developers.openai.com/codex/cli/reference#global-flags)
+flag. It is never enabled implicitly.
+
+## Main layout
+
+```text
+md-os/
+|-- kb/       -> knowledge, rules, and operating models
+|-- ops/      -> persistent memory and local runtime state
+|-- schemas/  -> machine-checkable contracts
+|-- os/       -> deterministic runtime and builders
+`-- modules/  -> bounded capabilities and connectors
+```
+
+Important edges are explicit: a knowledge artifact can require a contract, a
+contract can require a verifier, and a verifier can reject an executor's
+output. Hidden conversational memory is not a pipeline interface.
+
+## Nomenclature
+
+| Term | Meaning |
+| --- | --- |
+| **MD-OS** | the project and its Markdown-native Operating Filesystem |
+| **APFC** | the Artificial Prefrontal Cortex executive control architecture |
+| **v5.0** | the current identity and repository compatibility release line |
+
+In this README and throughout the repository, the short name is **MD-OS**.
+“Markdown Operating Filesystem” is the technical definition; “Markdown
+Operating System for Robotic Agents” is the paper title.
+
+## Architecture and maturity
 
 MD-OS (Artificial Prefrontal Cortex), abbreviated **MD-OS APFC**, is the
 repository-resident agentic operating identity and control plane for persistent
 AI agents, robotic systems, devices, and host runtimes.
-
-MD-OS was originally created by **Alessandro Rizzo**
-([ORCID 0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)). The official repository
-is [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS). The project uses a
-Linux-inspired GPL-2.0-only contribution model and a BSD-inspired coherent
-base-system engineering discipline; “BSD-inspired” describes how the whole
-system evolves, not a BSD software license.
-
-## Project links
-
-- 🌐 **Website:** [www.md-os.org](https://www.md-os.org)
-- ✉️ **Email:** [labs@md-os.org](mailto:labs@md-os.org)
-- 📄 **Zenodo paper:** [Markdown Operating System for Robotic Agents (MD-OS
-  CORTEX): Artificial Prefrontal Cortex
-  (APFC)](https://zenodo.org/records/21960027)
-- 🧑‍🔬 **ORCID:** [Alessandro Rizzo —
-  0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
-- ▶️ **YouTube:** [Watch the MD-OS
-  video](https://www.youtube.com/watch?v=ceeA_RcOPoQ)
 
 The APFC is the system's OS-like executive layer. It allocates context and
 attention budgets, maintains task-scoped working state, schedules and
@@ -1322,11 +1371,13 @@ The repository includes one Codex launcher:
 ./bootstrap-md-os-codex.sh
 ```
 
-This launcher is the Codex launch path. It always starts Codex with
-`--dangerously-bypass-approvals-and-sandbox` and injects the MD-OS bootstrap
-prompt. The broader architecture remains host-portable, but MD-OS APFC must stay
-functional with Codex. To recover the last Codex session, use
-`./bootstrap-md-os-codex.sh resume` or `MDOS_CODEX_RECOVERY=1 ./bootstrap-md-os-codex.sh`.
+This launcher is the Codex launch path. By default it starts Codex with the
+`workspace-write` sandbox and `on-request` approvals, then injects the MD-OS
+bootstrap prompt. The explicit `--unsafe` wrapper option disables both Codex
+protections and is reserved for externally hardened environments. The broader
+architecture remains host-portable, but MD-OS APFC must stay functional with
+Codex. To recover the last Codex session, use `./bootstrap-md-os-codex.sh
+resume` or `MDOS_CODEX_RECOVERY=1 ./bootstrap-md-os-codex.sh`.
 
 `bootstrap-md-os-codex.sh` injects the repository cognitive bootstrap as the
 default initial prompt for an interactive Codex session while still forwarding
@@ -1901,7 +1952,7 @@ Not yet production-grade:
   `md-os/ops/local/hardware/`
 - host-specific application and service inventory is isolated under cleanable
   `md-os/ops/local/software/`
-- host runtime permissions still depend on the selected Codex profile
+- explicit Codex flags or configuration overrides still require operator review
 
 Release hygiene commands:
 
@@ -1910,6 +1961,21 @@ npm run clean:release
 npm run verify:release
 npm run package:demo
 ```
+
+## Research and citation
+
+MD-OS was originally created by **Alessandro Rizzo**. The architecture is
+described in the paper:
+
+> *Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial
+> Prefrontal Cortex (APFC)* — Alessandro Rizzo
+
+- 🌐 **Website:** [www.md-os.org](https://www.md-os.org)
+- ✉️ **Email:** [labs@md-os.org](mailto:labs@md-os.org)
+- 📄 **Zenodo paper:** [record 21960027](https://zenodo.org/records/21960027)
+- 🧑‍🔬 **ORCID:** [0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
+- ▶️ **Video walkthrough:** [watch on YouTube](https://www.youtube.com/watch?v=ceeA_RcOPoQ)
+- 💻 **Official repository:** [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS)
 
 ## License
 
@@ -1936,3 +2002,8 @@ their own contributions unless a separate written agreement applies.
 Historical copies legitimately received under the previous MIT license retain
 the permissions attached to those copies. Later GPL-covered changes are not
 automatically available under those historical MIT terms.
+
+---
+
+*L'intelligenza può essere temporanea. Il contesto operativo deve persistere —
+e restare libero.*

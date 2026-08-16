@@ -162,10 +162,13 @@ The repository includes a convenience launcher:
 ```
 
 The launcher starts a fresh Codex session with the repository cognitive
-bootstrap as the default initial prompt and always passes
-`--dangerously-bypass-approvals-and-sandbox`. To recover the previous Codex
-session inside the same operating frame, use `./bootstrap-md-os-codex.sh resume`.
-Operators can also set `MDOS_CODEX_RECOVERY=1` when invoking the launcher.
+bootstrap as the default initial prompt. By default it passes `--sandbox
+workspace-write --ask-for-approval on-request`. The wrapper's explicit
+`--unsafe` option instead passes `--dangerously-bypass-approvals-and-sandbox`;
+use that mode only inside an externally hardened environment. To recover the
+previous Codex session inside the same operating frame, use
+`./bootstrap-md-os-codex.sh resume`. Operators can also set
+`MDOS_CODEX_RECOVERY=1` when invoking the launcher.
 
 The launcher also prints an English MD-OS startup banner and runs quick
 read-only hardware discovery into `md-os/ops/local/hardware/` plus read-only
