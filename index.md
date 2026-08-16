@@ -239,8 +239,33 @@ bound proof.
 The current claim is therefore precise: **MD-OS provides strong semantic
 orientation, an explicit commitment protocol, and deterministic detection of
 known drift; it does not yet provide complete containment against an
-adversarial or compromised writer.** The Markdown graph is the readable
-knowledge and orientation layer, not the sole authority boundary.
+adversarial or compromised writer.** This boundary is consistent with the
+biologically inspired paradigm rather than an exception to it. Human cognition
+is [plastic](https://www.nature.com/articles/s41467-021-26906-4) and
+suggestible; under controlled conditions,
+[some individuals show high hypnotic responsiveness](https://doi.org/10.1093/cercor/bhw220).
+Robustness therefore does not come from making thought immutable or trusting
+one infallible judge. It emerges from layered semantic rails: stable identity
+attractors, provenance and source
+discrimination, executive inhibition, metacognitive conflict detection,
+bounded experimentation, precommitted gates, separate verification, selective
+consolidation, and feedback.
+
+These layers are an externalized education of operational judgment. They do
+not dictate every thought. They train the architecture to distinguish factual
+support, operational success, safety, authorization, semantic fidelity, and
+ethical acceptability; to formulate relevant, observable, and falsifiable gates
+before acting; and to issue a scoped final verdict (`VERIFIED`, `FAILED`,
+`BLOCKED`, or `UNCERTAIN`) from evidence rather than fluency. Rules state the
+boundaries; experience tests judgment; memory preserves the lesson; APFC
+decides what may become action, canonical knowledge, or identity.
+
+Biological suggestibility is not a security argument for accepting substrate
+compromise. Direct write authority over the repository, policy, gate, or
+protected claim is a separate security problem. It requires external access
+control, authenticated authority, isolated verification, and mandatory commit,
+merge, and publication gates. The Markdown graph is the readable knowledge and
+orientation layer, not the sole authority boundary.
 
 The hardening target is:
 
