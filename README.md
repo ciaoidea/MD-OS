@@ -26,8 +26,8 @@ system evolves, not a BSD software license.
   (APFC)](https://zenodo.org/records/21960027)
 - 🧑‍🔬 **ORCID:** [Alessandro Rizzo —
   0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
-- ▶️ **YouTube:** [Watch the MD-OS CORTEX
-  video](https://www.youtube.com/watch?v=Y8ErJOV8DI4)
+- ▶️ **YouTube:** [Visit the MD-OS
+  channel](https://www.youtube.com/@MD-OS)
 
 The APFC is the system's OS-like executive layer. It allocates context and
 attention budgets, maintains task-scoped working state, schedules and
