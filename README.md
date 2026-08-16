@@ -6,6 +6,10 @@
 >
 > **The model reasons. MD-OS remembers, coordinates, constrains, and verifies.**
 
+MD-OS is a file-native control plane for persistent AI agents. It stores task
+state, constrains tool use, records actions, verifies outcomes, and supports
+replay across sessions.
+
 LLMs can be brilliant in the moment, but they do not by themselves preserve
 method, memory, permissions, or verified progress across sessions. MD-OS
 externalizes that operational context into plain, readable files.
@@ -20,6 +24,15 @@ These local runtime files are initialized inside `md-os/ops/`; they are not
 published as somebody else's session state. Goals, constraints, memory,
 actions, and verification become readable, versionable when appropriate, and
 reconstructible artifacts instead of remaining hidden inside a prompt window.
+
+MD-OS is a constructive demonstration that explicit method, persistent memory,
+bounded action control, traceable execution, and outcome verification can be
+integrated into one operating filesystem. This demonstrates a working mechanism
+for persistent, auditable, resumable operational context under bounded
+conditions. It does not claim that every MD-OS component is necessary, that the
+architecture is optimal, that persistent context alone guarantees success on
+arbitrary tasks, or that the measured benefits are universal across every agent
+and domain.
 
 ## The core idea
 
@@ -90,8 +103,8 @@ output. Hidden conversational memory is not a pipeline interface.
 
 | Term | Meaning |
 | --- | --- |
-| **MD-OS** | the project and its Markdown-native Operating Filesystem |
-| **APFC** | the Artificial Prefrontal Cortex executive control architecture |
+| **MD-OS** | the project and its file-native agent control plane, implemented as a Markdown-native Operating Filesystem |
+| **APFC** | the Artificial Prefrontal Cortex executive control architecture; a functional engineering metaphor, not a biological claim |
 | **v5.0** | the current identity and repository compatibility release line |
 
 In this README and throughout the repository, the short name is **MD-OS**.
@@ -175,18 +188,30 @@ tasks, memory, and recovery paths.
 It externalizes the operational context of persistent AI agents and robotic
 systems into readable, auditable, reconstructible, and actionable files.
 
-MD-OS is an early reference implementation of this Markdown-native Operating
-Filesystem paradigm. It is not yet a mature product runtime for agents or
-robots.
+MD-OS is a working early reference implementation of this Markdown-native
+Operating Filesystem paradigm. The implementation demonstrates the existence of
+the mechanism: operational context can be externalized as persistent state,
+bounded actions, evidence, verification, and replay instead of depending only
+on a model's volatile context window.
+
+The remaining scientific questions are comparative, not existential: how much
+the complete architecture improves outcomes over simpler persistent-memory
+baselines, which components produce that improvement, what overhead they add,
+and how far the result generalizes across agents, hosts, tasks, and domains.
+Those ablation and generalization experiments determine effectiveness,
+necessity, and scope; they do not make the implemented mechanism real.
 
 Architecture status as of `2026-07-18`: MD-OS (Artificial Prefrontal Cortex) is a prototype of a
 bounded quasi-autonomous cognitive agent and its persistent operating context.
 Within an explicit goal, environment, budget, permission set, tool set,
 acceptance contract, and stop condition, it can conduct self-directed research
 and problem solving by forming hypotheses, selecting discriminating tests,
-performing allowed actions, and independently checking outcomes. It is not
-demonstrated autonomous general intelligence. This status date does not change
-the `5.0` compatibility release line or the `5.0.1` package version. See
+performing allowed actions, and checking outcomes through a separate
+deterministic verification path. This is logical separation inside the MD-OS
+trust boundary, not a claim that every verifier is organizationally or
+infrastructurally independent. It is not demonstrated autonomous general
+intelligence. This status date does not change the `5.0` compatibility release
+line or the `5.0.1` package version. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the role boundaries, cognitive
 transaction, autonomy envelope, evidence levels, and maturity gaps.
 
@@ -333,14 +358,16 @@ Core discipline documents:
 - A semantic-operational runtime compiler that turns graph nodes into claim
   indexes, capability indexes, context packs, eval readback, and epistemic
   health reports.
-- A verified single-cycle AGI learning loop that records task episodes,
-  analyzes failures, distills skill candidates, runs evals, applies promotion
-  gates, and rebuilds the runtime compiler without claiming consciousness or
+- A verified single-cycle learning loop, exposed through the historical
+  `mdos agi` compatibility command family, that records task episodes, analyzes
+  failures, distills skill candidates, runs evals, applies promotion gates, and
+  rebuilds the runtime compiler without claiming consciousness, AGI, or
   unrestricted autonomy.
-- A bounded neuromorphic learning accelerator that converts independently
-  verified episodes into a sparse parameterized skill, measures before/after
-  transfer on sealed holdouts at an equal attempt budget, and blocks any AGI
-  claim beyond the measured task family.
+- A bounded sparse-learning research experiment, named the neuromorphic
+  learning accelerator in its internal model, that converts separately verified
+  episodes into a parameterized skill, measures before/after transfer on sealed
+  holdouts at an equal attempt budget, and blocks claims beyond the measured
+  task family.
 - A single knowledge-import entrypoint that turns an external directory into
   inventory, extraction, semantic-epistemic classification, relation mapping,
   promotion plan, questions, and compact readback.
@@ -422,7 +449,7 @@ bounded scope, file changes, schemas or tests, command readback, replay, health
 state, and runtime compiler output. The canonical protocol is
 `md-os/kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md`.
 
-The next kernel path is the proof-carrying Cognitive Transaction Loop. MD-OS
+The next runtime path is the proof-carrying Cognitive Transaction Loop. MD-OS
 accumulates verified operational competence, not context volume or
 self-declared success:
 
@@ -440,12 +467,12 @@ mdos agi prove \
 
 `mdos agi ...` remains a compatibility alias, not a separate AGI layer. A
 transaction writes typed TaskSpecs under `md-os/ops/tasks/`, ActionReceipts
-under `md-os/ops/action_receipts/`, independent VerificationResults under
-`md-os/ops/verifications/`, and proof-carrying episodes under
-`md-os/ops/episodes/`. Without executable acceptance tests the verdict is
-`unverified`; receipt or episode creation alone can never produce `success`.
-Skill promotion is opt-in and remains blocked without distinct verified source
-episodes and a passing holdout eval.
+under `md-os/ops/action_receipts/`, VerificationResults produced by a separate
+deterministic verifier under `md-os/ops/verifications/`, and proof-carrying
+episodes under `md-os/ops/episodes/`. Without executable acceptance tests the
+verdict is `unverified`; receipt or episode creation alone can never produce
+`success`. Skill promotion is opt-in and remains blocked without distinct
+verified source episodes and a passing holdout eval.
 
 The first vertical benchmark uses a fixed repository fixture, typed PlanGraphs,
 an append-only CandidateProvider receipt, one Git worktree per candidate,
@@ -475,7 +502,7 @@ generalization.
 The separate bounded skill provider receives only the public repository
 snapshot and visible checks under the Node permission model. The neuromorphic
 accelerator uses it to compare the same one-attempt provider before and after
-two independently verified development episodes. The reference experiment
+two separately verified development episodes. The reference experiment
 measures a narrow cross-instance result: two sealed holdouts improve from 0/2
 to 2/2, with two attempts before and after, zero regressions, and no detected
 contamination. This supports one bounded learning-transfer claim, not AGI.
@@ -483,16 +510,17 @@ Canonical evidence is written under
 `md-os/ops/agi/learning_experiments/<experiment_id>/`; aggregate benchmark
 status is compiled in `md-os/ops/benchmarks/software_repair/index.md`.
 
-The v3 prerequisite evidence suite broadens the experiment beyond one software
-repair grammar. It uses an isolated typed program synthesizer, independent
-hidden-test oracles, disjoint source and holdout domain families, an
-equal-budget irrelevant-sketch control, a novelty archive, cumulative replay,
-rollback, a procedural learning-progress curriculum, persistent checkpoints,
-fresh process restarts, controlled fault injection, and a hash-chained event
-ledger. The five executable gates are:
+The v3 finite symbolic capability suite, retained under the historical AGI
+compatibility naming, broadens the experiment beyond one software-repair
+grammar. It uses an isolated typed program synthesizer, hidden-test oracles
+kept outside learner requests, disjoint source and holdout data-type families,
+an equal-budget irrelevant-sketch control, a novelty archive, cumulative
+replay, rollback, a procedural learning-progress curriculum, persistent
+checkpoints, fresh process restarts, controlled fault injection, and a
+hash-chained event ledger. The five executable gates are:
 
 ```text
-cross-domain transfer
+structural transfer across data types in a fixed symbolic DSL
 + novel compositional invention
 + persistent autonomous curriculum
 + continual learning without promoted regressions
@@ -502,11 +530,12 @@ cross-domain transfer
 A successful run writes the complete evidence tree under
 `md-os/ops/agi/generality_experiments/<experiment_id>/`, including a master
 report, section reports, every public learner request, process receipts,
-independent verifications, campaign checkpoints, the append-only ledger, and a
-SHA-256 evidence integrity manifest. The protocol and falsification conditions
-are defined by `md-os/kb/AGI_PREREQUISITE_EVIDENCE_MODEL.md`.
+deterministic verification records, campaign checkpoints, the append-only
+ledger, and a SHA-256 evidence integrity manifest. The protocol and
+falsification conditions are defined by
+`md-os/kb/AGI_PREREQUISITE_EVIDENCE_MODEL.md`.
 
-The suite supports the five operational prerequisite edges only inside its
+The suite supports five bounded operational capability edges only inside its
 finite symbolic environment. The schemas force `agi_achieved = false` and
 `agi_claim_supported = false`; an open-world claim still requires external
 sealed domains, independent replication, and materially longer deployment.
