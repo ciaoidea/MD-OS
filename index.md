@@ -216,6 +216,44 @@ and how far the result generalizes across agents, hosts, tasks, and domains.
 Those ablation and generalization experiments determine effectiveness,
 necessity, and scope; they do not make the implemented mechanism real.
 
+### Current semantic-rail boundary
+
+MD-OS has a concrete
+[Semantic Commitment Gate](md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md): it
+checks protected invariant anchors, known contradictions, provenance,
+before/after semantic delta, evidence, and transition authority. Its status is
+integrated into build, replay, the operating cycle, and health readback. This is
+a working rail against known semantic drift when a cooperative or fallible host
+operates through the declared MD-OS path.
+
+It is not yet a non-bypassable semantic root of trust. The AI remains the first
+natural-language interpreter of the Markdown network. A writer with direct
+workspace or Git authority can still omit graph links, write a protected file
+directly, skip the proposal or gate, misstate a self-reported delta or approval,
+or attempt to change the policy, gate, and protected claim together. The
+deterministic scan detects missing anchors and known contradictions; it cannot
+prove arbitrary natural-language equivalence. Author approval is currently a
+structured record, not yet an externally authenticated or cryptographically
+bound proof.
+
+The current claim is therefore precise: **MD-OS provides strong semantic
+orientation, an explicit commitment protocol, and deterministic detection of
+known drift; it does not yet provide complete containment against an
+adversarial or compromised writer.** The Markdown graph is the readable
+knowledge and orientation layer, not the sole authority boundary.
+
+The hardening target is:
+
+```text
+AI explores, interprets, and challenges
+-> runtime derives mandatory context and the actual repository diff
+-> required external checks gate commitment, merge, and publication
+-> authenticated author authority controls foundational change
+```
+
+This preserves flexible reasoning while moving the enforceable transition
+outside the discretion of the same model being governed.
+
 Architecture status as of `2026-07-18`: MD-OS (Artificial Prefrontal Cortex) is a prototype of a
 bounded quasi-autonomous cognitive agent and its persistent operating context.
 Within an explicit goal, environment, budget, permission set, tool set,
