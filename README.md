@@ -4,6 +4,32 @@
 
 > **Your agent, now with an Artificial Prefrontal Cortex.**
 
+## Quick start
+
+**Prerequisites: [Codex CLI](https://developers.openai.com/codex/cli)
+installed and signed in, Node.js 20 or newer, and a Bash shell.**
+
+1. [Download the MD-OS ZIP](https://github.com/ciaoidea/MD-OS/archive/refs/heads/main.zip).
+2. Extract it and open a terminal inside the extracted `MD-OS-main` folder.
+3. Start MD-OS:
+
+```bash
+./bootstrap-md-os-codex.sh
+```
+
+To resume the previous session later:
+
+```bash
+./bootstrap-md-os-codex.sh resume
+```
+
+The launcher opens Codex inside the MD-OS workspace and loads its persistent
+operating context.
+
+**Important: the bundled launcher currently runs Codex with approval prompts
+and sandbox restrictions bypassed. Use it only on a trusted machine and
+workspace.**
+
 ## Abstract
 
 MD-OS (Artificial Prefrontal Cortex), abbreviated **MD-OS APFC**, is the
@@ -963,7 +989,7 @@ documented as equally compatible with Codex unless the Codex bootstrap behavior,
 working-directory handling, command forwarding, permission prompts, and runtime
 readback have been explicitly tested for OpenCode.
 
-## Quick start
+## Runtime initialization
 
 Published-package path:
 
