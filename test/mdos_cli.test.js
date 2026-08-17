@@ -29,6 +29,8 @@ test('mdos init <target_dir> scaffolds a fresh MD-OS workspace', () => {
   assert.ok(fs.existsSync(path.join(target, 'README.md')));
   assert.ok(fs.existsSync(path.join(target, '.gitignore')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/os/mdos.js')));
+  assert.ok(fs.existsSync(path.join(target, 'md-os/os/mdos_console.js')));
+  assert.ok(fs.existsSync(path.join(target, 'install-md-os-console.sh')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/apfc/README.md')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/kb/README.md')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/examples/projects/demo_general_system/project.json')));

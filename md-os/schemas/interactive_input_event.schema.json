@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/interactive_input_event.schema.json",
+  "title": "MD-OS Interactive Input Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "received_at",
+    "source_type",
+    "source_id",
+    "authority",
+    "content_type",
+    "content"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^input_[a-f0-9-]{16,64}$"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "human",
+        "agent",
+        "sensor"
+      ]
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "authority": {
+      "type": "string",
+      "enum": [
+        "operator",
+        "advisory",
+        "evidentiary"
+      ]
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "natural_language",
+        "agent_message",
+        "sensor_observation"
+      ]
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12000
+    }
+  }
+}

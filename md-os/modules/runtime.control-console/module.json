@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "module_id": "runtime.control-console",
+  "kind": "runtime",
+  "version": "0.2.0",
+  "status": "experimental",
+  "entrypoint": "md-os/modules/runtime.control-console/index.js",
+  "summary": "Local Interactive Executive Runtime with deterministic native-command routing and Codex as a read-only typed proposal engine.",
+  "owns": [
+    "md-os/kernel/interaction/*",
+    "md-os/os/control_console.js",
+    "md-os/os/control_console/*"
+  ],
+  "reads": [
+    "AGENTS.md",
+    "ME.md",
+    "md-os/kernel/interaction/native_command_policy.json",
+    "md-os/kb/*",
+    "md-os/ops/modules/registry.json",
+    "md-os/schemas/interactive_*.schema.json"
+  ],
+  "writes": [
+    "md-os/ops/local/control-console/**"
+  ],
+  "capabilities": [
+    {
+      "capability_id": "interaction.control_console",
+      "summary": "Route preauthorized human native commands without a model, or call Codex read-only and stop its action proposals at an explicit human gate.",
+      "risk": "low",
+      "side_effects": [
+        "ephemeral_codex_request",
+        "loopback_http_listener",
+        "private_local_command_history",
+        "preauthorized_read_only_host_process"
+      ],
+      "requires": [
+        "codex_installed_and_authenticated",
+        "loopback_only_bind",
+        "read_only_codex_sandbox",
+        "typed_output_schema",
+        "native_direct_argv_no_shell",
+        "native_filesystem_boundary_md_os",
+        "human_approval_before_model_proposed_executor",
+        "host_local_history_not_publishable"
+      ]
+    }
+  ],
+  "commands": {
+    "start": {
+      "summary": "Start the loopback-only MD-OS Control Console.",
+      "argv": [
+        "node",
+        "md-os/modules/runtime.control-console/index.js",
+        "start"
+      ],
+      "cli": [
+        "console",
+        "start"
+      ]
+    }
+  },
+  "verifiers": [
+    "control_console.loopback_only",
+    "control_console.native_policy_bounded",
+    "control_console.native_model_bypass",
+    "control_console.codex_read_only",
+    "control_console.proposal_schema_valid",
+    "control_console.action_requires_human_approval",
+    "control_console.registry_route_only"
+  ],
+  "evals": [
+    "node --test test/control_console.test.js"
+  ]
+}

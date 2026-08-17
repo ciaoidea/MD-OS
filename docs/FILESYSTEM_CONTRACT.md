@@ -35,6 +35,8 @@ audit, replay, package, and move between machines.
 | `md-os/kb/imports/*/{README,SOURCE_MANIFEST,KNOWLEDGE_NODES,RELATIONS,IDENTITY_FRAME,OPERATING_BINDING}.md` | canonical imported knowledge source | yes | yes | no | yes | no |
 | `md-os/kb/imports/*/canonical_import.json` | canonical imported knowledge source metadata | yes | yes | no | yes | no |
 | `md-os/schemas/*.schema.json` | source schema | yes | yes | no | yes | no |
+| `md-os/kernel/**` | source runtime kernel and control logic | yes | yes | no | yes | no |
+| `md-os/modules/**` | source module manifests, adapters, and module documentation | yes | yes | no | yes | no |
 | `md-os/os/**` | source runtime code | yes | yes | no | yes | no |
 | `md-os/examples/**` | demo source | yes | yes | no | yes | no |
 | `md-os/ops/projects/*/project.json` | live/source project definition | yes | case-dependent | no | case-dependent | no |

@@ -40,6 +40,7 @@ const SCAFFOLD_ENTRIES = [
   'test',
   'package.json',
   'bootstrap-md-os-codex.sh',
+  'install-md-os-console.sh',
   'session-recovery.sh',
 ];
 
@@ -144,6 +145,7 @@ function usage() {
     `  ${cli} live start`,
     `  ${cli} live stop`,
     `  ${cli} live restart`,
+    `  ${cli} console start [--port <port>] [--no-open] [--model <model>]`,
     `  ${cli} continuity status`,
     `  ${cli} continuity start`,
     `  ${cli} continuity stop`,
@@ -654,6 +656,11 @@ function main() {
     if (['start', 'stop', 'status', 'restart', 'run', 'run-once', 'once'].includes(normalized)) {
       runScript('continuity_service.js', [normalized, ...rest]);
     }
+    usage();
+  }
+  if (command === 'console' || command === 'control-console' || command === 'control_console') {
+    const normalized = subcommand || 'start';
+    if (normalized === 'start') runScript('control_console.js', ['start', ...rest]);
     usage();
   }
   if (command === 'wolfram' || command === 'math') {

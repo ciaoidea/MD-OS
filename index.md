@@ -72,7 +72,24 @@ the most recent session later with:
 ./bootstrap-md-os-codex.sh resume
 ```
 
-**The launcher is safe by default:** it requests a `workspace-write` sandbox
+Or start the experimental **MD-OS Control Console**, where MD-OS owns the
+interaction loop. Preauthorized native commands such as `ls` bypass Codex;
+natural language invokes Codex in the background as an ephemeral, read-only,
+schema-constrained reasoning process:
+
+```bash
+./install-md-os-console.sh
+mdos-console
+```
+
+In development mode, `Human -> Codex -> MD-OS`. In Control Console mode,
+MD-OS chooses between `Human -> native policy -> Executor` and `Human ->
+Codex -> gate -> registered Executor`; both routes continue through Sensor,
+Verifier, and event readback. Human inputs are stored only in private,
+Git-ignored local history by default. See
+[Control Console](docs/CONTROL_CONSOLE.md).
+
+**The Codex development launcher is safe by default:** it requests a `workspace-write` sandbox
 with `on-request` approvals. Only inside an externally hardened environment,
 you can explicitly disable both protections:
 
@@ -83,6 +100,154 @@ you can explicitly disable both protections:
 The `--unsafe` mode passes Codex's
 [`--dangerously-bypass-approvals-and-sandbox`](https://developers.openai.com/codex/cli/reference#global-flags)
 flag. It is never enabled implicitly.
+
+## Agentic Control Console: MD-OS + LLM
+
+The Control Console is the operating entrypoint in which the OS/LLM
+relationship is inverted:
+
+```text
+development mode
+  Human -> Codex -> MD-OS
+
+Control Console mode
+  Human -> MD-OS -> native command policy -> Executor
+                  \-> Codex -> commitment gate -> registered Executor
+  Executor -> Sensor -> Verifier -> event history
+```
+
+The experience is unified, but the control layers remain separate. MD-OS owns
+persistent identity, operating context, authority, policy, capability routing,
+history, and verification. Codex runs in the background only when semantic
+interpretation is needed, as a bounded cognitive process that returns a typed
+proposal. It is not the source of execution authority or outcome truth.
+
+### Start the agentic shell
+
+Install the direct runtime command once:
+
+```bash
+./install-md-os-console.sh
+```
+
+Then start the same MD-OS shell from any directory:
+
+```bash
+mdos-console
+```
+
+The installed command points directly to the Control Console runtime in this
+workspace; it does not invoke a bootstrap script and it does not use Ollama.
+The console opens on a loopback-only address such as
+`http://127.0.0.1:4937/`.
+
+No quotes or apostrophes are required. Native machine syntax and natural
+language share the same input field:
+
+```text
+ls -la
+pwd
+cd kb
+inspect the current project and explain what is still open
+list the registered terminal actions
+show the evidence supporting the last result
+```
+
+### Two routes in one console
+
+If the human enters an exact command covered by
+`md-os/kernel/interaction/native_command_policy.json`, MD-OS bypasses the
+model:
+
+```text
+human native command
+-> deterministic direct-argv parser
+-> preauthorized read-only policy
+-> bounded native Executor inside md-os/
+-> captured output
+-> explicit unverified/failed status
+-> private event history
+```
+
+The initial native catalogue contains `ls`, `pwd`, `cd`, `ps`, `top`,
+`whoami`, `id`, `uname`, `uptime`, and `free`. Filesystem commands start in
+`md-os/`; `cd` cannot leave that boundary. There is no Bash evaluation: pipes,
+redirections, command substitution, and unsupported paths or options are
+rejected rather than executed. Only the human operator channel may use this
+direct lane.
+
+Natural language follows the cognitive lane:
+
+```text
+natural-language input
+-> typed InputEvent
+-> Codex inside the MD-OS repository
+-> repository AGENTS.md instructions
+-> ephemeral read-only reasoning turn
+-> schema-constrained ProposalSpec
+-> deterministic lane and registry validation
+-> visible human commitment gate when action is requested
+-> registered module command only after approval
+-> executor readback
+-> explicit observed/unverified/failed status
+-> private event history
+```
+
+Codex cannot provide a native shell string for direct execution. A
+model-proposed action is eligible only when its module, capability, command,
+and parameters already exist in the generated MD-OS module registry. Approval
+is single-use. A successful process exit—including a native command—is not
+automatically reported as verified truth: the Console keeps Executor, Sensor,
+and Verifier status distinct.
+
+### Shell history is not canonical memory
+
+Bash records only the command used to start the console. Commands entered in
+the MD-OS shell are written by default to:
+
+```text
+md-os/ops/local/control-console/history.ndjson
+```
+
+The local session ledger is hash-chained under:
+
+```text
+md-os/ops/local/control-console/sessions/<session_id>.ndjson
+```
+
+These paths are private host-local state, ignored by Git, and excluded from the
+publication boundary. The default history keeps human commands and operational
+metadata, not the complete model transcript. Full local transcript persistence
+requires `mdos-console --save-chat`; all history can be disabled with
+`mdos-console --no-history`.
+
+Neither command history nor chat text becomes an MD-OS rule, thesis, skill, or
+canonical memory automatically. Stable memory requires a separate,
+evidence-bearing promotion.
+
+### Current implemented boundary
+
+The current console deliberately provides:
+
+- model-free execution of a declared native read-only command policy;
+- direct argument-vector execution without Bash evaluation;
+- a virtual filesystem working directory bounded to `md-os/`;
+- one ephemeral Codex reasoning process per turn;
+- repository `AGENTS.md` orientation;
+- read-only Codex sandbox selection;
+- strict structured output plus deterministic validation;
+- only preauthorized native commands or registered interactive actions;
+- explicit human approval before every model-proposed action;
+- loopback-only HTTP with a per-process mutation token;
+- private local natural-language command history;
+- truthful `unverified` status when no connector-specific Sensor and Verifier
+  have established the requested effect.
+
+It does not yet claim autonomous recursive agents, a persistent cloud agent
+team, complete sensor coverage, or containment of a compromised host process.
+See [Control Console](docs/CONTROL_CONSOLE.md) and
+[Interactive Executive Runtime Model](md-os/kb/INTERACTIVE_EXECUTIVE_RUNTIME_MODEL.md).
+
 
 ## Main layout
 
@@ -1624,13 +1789,15 @@ A host runtime should:
 7. Run deterministic scripts from `md-os/os/`.
 8. Report back using the rebuilt Markdown and JSON state.
 
-The repository includes one Codex launcher:
+The repository includes two operating entrypoints; only the semantic route of
+the second one invokes Codex:
 
 ```bash
 ./bootstrap-md-os-codex.sh
+mdos-console
 ```
 
-This launcher is the Codex launch path. By default it starts Codex with the
+`bootstrap-md-os-codex.sh` is the development path. By default it starts Codex with the
 `workspace-write` sandbox and `on-request` approvals, then injects the MD-OS
 bootstrap prompt. The explicit `--unsafe` wrapper option disables both Codex
 protections and is reserved for externally hardened environments. The broader
@@ -1646,6 +1813,15 @@ banner and runs quick read-only hardware and software discovery into
 `MDOS_SKIP_HARDWARE_BOOTSTRAP=1` or `MDOS_SKIP_SOFTWARE_BOOTSTRAP=1` to skip
 either startup scan. The launcher then refreshes the local runtime views so the
 scan is visible in generated indices.
+
+`mdos-console` is the controlled operating command installed once by
+`install-md-os-console.sh`. Exact commands covered by the native read-only
+policy bypass Codex; natural language invokes an ephemeral `codex exec`
+process in a read-only sandbox. MD-OS validates its JSON proposal, resolves
+any requested capability against the module registry, and stops every
+model-proposed action at an explicit human gate. Codex never supplies a native
+command string for direct execution. The command history remains under
+`md-os/ops/local/control-console/`, outside the publishable source boundary.
 
 More detail: [docs/HOST_RUNTIME_INTEGRATION.md](docs/HOST_RUNTIME_INTEGRATION.md)
 
@@ -1671,8 +1847,9 @@ MD-OS (Artificial Prefrontal Cortex) v5.0 provides:
 In short:
 
 ```text
-Codex = the host runtime operating MD-OS in the current session
-MD-OS = the persistent agent, control plane, and Operating Filesystem
+Development: Codex operates MD-OS for the human.
+Console:     MD-OS operates Codex for the human.
+MD-OS:      persistent identity, control plane, memory, and Operating Filesystem.
 ```
 
 The host can change. The MD-OS state, rules, and continuity model remain.

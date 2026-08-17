@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/interactive_execution_receipt.schema.json",
+  "title": "MD-OS Interactive Execution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "proposal_id",
+    "decided_at",
+    "decision",
+    "execution",
+    "observation",
+    "verification"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^receipt_[a-f0-9-]{16,64}$"
+    },
+    "proposal_id": {
+      "type": "string",
+      "pattern": "^proposal_[a-f0-9-]{16,64}$"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "declined"
+      ]
+    },
+    "execution": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "observation": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "scope",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "verified",
+            "unverified",
+            "failed",
+            "declined"
+          ]
+        },
+        "scope": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

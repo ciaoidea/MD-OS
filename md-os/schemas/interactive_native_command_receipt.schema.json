@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/interactive_native_command_receipt.schema.json",
+  "title": "MD-OS Interactive Native Command Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "input_event_id",
+    "created_at",
+    "policy_id",
+    "model_bypassed",
+    "gate",
+    "execution",
+    "observation",
+    "verification"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^receipt_[a-f0-9-]{16,64}$"
+    },
+    "input_event_id": {
+      "type": "string",
+      "pattern": "^input_[a-f0-9-]{16,64}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "policy_id": {
+      "type": "string"
+    },
+    "model_bypassed": {
+      "type": "boolean",
+      "const": true
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "preauthorized_by_native_policy"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "execution": {
+      "type": "object"
+    },
+    "observation": {
+      "type": "object"
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "scope",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "unverified",
+            "failed"
+          ]
+        },
+        "scope": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="mdos-console-token" content="{{MDOS_CONSOLE_TOKEN}}">
+  <title>MD-OS Control Console</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">MD-OS APFC v5.0</p>
+        <h1>Control Console</h1>
+      </div>
+      <div class="runtime-state">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="runtime-label">Connecting</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="rail" aria-label="MD-OS interaction layers">
+        <p class="rail-title">Interaction loop</p>
+        <ol id="layer-list">
+          <li data-layer="input"><span>01</span> Input event</li>
+          <li data-layer="native"><span>02</span> Native router</li>
+          <li data-layer="codex"><span>03</span> Codex proposal</li>
+          <li data-layer="gate"><span>04</span> Commitment gate</li>
+          <li data-layer="executor"><span>05</span> Executor</li>
+          <li data-layer="sensor"><span>06</span> Sensor</li>
+          <li data-layer="verifier"><span>07</span> Verifier</li>
+          <li data-layer="ledger"><span>08</span> Event readback</li>
+        </ol>
+        <div class="boundary-card">
+          <strong>Hard boundary</strong>
+          <p>Known read-only shell commands bypass Codex through deterministic policy. Model-proposed actions stop at the human gate.</p>
+        </div>
+      </aside>
+
+      <section class="console-panel">
+        <div id="transcript" class="transcript" aria-live="polite">
+          <article class="message system-message">
+            <p class="message-label">SYSTEM</p>
+            <p>MD-OS owns this loop. Type ls, pwd, or another preauthorized native command directly; natural language is routed to Codex as a bounded proposal.</p>
+          </article>
+        </div>
+
+        <form id="interaction-form" class="composer">
+          <div class="composer-meta">
+            <label>
+              Input channel
+              <select id="source-type" name="source_type">
+                <option value="human">Human intent</option>
+                <option value="agent">Agent proposal</option>
+                <option value="sensor">Sensor observation</option>
+              </select>
+            </label>
+            <span id="channel-authority">authority: operator</span>
+          </div>
+          <textarea id="content" name="content" rows="4" maxlength="12000" required placeholder="Ask, inspect, or propose a bounded action…"></textarea>
+          <div class="composer-actions">
+            <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit</span>
+            <button id="submit-button" type="submit">Send to MD-OS</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="inspection-panel">
+        <div class="inspection-head">
+          <p class="eyebrow">Typed readback</p>
+          <h2>Current proposal</h2>
+        </div>
+        <div id="proposal-empty" class="empty-state">
+          The validated JSON proposal will appear here before any action can run.
+        </div>
+        <div id="proposal-view" class="proposal-view hidden"></div>
+      </aside>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

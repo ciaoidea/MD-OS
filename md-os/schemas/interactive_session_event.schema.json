@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-os/schemas/interactive_session_event.schema.json",
+  "title": "MD-OS Control Console Local Session Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "session_id",
+    "sequence",
+    "occurred_at",
+    "event_type",
+    "privacy_mode",
+    "previous_hash",
+    "payload",
+    "event_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^session_[a-f0-9-]{16,64}$"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "session_started",
+        "input_received",
+        "native_command_recognized",
+        "native_command_rejected",
+        "proposal_validated",
+        "proposal_rejected",
+        "proposal_approved",
+        "proposal_declined",
+        "execution_completed"
+      ]
+    },
+    "privacy_mode": {
+      "type": "string",
+      "enum": [
+        "commands",
+        "full"
+      ]
+    },
+    "previous_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "event_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
