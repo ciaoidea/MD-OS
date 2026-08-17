@@ -88,6 +88,19 @@ test('Codex launcher keeps resume on the safe default path', () => {
     'on-request',
   ]);
   assert.deepEqual(result.args.slice(-2), ['resume', '--last']);
+  assert.doesNotMatch(result.stderr, /Host bootstrap|Hardware discovery|Refreshing local runtime/);
+});
+
+test('Codex launcher forwards explicit resume selectors without rebuilding', () => {
+  const sessionId = '019c1234-5678-7000-8000-123456789abc';
+  const result = runLauncher(['resume', sessionId, 'continue the task']);
+
+  assert.deepEqual(result.args.slice(-3), [
+    'resume',
+    sessionId,
+    'continue the task',
+  ]);
+  assert.doesNotMatch(result.stderr, /Host bootstrap|Hardware discovery|Refreshing local runtime/);
 });
 
 test('Codex launcher initializes only an empty fresh runtime', () => {

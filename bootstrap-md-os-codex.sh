@@ -260,21 +260,20 @@ for arg in "$@"; do
 done
 
 if [[ "${MDOS_CODEX_RECOVERY:-0}" == "1" || "${MDOS_CODEX_RESUME_LAST:-0}" == "1" || "$first_positional" == "resume" ]]; then
-  resume_request=""
+  resume_args=()
   if [[ "$first_positional" == "resume" && $first_positional_index -ge 0 ]]; then
-    trailing_args=("${@:$(($first_positional_index + 2))}")
-    if [[ ${#trailing_args[@]} -gt 0 ]]; then
-      resume_request="${trailing_args[*]}"
-    fi
+    resume_args=("${@:$(($first_positional_index + 2))}")
   elif [[ $# -gt 0 ]]; then
-    resume_request="$*"
+    resume_args=("$@")
   fi
 
-  mdos_bootstrap_prelude
-  if [[ -n "$resume_request" ]]; then
-    echo "[MD-OS] codex resume --last does not accept an injected bootstrap prompt without an explicit session id; extra resume text was ignored." >&2
+  # A saved Codex thread already contains its transcript and MD-OS bootstrap.
+  # Resume it directly: repeating hardware/software discovery and generated
+  # runtime refresh here wastes resources and delays the interactive TUI.
+  if [[ ${#resume_args[@]} -eq 0 ]]; then
+    resume_args=("--last")
   fi
-  mdos_exec_codex resume --last
+  mdos_exec_codex resume "${resume_args[@]}"
 fi
 
 for subcommand in "${KNOWN_SUBCOMMANDS[@]}"; do

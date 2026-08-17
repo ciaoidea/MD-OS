@@ -2,7 +2,7 @@
   "schema": "mdos.shell.runtime/v1",
   "runtime_instructions": "MDOS_SHELL.md",
   "provider": "codex",
-  "model": "default",
+  "model": "gpt-5.6-luna",
   "backend": "app-server",
   "reasoning_effort": "low",
   "think": false,

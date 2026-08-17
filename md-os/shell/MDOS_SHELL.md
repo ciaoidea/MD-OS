@@ -10,6 +10,8 @@ context.
 
 - Load and validate the selected JSON manifest and every declared Markdown
   source before invoking Codex.
+- Let Codex discover repository `AGENTS.md` natively from the working
+  directory. Do not duplicate its full text inside the shell program prompt.
 - Treat Markdown instructions as cumulative.
 - Pass the complete human input to the selected agent as the operating request,
   never as runtime configuration.
@@ -41,9 +43,13 @@ context.
 - Handle stateful directory changes (`cd`, `chdir`, and Windows
   `Set-Location`) inside the MD-OS REPL process so `PWD`, `OLDPWD`, the prompt,
   and Tab completion remain coherent.
-- Start one Codex App Server process and one Codex thread on the first semantic
-  line in a REPL. Keep both alive until the REPL exits; do not launch
-  `codex exec` again for each later semantic line.
+- Prewarm one Codex App Server process and one Codex thread when the REPL
+  starts. Keep both alive until the REPL exits; do not launch `codex exec`
+  for semantic turns.
+- Stream only validated conversational `answer` text after its routing header
+  is known. Buffer commands and scripts completely before execution.
+- Use `gpt-5.6-luna` as the lightweight interactive default and permit an
+  explicit model override when deeper reasoning is worth the latency.
 - Use `low` reasoning effort for interactive shell turns by default. Permit an
   explicit environment override when deeper reasoning is worth the latency.
 - Measure each Codex turn and expose the preceding turn duration to the next

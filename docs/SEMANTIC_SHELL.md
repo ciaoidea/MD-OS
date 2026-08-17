@@ -84,10 +84,10 @@ input
 │   └── execute in the detected host shell
 │       └── retain bounded command/output/exit readback for the next AI turn
 └── otherwise
-    └── first turn: start one Codex App Server and one MD-OS Codex thread
-        later turns: reuse that live process and exact thread
+    └── use the prewarmed Codex App Server and MD-OS Codex thread
+        later turns: reuse that same live process and exact thread
         └── include any native-shell observations since the preceding AI turn
-        └── `AGENT: answer`  -> display text
+        └── `AGENT: answer`  -> stream text after validating the route header
         └── `AGENT: code`    -> display source
         └── `AGENT: os`      -> validate one command, print `COMMAND:`, execute
         └── `AGENT: code+os` -> validate script, print `COMMAND:`, execute
@@ -138,16 +138,19 @@ Cortex rules     -> MD-OS shell programs plus repository `AGENTS.md`
 stateless turns  -> one live Codex thread plus bounded shell observations
 ```
 
-The first semantic turn starts one read-only `codex app-server` process over
-local JSONL stdio, initializes one thread, and keeps both alive for the REPL
-lifetime. Later turns use `turn/start` on that same connection; they do not
-spawn `codex exec resume` again. One-shot invocations remain ephemeral because
-they have no later turn to remember. The shell buffers the final agent message
-and applies the same tagged-output validation used by Cortex before displaying
-or executing it. The default Codex model comes from the user's Codex
-configuration, while interactive reasoning effort defaults to `low` so a
-global `xhigh` setting does not make routine shell dialogue unnecessarily slow.
-Codex currently documents App Server as an experimental integration surface.
+The REPL prewarms one read-only `codex app-server` process over local JSONL
+stdio, initializes one thread, and keeps both alive for its lifetime. Later
+turns use `turn/start` on that same connection; they do not spawn `codex exec`
+or `codex exec resume`. One-shot semantic invocations also use a short-lived
+App Server by default; `MDOS_CODEX_BACKEND=exec` is the explicit compatibility
+path. Codex already discovers the repository `AGENTS.md` when it starts from
+the workspace, so the shell program does not copy those same instructions into
+the first user prompt. The shell consumes `item/agentMessage/delta` events and exposes text only
+after the `AGENT: answer` header is complete. It continues to buffer `os` and
+`code+os` output fully before validation and execution. The interactive model
+defaults to `gpt-5.6-luna` with `low` reasoning effort; both remain explicitly
+overrideable. Codex currently documents App Server as an experimental
+integration surface.
 
 The Codex CLI stores its own resumable session outside this repository. MD-OS
 does not write the raw shell transcript into tracked files, and exiting the
@@ -158,8 +161,8 @@ Optional environment variables:
 
 | Variable | Meaning |
 | --- | --- |
-| `MDOS_MODEL` | select an explicit model; unset uses the Codex default |
-| `MDOS_REASONING_EFFORT` | `minimal`, `low` (default), `medium`, `high`, or `xhigh` |
+| `MDOS_MODEL` | select an explicit model; the shell default is `gpt-5.6-luna` |
+| `MDOS_REASONING_EFFORT` | select a model-supported effort; shell default: `low` |
 | `MDOS_CODEX_BACKEND` | `app-server` (persistent REPL default) or `exec` compatibility mode |
 | `MDOS_CODEX_BIN` | override the `codex` executable path, primarily for testing |
 | `MDOS_PROMPT_COLOR` | `auto`, `always`, or `never` |

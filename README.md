@@ -65,13 +65,17 @@ extract it, open a terminal inside `MD-OS-main`, and run:
 ./bootstrap-md-os-codex.sh
 ```
 
-The bootstrap initializes a fresh local runtime when needed, performs bounded
-read-only host discovery, and opens Codex inside the MD-OS workspace. Resume
-the most recent session later with:
+The first bootstrap initializes a fresh local runtime when needed, performs
+bounded read-only host discovery, and opens Codex inside the MD-OS workspace.
+
+**For every later session, resume directly with:**
 
 ```bash
 ./bootstrap-md-os-codex.sh resume
 ```
+
+The resume path reopens the latest Codex transcript from the MD-OS workspace
+without repeating hardware discovery, software discovery, or runtime rebuilds.
 
 **The launcher is safe by default:** it requests a `workspace-write` sandbox
 with `on-request` approvals. Only inside an externally hardened environment,
@@ -129,16 +133,16 @@ simulation. It preserves the actual current directory, persistent `cd`,
 `PWD`/`OLDPWD`, host-style prompt and colors, Readline/libedit editing, Tab
 completion, pipes, redirections, substitutions, and the native command
 language of Linux, macOS, BSD, or Windows. Valid native commands bypass Codex
-entirely. Natural-language lines invoke an ephemeral `codex exec` reasoning
-turn in one-shot mode. Inside the interactive REPL, the first natural-language
-line starts one read-only Codex App Server process and one Codex thread; both
-remain alive until the REPL exits. Later natural-language lines use that live
-connection instead of restarting `codex exec`. Interactive turns default to
-`low` reasoning effort rather than inheriting a global `xhigh` setting; set
-`MDOS_REASONING_EFFORT` explicitly when deeper reasoning is worth the latency.
-Native commands still bypass the model, but MD-OS retains a bounded observation
-of their command, directory, exit code, and terminal output for the next
-semantic turn:
+entirely. Natural-language requests use Codex App Server by default, including
+one-shot requests; `codex exec` remains only an explicit compatibility backend.
+The interactive REPL prewarms one read-only App Server process and one Codex
+thread, then keeps both alive until exit. Conversational `answer` text streams
+as soon as its routing header is known, while commands and scripts remain fully
+buffered and validated before execution. The shell defaults to the lightweight
+`gpt-5.6-luna` model with `low` reasoning effort; `MDOS_MODEL` and
+`MDOS_REASONING_EFFORT` can explicitly select a deeper path. Native commands
+still bypass the model, but MD-OS retains a bounded observation of their
+command, directory, exit code, and terminal output for the next semantic turn:
 
 ```text
 native input -> real shell -> bounded observation ─┐

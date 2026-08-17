@@ -4,9 +4,7 @@
   "version": "5.0.0",
   "kind": "agent-dispatch",
   "entrypoint": "orchestrator.md",
-  "includes": [
-    "../../../AGENTS.md"
-  ],
+  "includes": [],
   "permissions": [
     "platform.detect",
     "model.invoke",

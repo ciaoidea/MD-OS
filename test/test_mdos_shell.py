@@ -7,6 +7,7 @@ import io
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -91,6 +92,23 @@ class FakeCodex:
                             "id": request_id,
                             "result": {{"turn": {{"id": turn_id, "status": "inProgress", "items": []}}}},
                         }}), flush=True)
+                        split_at = max(1, len(response) // 3)
+                        for delta in (
+                            response[:split_at],
+                            response[split_at:split_at * 2],
+                            response[split_at * 2:],
+                        ):
+                            if not delta:
+                                continue
+                            print(json.dumps({{
+                                "method": "item/agentMessage/delta",
+                                "params": {{
+                                    "threadId": {self.THREAD_ID!r},
+                                    "turnId": turn_id,
+                                    "itemId": f"message-{{turn_index + 1}}",
+                                    "delta": delta,
+                                }},
+                            }}), flush=True)
                         print(json.dumps({{
                             "method": "item/completed",
                             "params": {{
@@ -177,14 +195,14 @@ def run_console(arguments: list[str], fake: FakeCodex, cwd: Path = PROJECT_ROOT)
 
 
 class SemanticShellParityTests(unittest.TestCase):
-    def test_default_program_loads_md_os_and_repository_instructions(self):
+    def test_default_program_uses_codex_native_agents_discovery_without_duplication(self):
         runtime = ENGINE.load_runtime()
         program = ENGINE.load_program(ENGINE.DEFAULT_AGENT_REFERENCE, runtime)
         self.assertEqual(runtime.provider, "codex")
         self.assertEqual(program.program_id, "md-os")
         self.assertEqual(program.kind, "agent-dispatch")
-        self.assertIn("Stable repository purpose", program.instructions)
         self.assertIn("Route to `answer`", program.instructions)
+        self.assertNotIn("Stable repository purpose", program.instructions)
 
     def test_explicit_native_command_bypasses_codex(self):
         with FakeCodex() as fake:
@@ -209,13 +227,13 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(result.stdout, f"{answer}\n")
             requests = fake.requests()
             self.assertEqual(len(requests), 1)
-            self.assertIn("--ephemeral", requests[0]["arguments"])
-            self.assertIn("read-only", requests[0]["arguments"])
-            self.assertIn(
-                'model_reasoning_effort="low"', requests[0]["arguments"]
-            )
+            self.assertEqual(requests[0]["arguments"][:2], ["app-server", "--listen"])
+            self.assertEqual(requests[0]["params"]["effort"], "low")
+            self.assertEqual(requests[0]["params"]["model"], "gpt-5.6-luna")
+            self.assertEqual(len(fake.process_starts()), 1)
             self.assertIn("che cosa è un tensore?", requests[0]["prompt"])
             self.assertIn("MANDATORY RUNTIME OUTPUT CONTRACT", requests[0]["prompt"])
+            self.assertNotIn("Stable repository purpose", requests[0]["prompt"])
 
     def test_codex_generated_os_command_executes_in_real_shell(self):
         with FakeCodex("AGENT: os\nprintf semantic-ok") as fake:
@@ -328,6 +346,28 @@ class SemanticShellParityTests(unittest.TestCase):
         commands = ENGINE.completion_candidates("pyth", True)
         self.assertTrue(any(candidate.startswith("python") for candidate in commands))
 
+    def test_answer_stream_hides_routing_header_and_preserves_lines(self):
+        streamer = ENGINE.DispatchAnswerStreamer()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            streamer.feed("AGENT:")
+            self.assertEqual(output.getvalue(), "")
+            streamer.feed(" answer\nprima riga\n")
+            streamer.feed("seconda riga")
+            streamed = streamer.finish(
+                "AGENT: answer\nprima riga\nseconda riga"
+            )
+        self.assertTrue(streamed)
+        self.assertEqual(output.getvalue(), "prima riga\nseconda riga\n")
+
+        command_streamer = ENGINE.DispatchAnswerStreamer()
+        command_output = io.StringIO()
+        with contextlib.redirect_stdout(command_output):
+            command_streamer.feed("AGENT: os\nprintf ok")
+            streamed = command_streamer.finish("AGENT: os\nprintf ok")
+        self.assertFalse(streamed)
+        self.assertEqual(command_output.getvalue(), "")
+
     def test_cd_persists_inside_repl_process(self):
         previous_directory = Path.cwd()
         previous_pwd = os.environ.get("PWD")
@@ -365,6 +405,32 @@ class SemanticShellParityTests(unittest.TestCase):
                 os.environ.pop("OLDPWD", None)
             else:
                 os.environ["OLDPWD"] = previous_oldpwd
+
+    def test_codex_generated_cd_changes_the_persistent_repl_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            child = parent / "semantic child"
+            child.mkdir()
+            response = f"AGENT: os\ncd {shlex.quote(str(child))}"
+            with FakeCodex(response) as fake:
+                environment = os.environ.copy()
+                environment["MDOS_CODEX_BIN"] = str(fake.executable)
+                environment["MDOS_PROMPT_COLOR"] = "never"
+                result = subprocess.run(
+                    [sys.executable, str(ENGINE_PATH)],
+                    input="vai nella cartella indicata\npwd\nexit\n",
+                    cwd=parent,
+                    env=environment,
+                    check=False,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(str(child), result.stdout)
+                self.assertIn(f"COMMAND: cd {shlex.quote(str(child))}", result.stderr)
+                self.assertEqual(len(fake.requests()), 1)
 
     def test_no_arguments_opens_shell_and_pwd_runs_natively(self):
         with FakeCodex() as fake, tempfile.TemporaryDirectory() as temporary:

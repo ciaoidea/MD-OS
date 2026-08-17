@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -340,7 +341,15 @@ def load_runtime() -> RuntimeSpec:
     if backend not in {"app-server", "exec"}:
         fail(f"{scope} field 'backend' must be 'app-server' or 'exec'", 65)
     reasoning_effort = contract.get("reasoning_effort", "low")
-    if reasoning_effort not in {"minimal", "low", "medium", "high", "xhigh"}:
+    if reasoning_effort not in {
+        "none",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+    }:
         fail(
             f"{scope} field 'reasoning_effort' has an unsupported value",
             65,
@@ -698,9 +707,18 @@ def effective_reasoning_effort(runtime: RuntimeSpec) -> str:
     effort = os.environ.get(
         "MDOS_REASONING_EFFORT", runtime.reasoning_effort
     ).strip().casefold()
-    if effort not in {"minimal", "low", "medium", "high", "xhigh"}:
+    if effort not in {
+        "none",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+    }:
         fail(
-            "MDOS_REASONING_EFFORT must be minimal, low, medium, high, or xhigh",
+            "MDOS_REASONING_EFFORT must be none, minimal, low, medium, high, "
+            "xhigh, or max",
             64,
         )
     return effort
@@ -1145,7 +1163,6 @@ class CodexAppServerClient:
                 },
                 "capabilities": {
                     "optOutNotificationMethods": [
-                        "item/agentMessage/delta",
                         "item/reasoning/summaryTextDelta",
                         "item/reasoning/summaryPartAdded",
                     ]
@@ -1172,7 +1189,11 @@ class CodexAppServerClient:
         self.thread_id = thread_id
         return thread_id
 
-    def run_turn(self, prompt: str) -> str:
+    def run_turn(
+        self,
+        prompt: str,
+        on_agent_delta: Callable[[str], None] | None = None,
+    ) -> str:
         if self.thread_id is None:
             self.start_thread()
         assert self.thread_id is not None
@@ -1215,6 +1236,13 @@ class CodexAppServerClient:
                 continue
             notification = message.get("params")
             if not isinstance(notification, dict):
+                continue
+            if method == "item/agentMessage/delta":
+                if notification.get("threadId") != self.thread_id:
+                    continue
+                delta = notification.get("delta")
+                if on_agent_delta is not None and isinstance(delta, str) and delta:
+                    on_agent_delta(delta)
                 continue
             if method == "item/completed":
                 if notification.get("threadId") != self.thread_id:
@@ -1269,6 +1297,55 @@ class CodexAppServerClient:
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=2)
+
+
+class DispatchAnswerStreamer:
+    """Stream conversational text only after the answer route is known."""
+
+    def __init__(self) -> None:
+        self.pending = ""
+        self.answer_route: bool | None = None
+        self.emitted = ""
+
+    def _write(self, text: str) -> None:
+        if not text:
+            return
+        sys.stdout.write(text)
+        sys.stdout.flush()
+        self.emitted += text
+
+    def feed(self, delta: str) -> None:
+        if self.answer_route is False:
+            return
+        if self.answer_route is True:
+            self._write(delta)
+            return
+        self.pending += delta
+        newline = self.pending.find("\n")
+        if newline < 0:
+            if len(self.pending) > 64:
+                self.answer_route = False
+                self.pending = ""
+            return
+        header = self.pending[:newline].removesuffix("\r")
+        content = self.pending[newline + 1 :]
+        self.pending = ""
+        self.answer_route = header == "AGENT: answer"
+        if self.answer_route:
+            self._write(content)
+
+    def finish(self, final_output: str) -> bool:
+        normalized = final_output.replace("\r\n", "\n").replace("\r", "\n").strip()
+        header, separator, content = normalized.partition("\n")
+        if not separator or header != "AGENT: answer" or self.answer_route is not True:
+            return False
+        final_content = content.strip()
+        emitted = self.emitted.replace("\r\n", "\n").replace("\r", "\n")
+        if final_content.startswith(emitted):
+            self._write(final_content[len(emitted) :])
+        if not self.emitted.endswith("\n"):
+            self._write("\n")
+        return True
 
 
 def codex_invocation(
@@ -1355,24 +1432,36 @@ def run_ai(
     runtime: RuntimeSpec,
     prompt: str,
     session: ShellSession | None = None,
+    on_agent_delta: Callable[[str], None] | None = None,
 ) -> str:
-    if session is not None and effective_backend(runtime) == "app-server":
+    if effective_backend(runtime) == "app-server":
         started_at = time.monotonic()
-        if session.app_server is None:
-            session.app_server = CodexAppServerClient(runtime)
+        temporary_client = session is None
+        if temporary_client:
+            app_server = CodexAppServerClient(runtime)
+        else:
+            assert session is not None
+            if session.app_server is None:
+                session.app_server = CodexAppServerClient(runtime)
+            app_server = session.app_server
         try:
-            model_response = session.app_server.run_turn(prompt)
+            model_response = app_server.run_turn(prompt, on_agent_delta)
         except BaseException:
-            session.app_server.close()
-            session.app_server = None
-            session.codex_thread_id = None
+            app_server.close()
+            if session is not None:
+                session.app_server = None
+                session.codex_thread_id = None
             raise
         finally:
-            session.last_codex_turn_duration_ms = round(
-                (time.monotonic() - started_at) * 1000
-            )
-        session.codex_thread_id = session.app_server.thread_id
-        session.codex_turns += 1
+            if temporary_client:
+                app_server.close()
+            elif session is not None:
+                session.last_codex_turn_duration_ms = round(
+                    (time.monotonic() - started_at) * 1000
+                )
+        if session is not None:
+            session.codex_thread_id = app_server.thread_id
+            session.codex_turns += 1
         return model_response
     output_path: Path | None = None
     try:
@@ -1436,10 +1525,21 @@ def run_ai_streaming_dispatch(
     session: ShellSession | None = None,
 ) -> tuple[str, bool]:
     """Run one Codex turn and retain the complete validated artifact."""
-    model_output = run_ai(runtime, prompt, session)
+    answer_stream = (
+        DispatchAnswerStreamer()
+        if effective_backend(runtime) == "app-server"
+        else None
+    )
+    model_output = run_ai(
+        runtime,
+        prompt,
+        session,
+        answer_stream.feed if answer_stream is not None else None,
+    )
     if len(model_output) > max_output_length:
         fail(f"model output exceeds {max_output_length} characters", 65)
-    return model_output, False
+    streamed = answer_stream.finish(model_output) if answer_stream is not None else False
+    return model_output, streamed
 
 
 def normalize_model_output(
@@ -1855,6 +1955,8 @@ def configure_line_editor() -> None:
 def handle_repl_builtin(
     command: str,
     session: ShellSession | None = None,
+    *,
+    origin: str = "native-builtin",
 ) -> bool:
     try:
         words = shlex.split(command, posix=os.name != "nt")
@@ -1875,7 +1977,7 @@ def handle_repl_builtin(
         if session is not None:
             record_shell_event(
                 session,
-                origin="native-builtin",
+                origin=origin,
                 command=command,
                 cwd_before=cwd_before,
                 cwd_after=Path.cwd(),
@@ -1915,7 +2017,7 @@ def handle_repl_builtin(
             target = Path(previous)
             show_destination = True
         else:
-            target = Path(raw_target).expanduser()
+            target = Path(os.path.expandvars(raw_target)).expanduser()
 
     try:
         os.chdir(target)
@@ -1943,6 +2045,10 @@ def semantic_shell() -> int:
     print("Use exit, quit, or Ctrl-D to leave.")
     session = ShellSession()
     try:
+        runtime = load_runtime()
+        if effective_backend(runtime) == "app-server":
+            session.app_server = CodexAppServerClient(runtime)
+            session.codex_thread_id = session.app_server.start_thread()
         while True:
             try:
                 line = input(native_fallback_prompt())
@@ -2241,7 +2347,7 @@ def run_request(
         fail(f"input exceeds {program.max_input_length} characters", 64)
 
     shell_context = render_shell_context(session) if session is not None else ""
-    continuing_thread = session is not None and session.codex_thread_id is not None
+    continuing_thread = session is not None and session.codex_turns > 0
     if continuing_thread and program.kind == "agent-dispatch":
         prompt = build_continuation_prompt(
             program,
@@ -2278,6 +2384,14 @@ def run_request(
         print(candidate)
         return 0
     print(f"COMMAND: {candidate}", file=sys.stderr)
+    if session is not None and handle_repl_builtin(
+        candidate,
+        session,
+        origin="codex-generated",
+    ):
+        if session.pending_events:
+            return session.pending_events[-1].exit_code
+        return 0
     if session is not None:
         cwd_before = Path.cwd()
         execution = execute_observed_native_command(candidate, spec)
