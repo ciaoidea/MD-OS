@@ -13,6 +13,7 @@ import sys
 import tempfile
 import textwrap
 import unittest
+from unittest import mock
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -637,6 +638,43 @@ class SemanticShellParityTests(unittest.TestCase):
         self.assertEqual(visible, plain)
         commands = ENGINE.completion_candidates("pyth", True)
         self.assertTrue(any(candidate.startswith("python") for candidate in commands))
+
+    def test_codex_color_policy_and_diff_rendering(self):
+        with mock.patch.dict(
+            os.environ,
+            {"MDOS_CODEX_COLOR": "always"},
+            clear=False,
+        ):
+            styled = ENGINE.codex_styled(
+                "CODEX COMMAND: npm test", ENGINE.ANSI_YELLOW, io.StringIO()
+            )
+            self.assertEqual(
+                styled,
+                "\033[33mCODEX COMMAND: npm test\033[0m",
+            )
+            diff = ENGINE.render_colored_diff(
+                "@@ -1 +1 @@\n-old\n+new\n", io.StringIO()
+            )
+            self.assertIn("\033[36m@@ -1 +1 @@\033[0m", diff)
+            self.assertIn("\033[31m-old\033[0m", diff)
+            self.assertIn("\033[32m+new\033[0m", diff)
+
+        with mock.patch.dict(
+            os.environ,
+            {"MDOS_CODEX_COLOR": "never"},
+            clear=False,
+        ):
+            self.assertEqual(
+                ENGINE.codex_styled("plain", ENGINE.ANSI_RED, io.StringIO()),
+                "plain",
+            )
+
+        with mock.patch.dict(
+            os.environ,
+            {"MDOS_CODEX_COLOR": "auto", "NO_COLOR": "1"},
+            clear=False,
+        ):
+            self.assertFalse(ENGINE.codex_color_enabled(io.StringIO()))
 
     def test_noninteractive_codex_approval_fails_closed(self):
         client = object.__new__(ENGINE.CodexAppServerClient)

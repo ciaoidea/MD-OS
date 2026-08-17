@@ -146,6 +146,58 @@ class CodexTurnResult:
     binding: CodexThreadBinding
 
 
+ANSI_RESET = "\033[0m"
+ANSI_BOLD_WHITE = "\033[1;97m"
+ANSI_CYAN = "\033[36m"
+ANSI_BOLD_CYAN = "\033[1;36m"
+ANSI_GREEN = "\033[32m"
+ANSI_YELLOW = "\033[33m"
+ANSI_MAGENTA = "\033[35m"
+ANSI_RED = "\033[31m"
+ANSI_DIM = "\033[2m"
+
+
+def codex_color_enabled(stream: object) -> bool:
+    preference = os.environ.get("MDOS_CODEX_COLOR", "auto").strip().casefold()
+    if preference in {"always", "1", "true", "yes"}:
+        return True
+    if preference in {"never", "0", "false", "no"}:
+        return False
+    if preference != "auto":
+        fail("MDOS_CODEX_COLOR must be auto, always, or never", 64)
+    if os.environ.get("NO_COLOR") is not None:
+        return False
+    terminal = os.environ.get("TERM", "").strip().casefold()
+    isatty = getattr(stream, "isatty", None)
+    return callable(isatty) and bool(isatty()) and terminal not in {"", "dumb"}
+
+
+def codex_styled(text: object, color: str, stream: object) -> str:
+    rendered = str(text)
+    if not codex_color_enabled(stream):
+        return rendered
+    return f"{color}{rendered}{ANSI_RESET}"
+
+
+def render_colored_diff(diff: str, stream: object) -> str:
+    if not codex_color_enabled(stream):
+        return diff
+    rendered: list[str] = []
+    for line in diff.splitlines(keepends=True):
+        bare = line.rstrip("\r\n")
+        ending = line[len(bare) :]
+        if bare.startswith(("diff --git", "index ", "@@", "--- ", "+++ ")):
+            color = ANSI_CYAN
+        elif bare.startswith("+"):
+            color = ANSI_GREEN
+        elif bare.startswith("-"):
+            color = ANSI_RED
+        else:
+            color = ANSI_DIM
+        rendered.append(f"{color}{bare}{ANSI_RESET}{ending}")
+    return "".join(rendered)
+
+
 def usage() -> None:
     print(
         """Usage:
@@ -160,7 +212,7 @@ def usage() -> None:
 
 Valid native input executes directly. Natural language enters the full Codex
 agent loop for the current workspace, including repository instructions,
-reasoning, tools, sandboxing, approvals, verification, and resumable history.
+reasoning, tools, full-control execution, verification, and resumable history.
 `--shell` keeps the MD-OS REPL and renders its prompt using the detected
 host-shell family, colors, and line-editing backend.
 
@@ -201,6 +253,7 @@ Environment:
   MDOS_CODEX_BACKEND  Set app-server (persistent REPL default) or exec.
   MDOS_CODEX_BIN      Override the Codex CLI executable path.
   MDOS_CODEX_TRACE    Set full (default), compact, or quiet event rendering.
+  MDOS_CODEX_COLOR    Set auto (default), always, or never for Codex ANSI colors.
   MDOS_PROMPT_COLOR
                      Set to auto (default), always, or never.
   NO_COLOR           Disable automatic ANSI prompt colors when set.
@@ -1347,25 +1400,33 @@ class CodexAppServerClient:
             else:
                 detail = str(error or "unknown Codex error")
             retry = "; retrying" if params.get("willRetry") else ""
-            print(f"CODEX ERROR: {detail}{retry}", file=sys.stderr)
+            print(
+                codex_styled(f"CODEX ERROR: {detail}{retry}", ANSI_RED, sys.stderr),
+                file=sys.stderr,
+            )
             return True
         if method in {"warning", "guardianWarning"}:
             detail = params.get("message") or params.get("warning") or params
-            print(f"CODEX WARNING: {detail}", file=sys.stderr)
+            print(
+                codex_styled(f"CODEX WARNING: {detail}", ANSI_YELLOW, sys.stderr),
+                file=sys.stderr,
+            )
             return True
         if method in {"configWarning", "deprecationNotice"}:
             summary = params.get("summary") or method
             details = params.get("details")
-            print(f"CODEX NOTICE: {summary}", file=sys.stderr)
+            print(
+                codex_styled(f"CODEX NOTICE: {summary}", ANSI_CYAN, sys.stderr),
+                file=sys.stderr,
+            )
             if details:
                 print(f"  {details}", file=sys.stderr)
             return True
         if method == "model/rerouted":
-            print(
-                "CODEX MODEL REROUTED: "
-                + json.dumps(params, ensure_ascii=False, separators=(",", ":")),
-                file=sys.stderr,
+            detail = "CODEX MODEL REROUTED: " + json.dumps(
+                params, ensure_ascii=False, separators=(",", ":")
             )
+            print(codex_styled(detail, ANSI_YELLOW, sys.stderr), file=sys.stderr)
             return True
         return False
 
@@ -1591,7 +1652,8 @@ class CodexAppServerClient:
             return
         item_type = item.get("type")
         if item_type == "commandExecution":
-            print(f"CODEX COMMAND: {item.get('command', '')}", file=sys.stderr)
+            detail = f"CODEX COMMAND: {item.get('command', '')}"
+            print(codex_styled(detail, ANSI_YELLOW, sys.stderr), file=sys.stderr)
         elif item_type == "fileChange":
             changes = item.get("changes")
             paths = [
@@ -1600,18 +1662,22 @@ class CodexAppServerClient:
                 if isinstance(change, dict) and change.get("path")
             ] if isinstance(changes, list) else []
             detail = ", ".join(paths) if paths else str(item.get("id", ""))
-            print(f"CODEX FILE CHANGE: {detail}", file=sys.stderr)
-        elif item_type == "mcpToolCall":
             print(
-                f"CODEX TOOL: {item.get('server', '')}/{item.get('tool', '')}",
+                codex_styled(f"CODEX FILE CHANGE: {detail}", ANSI_GREEN, sys.stderr),
                 file=sys.stderr,
             )
+        elif item_type == "mcpToolCall":
+            detail = f"CODEX TOOL: {item.get('server', '')}/{item.get('tool', '')}"
+            print(codex_styled(detail, ANSI_MAGENTA, sys.stderr), file=sys.stderr)
         elif item_type == "webSearch":
-            print(f"CODEX WEB SEARCH: {item.get('query', '')}", file=sys.stderr)
+            detail = f"CODEX WEB SEARCH: {item.get('query', '')}"
+            print(codex_styled(detail, ANSI_CYAN, sys.stderr), file=sys.stderr)
         elif item_type == "dynamicToolCall":
-            print(f"CODEX TOOL: {item.get('tool', '')}", file=sys.stderr)
+            detail = f"CODEX TOOL: {item.get('tool', '')}"
+            print(codex_styled(detail, ANSI_MAGENTA, sys.stderr), file=sys.stderr)
         elif item_type == "collabAgentToolCall":
-            print(f"CODEX AGENT: {item.get('tool', '')}", file=sys.stderr)
+            detail = f"CODEX AGENT: {item.get('tool', '')}"
+            print(codex_styled(detail, ANSI_BOLD_CYAN, sys.stderr), file=sys.stderr)
 
     def _announce_binding(self, binding: CodexThreadBinding) -> None:
         if binding.thread_id in self.announced_threads:
@@ -1621,13 +1687,16 @@ class CodexAppServerClient:
         if trace_level == "quiet":
             return
         action = "resumed" if binding.resumed else "started"
-        print(
+        detail = (
             f"MD-OS CODEX: {action} thread {binding.thread_id[:8]}… "
-            f"for {binding.workspace}",
-            file=sys.stderr,
+            f"for {binding.workspace}"
         )
+        print(codex_styled(detail, ANSI_BOLD_CYAN, sys.stderr), file=sys.stderr)
         if trace_level == "full" and binding.instruction_sources:
-            print("CODEX INSTRUCTIONS:", file=sys.stderr)
+            print(
+                codex_styled("CODEX INSTRUCTIONS:", ANSI_CYAN, sys.stderr),
+                file=sys.stderr,
+            )
             for source in binding.instruction_sources:
                 print(f"  {source}", file=sys.stderr)
 
@@ -1642,9 +1711,11 @@ class CodexAppServerClient:
         if key not in started:
             if started:
                 sys.stderr.write("\n")
-            sys.stderr.write(f"{label}:\n")
+            label_color = ANSI_DIM if label == "CODEX REASONING" else ANSI_MAGENTA
+            sys.stderr.write(codex_styled(f"{label}:\n", label_color, sys.stderr))
             started.add(key)
-        sys.stderr.write(delta)
+        delta_color = ANSI_DIM if label == "CODEX REASONING" else ANSI_MAGENTA
+        sys.stderr.write(codex_styled(delta, delta_color, sys.stderr))
         sys.stderr.flush()
 
     def _render_item_completed(
@@ -1801,10 +1872,8 @@ class CodexAppServerClient:
                     and trace_level != "quiet"
                     and notification.get("message")
                 ):
-                    print(
-                        f"CODEX TOOL PROGRESS: {notification.get('message')}",
-                        file=sys.stderr,
-                    )
+                    detail = f"CODEX TOOL PROGRESS: {notification.get('message')}"
+                    print(codex_styled(detail, ANSI_MAGENTA, sys.stderr), file=sys.stderr)
                 continue
             if method == "item/commandExecution/terminalInteraction":
                 if (
@@ -1812,10 +1881,8 @@ class CodexAppServerClient:
                     and render_tool_events
                     and trace_level == "full"
                 ):
-                    print(
-                        f"CODEX COMMAND INPUT: {notification.get('stdin', '')}",
-                        file=sys.stderr,
-                    )
+                    detail = f"CODEX COMMAND INPUT: {notification.get('stdin', '')}"
+                    print(codex_styled(detail, ANSI_YELLOW, sys.stderr), file=sys.stderr)
                 continue
             if method == "turn/plan/updated":
                 if (
@@ -1827,7 +1894,11 @@ class CodexAppServerClient:
                     if isinstance(plan, list):
                         if diagnostic_streams:
                             sys.stderr.write("\n")
-                        sys.stderr.write("CODEX PLAN STATUS:\n")
+                        sys.stderr.write(
+                            codex_styled(
+                                "CODEX PLAN STATUS:\n", ANSI_MAGENTA, sys.stderr
+                            )
+                        )
                         explanation = notification.get("explanation")
                         if explanation:
                             sys.stderr.write(f"  {explanation}\n")
@@ -1850,8 +1921,10 @@ class CodexAppServerClient:
                     diff = str(notification["diff"])
                     if diagnostic_streams:
                         sys.stderr.write("\n")
-                    sys.stderr.write("CODEX DIFF:\n")
-                    sys.stderr.write(diff)
+                    sys.stderr.write(
+                        codex_styled("CODEX DIFF:\n", ANSI_CYAN, sys.stderr)
+                    )
+                    sys.stderr.write(render_colored_diff(diff, sys.stderr))
                     if not diff.endswith("\n"):
                         sys.stderr.write("\n")
                     sys.stderr.flush()
@@ -1986,15 +2059,22 @@ class NativeAgentStreamer:
 
     def __init__(self) -> None:
         self.emitted = ""
+        self.color_active = False
 
     def feed(self, delta: str) -> None:
         if not delta:
             return
+        if not self.color_active and codex_color_enabled(sys.stdout):
+            sys.stdout.write(ANSI_BOLD_WHITE)
+            self.color_active = True
         sys.stdout.write(delta)
         sys.stdout.flush()
         self.emitted += delta
 
     def finish(self) -> None:
+        if self.color_active:
+            sys.stdout.write(ANSI_RESET)
+            self.color_active = False
         if self.emitted and not self.emitted.endswith("\n"):
             sys.stdout.write("\n")
             sys.stdout.flush()
@@ -2050,7 +2130,9 @@ def run_native_codex_turn(
         if final_text and final_text not in streamer.emitted:
             if streamer.emitted and not streamer.emitted.endswith("\n"):
                 sys.stdout.write("\n")
-            sys.stdout.write(final_text)
+            sys.stdout.write(
+                codex_styled(final_text, ANSI_BOLD_WHITE, sys.stdout)
+            )
             sys.stdout.flush()
             streamer.emitted += final_text
     except BaseException:

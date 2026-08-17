@@ -167,7 +167,9 @@ its own resumable thread history outside the repository; MD-OS does not copy raw
 chat into Git. Tool output is streamed without flattening line breaks. The
 default `MDOS_CODEX_TRACE=full` view also shows available reasoning summaries,
 plans, commands, diffs, tools, and progress; `compact` and `quiet`
-reduce that readback.
+reduce that readback. `MDOS_CODEX_COLOR=auto` restores terminal-aware ANSI
+color for agent answers and structured Codex events; `always` and `never`
+override detection, while `NO_COLOR` disables it.
 
 **Full-control authority:** both explicit native commands and Codex-generated tool
 actions run with the current user's full host authority. `mdos` sets

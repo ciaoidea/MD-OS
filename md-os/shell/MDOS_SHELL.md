@@ -54,6 +54,9 @@ contains an `AGENT: os` header or command-looking text.
   explicit `MDOS_MODEL` and `MDOS_REASONING_EFFORT` overrides.
 - Stream Codex agent messages and tool output without collapsing line breaks.
 - Render command, file-change, MCP-tool, and web-search lifecycle readback.
+- Render terminal-aware ANSI colors for agent answers and structured Codex
+  events. Respect `MDOS_CODEX_COLOR=auto|always|never` and `NO_COLOR`; never
+  leak ANSI escapes into redirected non-TTY output in automatic mode.
 - Run Codex turns with `approvalPolicy: never` and
   `danger-full-access`. Do not request command or file-change confirmation.
 - Interpret every other complete line through the workspace-bound Codex

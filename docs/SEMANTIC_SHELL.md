@@ -231,11 +231,14 @@ configuration by default. Optional overrides are explicit:
 | `MDOS_CODEX_BACKEND` | `app-server` (native persistent path) or `exec` compatibility mode |
 | `MDOS_CODEX_BIN` | override the `codex` executable, primarily for testing |
 | `MDOS_CODEX_TRACE` | `full` (default), `compact`, or `quiet` event rendering |
+| `MDOS_CODEX_COLOR` | `auto` (default), `always`, or `never` for Codex event and answer colors |
 | `MDOS_PROMPT_COLOR` | `auto`, `always`, or `never` |
-| `NO_COLOR` | disable automatic prompt colors |
+| `NO_COLOR` | disable automatic prompt and Codex colors |
 
-The implementation uses Codex App Server's documented thread lifecycle,
-streamed items, and approval requests. See the official
+The implementation uses Codex App Server's documented thread lifecycle and
+streamed structured items. ANSI colors are rendered locally from item type and
+status because the protocol does not supply the Codex terminal client's already
+rendered byte stream. See the official
 [Codex App Server documentation](https://learn.chatgpt.com/docs/app-server).
 
 ## Bootstrap versus `mdos`
