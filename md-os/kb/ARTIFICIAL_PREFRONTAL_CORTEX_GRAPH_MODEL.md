@@ -1714,7 +1714,7 @@ the prediction, action, receipt, and outcome that it verifies or falsifies.
 For an external action, `action_requested` must commit before the connector is
 called. The connector's canonical ActionReceipt must commit before
 `action_receipt_recorded`. If the action succeeds but post-action event
-materialization fails, all further external actions are blocked. `mdos apfc
+materialization fails, all further external actions are blocked. `cortex apfc
 reconcile` then replays an already-appended event or, when the event append
 failed after the receipt committed, constructs the missing event strictly from
 the immutable ActionReceipt and marks it `reconstructed_from_receipt`. It
@@ -1815,7 +1815,7 @@ Passing every automated gate produces `promotable`, never `promoted`.
 Promotion is a separate, explicit operation:
 
 ```text
-mdos apfc promote <skill_candidate_id>
+cortex apfc promote <skill_candidate_id>
 ```
 
 The command:
@@ -1841,16 +1841,16 @@ implicitly.
 The command surface is exactly:
 
 ```text
-mdos apfc status
-mdos apfc build
-mdos apfc verify
-mdos apfc reconcile
-mdos apfc context --task-spec <md-os/ops/tasks/task_id.json>
-mdos apfc consolidate --run-once
-mdos apfc promote <skill_candidate_id>
-mdos apfc rollback <promotion_receipt_id>
-mdos apfc graphify build
-mdos apfc graphify open --view <view_id>
+cortex apfc status
+cortex apfc build
+cortex apfc verify
+cortex apfc reconcile
+cortex apfc context --task-spec <md-os/ops/tasks/task_id.json>
+cortex apfc consolidate --run-once
+cortex apfc promote <skill_candidate_id>
+cortex apfc rollback <promotion_receipt_id>
+cortex apfc graphify build
+cortex apfc graphify open --view <view_id>
 ```
 
 `status` is read-only. `build`, `verify`, `reconcile`, `context`, and `graphify

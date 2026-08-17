@@ -28,21 +28,21 @@ the non-claim that MD-OS is not AGI itself.
 Preferred user-facing commands:
 
 ```bash
-mdos live status
-mdos live start
-mdos live stop
-mdos live restart
-mdos live run
+cortex live status
+cortex live start
+cortex live stop
+cortex live restart
+cortex live run
 ```
 
 Backward-compatible technical commands:
 
 ```bash
-mdos continuity status
-mdos continuity start
-mdos continuity stop
-mdos continuity restart
-mdos continuity run
+cortex continuity status
+cortex continuity start
+cortex continuity stop
+cortex continuity restart
+cortex continuity run
 ```
 
 NPM equivalents:
@@ -115,14 +115,14 @@ turn live mode on
 should map to:
 
 ```bash
-mdos live start
+cortex live start
 ```
 
 Likewise:
 
 ```text
-live mode status -> mdos live status
-turn live mode off -> mdos live stop
+live mode status -> cortex live status
+turn live mode off -> cortex live stop
 ```
 
 The host chat remains the conversational surface. Live mode keeps the MD-OS

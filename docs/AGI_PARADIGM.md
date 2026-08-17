@@ -50,7 +50,7 @@ verifiers = independent postcondition checks
 ```
 
 The canonical first path is the Cognitive Transaction Loop in
-`md-os/kb/COGNITIVE_TRANSACTION_LOOP_MODEL.md`. The historical `mdos agi`
+`md-os/kb/COGNITIVE_TRANSACTION_LOOP_MODEL.md`. The historical `cortex agi`
 command remains a compatibility alias and must not be described as a separate
 AGI layer.
 

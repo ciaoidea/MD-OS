@@ -252,7 +252,7 @@ Operational continuity rules:
   - `node md-os/os/build_semantic_commitment_gate.js status`
   - `node md-os/os/build_conceptual_boot_summary.js`
   - `node md-os/os/agi_loop.js eval`
-  - `mdos agi run-once --task "<task>"`
+  - `cortex agi run-once --task "<task>"`
   - `node md-os/os/build_runtime_compiler.js`
   - `node md-os/os/build_knowledge_import.js <import_id> <source_dir>`
   - `node md-os/os/build_self_release_index.js`

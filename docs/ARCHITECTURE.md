@@ -551,7 +551,7 @@ Important runtime locations:
 The canonical builders are:
 
 ```bash
-mdos replay
+cortex replay
 node md-os/os/compile_programs.js
 node md-os/os/build_project_state.js <project_id>
 node md-os/os/build_global_agenda.js
@@ -567,7 +567,7 @@ node md-os/os/build_health_dashboard.js
 Builders should be deterministic: given the same input files, they should
 produce the same state shape.
 
-`mdos replay` is the end-to-end check. It preserves source snapshots, project
+`cortex replay` is the end-to-end check. It preserves source snapshots, project
 definitions, connector config, artifacts, change proposals, and journal history,
 removes compiled state, rebuilds it, and emits a replay fingerprint for
 canonical project, active-summary, and global agenda/index state. Volatile

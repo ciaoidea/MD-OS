@@ -61,10 +61,10 @@ Discovery is not control. Control requires an explicit connector and policy.
 The intended model is:
 
 ```text
-mdos hardware bootstrap
+cortex hardware bootstrap
   -> discovers host-exposed devices and capability surfaces
 
-mdos hardware run "<explicit user intent>"
+cortex hardware run "<explicit user intent>"
   -> selects a bounded connector
   -> performs a local action or capture
   -> writes an audit record and any input/output artifact
@@ -73,12 +73,12 @@ mdos hardware run "<explicit user intent>"
 Examples:
 
 ```bash
-mdos hardware run "turn up the volume"
-mdos audio volume down
-mdos audio volume zero
-mdos hardware run "look at the desktop"
-mdos screen capture
-mdos display status
+cortex hardware run "turn up the volume"
+cortex audio volume down
+cortex audio volume zero
+cortex hardware run "look at the desktop"
+cortex screen capture
+cortex display status
 ```
 
 Device input and output are first-class:

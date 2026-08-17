@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Cortex entrypoint: MD-OS agentic shell plus deterministic runtime CLI."""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import shutil
+import sys
+from typing import NoReturn
+
+
+BIN_DIR = Path(__file__).resolve().parent
+SHELL_ENGINE = BIN_DIR / "mdos-console"
+RUNTIME_CLI = BIN_DIR.parent.parent / "os" / "mdos.js"
+RUNTIME_COMMANDS = frozenset({
+    "agenda", "agi", "apfc", "apps", "archive", "audio", "audit",
+    "benchmark", "boot-summary", "build", "capability", "cognition",
+    "compact", "compile-programs", "compile-runtime", "connector",
+    "continuity", "core", "cycle", "demo", "device", "display", "graph",
+    "graphify", "hardware", "health", "hygiene", "init", "knowledge",
+    "lifecycle", "live", "math", "mcp-server", "module", "paths",
+    "propose-change", "replay", "role", "runtime", "screen", "self",
+    "semantic", "services", "signal", "software", "wolfram",
+})
+
+
+def exec_shell(arguments: list[str]) -> NoReturn:
+    os.execv(sys.executable, [sys.executable, str(SHELL_ENGINE), *arguments])
+
+
+def exec_runtime(arguments: list[str]) -> NoReturn:
+    node = shutil.which("node")
+    if node is None:
+        print("ERROR: Node.js is required for deterministic cortex subcommands", file=sys.stderr)
+        raise SystemExit(69)
+    environment = os.environ.copy()
+    environment["MDOS_CLI_NAME"] = "cortex"
+    os.execve(node, [node, str(RUNTIME_CLI), *arguments], environment)
+
+
+def main() -> int:
+    arguments = sys.argv[1:]
+    if not arguments:
+        exec_shell([])
+    first = arguments[0]
+    if first == "console":
+        exec_shell(arguments[1:])
+    if first in RUNTIME_COMMANDS:
+        exec_runtime(arguments)
+    exec_shell(arguments)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

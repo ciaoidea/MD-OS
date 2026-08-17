@@ -33,7 +33,7 @@ if (Get-Command Set-PSReadLineKeyHandler -ErrorAction SilentlyContinue) {
         if ($null -ne $semanticInstruction) {
             $escaped = $semanticInstruction.Replace("'", "''")
             [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
-            [Microsoft.PowerShell.PSConsoleReadLine]::Insert("mdos '$escaped'")
+            [Microsoft.PowerShell.PSConsoleReadLine]::Insert("cortex '$escaped'")
         }
 
         [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()

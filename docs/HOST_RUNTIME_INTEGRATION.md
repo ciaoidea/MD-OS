@@ -14,7 +14,7 @@ around that reasoning and tool execution.
 
 MD-OS (Artificial Prefrontal Cortex) v5.0 and the host runtime are installed and managed separately.
 
-Installing MD-OS provides the `mdos` command, the filesystem runtime under
+Installing MD-OS provides the `cortex` command, the filesystem runtime under
 `md-os/`, deterministic builders, connector contracts, and persistent operating
 state. It does not install Codex or any other LLM host.
 
@@ -32,7 +32,7 @@ The repository launcher assumes the `codex` command already exists on `PATH`:
 ```
 
 Without Codex, the low-level filesystem runtime can still be operated through
-`mdos`, direct `node md-os/os/*.js` commands, the MCP adapter, another
+`cortex`, direct `node md-os/os/*.js` commands, the MCP adapter, another
 coding-agent CLI, or a custom host loop. The primary MD-OS APFC runtime path is not
 complete until the Codex launcher works.
 
@@ -173,19 +173,19 @@ previous Codex session inside the same operating frame, use
 The launcher also prints an English MD-OS startup banner and runs quick
 read-only hardware discovery into `md-os/ops/local/hardware/` plus read-only
 application/service discovery into `md-os/ops/local/software/`. These startup
-scans are host-local and cleanable with `mdos hardware clean` and
-`mdos software clean`. Set `MDOS_SKIP_HARDWARE_BOOTSTRAP=1` or
+scans are host-local and cleanable with `cortex hardware clean` and
+`cortex software clean`. Set `MDOS_SKIP_HARDWARE_BOOTSTRAP=1` or
 `MDOS_SKIP_SOFTWARE_BOOTSTRAP=1` to skip either scan. After scanning, the
 launcher refreshes generated runtime views so `md-os/ops/global_index.md` shows
 the current local cache state.
 
 ## Unified agentic shell
 
-After running `./install-md-os-console.sh`, the public `mdos` command opens a
+After running `./install-md-os-console.sh`, the public `cortex` command opens a
 real shell fused with workspace-bound Codex when invoked without arguments:
 
 ```bash
-mdos
+cortex
 ```
 
 Valid native commands execute directly. Natural-language input uses Codex App
@@ -198,7 +198,7 @@ for that workspace, falling back to a new thread if matching sessions are
 absent or already owned by another active writer.
 
 Known deterministic commands remain available under the same entrypoint, for
-example `mdos health`, `mdos replay`, and `mdos graphify status`. MD-OS adds
+example `cortex health`, `cortex replay`, and `cortex graphify status`. MD-OS adds
 persistent identity, operational context, semantic gates, policy, sensory
 readback, verification, and ledger discipline around the Codex loop; it does
 not replace the loop with a generated Bash command.
@@ -300,7 +300,7 @@ node md-os/os/build_health_dashboard.js
 Replay compiled state:
 
 ```bash
-mdos replay
+cortex replay
 ```
 
 Replay is the host-agnostic continuity check. It removes known compiled outputs

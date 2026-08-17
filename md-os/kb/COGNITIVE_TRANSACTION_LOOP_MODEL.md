@@ -18,12 +18,12 @@ human-readable Markdown and policy source
 -> evaluated reusable competence
 ```
 
-The existing `mdos agi ...` command family remains a compatibility alias during
+The existing `cortex agi ...` command family remains a compatibility alias during
 the migration. It does not name a separate AGI layer. The preferred command
 surface is:
 
 ```bash
-mdos cognition run-once --task-spec md-os/ops/tasks/<task_spec_id>.json
+cortex cognition run-once --task-spec md-os/ops/tasks/<task_spec_id>.json
 ```
 
 ## Truth Invariant

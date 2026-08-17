@@ -19,10 +19,10 @@ const {
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos agi score',
-    '  mdos agi score --report <signed_report.json> [--report <second.json>] --trust-store <external_trust_store.json>',
-    '  mdos agi certify --report <signed_report.json> [--report <second.json>] --trust-store <external_trust_store.json>',
-    '  mdos agi evaluation-request [--output <request.json>] [--manifest <source_manifest.json>]',
+    '  cortex agi score',
+    '  cortex agi score --report <signed_report.json> [--report <second.json>] --trust-store <external_trust_store.json>',
+    '  cortex agi certify --report <signed_report.json> [--report <second.json>] --trust-store <external_trust_store.json>',
+    '  cortex agi evaluation-request [--output <request.json>] [--manifest <source_manifest.json>]',
     '',
   ].join('\n'));
   process.exit(2);

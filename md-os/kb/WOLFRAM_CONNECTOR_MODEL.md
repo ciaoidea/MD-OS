@@ -26,14 +26,14 @@ explicit calculation profile
 ## Commands
 
 ```bash
-mdos wolfram bootstrap
-mdos wolfram list
-mdos wolfram run <project_id> <calculation_id>
-mdos math list
-mdos math run <project_id> <calculation_id>
-mdos connector wolfram bootstrap
-mdos connector wolfram list
-mdos connector wolfram run <project_id> <calculation_id>
+cortex wolfram bootstrap
+cortex wolfram list
+cortex wolfram run <project_id> <calculation_id>
+cortex math list
+cortex math run <project_id> <calculation_id>
+cortex connector wolfram bootstrap
+cortex connector wolfram list
+cortex connector wolfram run <project_id> <calculation_id>
 ```
 
 ## Runtime Files
@@ -49,7 +49,7 @@ mdos connector wolfram run <project_id> <calculation_id>
 
 ## Bootstrap Contract
 
-`mdos wolfram bootstrap` creates a missing default profile, discovers
+`cortex wolfram bootstrap` creates a missing default profile, discovers
 host-local `.wl` scripts, registers calculation profiles for previously
 unknown scripts, tests whether `wolframscript` is on `PATH`, updates the live
 connector registry, and writes an availability snapshot. When the executable

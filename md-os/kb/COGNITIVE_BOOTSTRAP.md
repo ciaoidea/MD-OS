@@ -273,12 +273,12 @@ The service must remain easy to start, stop, and inspect. The preferred
 user-facing name is live mode:
 
 ```bash
-mdos live start
-mdos live status
-mdos live stop
+cortex live start
+cortex live status
+cortex live stop
 ```
 
-The older `mdos continuity ...` form remains a technical/codename alias.
+The older `cortex continuity ...` form remains a technical/codename alias.
 
 ## Non-Claims
 

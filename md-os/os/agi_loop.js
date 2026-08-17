@@ -930,8 +930,8 @@ function buildBenchmarks() {
       domain: 'software_repair',
       metric: 'verified_success_rate_holdout',
       target: 'compare fixed experimental configurations on uncontaminated holdout cases',
-      runner: 'mdos benchmark software-repair run',
-      candidate_provider: 'mdos benchmark software-repair generate',
+      runner: 'cortex benchmark software-repair run',
+      candidate_provider: 'cortex benchmark software-repair generate',
       plan_ir: 'PlanGraph',
       index: 'md-os/ops/benchmarks/software_repair/index.json',
     },
@@ -1204,7 +1204,7 @@ function buildLoopStatus({ episodes, skillRegistry, evalReport, failureIndex, wo
     }),
     status,
     kernel_name: 'cognitive_transaction_loop',
-    compatibility_aliases: ['verified_agi_loop', 'mdos agi'],
+    compatibility_aliases: ['verified_agi_loop', 'cortex agi'],
     definition: 'Proof-carrying cognitive transactions through typed TaskSpecs, bounded execution, ActionReceipts, independent postcondition verification, episodes, and APFC-governed skill promotion.',
     non_claims: [
       'not consciousness',
@@ -1213,12 +1213,12 @@ function buildLoopStatus({ episodes, skillRegistry, evalReport, failureIndex, wo
       'not parametric model training',
     ],
     commands: [
-      'mdos agi run-once --task "<task>"',
-      'mdos cognition run-once --task-spec md-os/ops/tasks/<id>.json',
-      'mdos agi eval',
-      'mdos agi learn',
-      'mdos apfc promote <skill_candidate_id> --approve',
-      'mdos agi accelerate --experiment-id <append_only_id>',
+      'cortex agi run-once --task "<task>"',
+      'cortex cognition run-once --task-spec md-os/ops/tasks/<id>.json',
+      'cortex agi eval',
+      'cortex agi learn',
+      'cortex apfc promote <skill_candidate_id> --approve',
+      'cortex agi accelerate --experiment-id <append_only_id>',
     ],
     directories: [
       'md-os/ops/agi/',
@@ -1648,11 +1648,11 @@ function runOnce(args) {
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos cognition run-once --task "<task>" [--task-spec md-os/ops/tasks/<id>.json] [--risk-level low|medium|high] [--allowed-tools a,b] [--promote]',
-    '  mdos agi run-once ...  # compatibility alias',
-    '  mdos agi eval',
-    '  mdos agi learn',
-    '  mdos apfc promote <skill_candidate_id> --approve',
+    '  cortex cognition run-once --task "<task>" [--task-spec md-os/ops/tasks/<id>.json] [--risk-level low|medium|high] [--allowed-tools a,b] [--promote]',
+    '  cortex agi run-once ...  # compatibility alias',
+    '  cortex agi eval',
+    '  cortex agi learn',
+    '  cortex apfc promote <skill_candidate_id> --approve',
     '',
   ].join('\n'));
   process.exit(1);

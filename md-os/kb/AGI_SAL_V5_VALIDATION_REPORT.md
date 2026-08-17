@@ -173,7 +173,7 @@ worker processes and recoverable checkpoints. The runner also supports a
 real-wall-clock mode:
 
 ```bash
-mdos agi capability-lab \
+cortex agi capability-lab \
   --experiment-id external_long_horizon_run \
   --wall-minutes 480 \
   --cycle-pause-ms 1000

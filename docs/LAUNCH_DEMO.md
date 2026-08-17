@@ -29,7 +29,7 @@ Right side:
 1. Start from a fresh workspace:
 
 ```bash
-npx --package md-os-apfc mdos init my-agent-os
+npx --package md-os-apfc cortex init my-agent-os
 cd my-agent-os
 ```
 

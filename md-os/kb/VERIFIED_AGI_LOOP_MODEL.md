@@ -1,7 +1,7 @@
 # Verified AGI Loop Model
 
 Compatibility note: the canonical executable truth-loop contract is now
-`COGNITIVE_TRANSACTION_LOOP_MODEL.md`. The `mdos agi` command and the paths
+`COGNITIVE_TRANSACTION_LOOP_MODEL.md`. The `cortex agi` command and the paths
 under `md-os/ops/agi/` remain compatibility surfaces during migration; they do
 not define a separate AGI layer.
 
@@ -40,7 +40,7 @@ TaskSpec with executable acceptance tests
 The preferred first implementation surface is a single replayable transaction:
 
 ```bash
-mdos cognition run-once --task-spec md-os/ops/tasks/<task_spec_id>.json
+cortex cognition run-once --task-spec md-os/ops/tasks/<task_spec_id>.json
 ```
 
 It is not a daemon and it does not start continuous autonomous operation.
@@ -226,7 +226,7 @@ episodes or runtime failures.
 The canonical bounded command is:
 
 ```bash
-mdos agi accelerate --experiment-id <append_only_id>
+cortex agi accelerate --experiment-id <append_only_id>
 ```
 
 Its report must keep `agi_achieved` and `agi_claim_supported` false. The

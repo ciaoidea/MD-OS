@@ -18,7 +18,8 @@ from unittest import mock
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ENGINE_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos-console"
-LAUNCHER_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos"
+LAUNCHER_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "cortex"
+COMPATIBILITY_LAUNCHER_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos"
 INSTALLER_PATH = PROJECT_ROOT / "md-os" / "shell" / "install.py"
 
 
@@ -840,9 +841,10 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("shell=bash", result.stdout)
             self.assertIn("installation_status=ready", result.stdout)
-            self.assertIn("universal_command=mdos", result.stdout)
+            self.assertIn("universal_command=cortex", result.stdout)
+            self.assertIn("compatibility_alias=mdos", result.stdout)
 
-    def test_public_mdos_command_opens_the_agentic_shell(self):
+    def test_public_cortex_command_opens_the_agentic_shell(self):
         with FakeCodex() as fake, tempfile.TemporaryDirectory() as temporary:
             environment = os.environ.copy()
             environment["MDOS_CODEX_BIN"] = str(fake.executable)
@@ -861,6 +863,25 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("MD-OS agentic shell", result.stdout)
             self.assertIn(str(Path(temporary)), result.stdout)
+
+    def test_mdos_compatibility_alias_opens_the_agentic_shell(self):
+        with FakeCodex() as fake, tempfile.TemporaryDirectory() as temporary:
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            result = subprocess.run(
+                [sys.executable, str(COMPATIBILITY_LAUNCHER_PATH)],
+                input="pwd\nexit\n",
+                cwd=temporary,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("MD-OS agentic shell", result.stdout)
 
 
 if __name__ == "__main__":

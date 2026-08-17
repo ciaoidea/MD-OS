@@ -7,7 +7,7 @@ const { runCapabilityLab } = require('../kernel/cognition/agi_capability_lab');
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos agi capability-lab [--experiment-id <id>] [--cycles <n>] [--sessions <n>]',
+    '  cortex agi capability-lab [--experiment-id <id>] [--cycles <n>] [--sessions <n>]',
     '      [--seed <evaluator-seed>] [--wall-minutes <n>] [--cycle-pause-ms <n>]',
     '      [--train-per-family <n>] [--holdout-per-family <n>] [--probe-per-family <n>]',
     '',

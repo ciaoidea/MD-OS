@@ -34,8 +34,8 @@ const DEFAULT_PROFILE = {
   token_budget_role: 'primary_context_reduction_surface',
   dynamic_graph_evolution: true,
   graph_evolution_mode: 'bounded_local_update',
-  default_refresh_command: 'mdos graphify build .',
-  default_orient_command: 'mdos graphify orient <question>',
+  default_refresh_command: 'cortex graphify build .',
+  default_orient_command: 'cortex graphify orient <question>',
   output_dir: 'graphify-out',
   graph_json: 'graphify-out/graph.json',
   graph_html: 'graphify-out/graph.html',
@@ -90,19 +90,19 @@ function rel(filePath) {
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos graphify status',
-    '  mdos graphify bootstrap',
-    '  mdos graphify build [target_dir] [--force|--no-cluster|--no-viz]',
-    '  mdos graphify benchmark',
-    '  mdos graphify query <question>',
-    '  mdos graphify path <source_node> <target_node>',
-    '  mdos graphify explain <node>',
-    '  mdos graphify neural-map',
-    '  mdos graphify neural-open',
-    '  mdos graphify connector-map',
-    '  mdos graphify connector-open',
-    '  mdos graphify orient <question>',
-    '  mdos graphify open',
+    '  cortex graphify status',
+    '  cortex graphify bootstrap',
+    '  cortex graphify build [target_dir] [--force|--no-cluster|--no-viz]',
+    '  cortex graphify benchmark',
+    '  cortex graphify query <question>',
+    '  cortex graphify path <source_node> <target_node>',
+    '  cortex graphify explain <node>',
+    '  cortex graphify neural-map',
+    '  cortex graphify neural-open',
+    '  cortex graphify connector-map',
+    '  cortex graphify connector-open',
+    '  cortex graphify orient <question>',
+    '  cortex graphify open',
     '',
     'Direct form:',
     '  node md-os/os/graphify_connector.js status',
@@ -576,8 +576,8 @@ function status(profile) {
     token_budget_role: profile.token_budget_role || 'primary_context_reduction_surface',
     dynamic_graph_evolution: Boolean(profile.dynamic_graph_evolution),
     graph_evolution_mode: profile.graph_evolution_mode || 'bounded_local_update',
-    default_refresh_command: profile.default_refresh_command || 'mdos graphify build .',
-    default_orient_command: profile.default_orient_command || 'mdos graphify orient <question>',
+    default_refresh_command: profile.default_refresh_command || 'cortex graphify build .',
+    default_orient_command: profile.default_orient_command || 'cortex graphify orient <question>',
     output_dir: rel(outputs.outputDir),
     graph_json: rel(outputs.graphJson),
     graph_html: rel(outputs.graphHtml),
@@ -1201,7 +1201,7 @@ function openGraph(profile) {
     browser_command_hint: `xdg-open ${rel(outputs.graphHtml)}`,
     note: fs.existsSync(outputs.graphHtml)
       ? 'Open graph_html in a browser to inspect the interactive document network.'
-      : 'Run `mdos graphify build <target_dir>` first.',
+      : 'Run `cortex graphify build <target_dir>` first.',
   };
 }
 
@@ -1255,7 +1255,7 @@ function openNeuralMap(profile) {
     browser_command_hint: `xdg-open ${rel(outputs.neuralMapHtml)}`,
     note: fs.existsSync(outputs.neuralMapHtml)
       ? 'Open neural_map_html in a browser to inspect the semantic node network.'
-      : 'Run `mdos graphify neural-map` first.',
+      : 'Run `cortex graphify neural-map` first.',
   };
 }
 
@@ -1309,7 +1309,7 @@ function openConnectorTopology(profile) {
     browser_command_hint: `xdg-open ${rel(outputs.connectorTopologyHtml)}`,
     note: fs.existsSync(outputs.connectorTopologyHtml)
       ? 'Open connector_topology_html in a browser to inspect the sanitized connector topology.'
-      : 'Run `mdos graphify connector-map` first.',
+      : 'Run `cortex graphify connector-map` first.',
   };
 }
 

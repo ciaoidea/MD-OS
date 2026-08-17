@@ -153,7 +153,7 @@ OperationValid =
 | virtual memory | context paging | summaries, warm-start capsules, context packs |
 | scheduler | task prioritization | agenda, work-item state, project state |
 | log | audit ledger | journal, report, replay readback |
-| crash recovery | replay | deterministic builders and `mdos replay` |
+| crash recovery | replay | deterministic builders and `cortex replay` |
 
 ## Relationship To Existing Runtime Objects
 

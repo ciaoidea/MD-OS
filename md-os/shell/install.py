@@ -18,7 +18,8 @@ from typing import NoReturn
 PROJECT_ROOT = Path(__file__).resolve().parent
 BIN_DIR = PROJECT_ROOT / "bin"
 ENGINE_PATH = BIN_DIR / "mdos-console"
-LAUNCHER_PATH = BIN_DIR / "mdos"
+LAUNCHER_PATH = BIN_DIR / "cortex"
+COMPATIBILITY_LAUNCHER_PATH = BIN_DIR / "mdos"
 SHELL_DIR = PROJECT_ROOT / "adapters"
 # Stable managed markers preserve idempotent upgrades from the earlier name.
 BLOCK_START = "# >>> MD-OS semantic shell >>>"
@@ -64,6 +65,8 @@ def validate_project() -> None:
         fail("MD-OS requires Python 3.10 or newer", 69)
     required = (
         LAUNCHER_PATH,
+        COMPATIBILITY_LAUNCHER_PATH,
+        BIN_DIR / "cortex.cmd",
         BIN_DIR / "mdos.cmd",
         ENGINE_PATH,
         PROJECT_ROOT / "mdos-console.json",
@@ -278,7 +281,7 @@ def update_windows_user_path(dry_run: bool) -> None:
 def make_posix_launchers_executable(dry_run: bool) -> None:
     if os.name == "nt":
         return
-    for path in (LAUNCHER_PATH, ENGINE_PATH):
+    for path in (LAUNCHER_PATH, COMPATIBILITY_LAUNCHER_PATH, ENGINE_PATH):
         current_mode = path.stat().st_mode
         desired_mode = current_mode | 0o111
         if desired_mode == current_mode:
@@ -303,7 +306,8 @@ def main() -> int:
     configure_shell(target, arguments.dry_run)
     print("installation_status=ready")
     print("next_step=open a new terminal or reload the configured shell profile")
-    print("universal_command=mdos")
+    print("universal_command=cortex")
+    print("compatibility_alias=mdos")
     return 0
 
 

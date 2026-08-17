@@ -8,8 +8,8 @@ const { generateCandidateSet } = require('../kernel/cognition/candidate_provider
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos benchmark software-repair generate --case <case.json> --provider <provider.json> [options]',
-    '  mdos benchmark software-repair run --case <case.json> (--candidate-set <candidate_set.json> | --provider <provider.json>) [options]',
+    '  cortex benchmark software-repair generate --case <case.json> --provider <provider.json> [options]',
+    '  cortex benchmark software-repair run --case <case.json> (--candidate-set <candidate_set.json> | --provider <provider.json>) [options]',
     '',
     'Options:',
     '  --configuration <baseline_a_single_attempt|baseline_b_retrieval|mdos_learning_exploration|mdos_neuromorphic_skill|mdos_verified_runtime>',
@@ -18,7 +18,7 @@ function usage() {
     '  --run-id <append_only_run_id>',
     '',
     'Inspection:',
-    '  mdos benchmark software-repair configurations',
+    '  cortex benchmark software-repair configurations',
   ].join('\n') + '\n');
   process.exit(2);
 }

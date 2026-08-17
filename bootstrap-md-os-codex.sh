@@ -130,7 +130,7 @@ EOF
   else
     echo "[MD-OS] Running read-only host hardware discovery..." >&2
     if node "$ROOT_DIR/md-os/os/hardware_bootstrap.js" bootstrap --no-json >&2; then
-      echo "[MD-OS] Hardware cache: md-os/ops/local/hardware (clean with: mdos hardware clean)" >&2
+      echo "[MD-OS] Hardware cache: md-os/ops/local/hardware (clean with: cortex hardware clean)" >&2
     else
       echo "[MD-OS] Hardware discovery failed; continuing host startup." >&2
     fi
@@ -141,7 +141,7 @@ EOF
   else
     echo "[MD-OS] Running read-only host software discovery..." >&2
     if node "$ROOT_DIR/md-os/os/software_bootstrap.js" bootstrap --no-json >&2; then
-      echo "[MD-OS] Software cache: md-os/ops/local/software (clean with: mdos software clean)" >&2
+      echo "[MD-OS] Software cache: md-os/ops/local/software (clean with: cortex software clean)" >&2
     else
       echo "[MD-OS] Software discovery failed; continuing host startup." >&2
     fi
@@ -189,7 +189,7 @@ The MD-OS (Artificial Prefrontal Cortex) identity is an APFC operating frame,
 not a claim of literal personhood, consciousness, biological equivalence, AGI,
 resurrection, or factual authority.
 
-If spoken output is requested, prefer the explicit entrypoint `mdos audio speak
+If spoken output is requested, prefer the explicit entrypoint `cortex audio speak
 "<text>"` so the host runtime uses the same bounded speech path.
 EOF
 }

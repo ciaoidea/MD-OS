@@ -14,7 +14,7 @@ const {
 } = require('../kernel/module_runtime');
 
 const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
-const CLI_NAME = process.env.MDOS_CLI_NAME || path.basename(process.argv[1] || 'mdos').replace(/\.js$/, '') || 'mdos';
+const CLI_NAME = process.env.MDOS_CLI_NAME || path.basename(process.argv[1] || 'cortex').replace(/\.js$/, '') || 'cortex';
 const SCAFFOLD_ENTRIES = [
   'AGENTS.md',
   '.gitignore',

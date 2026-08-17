@@ -1,6 +1,6 @@
 # MD-OS Agentic Shell
 
-`mdos` is the public interactive entrypoint for MD-OS. It preserves the real
+`cortex` is the public interactive entrypoint for MD-OS. It preserves the real
 host-shell experience and fuses it with the native Codex agent loop. It is not
 a browser console, a simulated filesystem, or a one-command text generator.
 
@@ -19,14 +19,14 @@ result, answer, and preserve the Codex thread.
 Codex provides the plastic reasoning-and-tool loop. MD-OS provides the
 persistent identity and Operational Context as Filesystem: method, memory,
 semantic commitment gates, policy, bounded authority, executors, sensors,
-verifiers, and ledger readback. `mdos` is where these layers meet the real
+verifiers, and ledger readback. `cortex` is where these layers meet the real
 interactive shell.
 
 ## Prerequisites
 
 - Python 3.10 or newer;
 - Codex CLI installed, authenticated, and available as `codex`;
-- Node.js 20 or newer for deterministic `mdos` runtime subcommands;
+- Node.js 20 or newer for deterministic `cortex` runtime subcommands;
 - Bash, Zsh, Fish, or PowerShell for the installed adapter.
 
 ## Install
@@ -39,7 +39,7 @@ From the MD-OS checkout:
 
 The installer:
 
-1. makes the public `md-os/shell/bin/mdos` launcher and its compatibility
+1. makes the public `md-os/shell/bin/cortex` launcher and its compatibility
    engine executable;
 2. puts that checked-out `bin` directory on the selected shell's `PATH`;
 3. sources the corresponding adapter from `md-os/shell/adapters/`;
@@ -67,7 +67,7 @@ Open a new terminal or reload the configured shell profile after installation.
 Run this from any directory:
 
 ```bash
-mdos
+cortex
 ```
 
 Then type ordinary commands and natural language in the same interface:
@@ -85,20 +85,21 @@ Use `exit`, `quit`, or Ctrl-D to leave.
 One-shot natural-language input also uses the native Codex loop:
 
 ```bash
-mdos "explain the architecture of this repository"
+cortex "explain the architecture of this repository"
 ```
 
 The deterministic MD-OS runtime remains under the same command:
 
 ```bash
-mdos health
-mdos graphify status
-mdos replay
+cortex health
+cortex graphify status
+cortex replay
 ```
 
-`mdos` dispatches known deterministic subcommands to `md-os/os/mdos.js`.
-Running `mdos` without arguments opens the agentic shell; other free-form input
-goes to the shell engine. `mdos-console` remains a compatibility alias and is
+`cortex` dispatches known deterministic subcommands to `md-os/os/mdos.js`.
+Running `cortex` without arguments opens the agentic shell; other free-form input
+goes to the shell engine. `mdos` remains a deprecated command alias, while
+`mdos-console` remains the compatibility engine name and is
 not the public name.
 
 ## Exact interactive flow
@@ -146,7 +147,7 @@ stays alive until the REPL exits. Native-only use therefore pays no model
 startup cost.
 
 Threads are bound by current Git workspace, falling back to the exact current
-directory outside Git. On the first semantic turn in a workspace, `mdos` asks
+directory outside Git. On the first semantic turn in a workspace, `cortex` asks
 Codex App Server for the most recent matching `cli`, `vscode`, `exec`, or
 `appServer` thread and resumes it. If none exists, it starts one. Moving to a
 different repository selects that repository's thread; moving back reuses the
@@ -241,7 +242,7 @@ status because the protocol does not supply the Codex terminal client's already
 rendered byte stream. See the official
 [Codex App Server documentation](https://learn.chatgpt.com/docs/app-server).
 
-## Bootstrap versus `mdos`
+## Bootstrap versus `cortex`
 
 The bootstrap still exists and has a separate role:
 
@@ -249,7 +250,7 @@ The bootstrap still exists and has a separate role:
 ./bootstrap-md-os-codex.sh
   -> opens the ordinary interactive Codex client in this repository
 
-mdos
+cortex
   -> opens the MD-OS shell from any directory
   -> native input stays shell-native
   -> natural language enters a workspace-bound ordinary Codex agent thread

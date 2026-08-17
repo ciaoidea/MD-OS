@@ -221,8 +221,8 @@ make clean-release
 or:
 
 ```bash
-mdos hardware clean
-mdos software clean
+cortex hardware clean
+cortex software clean
 ```
 
 The clean commands also refresh derived runtime indices and scrub host-local

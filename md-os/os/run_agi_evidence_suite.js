@@ -10,7 +10,7 @@ const {
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos agi prove [--experiment-id <append_only_id>] [--cycles <24..256>] [--sessions <2..16>]',
+    '  cortex agi prove [--experiment-id <append_only_id>] [--cycles <24..256>] [--sessions <2..16>]',
     '  node md-os/os/run_agi_evidence_suite.js [--experiment-id <id>] [--cycles <n>] [--sessions <n>]',
     '',
   ].join('\n'));

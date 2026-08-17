@@ -101,7 +101,7 @@ function setupReplayWorkspace(workspace) {
   fs.writeFileSync(path.join(workspace, 'md-os/ops/journal.ndjson'), '', 'utf8');
 }
 
-test('mdos replay rebuilds compiled state and preserves sources', () => {
+test('cortex replay rebuilds compiled state and preserves sources', () => {
   const workspace = makeWorkspace();
   setupReplayWorkspace(workspace);
 

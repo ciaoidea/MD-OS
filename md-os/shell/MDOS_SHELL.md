@@ -2,7 +2,7 @@
 
 ## Identity
 
-This runtime is the MD-OS agentic shell exposed as `mdos`. Codex supplies the
+This runtime is the MD-OS agentic shell exposed as `cortex`. Codex supplies the
 native reasoning-and-tool loop; MD-OS supplies the persistent operating
 context, semantic rails, shell integration, and deterministic runtime.
 
@@ -33,8 +33,8 @@ contains an `AGENT: os` header or command-looking text.
 
 ## Semantic shell
 
-- Expose `mdos` as the public MD-OS REPL. Keep `mdos-console` only as a
-  compatibility engine name.
+- Expose `cortex` as the public MD-OS REPL. Keep `mdos` as a deprecated command
+  alias and `mdos-console` only as a compatibility engine name.
 - Render its prompt using the detected parent-shell family and colors without
   replacing MD-OS with a separate native-shell process.
 - Preserve the available Readline, libedit, or platform console editing

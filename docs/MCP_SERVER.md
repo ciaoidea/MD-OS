@@ -21,7 +21,7 @@ node md-os/os/mcp_server.js
 When installed through the package bin:
 
 ```bash
-mdos mcp-server
+cortex mcp-server
 ```
 
 ## Host Configuration
@@ -31,7 +31,7 @@ Point an MCP-compatible host at the server command from the repository root:
 ```json
 {
   "mcpServers": {
-    "mdos": {
+    "cortex": {
       "command": "node",
       "args": ["md-os/os/mcp_server.js"]
     }

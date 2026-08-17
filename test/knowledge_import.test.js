@@ -549,7 +549,7 @@ test('initial repository knowledge import assimilates identity and source tree d
   assert.match(binding, /md-os\/ops\/calculations\//);
 });
 
-test('mdos knowledge import routes through the single import builder', () => {
+test('cortex knowledge import routes through the single import builder', () => {
   const workspace = makeWorkspace();
   const source = makeSource();
   writeFile(path.join(source, 'README.md'), '# Operational Runbook\n\nA workflow procedure updates a task.\n');

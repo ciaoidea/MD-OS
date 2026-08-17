@@ -111,7 +111,7 @@ class ShellEvent:
 
 @dataclass
 class ShellSession:
-    """Volatile working context for one public `mdos` REPL process."""
+    """Volatile working context for one public `cortex` REPL process."""
 
     codex_thread_id: str | None = None
     codex_workspace: str | None = None
@@ -201,14 +201,14 @@ def render_colored_diff(diff: str, stream: object) -> str:
 def usage() -> None:
     print(
         """Usage:
-  mdos
-  mdos "human-language input"
-  mdos --print "human-language input"
-  mdos --inspect
-  mdos <agent.md> "human-language input"
-  mdos <agent.md> --print "human-language input"
-  mdos <agent.md> --inspect
-  mdos --platform
+  cortex
+  cortex "human-language input"
+  cortex --print "human-language input"
+  cortex --inspect
+  cortex <agent.md> "human-language input"
+  cortex <agent.md> --print "human-language input"
+  cortex <agent.md> --inspect
+  cortex --platform
 
 Valid native input executes directly. Natural language enters the full Codex
 agent loop for the current workspace, including repository instructions,
@@ -217,13 +217,13 @@ reasoning, tools, full-control execution, verification, and resumable history.
 host-shell family, colors, and line-editing backend.
 
 Examples:
-  mdos
-  mdos "show the files in my home directory"
-  mdos "scrivi un programma C nel file hello.c e compilalo"
-  mdos --print "human-language operating request"
-  mdos --inspect
-  mdos os.md "show the files in my home directory"
-  mdos code.md "generate the requested source code"
+  cortex
+  cortex "show the files in my home directory"
+  cortex "scrivi un programma C nel file hello.c e compilalo"
+  cortex --print "human-language operating request"
+  cortex --inspect
+  cortex os.md "show the files in my home directory"
+  cortex code.md "generate the requested source code"
 
 File contract:
   mdos-console.json            Runtime and Codex configuration in JSON.
@@ -2832,7 +2832,7 @@ def handle_repl_builtin(
     if arguments and arguments[0] == "--":
         arguments = arguments[1:]
     if len(arguments) > 1:
-        message = f"mdos: {words[0]}: too many arguments"
+        message = f"cortex: {words[0]}: too many arguments"
         print(message, file=sys.stderr)
         record_builtin(1, f"[stderr]\n{message}\n")
         return True
@@ -2851,7 +2851,7 @@ def handle_repl_builtin(
         if raw_target == "-":
             previous = os.environ.get("OLDPWD")
             if not previous:
-                message = f"mdos: {words[0]}: OLDPWD is not set"
+                message = f"cortex: {words[0]}: OLDPWD is not set"
                 print(message, file=sys.stderr)
                 record_builtin(1, f"[stderr]\n{message}\n")
                 return True
@@ -2863,7 +2863,7 @@ def handle_repl_builtin(
     try:
         os.chdir(target)
     except OSError as error:
-        message = f"mdos: {words[0]}: {target}: {error.strerror or error}"
+        message = f"cortex: {words[0]}: {target}: {error.strerror or error}"
         print(message, file=sys.stderr)
         record_builtin(1, f"[stderr]\n{message}\n")
         return True

@@ -14,7 +14,7 @@ register a change proposal.
 Command:
 
 ```bash
-mdos propose-change <target_path> <summary>
+cortex propose-change <target_path> <summary>
 ```
 
 Canonical storage:

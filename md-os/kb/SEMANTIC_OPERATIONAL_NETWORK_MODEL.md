@@ -36,7 +36,7 @@ The semantic operational network has five layers:
 | Semantic layer | Defines concepts, tasks, roles, relations, and action fields. | `md-os/kb/SEMANTIC_NEURAL_OVERLAY_MODEL.md`, `md-os/kb/NATURAL_LANGUAGE_PROGRAMMING_MODEL.md`, `md-os/kb/NATURAL_LANGUAGE_PROGRAMS.md` |
 | Epistemic layer | Defines claim status, validation, demotion, and correction. | `md-os/kb/EPISTEMIC_LIFECYCLE_MODEL.md`, `md-os/kb/SCIENTIFIC_VALIDATION_METHOD_MODEL.md`, `md-os/kb/KNOWLEDGE_IMPORT_METHOD_MODEL.md` |
 | Operational layer | Defines bounded procedures, runtime state, projects, connectors, and permissions. | `md-os/kb/OPERATIONS.md`, `md-os/kb/RUNTIME_STATE_LIFECYCLE_MODEL.md`, `md-os/kb/PERMISSION_MODEL.md`, `md-os/kb/CONNECTOR_CONTRACT.md` |
-| Coherence layer | Defines graph connectivity, generated indexes, health, hygiene, replay, and self-release readback. | `md-os/kb/MARKDOWN_GRAPH_MODEL.md`, `md-os/kb/SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md`, `md-os/kb/SELF_RELEASE_EVOLUTION_MODEL.md`, `md-os/kb/GLOBAL_RUNTIME_INDEX.md`, `md-os/kb/SYSTEM_HYGIENE_MODEL.md`, `mdos replay` |
+| Coherence layer | Defines graph connectivity, generated indexes, health, hygiene, replay, and self-release readback. | `md-os/kb/MARKDOWN_GRAPH_MODEL.md`, `md-os/kb/SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md`, `md-os/kb/SELF_RELEASE_EVOLUTION_MODEL.md`, `md-os/kb/GLOBAL_RUNTIME_INDEX.md`, `md-os/kb/SYSTEM_HYGIENE_MODEL.md`, `cortex replay` |
 
 These layers must reinforce each other. A semantic proposal without epistemic
 status is incomplete. An epistemic claim without an operating artifact is

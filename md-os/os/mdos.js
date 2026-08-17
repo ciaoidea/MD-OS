@@ -8,7 +8,7 @@ const result = spawnSync(process.execPath, [path.join(__dirname, 'mdos_cli.js'),
   cwd: process.cwd(),
   env: {
     ...process.env,
-    MDOS_CLI_NAME: 'mdos',
+    MDOS_CLI_NAME: 'cortex',
   },
   stdio: 'inherit',
 });

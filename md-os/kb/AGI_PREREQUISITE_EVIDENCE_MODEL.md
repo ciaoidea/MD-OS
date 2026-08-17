@@ -16,7 +16,7 @@ cross-domain transfer
 The suite is invoked with:
 
 ```bash
-mdos agi prove \
+cortex agi prove \
   --experiment-id <append_only_id> \
   --cycles 96 \
   --sessions 6

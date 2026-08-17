@@ -64,7 +64,7 @@ Examples:
 - robot motion command -> host-local action log entry plus controller response
 
 Artifacts that reveal the local machine or environment are not portable state.
-They must remain cleanable with `mdos hardware clean`.
+They must remain cleanable with `cortex hardware clean`.
 
 ## Robot And Actuator Policy
 
@@ -101,4 +101,4 @@ Discovery records should live under:
 md-os/ops/local/hardware/observations.ndjson
 ```
 
-The hardware directory is host-local and cleanable with `mdos hardware clean`.
+The hardware directory is host-local and cleanable with `cortex hardware clean`.

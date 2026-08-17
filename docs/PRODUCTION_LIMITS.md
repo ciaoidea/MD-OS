@@ -81,7 +81,7 @@ surface must stay simple.
 
 - Keep the formal structure under the hood.
 - Provide high-level commands for common workflows.
-- Prefer workflows such as `mdos role onboard <role_id>` that can create role
+- Prefer workflows such as `cortex role onboard <role_id>` that can create role
   folders, run intake, run sensemaking, rebuild indexes, and surface expert
   questions without exposing raw orchestration.
 - Keep Markdown read views understandable to non-specialists.

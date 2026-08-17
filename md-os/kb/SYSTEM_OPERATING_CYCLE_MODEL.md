@@ -27,8 +27,8 @@ questions.
 ```bash
 node md-os/os/operating_cycle.js status
 node md-os/os/operating_cycle.js run-once
-mdos cycle status
-mdos cycle run-once
+cortex cycle status
+cortex cycle run-once
 ```
 
 It writes:

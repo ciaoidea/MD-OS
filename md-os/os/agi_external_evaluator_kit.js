@@ -37,10 +37,10 @@ const {
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos agi evaluator-kit seal --request <external_evaluation_request.json> --output-dir <external_dir> [--seed <secret>] ',
-    '  mdos agi evaluator-kit reference-run --sealed-dir <external_dir> --output-dir <external_results_dir>',
-    '  mdos agi evaluator-kit keygen --output-dir <external_key_dir> --evaluator-id <id> --organization <name> --key-id <id>',
-    '  mdos agi evaluator-kit finalize --bundle <raw_bundle.json> --attestation <attestation.json> --private-key <key.pem> --key-id <id> --output <report.json>',
+    '  cortex agi evaluator-kit seal --request <external_evaluation_request.json> --output-dir <external_dir> [--seed <secret>] ',
+    '  cortex agi evaluator-kit reference-run --sealed-dir <external_dir> --output-dir <external_results_dir>',
+    '  cortex agi evaluator-kit keygen --output-dir <external_key_dir> --evaluator-id <id> --organization <name> --key-id <id>',
+    '  cortex agi evaluator-kit finalize --bundle <raw_bundle.json> --attestation <attestation.json> --private-key <key.pem> --key-id <id> --output <report.json>',
     '',
   ].join('\n'));
   process.exit(2);

@@ -6,13 +6,13 @@ therefore starts as a materialized view, not as destructive deletion.
 Command:
 
 ```bash
-mdos compact
+cortex compact
 ```
 
 Equivalent command:
 
 ```bash
-mdos archive
+cortex archive
 ```
 
 Builder:

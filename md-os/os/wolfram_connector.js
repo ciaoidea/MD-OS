@@ -79,10 +79,10 @@ function safeId(value) {
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos connector wolfram bootstrap',
-    '  mdos connector wolfram list',
-    '  mdos connector wolfram run <project_id> <calculation_id>',
-    '  mdos wolfram <bootstrap|list|run> [project_id] [calculation_id]',
+    '  cortex connector wolfram bootstrap',
+    '  cortex connector wolfram list',
+    '  cortex connector wolfram run <project_id> <calculation_id>',
+    '  cortex wolfram <bootstrap|list|run> [project_id] [calculation_id]',
     '  node md-os/os/wolfram_connector.js <bootstrap|list|run> ...',
     '',
   ].join('\n'));
@@ -537,7 +537,7 @@ function writeAvailabilitySnapshot(availability, smokeRun) {
       suspected_causes: availability.available ? [] : ['missing_host_prerequisite'],
       depends_on: [],
       next_step: availability.available
-        ? 'Run a registered calculation through mdos wolfram run.'
+        ? 'Run a registered calculation through cortex wolfram run.'
         : 'Install or expose wolframscript on PATH, then rerun the bootstrap.',
       external_parties: [],
       connector_runtime: {

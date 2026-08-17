@@ -43,14 +43,14 @@ For nontrivial repository navigation, Graphify is the default first-pass graph
 orientation layer. The operator should prefer:
 
 ```bash
-mdos graphify orient "<question>"
+cortex graphify orient "<question>"
 ```
 
 before broad file reads when a current graph exists, and should refresh the
 graph with:
 
 ```bash
-mdos graphify build .
+cortex graphify build .
 ```
 
 when the graph needs to evolve with current files, connectors, schemas, audit
@@ -232,7 +232,7 @@ repository can produce a stronger artifact, test, replay, or generated readback.
 
 ## Unified Agentic Shell Path
 
-The public `mdos` command can fuse a real host shell with the native Codex
+The public `cortex` command can fuse a real host shell with the native Codex
 agent loop without reducing either layer:
 
 ```text
