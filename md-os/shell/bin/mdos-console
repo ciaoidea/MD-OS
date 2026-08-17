@@ -1,0 +1,1570 @@
+#!/usr/bin/env python3
+"""Load JSON manifests, link Markdown instructions, and execute native actions."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+import getpass
+import hashlib
+import json
+import os
+import platform
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+
+try:
+    import readline
+except ImportError:  # Windows and minimal Python builds may not provide it.
+    readline = None
+
+
+RUNTIME_SCHEMA = "mdos.shell.runtime/v1"
+AGENT_SCHEMA = "mdos.shell.agent/v1"
+ENGINE_ROOT = Path(__file__).resolve().parent.parent
+RUNTIME_CONFIG_PATH = ENGINE_ROOT / "mdos-console.json"
+DEFAULT_AGENT_REFERENCE = "orchestrator.md"
+MAX_CONFIG_BYTES = 64 * 1024
+FORBIDDEN_MARKDOWN_CONTRACTS = (
+    "```mdos-console-config",
+    "```mdos-console-program",
+    "```mdos-console-fragment",
+)
+
+
+@dataclass(frozen=True)
+class RuntimeSpec:
+    config_path: Path
+    config_hash: str
+    instructions_path: Path
+    instructions_hash: str
+    instructions: str
+    provider: str
+    model: str
+    think: bool
+    agent_roots: tuple[Path, ...]
+    include_roots: tuple[Path, ...]
+    max_source_bytes: int
+    max_compiled_chars: int
+
+
+@dataclass(frozen=True)
+class SourceDocument:
+    path: Path
+    role: str
+    source_hash: str
+    instructions: str
+
+
+@dataclass(frozen=True)
+class ProgramSpec:
+    manifest_path: Path
+    manifest_hash: str
+    path: Path
+    program_id: str
+    version: str
+    kind: str
+    permissions: frozenset[str]
+    max_input_length: int
+    max_output_length: int
+    sources: tuple[SourceDocument, ...]
+    instructions: str
+    context_hash: str
+
+
+@dataclass(frozen=True)
+class PlatformSpec:
+    platform_id: str
+    platform_name: str
+    command_language: str
+    kernel: str
+    executor: str | None
+    guidance: str
+
+
+def usage() -> None:
+    print(
+        """Usage:
+  mdos-console "human-language input"
+  mdos-console --shell
+  mdos-console --print "human-language input"
+  mdos-console --inspect
+  mdos-console <agent.md> "human-language input"
+  mdos-console <agent.md> --print "human-language input"
+  mdos-console <agent.md> --inspect
+  mdos-console --platform
+
+MD-OS sends natural-language meaning to the LLM without Python keyword
+classification. The model selects answer, OS, code, or code+OS behavior in one
+invocation. `--shell` keeps the MD-OS REPL and renders its prompt using the
+detected host-shell family, colors, and line-editing backend.
+
+Examples:
+  mdos-console "show the files in my home directory"
+  mdos-console "scrivi un programma C nel file hello.c e compilalo"
+  mdos-console --shell
+  mdos-console --print "human-language operating request"
+  mdos-console --inspect
+  mdos-console os.md "show the files in my home directory"
+  mdos-console code.md "generate the requested source code"
+
+File contract:
+  mdos-console.json            Runtime and Codex configuration in JSON.
+  MDOS_SHELL.md                Semantic-shell runtime rules in Markdown.
+  programs/orchestrator.json   Automatic orchestrator manifest in JSON.
+  programs/orchestrator.md     Meaning-based routing program in Markdown.
+  programs/os.{json,md}        Native-command program and contract.
+  programs/code.{json,md}      Source-code program and contract.
+
+Include paths:
+  Relative includes are resolved first beside the agent manifest and then
+  through include_roots from mdos-console.json. Explicit absolute and ../ Markdown
+  paths in an agent JSON manifest are supported.
+
+Options:
+  --print            Translate with the general runtime without executing.
+  --inspect          Validate and show the default MD-OS agent, or one explicitly
+                     requested agent, without a model invocation.
+  --platform         Print the detected platform and command language.
+  --shell            Start MD-OS with a host-shell-style prompt.
+  -h, --help         Show this help.
+
+Environment:
+  MDOS_MODEL          Override the Codex model (default: Codex configuration).
+  MDOS_CODEX_BIN      Override the Codex CLI executable path.
+  MDOS_PROMPT_COLOR
+                     Set to auto (default), always, or never.
+  NO_COLOR           Disable automatic ANSI prompt colors when set.
+"""
+    )
+
+
+def fail(message: str, status: int = 1) -> "NoReturn":
+    print(f"ERROR: {message}", file=sys.stderr)
+    raise SystemExit(status)
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as stream:
+            while chunk := stream.read(64 * 1024):
+                digest.update(chunk)
+    except OSError as error:
+        fail(f"cannot hash artifact {path}: {error}", 74)
+    return digest.hexdigest()
+
+
+def read_text(path: Path, maximum_bytes: int, label: str) -> tuple[str, str]:
+    try:
+        size = path.stat().st_size
+    except OSError as error:
+        fail(f"cannot inspect {label} {path}: {error}", 66)
+    if size > maximum_bytes:
+        fail(f"{label} exceeds {maximum_bytes} bytes: {path}", 65)
+    try:
+        source = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        fail(f"cannot read UTF-8 {label} {path}: {error}", 66)
+    return source, hashlib.sha256(source.encode("utf-8")).hexdigest()
+
+
+def load_json_object(
+    path: Path, maximum_bytes: int, label: str
+) -> tuple[dict[str, object], str]:
+    source, source_hash = read_text(path, maximum_bytes, label)
+    try:
+        decoded = json.loads(source)
+    except json.JSONDecodeError as error:
+        fail(f"invalid {label} JSON at line {error.lineno}: {error.msg}", 65)
+    if not isinstance(decoded, dict):
+        fail(f"{label} must contain one JSON object", 65)
+    return decoded, source_hash
+
+
+def reject_unknown_fields(
+    contract: dict[str, object], allowed: set[str], scope: str
+) -> None:
+    unknown = sorted(set(contract) - allowed)
+    if unknown:
+        fail(f"{scope} has unknown fields: {', '.join(unknown)}", 65)
+
+
+def require_string(contract: dict[str, object], field: str, scope: str) -> str:
+    value = contract.get(field)
+    if not isinstance(value, str) or not value.strip():
+        fail(f"{scope} field '{field}' must be a non-empty string", 65)
+    return value.strip()
+
+
+def require_integer(
+    contract: dict[str, object],
+    field: str,
+    *,
+    minimum: int,
+    maximum: int,
+    scope: str,
+) -> int:
+    value = contract.get(field)
+    if not isinstance(value, int) or isinstance(value, bool):
+        fail(f"{scope} field '{field}' must be an integer", 65)
+    if not minimum <= value <= maximum:
+        fail(
+            f"{scope} field '{field}' must be between {minimum} and {maximum}",
+            65,
+        )
+    return value
+
+
+def require_string_array(
+    contract: dict[str, object],
+    field: str,
+    scope: str,
+    *,
+    allow_empty: bool,
+) -> tuple[str, ...]:
+    value = contract.get(field)
+    if not isinstance(value, list) or (not value and not allow_empty):
+        requirement = "an array" if allow_empty else "a non-empty array"
+        fail(f"{scope} field '{field}' must be {requirement}", 65)
+    result: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            fail(f"every {scope} '{field}' entry must be a non-empty string", 65)
+        normalized = item.strip()
+        if normalized in result:
+            fail(f"{scope} field '{field}' repeats: {normalized}", 65)
+        result.append(normalized)
+    return tuple(result)
+
+
+def resolve_from_base(reference: str, base: Path) -> Path:
+    requested = Path(reference).expanduser()
+    if requested.is_absolute():
+        return requested.resolve()
+    return (base / requested).resolve()
+
+
+def require_directory(path: Path, label: str) -> Path:
+    if not path.is_dir():
+        fail(f"{label} is not a readable directory: {path}", 66)
+    return path
+
+
+def assert_pure_markdown(source: str, path: Path) -> None:
+    for marker in FORBIDDEN_MARKDOWN_CONTRACTS:
+        if marker in source:
+            fail(
+                f"Markdown must not contain embedded MD-OS JSON contracts: {path}",
+                65,
+            )
+
+
+def load_runtime() -> RuntimeSpec:
+    contract, config_hash = load_json_object(
+        RUNTIME_CONFIG_PATH, MAX_CONFIG_BYTES, "runtime configuration"
+    )
+    scope = "runtime configuration"
+    reject_unknown_fields(
+        contract,
+        {
+            "schema",
+            "runtime_instructions",
+            "provider",
+            "model",
+            "think",
+            "agent_roots",
+            "include_roots",
+            "max_source_bytes",
+            "max_compiled_chars",
+        },
+        scope,
+    )
+    schema = require_string(contract, "schema", scope)
+    if schema != RUNTIME_SCHEMA:
+        fail(f"unsupported runtime schema: {schema}", 65)
+    provider = require_string(contract, "provider", scope)
+    if provider != "codex":
+        fail(f"unsupported model provider: {provider}", 65)
+    model = require_string(contract, "model", scope)
+    think = contract.get("think")
+    if not isinstance(think, bool):
+        fail(f"{scope} field 'think' must be a boolean", 65)
+    max_source_bytes = require_integer(
+        contract,
+        "max_source_bytes",
+        minimum=1024,
+        maximum=1024 * 1024,
+        scope=scope,
+    )
+    max_compiled_chars = require_integer(
+        contract,
+        "max_compiled_chars",
+        minimum=1024,
+        maximum=1024 * 1024,
+        scope=scope,
+    )
+    raw_agent_roots = require_string_array(
+        contract, "agent_roots", scope, allow_empty=False
+    )
+    raw_include_roots = require_string_array(
+        contract, "include_roots", scope, allow_empty=True
+    )
+    agent_roots = tuple(
+        require_directory(resolve_from_base(item, ENGINE_ROOT), "agent root")
+        for item in raw_agent_roots
+    )
+    include_roots = tuple(
+        require_directory(resolve_from_base(item, ENGINE_ROOT), "include root")
+        for item in raw_include_roots
+    )
+    instructions_reference = require_string(
+        contract, "runtime_instructions", scope
+    )
+    instructions_path = resolve_from_base(instructions_reference, ENGINE_ROOT)
+    if instructions_path.suffix.casefold() != ".md":
+        fail("runtime_instructions must reference a .md file", 65)
+    instructions, instructions_hash = read_text(
+        instructions_path, max_source_bytes, "runtime Markdown"
+    )
+    assert_pure_markdown(instructions, instructions_path)
+    return RuntimeSpec(
+        config_path=RUNTIME_CONFIG_PATH.resolve(),
+        config_hash=config_hash,
+        instructions_path=instructions_path,
+        instructions_hash=instructions_hash,
+        instructions=instructions.strip(),
+        provider=provider,
+        model=model,
+        think=think,
+        agent_roots=agent_roots,
+        include_roots=include_roots,
+        max_source_bytes=max_source_bytes,
+        max_compiled_chars=max_compiled_chars,
+    )
+
+
+def manifest_name(reference: Path) -> Path:
+    suffix = reference.suffix.casefold()
+    if suffix == ".json":
+        return reference
+    if suffix in {"", ".md"}:
+        return reference.with_suffix(".json")
+    fail(f"agent reference must have no suffix, .md, or .json: {reference}", 64)
+
+
+def resolve_manifest(reference: str, runtime: RuntimeSpec) -> Path:
+    requested = Path(reference).expanduser()
+    manifest = manifest_name(requested)
+    explicit = requested.is_absolute() or len(requested.parts) > 1
+    candidates: list[Path]
+    if explicit:
+        candidates = [manifest]
+    else:
+        candidates = [root / manifest for root in runtime.agent_roots]
+    checked: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved in checked:
+            continue
+        checked.add(resolved)
+        if resolved.is_file():
+            return resolved
+    fail(f"agent manifest not found for: {reference}", 66)
+
+
+def resolve_markdown(
+    reference: str, manifest_path: Path, runtime: RuntimeSpec, role: str
+) -> Path:
+    requested = Path(reference).expanduser()
+    if requested.suffix.casefold() != ".md":
+        fail(f"{role} must reference a .md file: {reference}", 65)
+    if requested.is_absolute():
+        candidates = [requested]
+    else:
+        candidates = [manifest_path.parent / requested]
+        candidates.extend(root / requested for root in runtime.include_roots)
+    checked: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved in checked:
+            continue
+        checked.add(resolved)
+        if resolved.is_file():
+            return resolved
+    fail(f"{role} Markdown file not found: {reference}", 66)
+
+
+def load_markdown_source(
+    path: Path, role: str, runtime: RuntimeSpec
+) -> SourceDocument:
+    instructions, source_hash = read_text(path, runtime.max_source_bytes, role)
+    assert_pure_markdown(instructions, path)
+    if not instructions.strip():
+        fail(f"{role} Markdown file is empty: {path}", 65)
+    return SourceDocument(
+        path=path,
+        role=role,
+        source_hash=source_hash,
+        instructions=instructions.strip(),
+    )
+
+
+def load_program(reference: str, runtime: RuntimeSpec | None = None) -> ProgramSpec:
+    runtime = runtime or load_runtime()
+    manifest_path = resolve_manifest(reference, runtime)
+    contract, manifest_hash = load_json_object(
+        manifest_path, runtime.max_source_bytes, "agent manifest"
+    )
+    scope = f"agent manifest {manifest_path}"
+    reject_unknown_fields(
+        contract,
+        {
+            "schema",
+            "id",
+            "version",
+            "kind",
+            "entrypoint",
+            "includes",
+            "permissions",
+            "max_input_chars",
+            "max_output_chars",
+        },
+        scope,
+    )
+    schema = require_string(contract, "schema", scope)
+    if schema != AGENT_SCHEMA:
+        fail(f"unsupported agent schema: {schema}", 65)
+    program_id = require_string(contract, "id", scope)
+    if not re.fullmatch(r"[a-z][a-z0-9_-]*", program_id):
+        fail("agent id must match [a-z][a-z0-9_-]*", 65)
+    version = require_string(contract, "version", scope)
+    kind = require_string(contract, "kind", scope)
+    permission_contracts = {
+        "native-command": {
+            "platform.detect",
+            "model.invoke",
+            "process.execute",
+        },
+        "source-code": {
+            "model.invoke",
+        },
+        "agent-dispatch": {
+            "platform.detect",
+            "model.invoke",
+            "process.execute",
+        },
+    }
+    if kind not in permission_contracts:
+        fail(f"unsupported agent kind: {kind}", 65)
+    entrypoint_reference = require_string(contract, "entrypoint", scope)
+    include_references = require_string_array(
+        contract, "includes", scope, allow_empty=True
+    )
+    raw_permissions = require_string_array(
+        contract, "permissions", scope, allow_empty=False
+    )
+    permissions = frozenset(raw_permissions)
+    supported_permissions = permission_contracts[kind]
+    unknown_permissions = sorted(permissions - supported_permissions)
+    if unknown_permissions:
+        fail(
+            f"{kind} agent has unknown permissions: "
+            + ", ".join(unknown_permissions),
+            65,
+        )
+    missing_permissions = sorted(supported_permissions - permissions)
+    if missing_permissions:
+        fail(
+            f"{kind} agent is missing permissions: "
+            + ", ".join(missing_permissions),
+            65,
+        )
+    max_input_length = require_integer(
+        contract,
+        "max_input_chars",
+        minimum=1,
+        maximum=32768,
+        scope=scope,
+    )
+    max_output_length = require_integer(
+        contract,
+        "max_output_chars",
+        minimum=1,
+        maximum=32768,
+        scope=scope,
+    )
+
+    entrypoint_path = resolve_markdown(
+        entrypoint_reference, manifest_path, runtime, "agent entrypoint"
+    )
+    requested_path = Path(reference).expanduser()
+    if requested_path.suffix.casefold() == ".md":
+        explicit = requested_path.is_absolute() or len(requested_path.parts) > 1
+        if explicit and requested_path.resolve() != entrypoint_path:
+            fail(
+                f"requested Markdown does not match manifest entrypoint: {entrypoint_path}",
+                65,
+            )
+        if not explicit and requested_path.name != entrypoint_path.name:
+            fail(
+                f"requested Markdown name does not match manifest entrypoint: {entrypoint_path.name}",
+                65,
+            )
+
+    documents: list[SourceDocument] = []
+    loaded_paths: set[Path] = set()
+    for index, include_reference in enumerate(include_references):
+        include_path = resolve_markdown(
+            include_reference, manifest_path, runtime, f"agent include[{index}]"
+        )
+        if include_path in loaded_paths:
+            continue
+        loaded_paths.add(include_path)
+        documents.append(
+            load_markdown_source(include_path, f"include[{index}]", runtime)
+        )
+    if entrypoint_path in loaded_paths:
+        fail("agent entrypoint must not also appear in includes", 65)
+    documents.append(load_markdown_source(entrypoint_path, "entrypoint", runtime))
+
+    compiled_parts: list[str] = []
+    for document in documents:
+        compiled_parts.extend(
+            [
+                "---BEGIN MARKDOWN SOURCE---",
+                f"role={document.role}",
+                f"source={document.path}",
+                document.instructions,
+                "---END MARKDOWN SOURCE---",
+            ]
+        )
+    instructions = "\n\n".join(compiled_parts)
+    compiled_context = f"{runtime.instructions}\n\n{instructions}"
+    if len(compiled_context) > runtime.max_compiled_chars:
+        fail(
+            f"compiled Markdown context exceeds {runtime.max_compiled_chars} characters",
+            65,
+        )
+    hash_material = "\n".join(
+        [
+            runtime.config_hash,
+            runtime.instructions_hash,
+            manifest_hash,
+            *(document.source_hash for document in documents),
+        ]
+    )
+    context_hash = hashlib.sha256(hash_material.encode("utf-8")).hexdigest()
+    return ProgramSpec(
+        manifest_path=manifest_path,
+        manifest_hash=manifest_hash,
+        path=entrypoint_path,
+        program_id=program_id,
+        version=version,
+        kind=kind,
+        permissions=permissions,
+        max_input_length=max_input_length,
+        max_output_length=max_output_length,
+        sources=tuple(documents),
+        instructions=instructions,
+        context_hash=context_hash,
+    )
+
+
+def detect_platform() -> PlatformSpec:
+    system = platform.system()
+    kernel = system or "Unknown"
+    if system == "Linux":
+        return PlatformSpec(
+            platform_id="linux",
+            platform_name="GNU/Linux",
+            command_language="Bash",
+            kernel=kernel,
+            executor=shutil.which("bash"),
+            guidance=(
+                "Use GNU/Linux utilities and Bash syntax. Do not emit commands "
+                "for Windows, DOS, macOS, or BSD unless the user asks for text "
+                "about them."
+            ),
+        )
+    if system == "Darwin":
+        return PlatformSpec(
+            platform_id="macos",
+            platform_name="macOS",
+            command_language="zsh",
+            kernel=kernel,
+            executor=shutil.which("zsh") or "/bin/zsh",
+            guidance=(
+                "Use commands and options available on macOS with zsh. Avoid "
+                "GNU-only flags unless the request targets an installed GNU utility."
+            ),
+        )
+    if system in {"FreeBSD", "OpenBSD", "NetBSD", "DragonFly"}:
+        return PlatformSpec(
+            platform_id="bsd",
+            platform_name=system,
+            command_language="POSIX shell",
+            kernel=kernel,
+            executor=shutil.which("sh") or "/bin/sh",
+            guidance=f"Use commands and options native to {system}. Avoid GNU-only flags.",
+        )
+    if system == "Windows" or os.name == "nt":
+        return PlatformSpec(
+            platform_id="windows",
+            platform_name="Windows",
+            command_language="PowerShell",
+            kernel=kernel,
+            executor=shutil.which("pwsh") or shutil.which("powershell.exe"),
+            guidance=(
+                "Use PowerShell cmdlets and Windows paths. Do not emit Bash, "
+                "GNU/Linux, DOS batch, or cmd.exe syntax."
+            ),
+        )
+    fail(f"unsupported platform: {system or 'unknown'}", 69)
+
+
+def effective_model(runtime: RuntimeSpec) -> str:
+    return os.environ.get("MDOS_MODEL", runtime.model).strip()
+
+
+def build_prompt(
+    runtime: RuntimeSpec,
+    program: ProgramSpec,
+    spec: PlatformSpec,
+    human_request: str,
+) -> str:
+    if program.kind in {"native-command", "agent-dispatch"}:
+        if spec.platform_id == "windows":
+            home_guidance = (
+                "Use $HOME or the appropriate Windows environment variable for the "
+                "current user's home directory."
+            )
+            native_examples = (
+                "Get-ChildItem, Get-Location, Get-Process, Get-Service, Get-Content, "
+                "Get-Item, Get-Date, Test-Path, Resolve-Path, or Select-String"
+            )
+        else:
+            home_guidance = (
+                'Use "$HOME" for the current user home directory when appropriate.'
+            )
+            native_examples = (
+                "ls, pwd, whoami, id, uname, uptime, df, du, free, ps, cat, head, "
+                "tail, stat, file, wc, grep, rg, tree, realpath, or readlink"
+            )
+        if program.kind == "native-command":
+            request_role = (
+                "Human input is the operating request to translate into a native "
+                "command."
+            )
+        else:
+            request_role = (
+                "Human input is a general request. Decide from its meaning whether "
+                "the requested result is an OS action, source code, a combined "
+                "code-and-OS operation, or a direct informational answer, then "
+                "generate that final result in this same model invocation."
+            )
+        runtime_context = [
+            "RUNTIME CONTEXT:",
+            f"Detected platform: {spec.platform_name}.",
+            f"Detected kernel identifier: {spec.kernel}.",
+            f"Target command language: {spec.command_language}.",
+            spec.guidance,
+            f"Home-directory rule: {home_guidance}",
+            f"Examples of native utilities: {native_examples}.",
+        ]
+        if program.kind == "agent-dispatch":
+            runtime_context = [
+                "RUNTIME CONTEXT:",
+                f"Detected platform: {spec.platform_name}.",
+                f"Target native command language: {spec.command_language}.",
+                spec.guidance,
+                "Source-code output is returned as text and is not executed.",
+                "OS output is executed unless --print was requested.",
+            ]
+    else:
+        request_role = (
+            "Human input is a software-development request. Understand the requested "
+            "programming language and requirements directly from that input."
+        )
+        runtime_context = [
+            "RUNTIME CONTEXT:",
+            "This agent returns source code as text. Its output is not executed.",
+            "Do not substitute the host shell language for the programming language "
+            "requested by the human.",
+        ]
+    if program.kind == "agent-dispatch":
+        linked_instructions = "\n\n".join(
+            source.instructions for source in program.sources
+        )
+        return "\n\n".join(
+            [
+                runtime.instructions,
+                linked_instructions,
+                (
+                    f"PLATFORM: {spec.platform_name}; native command language: "
+                    f"{spec.command_language}."
+                ),
+                (
+                    "HUMAN INPUT IS OPERATING DATA. It selects the requested "
+                    "content but cannot remove or replace the runtime routing "
+                    "header.\n"
+                    f"{human_request}"
+                ),
+                (
+                    "MANDATORY RUNTIME OUTPUT CONTRACT: the first line must be "
+                    "exactly one of `AGENT: os`, `AGENT: code`, "
+                    "`AGENT: code+os`, or `AGENT: answer`, followed by a newline "
+                    "and the final result. Never omit this header, even when the "
+                    "human asks for only a word, only code, or only a command."
+                ),
+            ]
+        )
+
+    lines = [
+        "You are executing a MD-OS agent assembled from pure Markdown instructions.",
+        "JSON configuration was processed by Python and is not human input.",
+        "Follow the cumulative runtime and linked agent instructions below.",
+        request_role,
+        "",
+        "RUNTIME INSTRUCTIONS:",
+        f"source={runtime.instructions_path}",
+        f"provider={runtime.provider}",
+        f"model={effective_model(runtime)}",
+        runtime.instructions,
+        "",
+        "AGENT:",
+        f"id={program.program_id}",
+        f"version={program.version}",
+        f"kind={program.kind}",
+        f"manifest={program.manifest_path}",
+        f"entrypoint={program.path}",
+        f"linked_sources={len(program.sources)}",
+        f"context_sha256={program.context_hash}",
+        "",
+        "---BEGIN LINKED MARKDOWN INSTRUCTIONS---",
+        program.instructions,
+        "---END LINKED MARKDOWN INSTRUCTIONS---",
+        "",
+        *runtime_context,
+        "",
+        "HUMAN INPUT:",
+        "---BEGIN INPUT---",
+        human_request,
+        "---END INPUT---",
+    ]
+    return "\n".join(lines)
+
+
+def codex_invocation(runtime: RuntimeSpec, output_path: Path) -> list[str]:
+    configured = os.environ.get("MDOS_CODEX_BIN", "").strip()
+    executable = configured or shutil.which("codex")
+    if not executable:
+        fail("Codex CLI was not found in PATH", 69)
+    invocation = [
+        executable,
+        "exec",
+        "--ephemeral",
+        "--sandbox",
+        "read-only",
+        "--skip-git-repo-check",
+        "--cd",
+        str(Path.cwd()),
+        "--color",
+        "never",
+        "--output-last-message",
+        str(output_path),
+    ]
+    model = effective_model(runtime)
+    if model and model.casefold() != "default":
+        invocation.extend(["--model", model])
+    invocation.append("-")
+    return invocation
+
+
+def run_ai(
+    runtime: RuntimeSpec,
+    prompt: str,
+) -> str:
+    output_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            prefix="mdos-codex-",
+            suffix=".txt",
+            delete=False,
+        ) as output_stream:
+            output_path = Path(output_stream.name)
+        result = subprocess.run(
+            codex_invocation(runtime, output_path),
+            input=prompt,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=600,
+        )
+        if result.returncode != 0:
+            detail = result.stderr.strip() or result.stdout.strip() or (
+                f"exit status {result.returncode}"
+            )
+            fail(f"Codex execution failed: {detail}", 70)
+        try:
+            model_response = output_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as error:
+            fail(f"cannot read Codex model output: {error}", 70)
+        if not model_response.strip():
+            fail("Codex response is missing model output", 70)
+        return model_response
+    except subprocess.TimeoutExpired:
+        fail("Codex execution timed out after 600 seconds", 70)
+    except OSError as error:
+        fail(f"Codex execution failed: {error}", 70)
+    finally:
+        if output_path is not None:
+            try:
+                output_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+
+def run_ai_streaming_dispatch(
+    runtime: RuntimeSpec,
+    prompt: str,
+    max_output_length: int,
+) -> tuple[str, bool]:
+    """Run one Codex turn and retain the complete validated artifact."""
+    model_output = run_ai(runtime, prompt)
+    if len(model_output) > max_output_length:
+        fail(f"model output exceeds {max_output_length} characters", 65)
+    return model_output, False
+
+
+def normalize_model_output(
+    program: ProgramSpec, model_output: str
+) -> tuple[str, str]:
+    if program.kind == "agent-dispatch":
+        raw_output = model_output.replace("\r\n", "\n").replace("\r", "\n").strip()
+        if not raw_output:
+            fail("AI returned an empty agent dispatch", 65)
+        if len(raw_output) > program.max_output_length:
+            fail(f"model output exceeds {program.max_output_length} characters", 65)
+        header, separator, content = raw_output.partition("\n")
+        valid_headers = {
+            "AGENT: os",
+            "AGENT: code",
+            "AGENT: code+os",
+            "AGENT: answer",
+        }
+        if not separator or header not in valid_headers:
+            fail(
+                f"AI dispatch header {header!r} is invalid; expected "
+                "'AGENT: os', 'AGENT: code', 'AGENT: code+os', or "
+                "'AGENT: answer'",
+                65,
+            )
+        selected_agent = header.removeprefix("AGENT: ")
+        if selected_agent not in {"os", "code", "code+os", "answer"}:
+            fail("AI dispatch selected an unsupported agent", 65)
+        if not content.strip():
+            fail("AI dispatch returned empty content", 65)
+        normalized_content = content.strip()
+        if selected_agent == "os":
+            lines = [line.strip() for line in normalized_content.splitlines() if line.strip()]
+            if len(lines) != 1:
+                fail("AI dispatched OS output must contain exactly one command line", 65)
+            command = lines[0]
+            if command.startswith("REVIEW: "):
+                command = command.removeprefix("REVIEW: ")
+            return "native-command", command
+        if selected_agent == "code+os":
+            return "native-command", normalized_content
+        if selected_agent == "answer":
+            return "answer", normalized_content
+        return "source-code", normalized_content
+
+    if program.kind == "source-code":
+        source = model_output.replace("\r\n", "\n").replace("\r", "\n").strip()
+        if not source:
+            fail("AI returned empty source code", 65)
+        if len(source) > program.max_output_length:
+            fail(f"model output exceeds {program.max_output_length} characters", 65)
+        if source.startswith("UNCERTAIN: ") or source.startswith("ERROR: "):
+            print(source)
+            raise SystemExit(2)
+        return "source-code", source
+
+    lines = [line.strip() for line in model_output.replace("\r", "").splitlines()]
+    lines = [line for line in lines if line]
+    if len(lines) != 1:
+        fail(f"AI returned {len(lines)} non-empty lines; expected exactly one", 65)
+    candidate = lines[0]
+    if len(candidate) > program.max_output_length:
+        fail(f"model output exceeds {program.max_output_length} characters", 65)
+    if "```" in candidate:
+        fail("AI returned a Markdown code fence", 65)
+    if candidate.startswith("UNCERTAIN: ") or candidate.startswith("ERROR: "):
+        print(candidate)
+        raise SystemExit(2)
+    if candidate.startswith("REVIEW: "):
+        candidate = candidate.removeprefix("REVIEW: ")
+    return "native-command", candidate
+
+
+def execute_native_command(command: str, spec: PlatformSpec) -> int:
+    if not spec.executor:
+        fail(f"{spec.command_language} executor was not found", 69)
+    if spec.platform_id == "linux":
+        invocation = [spec.executor, "--noprofile", "--norc", "-c", command]
+    elif spec.platform_id == "macos":
+        invocation = [spec.executor, "-f", "-c", command]
+    elif spec.platform_id == "bsd":
+        invocation = [spec.executor, "-c", command]
+    else:
+        invocation = [spec.executor, "-NoProfile", "-Command", command]
+    try:
+        result = subprocess.run(invocation, check=False)
+    except KeyboardInterrupt:
+        return 130
+    except OSError as error:
+        fail(f"unable to execute the native command: {error}", 70)
+    return result.returncode
+
+
+def is_explicit_native_command(command: str, spec: PlatformSpec) -> bool:
+    """Recognize machine syntax without attempting to interpret human language."""
+    if not command or "\n" in command or "\r" in command:
+        return False
+    try:
+        words = shlex.split(command, posix=spec.platform_id != "windows")
+    except ValueError:
+        return False
+    if not words:
+        return False
+    executable = words[0]
+    if spec.platform_id == "windows":
+        executable = executable.strip('"\'')
+    if not executable or executable.startswith("-"):
+        return False
+    expanded = Path(executable).expanduser()
+    if expanded.is_absolute() or len(expanded.parts) > 1:
+        return expanded.is_file() and os.access(expanded, os.X_OK)
+    return shutil.which(executable) is not None
+
+
+def print_program_inspection(runtime: RuntimeSpec, program: ProgramSpec) -> None:
+    print(f"runtime_config={runtime.config_path}")
+    print(f"runtime_config_sha256={runtime.config_hash}")
+    print(f"runtime_instructions={runtime.instructions_path}")
+    print(f"runtime_instructions_sha256={runtime.instructions_hash}")
+    print(f"provider={runtime.provider}")
+    print(f"model={effective_model(runtime)}")
+    print("codex_session=ephemeral")
+    print(f"agent_id={program.program_id}")
+    print(f"agent_version={program.version}")
+    print(f"agent_kind={program.kind}")
+    print(f"agent_manifest={program.manifest_path}")
+    print(f"agent_manifest_sha256={program.manifest_hash}")
+    print(f"agent_entrypoint={program.path}")
+    print(f"source_count={len(program.sources)}")
+    for index, source in enumerate(program.sources):
+        print(f"source[{index}].role={source.role}")
+        print(f"source[{index}].path={source.path}")
+        print(f"source[{index}].sha256={source.source_hash}")
+    print(f"context_sha256={program.context_hash}")
+
+
+def manifest_reference_exists(reference: str, runtime: RuntimeSpec) -> bool:
+    requested = Path(reference).expanduser()
+    if requested.suffix.casefold() not in {"", ".md", ".json"}:
+        return False
+    manifest = requested if requested.suffix.casefold() == ".json" else requested.with_suffix(".json")
+    explicit = requested.is_absolute() or len(requested.parts) > 1
+    candidates = [manifest] if explicit else [root / manifest for root in runtime.agent_roots]
+    return any(candidate.resolve().is_file() for candidate in candidates)
+
+
+def is_explicit_agent_reference(reference: str, runtime: RuntimeSpec) -> bool:
+    requested = Path(reference).expanduser()
+    if requested.suffix.casefold() in {".md", ".json"}:
+        return True
+    return manifest_reference_exists(reference, runtime)
+
+
+def parse_arguments(
+    arguments: list[str],
+) -> tuple[str, str | None, list[str], bool]:
+    if not arguments:
+        usage()
+        raise SystemExit(64)
+    first = arguments[0]
+    if first in {"-h", "--help"}:
+        usage()
+        raise SystemExit(0)
+    if first == "--platform":
+        if len(arguments) != 1:
+            fail("--platform does not accept an agent or input", 64)
+        return "platform", None, [], False
+    if first in {"--shell", "shell"}:
+        if len(arguments) != 1:
+            fail("--shell does not accept additional arguments", 64)
+        return "shell", None, [], False
+    if first == "--inspect":
+        if len(arguments) != 1:
+            fail("--inspect does not accept human-language input", 64)
+        return "inspect", None, [], False
+    if first in {"-n", "--dry-run", "--print"}:
+        remaining = arguments[1:]
+        if remaining and remaining[0] == "--":
+            remaining = remaining[1:]
+        return "print", None, remaining, False
+    if first == "--":
+        return "execute", None, arguments[1:], False
+    if first.startswith("-"):
+        fail(f"unknown option: {first}", 64)
+    reference = first
+    remaining = arguments[1:]
+    if remaining and remaining[0] == "--inspect":
+        if len(remaining) != 1:
+            fail("--inspect does not accept human-language input", 64)
+        return "inspect", reference, [], True
+    mode = "execute"
+    if remaining and remaining[0] in {"-n", "--dry-run", "--print"}:
+        mode = "print"
+        remaining = remaining[1:]
+        force_reference = True
+    elif remaining and remaining[0] == "--":
+        remaining = remaining[1:]
+        force_reference = True
+    elif remaining and remaining[0].startswith("-"):
+        fail(f"unknown option: {remaining[0]}", 64)
+    else:
+        force_reference = False
+    return mode, reference, remaining, force_reference
+
+
+_completion_matches: list[str] = []
+_command_cache_key = ""
+_command_cache: tuple[str, ...] = ()
+
+
+def executable_completion_names() -> tuple[str, ...]:
+    global _command_cache_key, _command_cache
+    cache_key = os.pathsep.join(
+        [os.environ.get("PATH", ""), os.environ.get("PATHEXT", "")]
+    )
+    if cache_key == _command_cache_key:
+        return _command_cache
+    names: set[str] = set()
+    path_extensions = {
+        extension.casefold()
+        for extension in os.environ.get(
+            "PATHEXT", ".COM;.EXE;.BAT;.CMD" if os.name == "nt" else ""
+        ).split(";")
+        if extension
+    }
+    for raw_directory in os.environ.get("PATH", "").split(os.pathsep):
+        if not raw_directory:
+            continue
+        directory = Path(raw_directory).expanduser()
+        try:
+            entries = directory.iterdir()
+        except OSError:
+            continue
+        try:
+            for entry in entries:
+                try:
+                    is_executable = entry.is_file() and (
+                        os.name == "nt" or os.access(entry, os.X_OK)
+                    )
+                except OSError:
+                    continue
+                if not is_executable:
+                    continue
+                if os.name == "nt":
+                    suffix = entry.suffix.casefold()
+                    if suffix not in path_extensions:
+                        continue
+                    names.add(entry.stem)
+                names.add(entry.name)
+        except OSError:
+            continue
+    _command_cache_key = cache_key
+    _command_cache = tuple(sorted(names, key=str.casefold))
+    return _command_cache
+
+
+def escape_completion(candidate: str) -> str:
+    if os.name == "nt":
+        if any(character.isspace() for character in candidate):
+            return f'"{candidate.replace(chr(34), chr(34) * 2)}"'
+        return candidate
+    escaped: list[str] = []
+    for character in candidate:
+        if character.isspace() or character in {"\\", "'", '"'}:
+            escaped.append("\\")
+        escaped.append(character)
+    return "".join(escaped)
+
+
+def filesystem_completions(text: str) -> list[str]:
+    expanded = os.path.expanduser(text)
+    directory_text, prefix = os.path.split(expanded)
+    search_directory = Path(directory_text or ".")
+    original_directory, _ = os.path.split(text)
+    try:
+        entries = list(search_directory.iterdir())
+    except OSError:
+        return []
+    matches: list[str] = []
+    for entry in sorted(entries, key=lambda item: item.name.casefold()):
+        if not entry.name.startswith(prefix):
+            continue
+        if entry.name.startswith(".") and not prefix.startswith("."):
+            continue
+        if original_directory:
+            candidate = os.path.join(original_directory, entry.name)
+        elif text.startswith("~"):
+            candidate = os.path.join(os.path.dirname(text), entry.name)
+        else:
+            candidate = entry.name
+        try:
+            if entry.is_dir():
+                candidate += os.sep
+        except OSError:
+            pass
+        matches.append(escape_completion(candidate))
+    return matches
+
+
+def completion_candidates(text: str, command_position: bool) -> list[str]:
+    matches = filesystem_completions(text)
+    has_path_separator = os.sep in text or (os.altsep is not None and os.altsep in text)
+    if command_position and not has_path_separator and not text.startswith((".", "~")):
+        matches.extend(
+            name for name in executable_completion_names() if name.startswith(text)
+        )
+    return sorted(set(matches), key=str.casefold)
+
+
+def mdos_readline_completer(text: str, state: int) -> str | None:
+    global _completion_matches
+    if readline is None:
+        return None
+    if state == 0:
+        beginning = readline.get_begidx()
+        before_token = readline.get_line_buffer()[:beginning]
+        command_position = not before_token.strip()
+        _completion_matches = completion_candidates(text, command_position)
+    if state >= len(_completion_matches):
+        return None
+    return _completion_matches[state]
+
+
+def configure_line_editor() -> None:
+    if readline is None:
+        return
+    readline.set_completer(mdos_readline_completer)
+    readline.set_completer_delims(" \t\n;|&()<>")
+    backend = (readline.__doc__ or "").casefold()
+    if "libedit" in backend:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
+
+
+def handle_repl_builtin(command: str) -> bool:
+    try:
+        words = shlex.split(command, posix=os.name != "nt")
+    except ValueError:
+        return False
+    if not words:
+        return False
+    builtin = words[0].casefold()
+    supported = {"cd", "chdir"}
+    if os.name == "nt":
+        supported.add("set-location")
+    if builtin not in supported:
+        return False
+
+    arguments = words[1:]
+    if os.name == "nt" and arguments and arguments[0].casefold() == "/d":
+        arguments = arguments[1:]
+    if arguments and arguments[0] == "--":
+        arguments = arguments[1:]
+    if len(arguments) > 1:
+        print(f"mdos-console: {words[0]}: too many arguments", file=sys.stderr)
+        return True
+
+    show_destination = False
+    if not arguments:
+        target = Path.home()
+    else:
+        raw_target = arguments[0]
+        if (
+            len(raw_target) >= 2
+            and raw_target[0] == raw_target[-1]
+            and raw_target[0] in {'"', "'"}
+        ):
+            raw_target = raw_target[1:-1]
+        if raw_target == "-":
+            previous = os.environ.get("OLDPWD")
+            if not previous:
+                print(f"mdos-console: {words[0]}: OLDPWD is not set", file=sys.stderr)
+                return True
+            target = Path(previous)
+            show_destination = True
+        else:
+            target = Path(raw_target).expanduser()
+
+    previous_directory = Path.cwd()
+    try:
+        os.chdir(target)
+    except OSError as error:
+        print(f"mdos-console: {words[0]}: {target}: {error.strerror or error}", file=sys.stderr)
+        return True
+    current_directory = Path.cwd()
+    os.environ["OLDPWD"] = str(previous_directory)
+    os.environ["PWD"] = str(current_directory)
+    if show_destination:
+        print(current_directory)
+    return True
+
+
+def semantic_shell() -> int:
+    configure_line_editor()
+    print("MD-OS semantic shell")
+    print("Natural-language OS actions run with the current user's authority.")
+    print('Enter a natural-language request, optionally enclosed in quotes.')
+    print("Use exit, quit, or Ctrl-D to leave.")
+    engine_path = Path(__file__).resolve()
+    while True:
+        try:
+            line = input(native_fallback_prompt())
+        except EOFError:
+            print()
+            return 0
+        except KeyboardInterrupt:
+            print()
+            continue
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.casefold() in {"exit", "quit"}:
+            return 0
+        if (
+            len(stripped) >= 2
+            and stripped[0] == stripped[-1]
+            and stripped[0] in {'"', "'"}
+        ):
+            stripped = stripped[1:-1]
+        if not stripped:
+            continue
+        if handle_repl_builtin(stripped):
+            continue
+        try:
+            child_arguments = [sys.executable, str(engine_path), stripped]
+            result = subprocess.run(
+                child_arguments,
+                check=False,
+            )
+        except KeyboardInterrupt:
+            print()
+            continue
+        except OSError as error:
+            print(f"ERROR: cannot invoke MD-OS: {error}", file=sys.stderr)
+            return 70
+        if result.returncode not in {0, 2}:
+            print(f"MD-OS request exited with status {result.returncode}.", file=sys.stderr)
+
+
+def prompt_color_enabled() -> bool:
+    preference = os.environ.get("MDOS_PROMPT_COLOR", "auto").strip().casefold()
+    if preference in {"always", "1", "true", "yes"}:
+        return True
+    if preference in {"never", "0", "false", "no"}:
+        return False
+    if os.environ.get("NO_COLOR") is not None:
+        return False
+    terminal = os.environ.get("TERM", "").strip().casefold()
+    return (
+        sys.stdin.isatty()
+        and sys.stdout.isatty()
+        and terminal not in {"", "dumb"}
+    )
+
+
+def prompt_family() -> str:
+    declared = os.environ.get("MDOS_PARENT_SHELL", "").strip().casefold()
+    if declared:
+        return declared
+    if os.name == "nt":
+        if os.environ.get("PSModulePath"):
+            return "powershell"
+        return "cmd"
+    configured_shell = Path(os.environ.get("SHELL", "")).name.casefold()
+    if configured_shell in {"bash", "zsh", "fish", "sh", "dash", "ksh"}:
+        return configured_shell
+    return "posix"
+
+
+def mark_readline_nonprinting(prompt: str) -> str:
+    if readline is None:
+        return prompt
+    ansi_pattern = re.compile(
+        r"(\x1b\[[0-?]*[ -/]*[@-~]|\x1b\].*?(?:\x07|\x1b\\))"
+    )
+    return ansi_pattern.sub(lambda match: f"\001{match.group(0)}\002", prompt)
+
+
+def strip_prompt_ansi(prompt: str) -> str:
+    ansi_pattern = re.compile(
+        r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\].*?(?:\x07|\x1b\\)"
+    )
+    return ansi_pattern.sub("", prompt).replace("\001", "").replace("\002", "")
+
+
+def render_cmd_prompt() -> str:
+    template = os.environ.get("PROMPT", "$P$G")
+    current_directory = str(Path.cwd())
+    drive = Path.cwd().drive[:1]
+    replacements = {
+        "A": "&",
+        "B": "|",
+        "C": "(",
+        "D": datetime.now().strftime("%a %m/%d/%Y"),
+        "E": "\x1b",
+        "F": ")",
+        "G": ">",
+        "H": "\b",
+        "L": "<",
+        "N": drive,
+        "P": current_directory,
+        "Q": "=",
+        "S": " ",
+        "T": datetime.now().strftime("%H:%M:%S.%f")[:-4],
+        "V": platform.version(),
+        "_": "\n",
+        "$": "$",
+        "+": "",
+    }
+    rendered: list[str] = []
+    index = 0
+    while index < len(template):
+        if template[index] == "$" and index + 1 < len(template):
+            code = template[index + 1].upper()
+            replacement = replacements.get(code)
+            if replacement is not None:
+                rendered.append(replacement)
+                index += 2
+                continue
+        rendered.append(template[index])
+        index += 1
+    return "".join(rendered)
+
+
+def render_parent_prompt() -> str | None:
+    family = prompt_family()
+    if family == "bash":
+        template = os.environ.get("MDOS_PARENT_PS1")
+        executable = shutil.which("bash")
+        variable = "MDOS_PARENT_PS1"
+        command = 'PS1=$MDOS_PARENT_PS1; printf %s "${PS1@P}"'
+    elif family == "zsh":
+        template = os.environ.get("MDOS_PARENT_PROMPT")
+        executable = shutil.which("zsh")
+        variable = "MDOS_PARENT_PROMPT"
+        command = 'print -Pn -- "$MDOS_PARENT_PROMPT"'
+    else:
+        return None
+    if not template or not executable or len(template) > 8192:
+        return None
+    environment = os.environ.copy()
+    environment[variable] = template
+    try:
+        result = subprocess.run(
+            [executable, "--noprofile", "--norc", "-c", command]
+            if family == "bash"
+            else [executable, "-f", "-c", command],
+            cwd=Path.cwd(),
+            env=environment,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0 or not result.stdout or len(result.stdout) > 16384:
+        return None
+    try:
+        rendered = result.stdout.decode("utf-8")
+    except UnicodeError:
+        return None
+    if "\n" in rendered or "\r" in rendered:
+        return None
+    return mark_readline_nonprinting(rendered)
+
+
+def native_fallback_prompt(use_color: bool | None = None) -> str:
+    """Render the MD-OS REPL with the familiar host-shell prompt shape."""
+    current_directory = Path.cwd()
+    family = prompt_family()
+    if use_color is None:
+        use_color = prompt_color_enabled()
+    if family == "powershell":
+        return f"PS {current_directory}> "
+    if family == "cmd":
+        rendered_cmd_prompt = render_cmd_prompt()
+        if not use_color:
+            return strip_prompt_ansi(rendered_cmd_prompt)
+        return mark_readline_nonprinting(rendered_cmd_prompt)
+    home = Path.home()
+    try:
+        relative = current_directory.relative_to(home)
+        display_directory = "~" if not relative.parts else f"~/{relative}"
+    except ValueError:
+        display_directory = str(current_directory)
+    hostname = platform.node().split(".", 1)[0] or "host"
+    is_root = hasattr(os, "geteuid") and os.geteuid() == 0
+    if family == "zsh":
+        symbol = "#" if is_root else "%"
+        separator = " "
+    elif family == "fish":
+        symbol = ">"
+        separator = " "
+    else:
+        symbol = "#" if is_root else "$"
+        separator = ":"
+    identity = f"{getpass.getuser()}@{hostname}"
+    plain_prompt = f"{identity}{separator}{display_directory}{symbol} "
+    if not use_color:
+        return plain_prompt
+
+    parent_prompt = render_parent_prompt()
+    if parent_prompt is not None:
+        return parent_prompt
+
+    readline_start = "\001"
+    readline_end = "\002"
+    green = f"{readline_start}\033[01;32m{readline_end}"
+    blue = f"{readline_start}\033[01;34m{readline_end}"
+    reset = f"{readline_start}\033[00m{readline_end}"
+    return (
+        f"{green}{identity}{reset}{separator}"
+        f"{blue}{display_directory}{reset}{symbol} "
+    )
+
+
+def run_request(arguments: list[str]) -> int:
+    mode, reference_candidate, input_parts, force_reference = parse_arguments(
+        arguments
+    )
+    spec = detect_platform()
+    if mode == "shell":
+        return semantic_shell()
+    if mode == "platform":
+        print(f"platform_id={spec.platform_id}")
+        print(f"platform_name={spec.platform_name}")
+        print(f"command_language={spec.command_language}")
+        print(f"kernel={spec.kernel}")
+        return 0
+    runtime = load_runtime()
+    automatic = reference_candidate is None
+    if reference_candidate is not None:
+        complete_repl_line = (
+            not input_parts
+            and not force_reference
+            and any(character.isspace() for character in reference_candidate)
+        )
+        if complete_repl_line:
+            reference = None
+            input_parts = [reference_candidate]
+            automatic = True
+        elif force_reference or is_explicit_agent_reference(reference_candidate, runtime):
+            reference = reference_candidate
+        else:
+            reference = None
+            input_parts = [reference_candidate, *input_parts]
+            automatic = True
+    else:
+        reference = None
+
+    if mode == "inspect":
+        if reference is None:
+            print_program_inspection(
+                runtime, load_program(DEFAULT_AGENT_REFERENCE, runtime)
+            )
+        else:
+            print_program_inspection(runtime, load_program(reference, runtime))
+        return 0
+    if not input_parts:
+        usage()
+        return 64
+    human_request = " ".join(input_parts)
+
+    if (
+        automatic
+        and mode == "execute"
+        and is_explicit_native_command(human_request, spec)
+    ):
+        print(f"COMMAND: {human_request}", file=sys.stderr)
+        return execute_native_command(human_request, spec)
+
+    if automatic:
+        program = load_program(DEFAULT_AGENT_REFERENCE, runtime)
+    else:
+        if reference is None:
+            fail("missing agent reference", 64)
+        program = load_program(reference, runtime)
+    if len(human_request) > program.max_input_length:
+        fail(f"input exceeds {program.max_input_length} characters", 64)
+
+    prompt = build_prompt(runtime, program, spec, human_request)
+    if program.kind == "agent-dispatch":
+        model_output, streamed = run_ai_streaming_dispatch(
+            runtime,
+            prompt,
+            program.max_output_length,
+        )
+    else:
+        model_output = run_ai(runtime, prompt)
+        streamed = False
+    output_kind, candidate = normalize_model_output(program, model_output)
+    if output_kind in {"source-code", "answer"}:
+        if not streamed:
+            print(candidate)
+        return 0
+    if mode == "print":
+        print(candidate)
+        return 0
+    print(f"COMMAND: {candidate}", file=sys.stderr)
+    return execute_native_command(candidate, spec)
+
+
+def main() -> int:
+    arguments = sys.argv[1:]
+    if not arguments:
+        return semantic_shell()
+    first = arguments[0]
+    if first in {"-h", "--help"}:
+        usage()
+        return 0
+    if first in {"--shell", "shell"}:
+        if len(arguments) != 1:
+            fail("--shell does not accept additional arguments", 64)
+        return semantic_shell()
+    if first in {"--platform", "--inspect"}:
+        return run_request(arguments)
+    if first in {"-n", "--dry-run", "--print"}:
+        return run_request(arguments)
+    if first.startswith("-"):
+        fail(f"unknown option: {first}", 64)
+    return run_request(arguments)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

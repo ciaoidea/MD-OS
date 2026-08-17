@@ -1,0 +1,17 @@
+{
+  "schema": "mdos.shell.agent/v1",
+  "id": "os",
+  "version": "1.0.0",
+  "kind": "native-command",
+  "entrypoint": "os.md",
+  "includes": [
+    "native_command.md"
+  ],
+  "permissions": [
+    "platform.detect",
+    "model.invoke",
+    "process.execute"
+  ],
+  "max_input_chars": 4096,
+  "max_output_chars": 4096
+}

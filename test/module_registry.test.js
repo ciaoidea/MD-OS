@@ -28,8 +28,8 @@ test('module registry builder compiles module, capability, CLI, and MCP readback
   const payload = parseLastJson(result.stdout);
   assert.equal(payload.ok, true);
   assert.equal(payload.mode, 'build_module_registry');
-  assert.equal(payload.module_count, 3);
-  assert.equal(payload.capability_count, 3);
+  assert.equal(payload.module_count, 2);
+  assert.equal(payload.capability_count, 2);
 
   const registryPath = path.join(REPO_ROOT, 'md-os/ops/modules/registry.json');
   const capabilityPath = path.join(REPO_ROOT, 'md-os/ops/runtime/module_capability_index.json');
@@ -43,14 +43,9 @@ test('module registry builder compiles module, capability, CLI, and MCP readback
   assert.ok(fs.existsSync(mcpPath));
 
   const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-  assert.deepEqual(registry.modules.map((item) => item.module_id), [
-    'connector.api',
-    'connector.terminal',
-    'runtime.control-console',
-  ]);
+  assert.deepEqual(registry.modules.map((item) => item.module_id), ['connector.api', 'connector.terminal']);
   assert.ok(registry.capabilities.some((item) => item.capability_id === 'terminal.run_allowlisted'));
   assert.ok(registry.capabilities.some((item) => item.capability_id === 'api.request_allowlisted'));
-  assert.ok(registry.capabilities.some((item) => item.capability_id === 'interaction.control_console'));
   assert.ok(registry.cli_commands.some((item) => item.command === 'connector terminal list'));
   assert.ok(registry.mcp_tools.some((item) => item.name === 'mdos_connector_terminal_list'));
 });
@@ -61,7 +56,6 @@ test('mdos module and capability commands read from the module registry', () => 
   const modules = parseLastJson(moduleResult.stdout);
   assert.equal(modules.ok, true);
   assert.ok(modules.modules.some((item) => item.module_id === 'connector.terminal'));
-  assert.ok(modules.modules.some((item) => item.module_id === 'runtime.control-console'));
 
   const capabilityResult = runNode([path.join(REPO_ROOT, 'md-os/os/mdos.js'), 'capability', 'list']);
   assert.equal(capabilityResult.status, 0, capabilityResult.stderr);

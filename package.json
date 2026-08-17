@@ -37,6 +37,7 @@
     "md-os/ops/.gitkeep",
     "md-os/os/",
     "md-os/schemas/",
+    "md-os/shell/",
     "requirements-stt.txt",
     "requirements-tts.txt",
     "scripts/",
@@ -51,7 +52,7 @@
   "bin": {
     "mdos": "md-os/os/mdos.js",
     "md-os": "md-os/os/mdos.js",
-    "mdos-console": "md-os/os/mdos_console.js"
+    "mdos-console": "md-os/shell/bin/mdos-console"
   },
   "scripts": {
     "init:ops": "node md-os/os/initialize_ops_memory.js",
@@ -131,7 +132,7 @@
     "live:stop": "node md-os/os/continuity_service.js stop",
     "live:restart": "node md-os/os/continuity_service.js restart",
     "live:once": "node md-os/os/continuity_service.js run-once",
-    "console": "node md-os/os/control_console.js start",
+    "console": "python3 md-os/shell/bin/mdos-console",
     "connector:terminal:list": "node md-os/os/terminal_connector.js list",
     "connector:terminal:run:node-version": "node md-os/os/terminal_connector.js run demo_general_system node_version",
     "connector:api:list": "node md-os/os/api_connector.js list",
@@ -147,8 +148,9 @@
     "check:public": "node --test test/release_hygiene_regression.test.js",
     "verify:release": "npm run clean:release && npm run verify",
     "package:demo": "bash scripts/package-demo.sh",
-    "check": "node --check md-os/os/*.js && node --check md-os/os/lib/*.js && node --check md-os/os/control_console/*.js && node --check md-os/kernel/*.js && node --check md-os/kernel/cognition/*.js && node --check md-os/kernel/interaction/*.js && node --check md-os/modules/*/*.js && node --check md-os/apfc/*/*.js && node --check md-os/examples/*.js && node --check test/*.js",
-    "test": "node scripts/prepare-test-runtime.js && node --test",
+    "check": "node --check md-os/os/*.js && node --check md-os/os/lib/*.js && node --check md-os/kernel/*.js && node --check md-os/kernel/cognition/*.js && node --check md-os/modules/*/*.js && node --check md-os/apfc/*/*.js && node --check md-os/examples/*.js && node --check test/*.js",
+    "test:shell": "python3 test/test_mdos_shell.py",
+    "test": "node scripts/prepare-test-runtime.js && node --test && npm run test:shell",
     "verify": "npm run check && npm test && npm run build:all",
     "agi:score": "node md-os/os/run_agi_sal_evaluator.js score",
     "agi:certify": "node md-os/os/run_agi_sal_evaluator.js certify",

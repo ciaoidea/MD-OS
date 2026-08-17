@@ -1,0 +1,15 @@
+{
+  "schema": "mdos.shell.agent/v1",
+  "id": "code",
+  "version": "1.0.0",
+  "kind": "source-code",
+  "entrypoint": "code.md",
+  "includes": [
+    "source_code.md"
+  ],
+  "permissions": [
+    "model.invoke"
+  ],
+  "max_input_chars": 8192,
+  "max_output_chars": 32768
+}

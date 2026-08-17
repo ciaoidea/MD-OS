@@ -1,0 +1,16 @@
+{
+  "schema": "mdos.shell.runtime/v1",
+  "runtime_instructions": "MDOS_SHELL.md",
+  "provider": "codex",
+  "model": "default",
+  "think": false,
+  "agent_roots": [
+    "programs"
+  ],
+  "include_roots": [
+    "programs",
+    "../.."
+  ],
+  "max_source_bytes": 65536,
+  "max_compiled_chars": 131072
+}

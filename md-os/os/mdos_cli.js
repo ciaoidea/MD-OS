@@ -33,6 +33,7 @@ const SCAFFOLD_ENTRIES = [
   path.join('md-os', 'modules'),
   path.join('md-os', 'schemas'),
   path.join('md-os', 'os'),
+  path.join('md-os', 'shell'),
   path.join('md-os', 'examples'),
   'requirements-stt.txt',
   'requirements-tts.txt',
@@ -145,7 +146,6 @@ function usage() {
     `  ${cli} live start`,
     `  ${cli} live stop`,
     `  ${cli} live restart`,
-    `  ${cli} console start [--port <port>] [--no-open] [--model <model>]`,
     `  ${cli} continuity status`,
     `  ${cli} continuity start`,
     `  ${cli} continuity stop`,
@@ -656,11 +656,6 @@ function main() {
     if (['start', 'stop', 'status', 'restart', 'run', 'run-once', 'once'].includes(normalized)) {
       runScript('continuity_service.js', [normalized, ...rest]);
     }
-    usage();
-  }
-  if (command === 'console' || command === 'control-console' || command === 'control_console') {
-    const normalized = subcommand || 'start';
-    if (normalized === 'start') runScript('control_console.js', ['start', ...rest]);
     usage();
   }
   if (command === 'wolfram' || command === 'math') {

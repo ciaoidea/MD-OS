@@ -30,9 +30,11 @@ test('assertInsideWorkspace rejects paths outside the workspace root', () => {
   assert.throws(() => assertInsideWorkspace(path.resolve(WORKSPACE_ROOT, '..')), /PATH_OUTSIDE_WORKSPACE/);
 });
 
-test('assertInsideWorkspace rejects a lexical child that resolves through a symlink outside the workspace', () => {
+test('assertInsideWorkspace rejects a lexical child that resolves through a symlink outside the workspace', (t) => {
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'md-os-outside-'));
   const inside = fs.mkdtempSync(path.join(WORKSPACE_ROOT, 'md-os/ops/local/symlink-guard-'));
+  t.after(() => fs.rmSync(outside, { recursive: true, force: true }));
+  t.after(() => fs.rmSync(inside, { recursive: true, force: true }));
   const link = path.join(inside, 'escape');
   fs.symlinkSync(outside, link, 'dir');
 
@@ -42,8 +44,9 @@ test('assertInsideWorkspace rejects a lexical child that resolves through a syml
   );
 });
 
-test('assertInsideWorkspace preserves valid unresolved and in-boundary symbolic paths', () => {
+test('assertInsideWorkspace preserves valid unresolved and in-boundary symbolic paths', (t) => {
   const inside = fs.mkdtempSync(path.join(WORKSPACE_ROOT, 'md-os/ops/local/symlink-valid-'));
+  t.after(() => fs.rmSync(inside, { recursive: true, force: true }));
   const target = path.join(inside, 'target');
   const link = path.join(inside, 'link');
   fs.mkdirSync(target);
@@ -59,9 +62,11 @@ test('assertInsideWorkspace preserves valid unresolved and in-boundary symbolic 
   );
 });
 
-test('task compiler rejects an md-os path that resolves through a symlink outside the boundary', () => {
-  const outsideBoundary = fs.mkdtempSync(path.join(WORKSPACE_ROOT, 'task-spec-outside-mdos-'));
+test('task compiler rejects an md-os path that resolves through a symlink outside the boundary', (t) => {
+  const outsideBoundary = fs.mkdtempSync(path.join(os.tmpdir(), 'task-spec-outside-mdos-'));
   const inside = fs.mkdtempSync(path.join(MDOS_ROOT, 'ops/local/task-spec-symlink-'));
+  t.after(() => fs.rmSync(outsideBoundary, { recursive: true, force: true }));
+  t.after(() => fs.rmSync(inside, { recursive: true, force: true }));
   const link = path.join(inside, 'escape');
   fs.symlinkSync(outsideBoundary, link, 'dir');
 
