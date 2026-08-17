@@ -122,6 +122,11 @@ You can add direction while Codex is still working: type the follow-up and press
 Enter. Cortex forwards it immediately to the active App Server turn through
 `turn/steer`, matching Codex's intermediate-message behavior.
 
+Codex slash commands are recognized directly. Use `/help` for the full catalog;
+core commands including `/goal`, `/compact`, `/rename`, `/fork`, `/new`,
+`/clear`, `/status`, `/model`, `/diff`, and `/review` have native Cortex or App
+Server adapters. UI-only commands stay visible and return a capability notice.
+
 The primary dispatch rule is:
 
 ```text

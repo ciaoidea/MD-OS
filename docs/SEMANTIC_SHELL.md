@@ -137,6 +137,16 @@ turn; it is not held as a separate later request and does not restart the App
 Server. This steering path is enabled for a real interactive TTY, not redirected
 one-shot stdin.
 
+## Codex slash commands
+
+Cortex reserves every currently documented Codex slash-command name, so slash
+input is never misrouted as an ordinary model prompt. `/help` prints the live
+catalog. Protocol-backed or deterministic adapters cover `/goal`, `/compact`,
+`/rename`, `/fork`, `/new`, `/clear`, `/status`, `/model`, `/diff`, `/review`,
+`/exit`, and `/quit`. Commands that require a Codex TUI picker, clipboard, IDE,
+desktop app, account dialog, or Windows-only setup remain recognized and return
+an explicit capability notice instead of pretending the operation occurred.
+
 There is no Python keyword classifier for natural language and no mandatory
 `AGENT: os` / `AGENT: answer` routing header on this primary path. The final
 assistant message is text; it is never silently re-executed by the parent

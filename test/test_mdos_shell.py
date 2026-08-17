@@ -280,6 +280,17 @@ class FakeCodex:
                             "id": request_id,
                             "result": {{"turnId": message["params"]["expectedTurnId"]}},
                         }}), flush=True)
+                    elif method == "thread/goal/get":
+                        print(json.dumps({{"id": request_id, "result": {{"goal": None}}}}), flush=True)
+                    elif method == "thread/goal/set":
+                        print(json.dumps({{
+                            "id": request_id,
+                            "result": {{"goal": {{
+                                "threadId": message["params"]["threadId"],
+                                "objective": message["params"].get("objective", ""),
+                                "status": message["params"].get("status", "active"),
+                            }}}},
+                        }}), flush=True)
                 raise SystemExit(0)
 
             output_index = arguments.index("--output-last-message") + 1
@@ -461,6 +472,31 @@ class SemanticShellParityTests(unittest.TestCase):
                 steer["params"]["input"],
                 [{"type": "text", "text": "aggiungi anche i test"}],
             )
+
+    def test_goal_slash_command_uses_app_server_goal_protocol(self):
+        with FakeCodex() as fake:
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            result = subprocess.run(
+                [sys.executable, str(ENGINE_PATH)],
+                input="/goal Keep tests green\nexit\n",
+                cwd=PROJECT_ROOT,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            goal = next(
+                item
+                for item in fake.protocol_requests()
+                if item.get("method") == "thread/goal/set"
+            )
+            self.assertEqual(goal["params"]["objective"], "Keep tests green")
+            self.assertEqual(goal["params"]["status"], "active")
 
     def test_native_codex_answer_is_not_reexecuted_by_the_outer_shell(self):
         with FakeCodex("AGENT: os\nprintf semantic-ok") as fake:

@@ -1242,6 +1242,24 @@ class CodexAppServerClient:
     def _reply(self, message: dict[str, object], result: dict[str, object]) -> None:
         self._send({"id": message.get("id"), "result": result})
 
+    def request(self, method: str, params: dict[str, object]) -> dict[str, object]:
+        """Run one idle App Server request and return its structured result."""
+        request_id = self._next_request_id()
+        self._send({"method": method, "id": request_id, "params": params})
+        deadline = time.monotonic() + 60
+        while True:
+            message = self._receive(deadline)
+            assert message is not None
+            if message.get("id") == request_id and "method" not in message:
+                error = message.get("error")
+                if isinstance(error, dict):
+                    fail(f"Codex {method} failed: {error.get('message', 'unknown error')}", 70)
+                result = message.get("result")
+                return result if isinstance(result, dict) else {}
+            method_name = message.get("method")
+            if "id" in message and isinstance(method_name, str):
+                self._handle_server_request(message)
+
     def _approval_choice(
         self,
         *,
@@ -2965,6 +2983,109 @@ def handle_repl_builtin(
     return True
 
 
+CODEX_SLASH_COMMANDS = (
+    "agent", "subagents", "apps", "plugins", "hooks", "clear", "rename",
+    "archive", "delete", "compact", "copy", "diff", "exit", "quit",
+    "experimental", "approve", "memories", "skills", "import", "feedback",
+    "init", "logout", "mcp", "mention", "model", "fast", "plan", "goal",
+    "personality", "ps", "stop", "fork", "app", "side", "btw", "raw",
+    "resume", "new", "review", "status", "usage", "debug-config",
+    "statusline", "title", "theme", "pets", "pet", "keymap", "vim",
+    "permissions", "ide", "setup-default-sandbox", "sandbox-add-read-dir",
+)
+
+
+def slash_client(session: ShellSession) -> tuple[CodexAppServerClient, CodexThreadBinding]:
+    runtime = load_runtime()
+    if session.app_server is None:
+        session.app_server = CodexAppServerClient(runtime)
+    binding = session.app_server.bind_thread(Path.cwd(), resume_existing=True)
+    return session.app_server, binding
+
+
+def render_json_result(value: object) -> None:
+    print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
+    if not line.startswith("/"):
+        return False
+    command_text, _, argument = line[1:].partition(" ")
+    command = command_text.casefold()
+    argument = argument.strip()
+    if command in {"exit", "quit"}:
+        raise EOFError
+    if command in {"help", "commands"} or not command:
+        print("Codex slash commands:")
+        print("  " + "  ".join(f"/{item}" for item in CODEX_SLASH_COMMANDS))
+        print("Core Cortex adapters: /goal /compact /rename /fork /new /clear /status /diff /model /review")
+        return True
+    if command not in CODEX_SLASH_COMMANDS:
+        print(f"cortex: unknown Codex slash command /{command}", file=sys.stderr)
+        return True
+    if command == "diff":
+        subprocess.run(["git", "status", "--short", "--branch"], check=False)
+        subprocess.run(["git", "diff", "--"], check=False)
+        return True
+    if command == "model":
+        if argument:
+            os.environ["MDOS_MODEL"] = argument
+        print(f"model={effective_model(load_runtime())}")
+        return True
+    if command in {"new", "clear"}:
+        if command == "clear":
+            sys.stdout.write("\033[2J\033[H")
+            sys.stdout.flush()
+        if session.app_server is not None:
+            session.app_server.close()
+        session.app_server = None
+        session.codex_thread_id = None
+        session.codex_workspace = None
+        session.codex_instruction_sources = ()
+        print("CORTEX: a new Codex chat will start with the next request")
+        return True
+    client, binding = slash_client(session)
+    thread_id = binding.thread_id
+    if command == "goal":
+        action, _, objective = argument.partition(" ")
+        if not argument:
+            render_json_result(client.request("thread/goal/get", {"threadId": thread_id}))
+        elif action == "clear":
+            render_json_result(client.request("thread/goal/clear", {"threadId": thread_id}))
+        elif action in {"pause", "resume"}:
+            status = "paused" if action == "pause" else "active"
+            render_json_result(client.request("thread/goal/set", {"threadId": thread_id, "status": status}))
+        else:
+            text = objective if action == "edit" else argument
+            if not text or len(text) > 4000:
+                print("cortex: /goal requires 1..4000 characters", file=sys.stderr)
+            else:
+                render_json_result(client.request("thread/goal/set", {"threadId": thread_id, "objective": text, "status": "active"}))
+        return True
+    if command == "compact":
+        render_json_result(client.request("thread/compact/start", {"threadId": thread_id}))
+        return True
+    if command == "rename":
+        if not argument:
+            print("cortex: usage: /rename <name>", file=sys.stderr)
+        else:
+            render_json_result(client.request("thread/name/set", {"threadId": thread_id, "name": argument}))
+        return True
+    if command == "fork":
+        result = client.request("thread/fork", {"threadId": thread_id, "cwd": str(Path.cwd()), "approvalPolicy": "never", "sandbox": "danger-full-access"})
+        render_json_result(result)
+        return True
+    if command == "status":
+        render_json_result(client.request("thread/read", {"threadId": thread_id, "includeTurns": False}))
+        return True
+    if command == "review":
+        request = argument or "Review the current working tree and report findings by severity."
+        run_native_codex_turn(load_runtime(), request, session)
+        return True
+    print(f"CORTEX: /{command} is recognized but depends on Codex TUI UI/state not exposed as a safe direct Cortex adapter.")
+    return True
+
+
 def semantic_shell() -> int:
     configure_line_editor()
     print("MD-OS agentic shell")
@@ -2997,6 +3118,11 @@ def semantic_shell() -> int:
                 stripped = stripped[1:-1]
             if not stripped:
                 continue
+            try:
+                if handle_codex_slash_command(stripped, session):
+                    continue
+            except EOFError:
+                return 0
             if handle_repl_builtin(stripped, session):
                 continue
             try:
