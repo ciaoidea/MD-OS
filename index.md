@@ -131,14 +131,18 @@ completion, pipes, redirections, substitutions, and the native command
 language of Linux, macOS, BSD, or Windows. Valid native commands bypass Codex
 entirely. Natural-language lines invoke an ephemeral `codex exec` reasoning
 turn in one-shot mode. Inside the interactive REPL, the first natural-language
-line creates one Codex thread and every later natural-language line resumes
-that exact thread. Native commands still bypass the model, but MD-OS retains a
-bounded observation of their command, directory, exit code, and terminal
-output for the next semantic turn:
+line starts one read-only Codex App Server process and one Codex thread; both
+remain alive until the REPL exits. Later natural-language lines use that live
+connection instead of restarting `codex exec`. Interactive turns default to
+`low` reasoning effort rather than inheriting a global `xhigh` setting; set
+`MDOS_REASONING_EFFORT` explicitly when deeper reasoning is worth the latency.
+Native commands still bypass the model, but MD-OS retains a bounded observation
+of their command, directory, exit code, and terminal output for the next
+semantic turn:
 
 ```text
 native input -> real shell -> bounded observation ─┐
-                                                   ├-> continuing Codex thread
+                                                   ├-> live App Server + Codex thread
 natural input -------------------------------------┘
 ```
 

@@ -11,12 +11,14 @@ import hashlib
 import json
 import os
 import platform
+import queue
 import re
 import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 try:
@@ -50,6 +52,8 @@ class RuntimeSpec:
     instructions: str
     provider: str
     model: str
+    backend: str
+    reasoning_effort: str
     think: bool
     agent_roots: tuple[Path, ...]
     include_roots: tuple[Path, ...]
@@ -110,6 +114,7 @@ class ShellSession:
     codex_thread_id: str | None = None
     codex_turns: int = 0
     last_codex_turn_duration_ms: int | None = None
+    app_server: "CodexAppServerClient | None" = None
     event_sequence: int = 0
     pending_events: list[ShellEvent] = field(default_factory=list)
 
@@ -170,6 +175,9 @@ Options:
 
 Environment:
   MDOS_MODEL          Override the Codex model (default: Codex configuration).
+  MDOS_REASONING_EFFORT
+                     Override console reasoning effort (default: low).
+  MDOS_CODEX_BACKEND  Set app-server (persistent REPL default) or exec.
   MDOS_CODEX_BIN      Override the Codex CLI executable path.
   MDOS_PROMPT_COLOR
                      Set to auto (default), always, or never.
@@ -311,6 +319,8 @@ def load_runtime() -> RuntimeSpec:
             "runtime_instructions",
             "provider",
             "model",
+            "backend",
+            "reasoning_effort",
             "think",
             "agent_roots",
             "include_roots",
@@ -326,6 +336,15 @@ def load_runtime() -> RuntimeSpec:
     if provider != "codex":
         fail(f"unsupported model provider: {provider}", 65)
     model = require_string(contract, "model", scope)
+    backend = contract.get("backend", "app-server")
+    if backend not in {"app-server", "exec"}:
+        fail(f"{scope} field 'backend' must be 'app-server' or 'exec'", 65)
+    reasoning_effort = contract.get("reasoning_effort", "low")
+    if reasoning_effort not in {"minimal", "low", "medium", "high", "xhigh"}:
+        fail(
+            f"{scope} field 'reasoning_effort' has an unsupported value",
+            65,
+        )
     think = contract.get("think")
     if not isinstance(think, bool):
         fail(f"{scope} field 'think' must be a boolean", 65)
@@ -375,6 +394,8 @@ def load_runtime() -> RuntimeSpec:
         instructions=instructions.strip(),
         provider=provider,
         model=model,
+        backend=backend,
+        reasoning_effort=reasoning_effort,
         think=think,
         agent_roots=agent_roots,
         include_roots=include_roots,
@@ -666,6 +687,25 @@ def effective_model(runtime: RuntimeSpec) -> str:
     return os.environ.get("MDOS_MODEL", runtime.model).strip()
 
 
+def effective_backend(runtime: RuntimeSpec) -> str:
+    backend = os.environ.get("MDOS_CODEX_BACKEND", runtime.backend).strip().casefold()
+    if backend not in {"app-server", "exec"}:
+        fail("MDOS_CODEX_BACKEND must be 'app-server' or 'exec'", 64)
+    return backend
+
+
+def effective_reasoning_effort(runtime: RuntimeSpec) -> str:
+    effort = os.environ.get(
+        "MDOS_REASONING_EFFORT", runtime.reasoning_effort
+    ).strip().casefold()
+    if effort not in {"minimal", "low", "medium", "high", "xhigh"}:
+        fail(
+            "MDOS_REASONING_EFFORT must be minimal, low, medium, high, or xhigh",
+            64,
+        )
+    return effort
+
+
 def bounded_shell_output(output: str) -> tuple[str, bool]:
     normalized = output.replace("\r\n", "\n").replace("\r", "\n")
     normalized = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", normalized)
@@ -927,6 +967,310 @@ def build_continuation_prompt(
     )
 
 
+class CodexAppServerClient:
+    """One Codex app-server process and one thread for a REPL lifetime."""
+
+    def __init__(self, runtime: RuntimeSpec) -> None:
+        configured = os.environ.get("MDOS_CODEX_BIN", "").strip()
+        executable = configured or shutil.which("codex")
+        if not executable:
+            fail("Codex CLI was not found in PATH", 69)
+        self.runtime = runtime
+        self.request_id = 0
+        self.thread_id: str | None = None
+        self.messages: queue.Queue[object] = queue.Queue()
+        self.stderr_lines: list[str] = []
+        self.eof = object()
+        try:
+            self.process = subprocess.Popen(
+                [executable, "app-server", "--listen", "stdio://"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+            )
+        except OSError as error:
+            fail(f"Codex app-server startup failed: {error}", 70)
+        if self.process.stdin is None or self.process.stdout is None:
+            self.close()
+            fail("Codex app-server did not expose stdio", 70)
+        self.stdout_thread = threading.Thread(
+            target=self._read_stdout,
+            name="mdos-codex-app-server-stdout",
+            daemon=True,
+        )
+        self.stdout_thread.start()
+        self.stderr_thread: threading.Thread | None = None
+        if self.process.stderr is not None:
+            self.stderr_thread = threading.Thread(
+                target=self._read_stderr,
+                name="mdos-codex-app-server-stderr",
+                daemon=True,
+            )
+            self.stderr_thread.start()
+        try:
+            self._initialize()
+        except BaseException:
+            self.close()
+            raise
+
+    def _read_stdout(self) -> None:
+        assert self.process.stdout is not None
+        try:
+            for line in self.process.stdout:
+                if not line.strip():
+                    continue
+                try:
+                    message = json.loads(line)
+                except json.JSONDecodeError as error:
+                    self.messages.put(
+                        RuntimeError(
+                            f"invalid Codex app-server JSON: {error.msg}"
+                        )
+                    )
+                    continue
+                if not isinstance(message, dict):
+                    self.messages.put(
+                        RuntimeError("Codex app-server message is not an object")
+                    )
+                    continue
+                self.messages.put(message)
+        finally:
+            self.messages.put(self.eof)
+
+    def _read_stderr(self) -> None:
+        assert self.process.stderr is not None
+        for line in self.process.stderr:
+            self.stderr_lines.append(line.rstrip())
+            if len(self.stderr_lines) > 64:
+                del self.stderr_lines[:-64]
+
+    def _stderr_detail(self) -> str:
+        detail = "\n".join(self.stderr_lines).strip()
+        if len(detail) > 8192:
+            return detail[-8192:]
+        return detail
+
+    def _send(self, message: dict[str, object]) -> None:
+        if self.process.poll() is not None:
+            detail = self._stderr_detail() or f"exit status {self.process.returncode}"
+            fail(f"Codex app-server stopped: {detail}", 70)
+        assert self.process.stdin is not None
+        try:
+            self.process.stdin.write(
+                json.dumps(message, ensure_ascii=False, separators=(",", ":"))
+                + "\n"
+            )
+            self.process.stdin.flush()
+        except (BrokenPipeError, OSError) as error:
+            detail = self._stderr_detail()
+            suffix = f": {detail}" if detail else ""
+            fail(f"Codex app-server write failed: {error}{suffix}", 70)
+
+    def _receive(self, deadline: float) -> dict[str, object]:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            fail("Codex app-server timed out after 600 seconds", 70)
+        try:
+            message = self.messages.get(timeout=remaining)
+        except queue.Empty:
+            fail("Codex app-server timed out after 600 seconds", 70)
+        if message is self.eof:
+            detail = self._stderr_detail() or (
+                f"exit status {self.process.poll()}"
+                if self.process.poll() is not None
+                else "stdout closed"
+            )
+            fail(f"Codex app-server stopped: {detail}", 70)
+        if isinstance(message, BaseException):
+            fail(str(message), 70)
+        if not isinstance(message, dict):
+            fail("Codex app-server returned an invalid message", 70)
+        return message
+
+    def _next_request_id(self) -> int:
+        self.request_id += 1
+        return self.request_id
+
+    def _reject_server_request(self, message: dict[str, object]) -> None:
+        self._send(
+            {
+                "id": message.get("id"),
+                "error": {
+                    "code": -32601,
+                    "message": (
+                        "MD-OS semantic shell does not expose interactive "
+                        "app-server requests"
+                    ),
+                },
+            }
+        )
+
+    def _request(
+        self,
+        method: str,
+        params: dict[str, object],
+        *,
+        timeout_seconds: int = 30,
+    ) -> dict[str, object]:
+        request_id = self._next_request_id()
+        self._send({"method": method, "id": request_id, "params": params})
+        deadline = time.monotonic() + timeout_seconds
+        while True:
+            message = self._receive(deadline)
+            if message.get("id") == request_id and "method" not in message:
+                error = message.get("error")
+                if isinstance(error, dict):
+                    fail(
+                        f"Codex app-server {method} failed: "
+                        f"{error.get('message', 'unknown error')}",
+                        70,
+                    )
+                result = message.get("result")
+                if not isinstance(result, dict):
+                    fail(f"Codex app-server {method} returned no result", 70)
+                return result
+            if "id" in message and isinstance(message.get("method"), str):
+                self._reject_server_request(message)
+
+    def _initialize(self) -> None:
+        self._request(
+            "initialize",
+            {
+                "clientInfo": {
+                    "name": "md_os_semantic_shell",
+                    "title": "MD-OS Semantic Shell",
+                    "version": "5.0.1",
+                },
+                "capabilities": {
+                    "optOutNotificationMethods": [
+                        "item/agentMessage/delta",
+                        "item/reasoning/summaryTextDelta",
+                        "item/reasoning/summaryPartAdded",
+                    ]
+                },
+            },
+        )
+        self._send({"method": "initialized", "params": {}})
+
+    def start_thread(self) -> str:
+        params: dict[str, object] = {
+            "cwd": str(Path.cwd()),
+            "approvalPolicy": "never",
+            "sandbox": "read-only",
+            "serviceName": "mdos_console",
+        }
+        model = effective_model(self.runtime)
+        if model and model.casefold() != "default":
+            params["model"] = model
+        result = self._request("thread/start", params)
+        thread = result.get("thread")
+        thread_id = thread.get("id") if isinstance(thread, dict) else None
+        if not isinstance(thread_id, str) or not thread_id.strip():
+            fail("Codex app-server returned an invalid thread id", 70)
+        self.thread_id = thread_id
+        return thread_id
+
+    def run_turn(self, prompt: str) -> str:
+        if self.thread_id is None:
+            self.start_thread()
+        assert self.thread_id is not None
+        request_id = self._next_request_id()
+        params: dict[str, object] = {
+            "threadId": self.thread_id,
+            "input": [{"type": "text", "text": prompt}],
+            "cwd": str(Path.cwd()),
+            "approvalPolicy": "never",
+            "sandboxPolicy": {"type": "readOnly"},
+            "effort": effective_reasoning_effort(self.runtime),
+            "summary": "none",
+        }
+        model = effective_model(self.runtime)
+        if model and model.casefold() != "default":
+            params["model"] = model
+        self._send({"method": "turn/start", "id": request_id, "params": params})
+        deadline = time.monotonic() + 600
+        response_received = False
+        completed = False
+        final_messages: list[str] = []
+        unclassified_messages: list[str] = []
+        while not (response_received and completed):
+            message = self._receive(deadline)
+            if message.get("id") == request_id and "method" not in message:
+                error = message.get("error")
+                if isinstance(error, dict):
+                    fail(
+                        "Codex app-server turn/start failed: "
+                        f"{error.get('message', 'unknown error')}",
+                        70,
+                    )
+                if not isinstance(message.get("result"), dict):
+                    fail("Codex app-server turn/start returned no result", 70)
+                response_received = True
+                continue
+            method = message.get("method")
+            if "id" in message and isinstance(method, str):
+                self._reject_server_request(message)
+                continue
+            notification = message.get("params")
+            if not isinstance(notification, dict):
+                continue
+            if method == "item/completed":
+                if notification.get("threadId") != self.thread_id:
+                    continue
+                item = notification.get("item")
+                if not isinstance(item, dict) or item.get("type") != "agentMessage":
+                    continue
+                text = item.get("text")
+                if not isinstance(text, str) or not text.strip():
+                    continue
+                if item.get("phase") == "final_answer":
+                    final_messages.append(text)
+                elif item.get("phase") != "commentary":
+                    unclassified_messages.append(text)
+                continue
+            if method == "turn/completed":
+                if notification.get("threadId") != self.thread_id:
+                    continue
+                turn = notification.get("turn")
+                if not isinstance(turn, dict):
+                    fail("Codex app-server returned an invalid completed turn", 70)
+                status = turn.get("status")
+                if status != "completed":
+                    error = turn.get("error")
+                    detail = (
+                        error.get("message")
+                        if isinstance(error, dict)
+                        else str(status or "unknown status")
+                    )
+                    fail(f"Codex app-server turn failed: {detail}", 70)
+                completed = True
+        responses = final_messages or unclassified_messages
+        if not responses:
+            fail("Codex app-server response is missing model output", 70)
+        return "\n".join(responses)
+
+    def close(self) -> None:
+        process = getattr(self, "process", None)
+        if process is None or process.poll() is not None:
+            return
+        if process.stdin is not None:
+            try:
+                process.stdin.close()
+            except OSError:
+                pass
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=2)
+
+
 def codex_invocation(
     runtime: RuntimeSpec,
     output_path: Path,
@@ -968,6 +1312,12 @@ def codex_invocation(
     model = effective_model(runtime)
     if model and model.casefold() != "default":
         invocation.extend(["--model", model])
+    invocation.extend(
+        [
+            "--config",
+            f'model_reasoning_effort="{effective_reasoning_effort(runtime)}"',
+        ]
+    )
     if session is not None and session.codex_thread_id is not None:
         invocation.append(session.codex_thread_id)
     invocation.append("-")
@@ -1006,6 +1356,24 @@ def run_ai(
     prompt: str,
     session: ShellSession | None = None,
 ) -> str:
+    if session is not None and effective_backend(runtime) == "app-server":
+        started_at = time.monotonic()
+        if session.app_server is None:
+            session.app_server = CodexAppServerClient(runtime)
+        try:
+            model_response = session.app_server.run_turn(prompt)
+        except BaseException:
+            session.app_server.close()
+            session.app_server = None
+            session.codex_thread_id = None
+            raise
+        finally:
+            session.last_codex_turn_duration_ms = round(
+                (time.monotonic() - started_at) * 1000
+            )
+        session.codex_thread_id = session.app_server.thread_id
+        session.codex_turns += 1
+        return model_response
     output_path: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -1266,6 +1634,8 @@ def print_program_inspection(runtime: RuntimeSpec, program: ProgramSpec) -> None
     print(f"runtime_instructions_sha256={runtime.instructions_hash}")
     print(f"provider={runtime.provider}")
     print(f"model={effective_model(runtime)}")
+    print(f"codex_backend={effective_backend(runtime)}")
+    print(f"codex_reasoning_effort={effective_reasoning_effort(runtime)}")
     print("codex_one_shot_session=ephemeral")
     print("codex_repl_session=persistent")
     print("native_shell_observation=bounded")
@@ -1572,39 +1942,43 @@ def semantic_shell() -> int:
     print('Enter a natural-language request, optionally enclosed in quotes.')
     print("Use exit, quit, or Ctrl-D to leave.")
     session = ShellSession()
-    while True:
-        try:
-            line = input(native_fallback_prompt())
-        except EOFError:
-            print()
-            return 0
-        except KeyboardInterrupt:
-            print()
-            continue
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if stripped.casefold() in {"exit", "quit"}:
-            return 0
-        if (
-            len(stripped) >= 2
-            and stripped[0] == stripped[-1]
-            and stripped[0] in {'"', "'"}
-        ):
-            stripped = stripped[1:-1]
-        if not stripped:
-            continue
-        if handle_repl_builtin(stripped, session):
-            continue
-        try:
-            status = run_request([stripped], session)
-        except KeyboardInterrupt:
-            print()
-            continue
-        except SystemExit as error:
-            status = error.code if isinstance(error.code, int) else 1
-        if status not in {0, 2}:
-            print(f"MD-OS request exited with status {status}.", file=sys.stderr)
+    try:
+        while True:
+            try:
+                line = input(native_fallback_prompt())
+            except EOFError:
+                print()
+                return 0
+            except KeyboardInterrupt:
+                print()
+                continue
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.casefold() in {"exit", "quit"}:
+                return 0
+            if (
+                len(stripped) >= 2
+                and stripped[0] == stripped[-1]
+                and stripped[0] in {'"', "'"}
+            ):
+                stripped = stripped[1:-1]
+            if not stripped:
+                continue
+            if handle_repl_builtin(stripped, session):
+                continue
+            try:
+                status = run_request([stripped], session)
+            except KeyboardInterrupt:
+                print()
+                continue
+            except SystemExit as error:
+                status = error.code if isinstance(error.code, int) else 1
+            if status not in {0, 2}:
+                print(f"MD-OS request exited with status {status}.", file=sys.stderr)
+    finally:
+        if session.app_server is not None:
+            session.app_server.close()
 
 
 def prompt_color_enabled() -> bool:

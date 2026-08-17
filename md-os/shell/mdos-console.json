@@ -3,6 +3,8 @@
   "runtime_instructions": "MDOS_SHELL.md",
   "provider": "codex",
   "model": "default",
+  "backend": "app-server",
+  "reasoning_effort": "low",
   "think": false,
   "agent_roots": [
     "programs"

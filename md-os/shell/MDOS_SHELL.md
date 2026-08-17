@@ -41,8 +41,11 @@ context.
 - Handle stateful directory changes (`cd`, `chdir`, and Windows
   `Set-Location`) inside the MD-OS REPL process so `PWD`, `OLDPWD`, the prompt,
   and Tab completion remain coherent.
-- Create one persistent Codex thread on the first semantic line in a REPL and
-  resume that exact thread for every later semantic line.
+- Start one Codex App Server process and one Codex thread on the first semantic
+  line in a REPL. Keep both alive until the REPL exits; do not launch
+  `codex exec` again for each later semantic line.
+- Use `low` reasoning effort for interactive shell turns by default. Permit an
+  explicit environment override when deeper reasoning is worth the latency.
 - Measure each Codex turn and expose the preceding turn duration to the next
   turn so latency feedback is grounded in observed runtime state.
 - Interpret every other complete line through that continuing Codex thread.

@@ -84,8 +84,8 @@ input
 │   └── execute in the detected host shell
 │       └── retain bounded command/output/exit readback for the next AI turn
 └── otherwise
-    └── first turn: create one Codex thread with the MD-OS instructions
-        later turns: resume that exact Codex thread
+    └── first turn: start one Codex App Server and one MD-OS Codex thread
+        later turns: reuse that live process and exact thread
         └── include any native-shell observations since the preceding AI turn
         └── `AGENT: answer`  -> display text
         └── `AGENT: code`    -> display source
@@ -133,18 +133,21 @@ shell-feedback loop:
 
 ```text
 Cortex identity -> MD-OS semantic shell
-Ollama API       -> `codex exec`
+Ollama API       -> one persistent Codex App Server connection
 Cortex rules     -> MD-OS shell programs plus repository `AGENTS.md`
-stateless turns  -> one resumed Codex thread plus bounded shell observations
+stateless turns  -> one live Codex thread plus bounded shell observations
 ```
 
-The first semantic turn starts a read-only Codex session and reads its
-`thread.started` identifier from the CLI JSONL event stream. Later semantic
-turns use `codex exec resume` with that exact identifier. One-shot invocations
-remain ephemeral because they have no later turn to remember. Final text is
-obtained through `--output-last-message`, then the shell applies the same
-tagged-output validation used by Cortex before displaying or executing the
-result. The default Codex model comes from the user's Codex configuration.
+The first semantic turn starts one read-only `codex app-server` process over
+local JSONL stdio, initializes one thread, and keeps both alive for the REPL
+lifetime. Later turns use `turn/start` on that same connection; they do not
+spawn `codex exec resume` again. One-shot invocations remain ephemeral because
+they have no later turn to remember. The shell buffers the final agent message
+and applies the same tagged-output validation used by Cortex before displaying
+or executing it. The default Codex model comes from the user's Codex
+configuration, while interactive reasoning effort defaults to `low` so a
+global `xhigh` setting does not make routine shell dialogue unnecessarily slow.
+Codex currently documents App Server as an experimental integration surface.
 
 The Codex CLI stores its own resumable session outside this repository. MD-OS
 does not write the raw shell transcript into tracked files, and exiting the
@@ -155,7 +158,9 @@ Optional environment variables:
 
 | Variable | Meaning |
 | --- | --- |
-| `MDOS_MODEL` | pass an explicit model to `codex exec`; unset uses the Codex default |
+| `MDOS_MODEL` | select an explicit model; unset uses the Codex default |
+| `MDOS_REASONING_EFFORT` | `minimal`, `low` (default), `medium`, `high`, or `xhigh` |
+| `MDOS_CODEX_BACKEND` | `app-server` (persistent REPL default) or `exec` compatibility mode |
 | `MDOS_CODEX_BIN` | override the `codex` executable path, primarily for testing |
 | `MDOS_PROMPT_COLOR` | `auto`, `always`, or `never` |
 | `NO_COLOR` | disable automatic prompt colors |

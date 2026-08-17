@@ -45,6 +45,7 @@ class FakeCodex:
         self.root = Path(self.temporary.name)
         self.executable = self.root / "codex"
         self.calls = self.root / "calls.ndjson"
+        self.starts = self.root / "starts.ndjson"
         source = textwrap.dedent(
             f"""\
             #!/usr/bin/env python3
@@ -53,16 +54,75 @@ class FakeCodex:
             import sys
 
             arguments = sys.argv[1:]
+            calls_path = Path({str(self.calls)!r})
+            starts_path = Path({str(self.starts)!r})
+            responses = {self.responses!r}
+            if arguments and arguments[0] == "app-server":
+                with starts_path.open("a", encoding="utf-8") as stream:
+                    stream.write(json.dumps({{"arguments": arguments}}) + "\\n")
+                turn_index = 0
+                for line in sys.stdin:
+                    if not line.strip():
+                        continue
+                    message = json.loads(line)
+                    method = message.get("method")
+                    request_id = message.get("id")
+                    if method == "initialize":
+                        print(json.dumps({{"id": request_id, "result": {{"userAgent": "fake"}}}}), flush=True)
+                    elif method == "initialized":
+                        continue
+                    elif method == "thread/start":
+                        print(json.dumps({{
+                            "id": request_id,
+                            "result": {{"thread": {{"id": {self.THREAD_ID!r}}}}},
+                        }}), flush=True)
+                    elif method == "turn/start":
+                        params = message["params"]
+                        prompt = params["input"][0]["text"]
+                        with calls_path.open("a", encoding="utf-8") as stream:
+                            stream.write(json.dumps({{
+                                "arguments": arguments,
+                                "prompt": prompt,
+                                "params": params,
+                            }}) + "\\n")
+                        response = responses[min(turn_index, len(responses) - 1)]
+                        turn_id = f"turn-{{turn_index + 1}}"
+                        print(json.dumps({{
+                            "id": request_id,
+                            "result": {{"turn": {{"id": turn_id, "status": "inProgress", "items": []}}}},
+                        }}), flush=True)
+                        print(json.dumps({{
+                            "method": "item/completed",
+                            "params": {{
+                                "threadId": {self.THREAD_ID!r},
+                                "turnId": turn_id,
+                                "completedAtMs": 1,
+                                "item": {{
+                                    "id": f"message-{{turn_index + 1}}",
+                                    "type": "agentMessage",
+                                    "text": response,
+                                    "phase": "final_answer",
+                                }},
+                            }},
+                        }}), flush=True)
+                        print(json.dumps({{
+                            "method": "turn/completed",
+                            "params": {{
+                                "threadId": {self.THREAD_ID!r},
+                                "turn": {{"id": turn_id, "status": "completed", "items": [], "error": None}},
+                            }},
+                        }}), flush=True)
+                        turn_index += 1
+                raise SystemExit(0)
+
             output_index = arguments.index("--output-last-message") + 1
             output_path = Path(arguments[output_index])
             prompt = sys.stdin.read()
-            calls_path = Path({str(self.calls)!r})
             call_index = 0
             if calls_path.exists():
                 call_index = len([line for line in calls_path.read_text(encoding="utf-8").splitlines() if line])
             with calls_path.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps({{"arguments": arguments, "prompt": prompt}}) + "\\n")
-            responses = {self.responses!r}
             response = responses[min(call_index, len(responses) - 1)]
             output_path.write_text(response, encoding="utf-8")
             if "--json" in arguments:
@@ -78,6 +138,15 @@ class FakeCodex:
         return [
             __import__("json").loads(line)
             for line in self.calls.read_text(encoding="utf-8").splitlines()
+            if line
+        ]
+
+    def process_starts(self) -> list[dict[str, object]]:
+        if not self.starts.exists():
+            return []
+        return [
+            __import__("json").loads(line)
+            for line in self.starts.read_text(encoding="utf-8").splitlines()
             if line
         ]
 
@@ -142,6 +211,9 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(len(requests), 1)
             self.assertIn("--ephemeral", requests[0]["arguments"])
             self.assertIn("read-only", requests[0]["arguments"])
+            self.assertIn(
+                'model_reasoning_effort="low"', requests[0]["arguments"]
+            )
             self.assertIn("che cosa è un tensore?", requests[0]["prompt"])
             self.assertIn("MANDATORY RUNTIME OUTPUT CONTRACT", requests[0]["prompt"])
 
@@ -183,11 +255,18 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(len(requests), 2)
             first_arguments = requests[0]["arguments"]
             second_arguments = requests[1]["arguments"]
-            self.assertIn("--json", first_arguments)
-            self.assertNotIn("--ephemeral", first_arguments)
-            self.assertNotIn("resume", first_arguments)
-            self.assertIn("resume", second_arguments)
-            self.assertIn(FakeCodex.THREAD_ID, second_arguments)
+            self.assertEqual(first_arguments[:2], ["app-server", "--listen"])
+            self.assertEqual(second_arguments, first_arguments)
+            self.assertEqual(len(fake.process_starts()), 1)
+            self.assertEqual(requests[0]["params"]["effort"], "low")
+            self.assertEqual(requests[1]["params"]["effort"], "low")
+            self.assertEqual(requests[0]["params"]["summary"], "none")
+            self.assertEqual(
+                requests[0]["params"]["threadId"], FakeCodex.THREAD_ID
+            )
+            self.assertEqual(
+                requests[1]["params"]["threadId"], FakeCodex.THREAD_ID
+            )
             self.assertIn('"origin":"native-input"', requests[0]["prompt"])
             self.assertIn('"command":"printf shell-memory-ok"', requests[0]["prompt"])
             self.assertIn('"output":"shell-memory-ok"', requests[0]["prompt"])
@@ -199,6 +278,45 @@ class SemanticShellParityTests(unittest.TestCase):
                 r"previous_codex_turn_duration_ms=\d+",
             )
             self.assertNotIn("Stable repository purpose", requests[1]["prompt"])
+
+    def test_exec_backend_remains_an_explicit_compatibility_path(self):
+        responses = [
+            "AGENT: answer\nprima",
+            "AGENT: answer\nseconda",
+        ]
+        with FakeCodex(responses) as fake:
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_CODEX_BACKEND"] = "exec"
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            result = subprocess.run(
+                [sys.executable, str(ENGINE_PATH)],
+                input="prima domanda?\nseconda domanda?\nexit\n",
+                cwd=PROJECT_ROOT,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            requests = fake.requests()
+            self.assertEqual(len(requests), 2)
+            self.assertEqual(requests[0]["arguments"][0], "exec")
+            self.assertIn("resume", requests[1]["arguments"])
+            self.assertIn(
+                'model_reasoning_effort="low"', requests[1]["arguments"]
+            )
+            self.assertEqual(fake.process_starts(), [])
+
+    def test_inspect_reports_persistent_fast_codex_backend(self):
+        with FakeCodex() as fake:
+            result = run_console(["--inspect"], fake)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("codex_backend=app-server", result.stdout)
+            self.assertIn("codex_reasoning_effort=low", result.stdout)
+            self.assertEqual(fake.process_starts(), [])
 
     def test_prompt_matches_native_shape_and_completion(self):
         plain = ENGINE.native_fallback_prompt(use_color=False)
