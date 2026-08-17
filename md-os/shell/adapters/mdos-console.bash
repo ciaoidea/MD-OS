@@ -12,7 +12,7 @@ command_not_found_handle() {
     local mdos_executable
 
     if (( $# == 1 )) && [[ "$mdos_missing_command" == *[[:space:]]* ]]; then
-        mdos_executable="$(type -P mdos-console 2>/dev/null || true)"
+        mdos_executable="$(type -P mdos 2>/dev/null || true)"
         if [[ ! -x "$mdos_executable" ]]; then
             printf 'bash: MD-OS executable is unavailable in PATH\n' >&2
             return 127

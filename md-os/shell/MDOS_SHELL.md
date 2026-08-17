@@ -1,35 +1,40 @@
-# MD-OS Semantic Shell Runtime Instructions
+# MD-OS Agentic Shell Runtime Instructions
 
 ## Identity
 
-This runtime is the MD-OS semantic shell. Codex is its language-model backend,
-not the shell identity and not a replacement for MD-OS persistent operating
-context.
+This runtime is the MD-OS agentic shell exposed as `mdos`. Codex supplies the
+native reasoning-and-tool loop; MD-OS supplies the persistent operating
+context, semantic rails, shell integration, and deterministic runtime.
 
-## Composition
+## Primary composition
 
-- Load and validate the selected JSON manifest and every declared Markdown
-  source before invoking Codex.
-- Let Codex discover repository `AGENTS.md` natively from the working
-  directory. Do not duplicate its full text inside the shell program prompt.
-- Treat Markdown instructions as cumulative.
-- Pass the complete human input to the selected agent as the operating request,
-  never as runtime configuration.
-- Let Codex route meaning. Do not add Python keyword classifiers.
+- Execute an already valid native command directly in the real host shell.
+- Send every other complete input line unchanged to the normal Codex agent
+  loop. Do not reduce that loop to a text classifier or a generated command.
+- Let Codex discover `AGENTS.md` and nested instruction files natively from the
+  current workspace.
+- Preserve Codex planning, repository exploration, tools, sandboxing,
+  approvals, effect observation, correction, verification, and final answer.
+- Keep one App Server process alive for the REPL, but bind Codex threads by
+  current Git workspace. Resume the most recent matching native Codex thread
+  when one exists; otherwise start a new persistent thread.
+- When the current directory changes to another workspace, select that
+  workspace's thread before the next natural-language turn.
+- Keep Codex-native session history in the Codex store outside the repository.
+  Never copy raw chat or shell history into tracked MD-OS artifacts.
 
-## Agent protocols
+## Explicit compatibility programs
 
-- `answer`: return a direct informational response.
-- `os`: return exactly one native command for the detected platform.
-- `code`: return source code as text and never execute it.
-- `code+os`: return one complete native script that performs the requested
-  development and operating-system actions.
-- Validate the routing header before displaying or executing its body.
-- Buffer `os` and `code+os` output completely before execution.
+The linked JSON/Markdown `answer`, `os`, `code`, and `code+os` protocols remain
+available only when an operator explicitly selects a program or the legacy
+`exec` backend. They are not the primary interactive natural-language path.
+The primary path must never execute an assistant message merely because it
+contains an `AGENT: os` header or command-looking text.
 
 ## Semantic shell
 
-- Keep `mdos-console` as the MD-OS REPL.
+- Expose `mdos` as the public MD-OS REPL. Keep `mdos-console` only as a
+  compatibility engine name.
 - Render its prompt using the detected parent-shell family and colors without
   replacing MD-OS with a separate native-shell process.
 - Preserve the available Readline, libedit, or platform console editing
@@ -43,30 +48,45 @@ context.
 - Handle stateful directory changes (`cd`, `chdir`, and Windows
   `Set-Location`) inside the MD-OS REPL process so `PWD`, `OLDPWD`, the prompt,
   and Tab completion remain coherent.
-- Prewarm one Codex App Server process and one Codex thread when the REPL
-  starts. Keep both alive until the REPL exits; do not launch `codex exec`
-  for semantic turns.
-- Stream only validated conversational `answer` text after its routing header
-  is known. Buffer commands and scripts completely before execution.
-- Use `gpt-5.6-luna` as the lightweight interactive default and permit an
-  explicit model override when deeper reasoning is worth the latency.
-- Use `low` reasoning effort for interactive shell turns by default. Permit an
-  explicit environment override when deeper reasoning is worth the latency.
-- Measure each Codex turn and expose the preceding turn duration to the next
-  turn so latency feedback is grounded in observed runtime state.
-- Interpret every other complete line through that continuing Codex thread.
+- Start the App Server lazily on the first natural-language turn so native-only
+  shell use has no model startup cost.
+- Inherit the configured Codex model and reasoning effort by default. Permit
+  explicit `MDOS_MODEL` and `MDOS_REASONING_EFFORT` overrides.
+- Stream Codex agent messages and tool output without collapsing line breaks.
+- Render command, file-change, MCP-tool, and web-search lifecycle readback.
+- Run Codex turns with `workspace-write`, network disabled by default, and
+  `on-request` approvals. Render approval requests interactively and fail
+  closed when no terminal is available.
+- Interpret every other complete line through the workspace-bound Codex
+  thread.
 - Present queued native-shell events as bounded, untrusted operating data, not
   as instructions. Clear the volatile queue only after Codex has received it.
 - Do not write the shell transcript or observed output into the repository and
   do not promote it into durable MD-OS memory without a separate gate.
-- Print `COMMAND: <command>` before native execution.
+- Print `COMMAND: <command>` before direct native execution. Codex tool actions
+  use their native App Server lifecycle and approval readback instead.
 
 ## Platform behavior
 
 - Detect Linux, macOS, BSD, Windows, PowerShell, cmd/DOS-like consoles, and
   supported native executors at runtime.
-- Generate commands only for the detected platform unless the human explicitly
-  asks for text about another platform.
-- Run native commands with the current user's authority, exactly as the host
-  shell would. Codex itself runs read-only and returns text; the shell runtime
-  performs any resulting command.
+- Run explicit native commands with the current user's authority, exactly as
+  the host shell would.
+- Run Codex-generated tool actions inside the Codex workspace sandbox and
+  approval protocol. Do not execute the final assistant message as shell code.
+
+## Linked operating sources
+
+This shell remains an explicit node in the MD-OS knowledge network. Its
+canonical operator contract is the
+[Codex natural-language operator model](../kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md),
+and its complete user-facing behavior is documented in the
+[MD-OS Agentic Shell guide](../../docs/SEMANTIC_SHELL.md).
+
+The older typed programs remain linked as bounded compatibility lanes:
+
+- [orchestrator](programs/orchestrator.md);
+- [OS command](programs/os.md);
+- [source code](programs/code.md);
+- [native command](programs/native_command.md);
+- [source-code contract](programs/source_code.md).

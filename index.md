@@ -89,12 +89,11 @@ The `--unsafe` mode passes Codex's
 [`--dangerously-bypass-approvals-and-sandbox`](https://developers.openai.com/codex/cli/reference#global-flags)
 flag. It is never enabled implicitly.
 
-### Install the MD-OS semantic shell
+### Install and start the MD-OS agentic shell
 
-The bootstrap above opens Codex to develop and operate the repository. The
-semantic shell is the complementary Cortex-derived entrypoint: it keeps the
-real host-shell experience and uses Codex only when a line is not already a
-valid native command.
+The bootstrap above opens the ordinary Codex client inside this repository.
+The complementary agentic shell keeps the real host-shell experience and sends
+natural language into the full Codex agent loop for the current workspace.
 
 Install it once from the repository:
 
@@ -105,80 +104,95 @@ Install it once from the repository:
 Open a new terminal, then start it from any directory:
 
 ```bash
-mdos-console
+mdos
 ```
 
-Inside `mdos-console`, type exactly as you would in a normal shell—without
-apostrophes or a special command prefix:
+Type commands and natural language in the same interface, without apostrophes,
+a chat prefix, or special syntax:
 
 ```text
 ls -la
 cd ~/projects
 printf 'one\ntwo\n' | tail -n 1
 explain what is consuming the most disk space
-write a C program that prints hello and compile it
+inspect this repository, fix the failing test, verify it, and report the result
 ```
 
-The dispatch rule is deliberately small and is inherited from the working
-Cortex prototype:
+The primary dispatch rule is:
 
 ```text
 complete input line
-├── valid native command -> execute immediately in the real host shell
-└── every other line     -> Codex -> tagged result -> validate -> answer/code/command
+├── valid native command -> real host shell -> bounded observation
+└── natural language     -> full Codex agent loop for the current workspace
 ```
 
-This is a shell inside the shell, not a browser GUI and not a restricted
-simulation. It preserves the actual current directory, persistent `cd`,
-`PWD`/`OLDPWD`, host-style prompt and colors, Readline/libedit editing, Tab
-completion, pipes, redirections, substitutions, and the native command
-language of Linux, macOS, BSD, or Windows. Valid native commands bypass Codex
-entirely. Natural-language requests use Codex App Server by default, including
-one-shot requests; `codex exec` remains only an explicit compatibility backend.
-The interactive REPL prewarms one read-only App Server process and one Codex
-thread, then keeps both alive until exit. Conversational `answer` text streams
-as soon as its routing header is known, while commands and scripts remain fully
-buffered and validated before execution. The shell defaults to the lightweight
-`gpt-5.6-luna` model with `low` reasoning effort; `MDOS_MODEL` and
-`MDOS_REASONING_EFFORT` can explicitly select a deeper path. Native commands
-still bypass the model, but MD-OS retains a bounded observation of their
-command, directory, exit code, and terminal output for the next semantic turn:
+This is a shell inside the shell, not a browser GUI or a restricted simulation.
+It preserves the actual current directory, persistent `cd`, `PWD`/`OLDPWD`,
+host-style prompt, line editing, Tab completion, pipes, redirections,
+substitutions, and the native command language of Linux, macOS, BSD, or
+Windows. Valid native commands bypass Codex completely.
+
+On the first natural-language request, `mdos` starts one Codex App Server
+process. It resolves the current Git workspace, resumes the most recent matching
+native Codex thread when one exists, or starts a new one. Moving to another
+repository selects that repository's thread; moving back restores the earlier
+binding:
 
 ```text
-native input -> real shell -> bounded observation ─┐
-                                                   ├-> live App Server + Codex thread
-natural input -------------------------------------┘
+native input -> real shell -> bounded observation ──────────────┐
+                                                                │
+natural input -> workspace -> thread list/resume/start -> Codex ├─> readback
+                                      ├-> AGENTS.md discovery   │
+                                      ├-> reasoning and plan    │
+                                      ├-> tools and sandbox     │
+                                      ├-> approval gates        │
+                                      ├-> effect observation    │
+                                      └-> verification ─────────┘
 ```
 
-The observation queue is volatile and is not written into tracked repository
-files. This gives Codex working context inside the live shell without silently
-promoting a raw terminal transcript into canonical MD-OS memory. If a validated
-Codex result is an OS action, MD-OS executes it through the detected host shell
-and observes its outcome in the same way. The next turn also receives the
-measured duration of the preceding Codex turn, so a complaint about response
-latency is grounded in runtime evidence rather than mistaken for a request to
-write more briefly.
+Natural-language input is no longer reduced to an `AGENT: os` tag and one
+command executed by the outer shell. It enters Codex's normal repository-aware
+cycle: understand, explore, plan, use tools, request approval, act in a
+`workspace-write` sandbox, observe, correct, verify, and answer. Model and
+reasoning effort inherit the user's Codex configuration unless
+`MDOS_MODEL` or `MDOS_REASONING_EFFORT` explicitly overrides them.
 
-**Authority warning:** commands entered directly and commands produced from a
-natural-language request run with the current user's host-shell authority, as
-they did in Cortex. Codex itself is invoked read-only, but the validated native
-command is real. Read it at the `COMMAND:` line and use the same care you would
-use in Bash, Zsh, Fish, or PowerShell. Bounded terminal output is sent to Codex
-with the next natural-language turn and becomes part of the resumable session;
-do not print secrets in a session that will subsequently invoke the model.
+Codex supplies the plastic reasoning-and-tool loop; MD-OS supplies identity,
+method, persistent operational context, semantic commitment gates, bounded
+authority, executors, sensors, verifiers, and ledger readback. The shell is the
+operational fusion point, not a replacement for either layer.
 
-The installer is itself ported from Cortex. It adds the checked-out
-`md-os/shell/bin` directory to the selected shell's `PATH`, sources the matching
-Bash/Zsh/Fish/PowerShell adapter, and backs up an existing profile before
-editing it. Preview without writing:
+The volatile observation queue is not written into tracked files. Codex keeps
+its own resumable thread history outside the repository; MD-OS does not copy raw
+chat into Git. Tool output is streamed without flattening line breaks. The
+default `MDOS_CODEX_TRACE=full` view also shows available reasoning summaries,
+plans, commands, diffs, tools, approvals, and progress; `compact` and `quiet`
+reduce that readback.
+
+**Authority boundary:** a command typed explicitly by the human runs with the
+current user's host-shell authority. Codex-generated commands and file changes
+run through Codex's sandbox and `on-request` approval protocol. Final assistant
+text is never silently re-executed as shell code. Do not print secrets before a
+natural-language turn because bounded terminal output may be sent to Codex as
+operating context.
+
+The same public command retains deterministic MD-OS subcommands:
+
+```bash
+mdos health
+mdos graphify status
+mdos replay
+```
+
+`mdos-console` remains only as a compatibility alias. Preview installer
+changes without writing:
 
 ```bash
 ./install-md-os-console.sh --dry-run
 ```
 
-See [MD-OS Semantic Shell](docs/SEMANTIC_SHELL.md) for the exact behavior,
-one-shot commands, environment variables, and the boundary between the
-repository bootstrap and the shell.
+See [MD-OS Agentic Shell](docs/SEMANTIC_SHELL.md) for the exact thread-binding,
+approval, one-shot, privacy, and compatibility behavior.
 
 ## Main layout
 
@@ -1725,7 +1739,7 @@ directions:
 
 ```bash
 ./bootstrap-md-os-codex.sh
-mdos-console
+mdos
 ```
 
 `bootstrap-md-os-codex.sh` is the repository-development path: Codex owns the
@@ -1746,11 +1760,13 @@ banner and runs quick read-only hardware and software discovery into
 either startup scan. The launcher then refreshes the local runtime views so the
 scan is visible in generated indices.
 
-`mdos-console` is the Cortex-derived semantic-shell path: MD-OS owns the REPL,
-executes already-valid native input without a model call, and invokes an
-persistent, resumable Codex thread for semantic interpretation. Native command
-and output readback is queued as bounded sensory context for that thread. The
-existing shell mechanics are preserved; Ollama is not used. See
+`mdos` is the Cortex-derived agentic-shell path: MD-OS owns the persistent REPL
+and executes already-valid native input without a model call; natural language
+enters the complete Codex agent loop bound to the current workspace. The shell
+lists and resumes existing native Codex threads, preserves repository
+instruction discovery, tools, sandboxing, approvals, verification, and session
+history, and queues native command/output readback as bounded sensory context.
+The existing shell mechanics are preserved; Ollama is not used. See
 [docs/SEMANTIC_SHELL.md](docs/SEMANTIC_SHELL.md).
 
 More detail: [docs/HOST_RUNTIME_INTEGRATION.md](docs/HOST_RUNTIME_INTEGRATION.md)
@@ -1777,8 +1793,8 @@ MD-OS (Artificial Prefrontal Cortex) v5.0 provides:
 In short:
 
 ```text
-Repository bootstrap: Codex operates MD-OS for the human.
-Semantic shell:       MD-OS invokes Codex for the human.
+Repository bootstrap: Codex client operates MD-OS for the human.
+Agentic shell:        MD-OS binds the real shell to workspace-native Codex loops.
 MD-OS:                persistent agent, control plane, and Operating Filesystem.
 ```
 

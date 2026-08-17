@@ -17,6 +17,7 @@ import unittest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ENGINE_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos-console"
+LAUNCHER_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos"
 INSTALLER_PATH = PROJECT_ROOT / "md-os" / "shell" / "install.py"
 
 
@@ -39,7 +40,11 @@ class FakeCodex:
 
     def __init__(
         self,
-        response: str | list[str] = "AGENT: os\nprintf runtime-ok",
+        response: str | list[str] = "runtime-ok",
+        existing_threads: dict[str, str] | None = None,
+        command_event: tuple[str, str] | None = None,
+        trace_events: bool = False,
+        busy_threads: set[str] | None = None,
     ) -> None:
         self.responses = [response] if isinstance(response, str) else response
         self.temporary = tempfile.TemporaryDirectory()
@@ -47,6 +52,7 @@ class FakeCodex:
         self.executable = self.root / "codex"
         self.calls = self.root / "calls.ndjson"
         self.starts = self.root / "starts.ndjson"
+        self.protocol = self.root / "protocol.ndjson"
         source = textwrap.dedent(
             f"""\
             #!/usr/bin/env python3
@@ -57,7 +63,12 @@ class FakeCodex:
             arguments = sys.argv[1:]
             calls_path = Path({str(self.calls)!r})
             starts_path = Path({str(self.starts)!r})
+            protocol_path = Path({str(self.protocol)!r})
             responses = {self.responses!r}
+            existing_threads = {existing_threads or {}!r}
+            command_event = {command_event!r}
+            trace_events = {trace_events!r}
+            busy_threads = set({sorted(busy_threads or set())!r})
             if arguments and arguments[0] == "app-server":
                 with starts_path.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps({{"arguments": arguments}}) + "\\n")
@@ -68,17 +79,66 @@ class FakeCodex:
                     message = json.loads(line)
                     method = message.get("method")
                     request_id = message.get("id")
+                    with protocol_path.open("a", encoding="utf-8") as stream:
+                        stream.write(json.dumps(message) + "\\n")
                     if method == "initialize":
-                        print(json.dumps({{"id": request_id, "result": {{"userAgent": "fake"}}}}), flush=True)
+                        print(
+                            json.dumps(
+                                {{"id": request_id, "result": {{"userAgent": "fake"}}}}
+                            ),
+                            flush=True,
+                        )
                     elif method == "initialized":
                         continue
+                    elif method == "thread/list":
+                        cwd_filter = message["params"].get("cwd", [])
+                        if isinstance(cwd_filter, str):
+                            cwd_filter = [cwd_filter]
+                        data = [
+                            {{
+                                "id": thread_id,
+                                "cwd": cwd,
+                                "parentThreadId": None,
+                            }}
+                            for cwd, thread_id in existing_threads.items()
+                            if cwd in cwd_filter
+                        ]
+                        print(json.dumps({{
+                            "id": request_id,
+                            "result": {{"data": data, "nextCursor": None}},
+                        }}), flush=True)
+                    elif method == "thread/resume":
+                        thread_id = message["params"]["threadId"]
+                        if thread_id in busy_threads:
+                            print(json.dumps({{
+                                "id": request_id,
+                                "error": {{
+                                    "code": -32000,
+                                    "message": (
+                                        f"thread {{thread_id}} already has an "
+                                        "active writer"
+                                    ),
+                                }},
+                            }}), flush=True)
+                            continue
+                        print(json.dumps({{
+                            "id": request_id,
+                            "result": {{
+                                "thread": {{"id": thread_id}},
+                                "instructionSources": ["AGENTS.md"],
+                            }},
+                        }}), flush=True)
                     elif method == "thread/start":
                         print(json.dumps({{
                             "id": request_id,
-                            "result": {{"thread": {{"id": {self.THREAD_ID!r}}}}},
+                            "result": {{
+                                "thread": {{"id": {self.THREAD_ID!r}}},
+                                "instructionSources": ["AGENTS.md"],
+                            }},
                         }}), flush=True)
                     elif method == "turn/start":
                         params = message["params"]
+                        thread_id = params["threadId"]
                         prompt = params["input"][0]["text"]
                         with calls_path.open("a", encoding="utf-8") as stream:
                             stream.write(json.dumps({{
@@ -90,8 +150,85 @@ class FakeCodex:
                         turn_id = f"turn-{{turn_index + 1}}"
                         print(json.dumps({{
                             "id": request_id,
-                            "result": {{"turn": {{"id": turn_id, "status": "inProgress", "items": []}}}},
+                            "result": {{
+                                "turn": {{
+                                    "id": turn_id,
+                                    "status": "inProgress",
+                                    "items": [],
+                                }}
+                            }},
                         }}), flush=True)
+                        if command_event is not None:
+                            command, command_output = command_event
+                            command_item = {{
+                                "id": f"command-{{turn_index + 1}}",
+                                "type": "commandExecution",
+                                "command": command,
+                                "commandActions": [],
+                                "cwd": params.get("cwd", ""),
+                                "status": "inProgress",
+                            }}
+                            print(json.dumps({{
+                                "method": "item/started",
+                                "params": {{
+                                    "threadId": thread_id,
+                                    "turnId": turn_id,
+                                    "startedAtMs": 1,
+                                    "item": command_item,
+                                }},
+                            }}), flush=True)
+                            print(json.dumps({{
+                                "method": "item/commandExecution/outputDelta",
+                                "params": {{
+                                    "threadId": thread_id,
+                                    "turnId": turn_id,
+                                    "itemId": command_item["id"],
+                                    "delta": command_output,
+                                }},
+                            }}), flush=True)
+                            command_item["status"] = "completed"
+                            command_item["aggregatedOutput"] = command_output
+                            command_item["exitCode"] = 0
+                            print(json.dumps({{
+                                "method": "item/completed",
+                                "params": {{
+                                    "threadId": thread_id,
+                                    "turnId": turn_id,
+                                    "completedAtMs": 1,
+                                    "item": command_item,
+                                }},
+                            }}), flush=True)
+                        if trace_events:
+                            print(json.dumps({{
+                                "method": "item/reasoning/summaryTextDelta",
+                                "params": {{
+                                    "threadId": thread_id,
+                                    "turnId": turn_id,
+                                    "itemId": f"reasoning-{{turn_index + 1}}",
+                                    "summaryIndex": 0,
+                                    "delta": "Inspecting the workspace.\\n",
+                                }},
+                            }}), flush=True)
+                            print(json.dumps({{
+                                "method": "turn/plan/updated",
+                                "params": {{
+                                    "threadId": thread_id,
+                                    "turnId": turn_id,
+                                    "explanation": "Verify before answering.",
+                                    "plan": [{{
+                                        "step": "Run focused checks",
+                                        "status": "inProgress",
+                                    }}],
+                                }},
+                            }}), flush=True)
+                            print(json.dumps({{
+                                "method": "turn/diff/updated",
+                                "params": {{
+                                    "threadId": thread_id,
+                                    "turnId": turn_id,
+                                    "diff": "diff --git a/a b/a\\n",
+                                }},
+                            }}), flush=True)
                         split_at = max(1, len(response) // 3)
                         for delta in (
                             response[:split_at],
@@ -103,7 +240,7 @@ class FakeCodex:
                             print(json.dumps({{
                                 "method": "item/agentMessage/delta",
                                 "params": {{
-                                    "threadId": {self.THREAD_ID!r},
+                                    "threadId": thread_id,
                                     "turnId": turn_id,
                                     "itemId": f"message-{{turn_index + 1}}",
                                     "delta": delta,
@@ -112,7 +249,7 @@ class FakeCodex:
                         print(json.dumps({{
                             "method": "item/completed",
                             "params": {{
-                                "threadId": {self.THREAD_ID!r},
+                                "threadId": thread_id,
                                 "turnId": turn_id,
                                 "completedAtMs": 1,
                                 "item": {{
@@ -126,8 +263,13 @@ class FakeCodex:
                         print(json.dumps({{
                             "method": "turn/completed",
                             "params": {{
-                                "threadId": {self.THREAD_ID!r},
-                                "turn": {{"id": turn_id, "status": "completed", "items": [], "error": None}},
+                            "threadId": thread_id,
+                                "turn": {{
+                                    "id": turn_id,
+                                    "status": "completed",
+                                    "items": [],
+                                    "error": None,
+                                }},
                             }},
                         }}), flush=True)
                         turn_index += 1
@@ -138,13 +280,31 @@ class FakeCodex:
             prompt = sys.stdin.read()
             call_index = 0
             if calls_path.exists():
-                call_index = len([line for line in calls_path.read_text(encoding="utf-8").splitlines() if line])
+                call_index = len(
+                    [
+                        line
+                        for line in calls_path.read_text(
+                            encoding="utf-8"
+                        ).splitlines()
+                        if line
+                    ]
+                )
             with calls_path.open("a", encoding="utf-8") as stream:
-                stream.write(json.dumps({{"arguments": arguments, "prompt": prompt}}) + "\\n")
+                stream.write(
+                    json.dumps({{"arguments": arguments, "prompt": prompt}})
+                    + "\\n"
+                )
             response = responses[min(call_index, len(responses) - 1)]
             output_path.write_text(response, encoding="utf-8")
             if "--json" in arguments:
-                print(json.dumps({{"type": "thread.started", "thread_id": {self.THREAD_ID!r}}}))
+                print(
+                    json.dumps(
+                        {{
+                            "type": "thread.started",
+                            "thread_id": {self.THREAD_ID!r},
+                        }}
+                    )
+                )
             """
         )
         self.executable.write_text(source, encoding="utf-8")
@@ -165,6 +325,15 @@ class FakeCodex:
         return [
             __import__("json").loads(line)
             for line in self.starts.read_text(encoding="utf-8").splitlines()
+            if line
+        ]
+
+    def protocol_requests(self) -> list[dict[str, object]]:
+        if not self.protocol.exists():
+            return []
+        return [
+            __import__("json").loads(line)
+            for line in self.protocol.read_text(encoding="utf-8").splitlines()
             if line
         ]
 
@@ -195,7 +364,9 @@ def run_console(arguments: list[str], fake: FakeCodex, cwd: Path = PROJECT_ROOT)
 
 
 class SemanticShellParityTests(unittest.TestCase):
-    def test_default_program_uses_codex_native_agents_discovery_without_duplication(self):
+    def test_default_program_uses_codex_native_agents_discovery_without_duplication(
+        self,
+    ):
         runtime = ENGINE.load_runtime()
         program = ENGINE.load_program(ENGINE.DEFAULT_AGENT_REFERENCE, runtime)
         self.assertEqual(runtime.provider, "codex")
@@ -221,31 +392,59 @@ class SemanticShellParityTests(unittest.TestCase):
 
     def test_natural_language_uses_codex_and_returns_answer(self):
         answer = "Un tensore generalizza scalari, vettori e matrici."
-        with FakeCodex(f"AGENT: answer\n{answer}") as fake:
+        with FakeCodex(answer) as fake:
             result = run_console(["che cosa è un tensore?"], fake)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout, f"{answer}\n")
             requests = fake.requests()
             self.assertEqual(len(requests), 1)
             self.assertEqual(requests[0]["arguments"][:2], ["app-server", "--listen"])
-            self.assertEqual(requests[0]["params"]["effort"], "low")
-            self.assertEqual(requests[0]["params"]["model"], "gpt-5.6-luna")
+            self.assertNotIn("effort", requests[0]["params"])
+            self.assertNotIn("model", requests[0]["params"])
+            self.assertEqual(
+                requests[0]["params"]["approvalPolicy"], "on-request"
+            )
+            self.assertEqual(
+                requests[0]["params"]["sandboxPolicy"]["type"],
+                "workspaceWrite",
+            )
             self.assertEqual(len(fake.process_starts()), 1)
-            self.assertIn("che cosa è un tensore?", requests[0]["prompt"])
-            self.assertIn("MANDATORY RUNTIME OUTPUT CONTRACT", requests[0]["prompt"])
+            self.assertEqual(requests[0]["prompt"], "che cosa è un tensore?")
+            self.assertNotIn("MANDATORY RUNTIME OUTPUT CONTRACT", requests[0]["prompt"])
             self.assertNotIn("Stable repository purpose", requests[0]["prompt"])
 
-    def test_codex_generated_os_command_executes_in_real_shell(self):
+    def test_native_codex_answer_is_not_reexecuted_by_the_outer_shell(self):
         with FakeCodex("AGENT: os\nprintf semantic-ok") as fake:
             result = run_console(["produce the semantic marker"], fake)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(result.stdout, "semantic-ok")
-            self.assertEqual(result.stderr, "COMMAND: printf semantic-ok\n")
+            self.assertEqual(result.stdout, "AGENT: os\nprintf semantic-ok\n")
+            self.assertNotIn("COMMAND:", result.stderr)
+
+    def test_codex_tool_output_preserves_terminal_line_breaks(self):
+        with FakeCodex(
+            "Process inspection complete.",
+            command_event=("ps -eo pid,comm", "PID COMMAND\n1 init\n2 worker\n"),
+        ) as fake:
+            result = run_console(["show the processes"], fake)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("PID COMMAND\n1 init\n2 worker\n", result.stdout)
+            self.assertIn("Process inspection complete.\n", result.stdout)
+            self.assertIn("CODEX COMMAND: ps -eo pid,comm", result.stderr)
+
+    def test_full_trace_renders_reasoning_plan_and_diff_readback(self):
+        with FakeCodex("Verified.", trace_events=True) as fake:
+            result = run_console(["inspect and verify"], fake)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("CODEX REASONING:\nInspecting the workspace.", result.stderr)
+            self.assertIn("CODEX PLAN STATUS:", result.stderr)
+            self.assertIn("[inProgress] Run focused checks", result.stderr)
+            self.assertIn("CODEX DIFF:\ndiff --git a/a b/a", result.stderr)
+            self.assertEqual(fake.requests()[0]["params"]["summary"], "auto")
 
     def test_repl_preserves_codex_thread_and_observes_native_shell_events(self):
         responses = [
-            "AGENT: answer\nHai eseguito printf shell-memory-ok.",
-            "AGENT: answer\nL'ultimo comando nativo è printf shell-memory-ok.",
+            "Hai eseguito printf shell-memory-ok.",
+            "L'ultimo comando nativo è printf shell-memory-ok.",
         ]
         with FakeCodex(responses) as fake, tempfile.TemporaryDirectory() as temporary:
             environment = os.environ.copy()
@@ -276,9 +475,9 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(first_arguments[:2], ["app-server", "--listen"])
             self.assertEqual(second_arguments, first_arguments)
             self.assertEqual(len(fake.process_starts()), 1)
-            self.assertEqual(requests[0]["params"]["effort"], "low")
-            self.assertEqual(requests[1]["params"]["effort"], "low")
-            self.assertEqual(requests[0]["params"]["summary"], "none")
+            self.assertNotIn("effort", requests[0]["params"])
+            self.assertNotIn("effort", requests[1]["params"])
+            self.assertEqual(requests[0]["params"]["summary"], "auto")
             self.assertEqual(
                 requests[0]["params"]["threadId"], FakeCodex.THREAD_ID
             )
@@ -290,12 +489,93 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn('"output":"shell-memory-ok"', requests[0]["prompt"])
             self.assertIn("che cosa ho appena fatto?", requests[0]["prompt"])
             self.assertIn("qual è l'ultimo comando nativo?", requests[1]["prompt"])
-            self.assertIn("MD-OS SEMANTIC SHELL CONTINUATION", requests[1]["prompt"])
-            self.assertRegex(
-                requests[1]["prompt"],
-                r"previous_codex_turn_duration_ms=\d+",
+            self.assertNotIn("MD-OS SHELL OBSERVATIONS", requests[1]["prompt"])
+            self.assertEqual(
+                requests[1]["prompt"], "qual è l'ultimo comando nativo?"
             )
             self.assertNotIn("Stable repository purpose", requests[1]["prompt"])
+            methods = [
+                message.get("method") for message in fake.protocol_requests()
+            ]
+            self.assertEqual(methods.count("thread/list"), 1)
+            self.assertEqual(methods.count("thread/start"), 1)
+
+    def test_repl_resumes_the_latest_thread_for_each_current_workspace(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            first = root / "first"
+            second = root / "second"
+            first.mkdir()
+            second.mkdir()
+            first_thread = "01900000-0000-7000-8000-000000000011"
+            second_thread = "01900000-0000-7000-8000-000000000022"
+            with FakeCodex(
+                ["first answer", "second answer", "first again"],
+                existing_threads={
+                    str(first): first_thread,
+                    str(second): second_thread,
+                },
+            ) as fake:
+                environment = os.environ.copy()
+                environment["MDOS_CODEX_BIN"] = str(fake.executable)
+                environment["MDOS_PROMPT_COLOR"] = "never"
+                result = subprocess.run(
+                    [sys.executable, str(ENGINE_PATH)],
+                    input=(
+                        f"cd {first}\nwhat happened here?\n"
+                        f"cd {second}\nwhat happened there?\n"
+                        f"cd {first}\ncontinue the first workspace\nexit\n"
+                    ),
+                    cwd=root,
+                    env=environment,
+                    check=False,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                requests = fake.requests()
+                self.assertEqual(
+                    [request["params"]["threadId"] for request in requests],
+                    [first_thread, second_thread, first_thread],
+                )
+                methods = [
+                    message.get("method") for message in fake.protocol_requests()
+                ]
+                self.assertEqual(methods.count("thread/list"), 2)
+                self.assertEqual(methods.count("thread/resume"), 2)
+                self.assertEqual(methods.count("thread/start"), 0)
+
+    def test_busy_existing_thread_falls_back_to_a_new_workspace_thread(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            cwd = str(Path(temporary).resolve())
+            busy = "01900000-0000-7000-8000-000000000099"
+            with FakeCodex(
+                "fallback works",
+                existing_threads={cwd: busy},
+                busy_threads={busy},
+            ) as fake:
+                environment = os.environ.copy()
+                environment["MDOS_CODEX_BIN"] = str(fake.executable)
+                environment["MDOS_PROMPT_COLOR"] = "never"
+                result = subprocess.run(
+                    [sys.executable, str(ENGINE_PATH)],
+                    input="continue here\nexit\n",
+                    cwd=cwd,
+                    env=environment,
+                    check=False,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                methods = [
+                    message.get("method") for message in fake.protocol_requests()
+                ]
+                self.assertEqual(methods.count("thread/resume"), 1)
+                self.assertEqual(methods.count("thread/start"), 1)
 
     def test_exec_backend_remains_an_explicit_compatibility_path(self):
         responses = [
@@ -306,6 +586,7 @@ class SemanticShellParityTests(unittest.TestCase):
             environment = os.environ.copy()
             environment["MDOS_CODEX_BIN"] = str(fake.executable)
             environment["MDOS_CODEX_BACKEND"] = "exec"
+            environment["MDOS_REASONING_EFFORT"] = "low"
             environment["MDOS_PROMPT_COLOR"] = "never"
             result = subprocess.run(
                 [sys.executable, str(ENGINE_PATH)],
@@ -333,7 +614,7 @@ class SemanticShellParityTests(unittest.TestCase):
             result = run_console(["--inspect"], fake)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("codex_backend=app-server", result.stdout)
-            self.assertIn("codex_reasoning_effort=low", result.stdout)
+            self.assertIn("codex_reasoning_effort=default", result.stdout)
             self.assertEqual(fake.process_starts(), [])
 
     def test_prompt_matches_native_shape_and_completion(self):
@@ -345,6 +626,44 @@ class SemanticShellParityTests(unittest.TestCase):
         self.assertEqual(visible, plain)
         commands = ENGINE.completion_candidates("pyth", True)
         self.assertTrue(any(candidate.startswith("python") for candidate in commands))
+
+    def test_noninteractive_codex_approval_fails_closed(self):
+        client = object.__new__(ENGINE.CodexAppServerClient)
+        replies: list[dict[str, object]] = []
+        client._send = replies.append
+        with contextlib.redirect_stderr(io.StringIO()):
+            client._handle_server_request(
+                {
+                    "id": 77,
+                    "method": "item/commandExecution/requestApproval",
+                    "params": {
+                        "threadId": FakeCodex.THREAD_ID,
+                        "turnId": "turn-1",
+                        "itemId": "command-1",
+                        "startedAtMs": 1,
+                        "command": "touch outside",
+                        "cwd": "/tmp",
+                    },
+                }
+            )
+        self.assertEqual(
+            replies,
+            [{"id": 77, "result": {"decision": "decline"}}],
+        )
+
+    def test_codex_protocol_errors_are_visible(self):
+        client = object.__new__(ENGINE.CodexAppServerClient)
+        output = io.StringIO()
+        with contextlib.redirect_stderr(output):
+            handled = client._render_protocol_notice(
+                "error",
+                {
+                    "error": {"message": "sandbox setup failed"},
+                    "willRetry": False,
+                },
+            )
+        self.assertTrue(handled)
+        self.assertEqual(output.getvalue(), "CODEX ERROR: sandbox setup failed\n")
 
     def test_answer_stream_hides_routing_header_and_preserves_lines(self):
         streamer = ENGINE.DispatchAnswerStreamer()
@@ -406,12 +725,12 @@ class SemanticShellParityTests(unittest.TestCase):
             else:
                 os.environ["OLDPWD"] = previous_oldpwd
 
-    def test_codex_generated_cd_changes_the_persistent_repl_directory(self):
+    def test_codex_text_cannot_silently_change_the_parent_shell_directory(self):
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary).resolve()
             child = parent / "semantic child"
             child.mkdir()
-            response = f"AGENT: os\ncd {shlex.quote(str(child))}"
+            response = f"cd {shlex.quote(str(child))}"
             with FakeCodex(response) as fake:
                 environment = os.environ.copy()
                 environment["MDOS_CODEX_BIN"] = str(fake.executable)
@@ -428,8 +747,9 @@ class SemanticShellParityTests(unittest.TestCase):
                     timeout=30,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertIn(str(child), result.stdout)
-                self.assertIn(f"COMMAND: cd {shlex.quote(str(child))}", result.stderr)
+                self.assertIn(response, result.stdout)
+                self.assertIn(str(parent), result.stdout)
+                self.assertNotIn(f"COMMAND: {response}", result.stderr)
                 self.assertEqual(len(fake.requests()), 1)
 
     def test_no_arguments_opens_shell_and_pwd_runs_natively(self):
@@ -450,7 +770,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 timeout=30,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("MD-OS semantic shell", result.stdout)
+            self.assertIn("MD-OS agentic shell", result.stdout)
             self.assertIn(str(cwd), result.stdout)
             self.assertEqual(fake.requests(), [])
 
@@ -471,7 +791,27 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("shell=bash", result.stdout)
             self.assertIn("installation_status=ready", result.stdout)
-            self.assertIn("universal_fallback=mdos-console", result.stdout)
+            self.assertIn("universal_command=mdos", result.stdout)
+
+    def test_public_mdos_command_opens_the_agentic_shell(self):
+        with FakeCodex() as fake, tempfile.TemporaryDirectory() as temporary:
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            result = subprocess.run(
+                [sys.executable, str(LAUNCHER_PATH)],
+                input="pwd\nexit\n",
+                cwd=temporary,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("MD-OS agentic shell", result.stdout)
+            self.assertIn(str(Path(temporary)), result.stdout)
 
 
 if __name__ == "__main__":

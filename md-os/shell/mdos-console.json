@@ -2,9 +2,9 @@
   "schema": "mdos.shell.runtime/v1",
   "runtime_instructions": "MDOS_SHELL.md",
   "provider": "codex",
-  "model": "gpt-5.6-luna",
+  "model": "default",
   "backend": "app-server",
-  "reasoning_effort": "low",
+  "reasoning_effort": "default",
   "think": false,
   "agent_roots": [
     "programs"

@@ -179,6 +179,31 @@ scans are host-local and cleanable with `mdos hardware clean` and
 launcher refreshes generated runtime views so `md-os/ops/global_index.md` shows
 the current local cache state.
 
+## Unified agentic shell
+
+After running `./install-md-os-console.sh`, the public `mdos` command opens a
+real shell fused with workspace-bound Codex when invoked without arguments:
+
+```bash
+mdos
+```
+
+Valid native commands execute directly. Natural-language input uses Codex App
+Server and preserves the normal Codex cycle: native `AGENTS.md` discovery,
+reasoning, plans, tools, workspace sandbox, on-request approvals, observation,
+correction, verification, and Codex-native thread history. The shell resolves
+the current Git workspace and resumes the most recent available Codex thread
+for that workspace, falling back to a new thread if matching sessions are
+absent or already owned by another active writer.
+
+Known deterministic commands remain available under the same entrypoint, for
+example `mdos health`, `mdos replay`, and `mdos graphify status`. MD-OS adds
+persistent identity, operational context, semantic gates, policy, sensory
+readback, verification, and ledger discipline around the Codex loop; it does
+not replace the loop with a generated Bash command.
+
+See [SEMANTIC_SHELL.md](SEMANTIC_SHELL.md) for the exact runtime boundary.
+
 ## MCP-Compatible Hosts
 
 MCP-compatible hosts can operate MD-OS APFC through the stdio adapter:

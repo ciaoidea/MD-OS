@@ -50,7 +50,7 @@
     "node": ">=20"
   },
   "bin": {
-    "mdos": "md-os/os/mdos.js",
+    "mdos": "md-os/shell/bin/mdos",
     "md-os": "md-os/os/mdos.js",
     "mdos-console": "md-os/shell/bin/mdos-console"
   },
@@ -132,7 +132,7 @@
     "live:stop": "node md-os/os/continuity_service.js stop",
     "live:restart": "node md-os/os/continuity_service.js restart",
     "live:once": "node md-os/os/continuity_service.js run-once",
-    "console": "python3 md-os/shell/bin/mdos-console",
+    "console": "python3 md-os/shell/bin/mdos",
     "connector:terminal:list": "node md-os/os/terminal_connector.js list",
     "connector:terminal:run:node-version": "node md-os/os/terminal_connector.js run demo_general_system node_version",
     "connector:api:list": "node md-os/os/api_connector.js list",

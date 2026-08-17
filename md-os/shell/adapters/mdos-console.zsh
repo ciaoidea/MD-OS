@@ -9,7 +9,7 @@ command_not_found_handler() {
     local mdos_executable=""
 
     if (( $# == 1 )) && [[ "$mdos_missing_command" == *[[:space:]]* ]]; then
-        mdos_executable="${commands[mdos-console]-}"
+        mdos_executable="${commands[mdos]-}"
         if [[ -z "$mdos_executable" || ! -x "$mdos_executable" ]]; then
             print -u2 -- 'zsh: MD-OS executable is unavailable in PATH'
             return 127
