@@ -353,25 +353,25 @@ function statusReadback(options = {}) {
   const mdosRoot = options.mdos_root || MDOS_ROOT;
   const filePath = path.join(options.apfc_dir || path.join(mdosRoot, 'ops', 'apfc', 'executive'), 'status.json');
   const status = readJsonSafe(filePath);
-  if (!status) return { ok: false, mode: 'apfc_status', status: 'missing', suggested_action: 'mdos apfc build' };
+  if (!status) return { ok: false, mode: 'apfc_status', status: 'missing', suggested_action: 'cortex apfc build' };
   return { ok: status.status !== 'critical', mode: 'apfc_status', ...status };
 }
 
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos apfc status',
-    '  mdos apfc build',
-    '  mdos apfc verify',
-    '  mdos apfc reconcile',
-    '  mdos apfc context --task-spec <md-os/ops/tasks/task_id.json>',
-    '  mdos apfc consolidate --run-once',
-    '  mdos apfc promote <skill_candidate_id> --approve [--approve-high-risk]',
-    '  mdos apfc rollback <promotion_receipt_id> --approve',
-    '  mdos apfc revoke <skill_id> --approve [--reason <text>]',
-    '  mdos apfc restore <revocation_receipt_id> --approve',
-    '  mdos apfc graphify build',
-    '  mdos apfc graphify open --view <view_id>',
+    '  cortex apfc status',
+    '  cortex apfc build',
+    '  cortex apfc verify',
+    '  cortex apfc reconcile',
+    '  cortex apfc context --task-spec <md-os/ops/tasks/task_id.json>',
+    '  cortex apfc consolidate --run-once',
+    '  cortex apfc promote <skill_candidate_id> --approve [--approve-high-risk]',
+    '  cortex apfc rollback <promotion_receipt_id> --approve',
+    '  cortex apfc revoke <skill_id> --approve [--reason <text>]',
+    '  cortex apfc restore <revocation_receipt_id> --approve',
+    '  cortex apfc graphify build',
+    '  cortex apfc graphify open --view <view_id>',
     '',
   ].join('\n'));
   process.exit(1);

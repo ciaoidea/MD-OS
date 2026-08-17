@@ -10,7 +10,7 @@ const test = require('node:test');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 
-test('mdos init <target_dir> scaffolds a fresh MD-OS workspace', () => {
+test('cortex init <target_dir> scaffolds a fresh MD-OS workspace', () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'md-os-init-'));
   const target = path.join(parent, 'my-agent-os');
 
@@ -46,7 +46,7 @@ test('mdos init <target_dir> scaffolds a fresh MD-OS workspace', () => {
   assert.match(globalIndex, /Package semver: `5\.0\.1`/);
 });
 
-test('mdos wrapper exposes the primary command name', () => {
+test('cortex wrapper exposes the primary command name', () => {
   const result = spawnSync(process.execPath, [path.join(REPO_ROOT, 'md-os/os/mdos.js')], {
     cwd: REPO_ROOT,
     encoding: 'utf8',
@@ -54,10 +54,10 @@ test('mdos wrapper exposes the primary command name', () => {
   });
 
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /mdos live start/);
+  assert.match(result.stderr, /cortex live start/);
 });
 
-test('mdos paths reports the active workspace selected from cwd', () => {
+test('cortex paths reports the active workspace selected from cwd', () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'md-os-cli-paths-'));
   fs.mkdirSync(path.join(workspace, 'md-os/os'), { recursive: true });
   fs.mkdirSync(path.join(workspace, 'md-os/kb'), { recursive: true });

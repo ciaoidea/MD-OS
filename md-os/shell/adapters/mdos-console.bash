@@ -9,16 +9,16 @@ export MDOS_PARENT_PS1="${PS1-}"
 
 command_not_found_handle() {
     local mdos_missing_command="${1-}"
-    local mdos_executable
+    local cortex_executable
 
     if (( $# == 1 )) && [[ "$mdos_missing_command" == *[[:space:]]* ]]; then
-        mdos_executable="$(type -P mdos-console 2>/dev/null || true)"
-        if [[ ! -x "$mdos_executable" ]]; then
+        cortex_executable="$(type -P cortex 2>/dev/null || true)"
+        if [[ ! -x "$cortex_executable" ]]; then
             printf 'bash: MD-OS executable is unavailable in PATH\n' >&2
             return 127
         fi
 
-        "$mdos_executable" "$mdos_missing_command"
+        "$cortex_executable" "$mdos_missing_command"
         return $?
     fi
 

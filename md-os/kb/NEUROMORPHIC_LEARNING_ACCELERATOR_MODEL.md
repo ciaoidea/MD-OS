@@ -20,7 +20,7 @@ manufactured by spending more search at evaluation time.
 The executable entrypoint is:
 
 ```bash
-mdos agi accelerate --experiment-id <append_only_id>
+cortex agi accelerate --experiment-id <append_only_id>
 ```
 
 The command runs one finite experiment. It is not a daemon and does not enable
@@ -282,7 +282,7 @@ The repository now includes a separate executable suite that closes the next
 five operational evidence edges in a controlled symbolic environment:
 
 ```bash
-mdos agi prove \
+cortex agi prove \
   --experiment-id agi_generality_reference_20260718_v3 \
   --cycles 96 \
   --sessions 6

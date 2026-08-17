@@ -152,16 +152,16 @@ audit, replay, package, and move between machines.
 | `node md-os/os/build_agentic_core.js` | `md-os/ops/core/agentic_core.*` |
 | `node md-os/os/build_workspace_inventory.js` | `md-os/ops/workspace_inventory.*` |
 | `node md-os/os/build_markdown_graph.js` | `md-os/ops/markdown_graph.*` |
-| `mdos graphify build <target_dir>` | `graphify-out/{graph.json,graph.html,GRAPH_REPORT.md,MD_OS_SYSTEM_MAP.md}` |
-| `mdos graphify neural-map` | `graphify-out/{neural_node_map.json,neural_node_map.html,neural_node_map.md}` |
-| `mdos graphify connector-map` | `graphify-out/{connector_topology.json,connector_topology.html,connector_topology.md}` |
-| `mdos graphify orient <question>` | `graphify-out/{orientation.json,orientation.md}` |
+| `cortex graphify build <target_dir>` | `graphify-out/{graph.json,graph.html,GRAPH_REPORT.md,MD_OS_SYSTEM_MAP.md}` |
+| `cortex graphify neural-map` | `graphify-out/{neural_node_map.json,neural_node_map.html,neural_node_map.md}` |
+| `cortex graphify connector-map` | `graphify-out/{connector_topology.json,connector_topology.html,connector_topology.md}` |
+| `cortex graphify orient <question>` | `graphify-out/{orientation.json,orientation.md}` |
 | `node md-os/os/build_semantic_knowledge_graph.js` | `md-os/ops/semantic_knowledge_graph.*` and `md-os/ops/semantic_knowledge_summary.*` |
 | `node md-os/os/build_semantic_commitment_gate.js status` | `md-os/ops/semantic/commitment_gate_status.*` |
 | `node md-os/os/agi_loop.js eval` | `md-os/ops/agi/{loop_status,promotion_gate}.*`, `md-os/ops/skills/skill_registry.*`, `md-os/ops/evals/agi_eval_report.*`, `md-os/ops/failures/failure_index.*`, `md-os/ops/world/world_model.*`, and `md-os/ops/benchmarks/agi_benchmarks.*` |
-| `mdos cognition run-once --task-spec md-os/ops/tasks/<id>.json` (`mdos agi` compatibility alias) | live TaskSpecs, ActionReceipts, VerificationResults, episodes, trajectories, verified skill candidates, opt-in promoted skills when all gates pass, eval readback, and runtime compiler rebuild |
-| `mdos benchmark software-repair generate --case <case.json> --provider <provider.json>` | append-only CandidateProvider request, result, receipt, PlanGraphs, patch snapshots, CandidateSet, and journal readback |
-| `mdos benchmark software-repair run --case <case.json> --provider <provider.json>` | append-only provider evidence, BenchmarkRun, CandidateComparison, candidate diffs, and journal readback |
+| `cortex cognition run-once --task-spec md-os/ops/tasks/<id>.json` (`cortex agi` compatibility alias) | live TaskSpecs, ActionReceipts, VerificationResults, episodes, trajectories, verified skill candidates, opt-in promoted skills when all gates pass, eval readback, and runtime compiler rebuild |
+| `cortex benchmark software-repair generate --case <case.json> --provider <provider.json>` | append-only CandidateProvider request, result, receipt, PlanGraphs, patch snapshots, CandidateSet, and journal readback |
+| `cortex benchmark software-repair run --case <case.json> --provider <provider.json>` | append-only provider evidence, BenchmarkRun, CandidateComparison, candidate diffs, and journal readback |
 | `node md-os/os/build_software_repair_benchmark_index.js` | `md-os/ops/benchmarks/software_repair/index.{json,md}` |
 | `node md-os/os/build_runtime_compiler.js` | semantic, claim, capability, link, context-pack, eval, and epistemic health readback under `md-os/ops/runtime/` |
 | `node md-os/os/build_conceptual_boot_summary.js` | `md-os/ops/summary/conceptual_boot_summary.*` |
@@ -172,19 +172,19 @@ audit, replay, package, and move between machines.
 | `node md-os/os/build_global_index.js` | `md-os/ops/global_index.*` |
 | `node md-os/os/build_system_hygiene_status.js` | `md-os/ops/system_hygiene_status.*` |
 | `node md-os/os/build_health_dashboard.js` | `md-os/ops/health.*` |
-| `mdos replay` | replay report and rebuilt generated state |
-| `mdos hardware bootstrap` | `md-os/ops/local/hardware/**` |
-| `mdos software bootstrap` | `md-os/ops/local/software/**` |
-| `mdos wolfram bootstrap` | Wolfram connector profile, calculation registry entries, availability snapshot, connector registry update, and smoke-test artifact |
-| `mdos wolfram run <project_id> <calculation_id>` | `md-os/ops/artifacts/wolfram/**`, `md-os/ops/sources/connectors/*__wolfram__*.json`, and journal events |
+| `cortex replay` | replay report and rebuilt generated state |
+| `cortex hardware bootstrap` | `md-os/ops/local/hardware/**` |
+| `cortex software bootstrap` | `md-os/ops/local/software/**` |
+| `cortex wolfram bootstrap` | Wolfram connector profile, calculation registry entries, availability snapshot, connector registry update, and smoke-test artifact |
+| `cortex wolfram run <project_id> <calculation_id>` | `md-os/ops/artifacts/wolfram/**`, `md-os/ops/sources/connectors/*__wolfram__*.json`, and journal events |
 
 ## Publication Rule
 
 Before packaging or publishing a workspace:
 
 ```bash
-mdos hardware clean
-mdos software clean
+cortex hardware clean
+cortex software clean
 npm run clean:release
 npm run verify:release
 npm run package:demo

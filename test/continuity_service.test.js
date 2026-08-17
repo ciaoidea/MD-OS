@@ -68,7 +68,7 @@ test('continuity service run-once writes readable status, log, and rebuilt views
   assert.equal(index.ops.services.services[0].status, 'stopped');
 });
 
-test('mdos continuity status is available as a simple toggle command', () => {
+test('cortex continuity status is available as a simple toggle command', () => {
   const workspace = makeWorkspace();
   const initialized = runScript(workspace, 'initialize_ops_memory.js');
   assert.equal(initialized.status, 0, initialized.stderr);
@@ -94,7 +94,7 @@ test('mdos continuity status is available as a simple toggle command', () => {
   assert.equal(payload.service_id, 'continuity_service');
 });
 
-test('mdos live status is the primary live-mode toggle command', () => {
+test('cortex live status is the primary live-mode toggle command', () => {
   const workspace = makeWorkspace();
   const initialized = runScript(workspace, 'initialize_ops_memory.js');
   assert.equal(initialized.status, 0, initialized.stderr);

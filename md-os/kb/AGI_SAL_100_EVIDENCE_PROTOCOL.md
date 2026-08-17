@@ -54,7 +54,7 @@ md-os/ops/agi/sal/score.md
 Command:
 
 ```bash
-mdos agi score
+cortex agi score
 ```
 
 ## Axes and weights
@@ -96,7 +96,7 @@ agent cannot close by editing its own package.
 Create the frozen source manifest and evaluator request:
 
 ```bash
-mdos agi evaluation-request
+cortex agi evaluation-request
 ```
 
 Outputs:
@@ -167,7 +167,7 @@ md-os/schemas/agi_sal_score.schema.json
 Certification command:
 
 ```bash
-mdos agi certify \
+cortex agi certify \
   --report evaluator_a_report.json \
   --report evaluator_b_report.json \
   --trust-store /external/path/trust_store.json

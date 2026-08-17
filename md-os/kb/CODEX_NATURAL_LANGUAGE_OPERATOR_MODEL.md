@@ -43,14 +43,14 @@ For nontrivial repository navigation, Graphify is the default first-pass graph
 orientation layer. The operator should prefer:
 
 ```bash
-mdos graphify orient "<question>"
+cortex graphify orient "<question>"
 ```
 
 before broad file reads when a current graph exists, and should refresh the
 graph with:
 
 ```bash
-mdos graphify build .
+cortex graphify build .
 ```
 
 when the graph needs to evolve with current files, connectors, schemas, audit
@@ -229,3 +229,41 @@ prompt
 
 The host should never ask the user to trust a conversational answer when the
 repository can produce a stronger artifact, test, replay, or generated readback.
+
+## Unified Agentic Shell Path
+
+The public `cortex` command can fuse a real host shell with the native Codex
+agent loop without reducing either layer:
+
+```text
+human input
+├── valid native command
+│   -> host shell
+│   -> bounded observation
+└── natural language
+    -> current workspace
+    -> native Codex thread list/resume/start
+    -> AGENTS.md discovery
+    -> reason -> plan -> explore -> tool -> act with full host authority
+    -> observe -> correct -> verify -> report
+```
+
+The layers have distinct responsibilities:
+
+```text
+shell = continuous interaction, cwd, commands, pipes, processes
+Codex = plastic reasoning, planning, repository exploration, and tool use
+MD-OS = identity, method, persistent operational context, semantic gates,
+        policy, bounded authority, executors, sensors, verifiers, and ledger
+```
+
+MD-OS must preserve Codex's native agent cycle on this path. It may orient,
+constrain, observe, verify, and persist commitments, but it must not replace the
+cycle with a classifier whose final output is executed as one unrestricted
+host command. Direct human commands retain host-shell authority. Agent-selected actions run with full current-user host authority and no approval
+prompts. Final assistant text
+is never itself an executable capability.
+
+Codex-native thread history remains outside the repository. Workspace changes
+select workspace-specific threads; raw conversation and shell history do not
+become canonical MD-OS memory without the semantic commitment gate.

@@ -6,7 +6,7 @@ MD-OS (Artificial Prefrontal Cortex) v5.0.
 The command:
 
 ```bash
-mdos software bootstrap
+cortex software bootstrap
 ```
 
 scans host-exposed application and service surfaces, then writes normalized
@@ -19,7 +19,7 @@ md-os/ops/local/software/
 Cleanup command:
 
 ```bash
-mdos software clean
+cortex software clean
 ```
 
 Cleanup must remove the local software cache, remove legacy software cache

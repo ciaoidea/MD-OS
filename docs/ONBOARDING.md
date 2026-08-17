@@ -31,7 +31,7 @@ agenda, audit, and continuity layer for bounded device coordination.
 MD-OS (Artificial Prefrontal Cortex) v5.0 is the persistent agent and Operating Filesystem on disk. It
 does not include the LLM host runtime inside the package.
 
-For local filesystem operation you need Node.js 20 or newer and the `mdos` or
+For local filesystem operation you need Node.js 20 or newer and the `cortex` or
 `node md-os/os/*.js` commands. For the intended LLM-operated workflow, install
 Codex separately. Other coding-agent CLIs, MCP-compatible clients, or custom
 host loops can be integrated, but Codex is the verified runtime path for
@@ -134,11 +134,11 @@ sed -n '1,160p' md-os/ops/agenda/global_agenda.md
   `md-os/ops/compiled/`.
 - Source snapshots are raw observations.
 - Builders compile raw observations into project state.
-- `mdos compact` builds the hot active-work summary and terminal archive
+- `cortex compact` builds the hot active-work summary and terminal archive
   views without deleting canonical work items.
-- `mdos propose-change <target_path> <summary>` records contested edits as
+- `cortex propose-change <target_path> <summary>` records contested edits as
   append-only proposals under `md-os/ops/changes/`.
-- `mdos software bootstrap` builds a cleanable host-local application and
+- `cortex software bootstrap` builds a cleanable host-local application and
   service inventory under `md-os/ops/local/software/`.
 - Replay removes compiled state and rebuilds it from sources and project
   definitions.
@@ -203,10 +203,10 @@ authorized for the new hire, supervised by the new hire during the work.
 
 1. Create or let the builder create `md-os/ops/roles/<role_id>/ROLE.md`.
 2. Drop raw material into `md-os/ops/roles/<role_id>/intake/raw/`.
-3. Run `mdos role intake <role_id>`.
+3. Run `cortex role intake <role_id>`.
 4. Inspect `inventory.md`, `task_map.md`, `candidate_operations.md`, and
    `questions_for_expert.md`.
-5. Run `mdos role sensemake <role_id>`.
+5. Run `cortex role sensemake <role_id>`.
 6. Inspect `analysis/role_understanding.md`, `cases/cases.md`,
    `graph/relation_graph.md`, `analysis/root_cause_candidates.md`, and
    `analysis/work_patterns.md`.

@@ -64,7 +64,7 @@ Connectors are bounded substrate adapters registered and audited inside the MD-O
 
 ## Protocol Adapter Policy
 
-The `mcp:server` npm script, `mdos mcp-server` command, and
+The `mcp:server` npm script, `cortex mcp-server` command, and
 `md-os/os/mcp_server.js` file keep the MCP name because they expose the Model
 Context Protocol adapter. They do not authorize or imply an `mcp/` filesystem
 boundary.

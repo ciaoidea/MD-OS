@@ -496,13 +496,13 @@ function buildMarkdown(status) {
 
   if (status.publication.host_local_hardware_files.length) {
     lines.push('', '## Host-Local Hardware Cache', '');
-    lines.push('Run `mdos hardware clean` before packaging or distributing this workspace.');
+    lines.push('Run `cortex hardware clean` before packaging or distributing this workspace.');
     for (const file of status.publication.host_local_hardware_files) lines.push(`- \`${file}\``);
   }
 
   if (status.publication.host_local_software_files.length) {
     lines.push('', '## Host-Local Software Cache', '');
-    lines.push('Run `mdos software clean` before packaging or distributing this workspace.');
+    lines.push('Run `cortex software clean` before packaging or distributing this workspace.');
     for (const file of status.publication.host_local_software_files) lines.push(`- \`${file}\``);
   }
 

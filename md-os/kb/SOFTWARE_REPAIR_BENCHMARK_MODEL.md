@@ -344,21 +344,21 @@ the declared delimited-boundary hypothesis family.
 ## Canonical commands
 
 ```bash
-mdos benchmark software-repair configurations
+cortex benchmark software-repair configurations
 
-mdos benchmark software-repair generate \
+cortex benchmark software-repair generate \
   --case md-os/benchmarks/software_repair/cases/<case>.json \
   --provider md-os/benchmarks/software_repair/providers/<provider>.json \
   --configuration mdos_verified_runtime
 
-mdos benchmark software-repair run \
+cortex benchmark software-repair run \
   --case md-os/benchmarks/software_repair/cases/<case>.json \
   --provider md-os/benchmarks/software_repair/providers/<provider>.json \
   --configuration mdos_verified_runtime
 
 node md-os/os/build_software_repair_benchmark_index.js
 
-mdos agi accelerate --experiment-id <append_only_id>
+cortex agi accelerate --experiment-id <append_only_id>
 ```
 
 ## Master closure

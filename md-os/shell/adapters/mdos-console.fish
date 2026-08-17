@@ -6,13 +6,13 @@ function fish_command_not_found
     set -l mdos_missing_command $argv[1]
 
     if test (count $argv) -eq 1; and string match -rq '[[:space:]]' -- "$mdos_missing_command"
-        set -l mdos_executable (command -s mdos-console)
-        if test -z "$mdos_executable"
+        set -l cortex_executable (command -s cortex)
+        if test -z "$cortex_executable"
             printf 'fish: MD-OS executable is unavailable in PATH\n' >&2
             return 127
         end
 
-        command "$mdos_executable" "$mdos_missing_command"
+        command "$cortex_executable" "$mdos_missing_command"
         return $status
     end
 

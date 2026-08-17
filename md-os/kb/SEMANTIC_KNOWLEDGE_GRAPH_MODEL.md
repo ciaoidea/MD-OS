@@ -92,7 +92,7 @@ node md-os/os/build_semantic_knowledge_graph.js
 CLI entrypoint:
 
 ```bash
-mdos semantic graph build
+cortex semantic graph build
 ```
 
 Generated readback:

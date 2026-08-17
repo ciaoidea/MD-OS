@@ -19,7 +19,7 @@ Markdown vault
 Canonical command:
 
 ```bash
-mdos compile-runtime
+cortex compile-runtime
 ```
 
 Equivalent direct builder:

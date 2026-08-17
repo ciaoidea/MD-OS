@@ -9,7 +9,7 @@ full identity = MD-OS (Artificial Prefrontal Cortex)
 short identity = MD-OS APFC
 public release = v5.0
 package semver = 5.0.1
-command = mdos
+command = cortex
 active boundary = md-os/
 ```
 

@@ -50,7 +50,7 @@ test('module registry builder compiles module, capability, CLI, and MCP readback
   assert.ok(registry.mcp_tools.some((item) => item.name === 'mdos_connector_terminal_list'));
 });
 
-test('mdos module and capability commands read from the module registry', () => {
+test('cortex module and capability commands read from the module registry', () => {
   const moduleResult = runNode([path.join(REPO_ROOT, 'md-os/os/mdos.js'), 'module', 'list']);
   assert.equal(moduleResult.status, 0, moduleResult.stderr);
   const modules = parseLastJson(moduleResult.stdout);

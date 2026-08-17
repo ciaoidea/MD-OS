@@ -78,7 +78,7 @@ const STOP_WORDS = new Set([
   'is',
   'it',
   'md',
-  'mdos',
+  'cortex',
   'of',
   'on',
   'or',

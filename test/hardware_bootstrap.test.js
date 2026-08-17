@@ -59,7 +59,7 @@ test('hardware bootstrap writes read-only registry and markdown views', () => {
   assert.equal(registry.mode, 'hardware_bootstrap_read_only');
   assert.equal(registry.locality.scope, 'host_local');
   assert.equal(registry.locality.portable, false);
-  assert.equal(registry.locality.clean_command, 'mdos hardware clean');
+  assert.equal(registry.locality.clean_command, 'cortex hardware clean');
   assert.equal(registry.policy.read_only, true);
   assert.equal(registry.policy.no_camera_activation, true);
   assert.equal(registry.policy.no_audio_recording, true);
@@ -74,7 +74,7 @@ test('hardware bootstrap writes read-only registry and markdown views', () => {
 
   const inventory = fs.readFileSync(inventoryPath, 'utf8');
   assert.match(inventory, /# Hardware Inventory/);
-  assert.match(inventory, /Clean command: `mdos hardware clean`/);
+  assert.match(inventory, /Clean command: `cortex hardware clean`/);
 });
 
 test('hardware clean removes host-local and legacy hardware inventory folders', () => {
@@ -117,7 +117,7 @@ test('hardware bootstrap can print boot screen without JSON payload', () => {
   assert.ok(fs.existsSync(path.join(workspace, 'md-os/ops/local/hardware/device_registry.json')));
 });
 
-test('mdos hardware bootstrap command is wired through the CLI', () => {
+test('cortex hardware bootstrap command is wired through the CLI', () => {
   const workspace = makeWorkspace();
 
   const result = spawnSync(process.execPath, [

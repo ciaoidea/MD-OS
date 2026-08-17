@@ -20,7 +20,7 @@ md-os/ops/local/software/
 This directory is local, portable=false, and safe to delete:
 
 ```bash
-mdos software clean
+cortex software clean
 ```
 
 Deterministic software discovery and future software connectors live under:
@@ -32,14 +32,14 @@ md-os/os/
 Current discovery command:
 
 ```bash
-mdos software bootstrap
+cortex software bootstrap
 ```
 
 Aliases:
 
 ```bash
-mdos apps discover
-mdos services discover
+cortex apps discover
+cortex services discover
 ```
 
 The bootstrap may run during Codex startup unless

@@ -676,7 +676,7 @@ function buildRegistry() {
       scope: 'host_local',
       portable: false,
       output_dir: rel(SOFTWARE_DIR),
-      clean_command: 'mdos software clean',
+      clean_command: 'cortex software clean',
       notes: 'This inventory describes applications and services on the current host machine and is safe to delete and regenerate.',
     },
     host,
@@ -888,7 +888,7 @@ function buildBootstrapReportMarkdown(registry, bootLines) {
     `- \`${rel(BOOTSTRAP_REPORT_MD)}\``,
     `- \`${rel(OBSERVATIONS_NDJSON)}\``,
     '',
-    'These files are host-local and can be deleted with `mdos software clean`.',
+    'These files are host-local and can be deleted with `cortex software clean`.',
     '',
     '## Safety',
     '',
@@ -985,13 +985,13 @@ function softwareList({ jsonOnly = false, printJsonPayload = true } = {}) {
 
   if (!jsonOnly) {
     if (!registry) {
-      process.stdout.write('No local software inventory present. Run: mdos software bootstrap\n');
+      process.stdout.write('No local software inventory present. Run: cortex software bootstrap\n');
     } else {
       process.stdout.write('MD-OS (Artificial Prefrontal Cortex) v5.0 Software Inventory\n');
       process.stdout.write(`Applications: ${payload.application_count}\n`);
       process.stdout.write(`Services: ${payload.service_count}\n`);
       process.stdout.write(`Registry: ${payload.registry_file}\n`);
-      process.stdout.write(`Clean: ${registry.locality && registry.locality.clean_command || 'mdos software clean'}\n`);
+      process.stdout.write(`Clean: ${registry.locality && registry.locality.clean_command || 'cortex software clean'}\n`);
     }
   }
 
@@ -1125,7 +1125,7 @@ function softwareClean({ jsonOnly = false, printJsonPayload = true } = {}) {
     }
     process.stdout.write(`[SCRUB] ${journalScrub.journal_file}: ${journalScrub.removed_event_count} software scan event(s)\n`);
     for (const item of refreshedViews) process.stdout.write(`[REBUILD] ${item.script}\n`);
-    process.stdout.write('[READY] regenerate with: mdos software bootstrap\n');
+    process.stdout.write('[READY] regenerate with: cortex software bootstrap\n');
   }
 
   if (printJsonPayload) printJson(payload);

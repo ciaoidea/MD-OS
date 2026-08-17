@@ -12,12 +12,16 @@ import platform
 import shutil
 import subprocess
 import sys
+from typing import NoReturn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 BIN_DIR = PROJECT_ROOT / "bin"
 ENGINE_PATH = BIN_DIR / "mdos-console"
+LAUNCHER_PATH = BIN_DIR / "cortex"
+COMPATIBILITY_LAUNCHER_PATH = BIN_DIR / "mdos"
 SHELL_DIR = PROJECT_ROOT / "adapters"
+# Stable managed markers preserve idempotent upgrades from the earlier name.
 BLOCK_START = "# >>> MD-OS semantic shell >>>"
 BLOCK_END = "# <<< MD-OS semantic shell <<<"
 SUPPORTED_SHELLS = ("auto", "bash", "zsh", "fish", "powershell", "none")
@@ -51,7 +55,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def fail(message: str, status: int = 1) -> "NoReturn":
+def fail(message: str, status: int = 1) -> NoReturn:
     print(f"ERROR: {message}", file=sys.stderr)
     raise SystemExit(status)
 
@@ -60,6 +64,10 @@ def validate_project() -> None:
     if sys.version_info < (3, 10):
         fail("MD-OS requires Python 3.10 or newer", 69)
     required = (
+        LAUNCHER_PATH,
+        COMPATIBILITY_LAUNCHER_PATH,
+        BIN_DIR / "cortex.cmd",
+        BIN_DIR / "mdos.cmd",
         ENGINE_PATH,
         PROJECT_ROOT / "mdos-console.json",
         PROJECT_ROOT / "MDOS_SHELL.md",
@@ -144,7 +152,7 @@ def shell_block(target: ShellTarget) -> str:
         quoted_adapter = posix_quote(adapter_path)
         body = "\n".join(
             [
-                f"case :\"$PATH\": in",
+                "case :\"$PATH\": in",
                 f"  *:{quoted_bin}:*) ;;",
                 f"  *) export PATH={quoted_bin}:\"$PATH\" ;;",
                 "esac",
@@ -270,17 +278,18 @@ def update_windows_user_path(dry_run: bool) -> None:
         fail(f"cannot update the Windows user PATH: {error}", 73)
 
 
-def make_posix_engine_executable(dry_run: bool) -> None:
+def make_posix_launchers_executable(dry_run: bool) -> None:
     if os.name == "nt":
         return
-    current_mode = ENGINE_PATH.stat().st_mode
-    desired_mode = current_mode | 0o111
-    if desired_mode == current_mode:
-        print("engine_executable=already configured")
-        return
-    print("engine_executable=install")
-    if not dry_run:
-        ENGINE_PATH.chmod(desired_mode)
+    for path in (LAUNCHER_PATH, COMPATIBILITY_LAUNCHER_PATH, ENGINE_PATH):
+        current_mode = path.stat().st_mode
+        desired_mode = current_mode | 0o111
+        if desired_mode == current_mode:
+            print(f"launcher_executable={path.name}:already configured")
+            continue
+        print(f"launcher_executable={path.name}:install")
+        if not dry_run:
+            path.chmod(desired_mode)
 
 
 def main() -> int:
@@ -292,12 +301,13 @@ def main() -> int:
     print(f"platform={platform.system() or os.name}")
     print(f"bin_directory={BIN_DIR}")
     print(f"dry_run={'yes' if arguments.dry_run else 'no'}")
-    make_posix_engine_executable(arguments.dry_run)
+    make_posix_launchers_executable(arguments.dry_run)
     update_windows_user_path(arguments.dry_run)
     configure_shell(target, arguments.dry_run)
     print("installation_status=ready")
     print("next_step=open a new terminal or reload the configured shell profile")
-    print("universal_fallback=mdos-console")
+    print("universal_command=cortex")
+    print("compatibility_alias=mdos")
     return 0
 
 

@@ -11,13 +11,13 @@ graph, and consolidation modules live under `executive/`.
 ## Runtime Surface
 
 ```text
-mdos apfc cognitive ingest <source.json>
-mdos apfc cognitive bind [frame_id]
-mdos apfc cognitive workspace [frame_id]
-mdos apfc cognitive gate [frame_id]
-mdos apfc cognitive predict [frame_id]
-mdos apfc cognitive run-cycle <source.json>
-mdos apfc cognitive status
+cortex apfc cognitive ingest <source.json>
+cortex apfc cognitive bind [frame_id]
+cortex apfc cognitive workspace [frame_id]
+cortex apfc cognitive gate [frame_id]
+cortex apfc cognitive predict [frame_id]
+cortex apfc cognitive run-cycle <source.json>
+cortex apfc cognitive status
 ```
 
 Generated and live state is written under `md-os/ops/apfc/cognitive/`.

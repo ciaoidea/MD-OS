@@ -65,7 +65,7 @@ test('software bootstrap writes read-only application and service views', () => 
   assert.equal(registry.mode, 'software_bootstrap_read_only');
   assert.equal(registry.locality.scope, 'host_local');
   assert.equal(registry.locality.portable, false);
-  assert.equal(registry.locality.clean_command, 'mdos software clean');
+  assert.equal(registry.locality.clean_command, 'cortex software clean');
   assert.equal(registry.policy.read_only, true);
   assert.equal(registry.policy.no_application_launch, true);
   assert.equal(registry.policy.no_service_start, true);
@@ -83,7 +83,7 @@ test('software bootstrap writes read-only application and service views', () => 
 
   const applications = fs.readFileSync(applicationsPath, 'utf8');
   assert.match(applications, /# Software Applications/);
-  assert.match(applications, /Clean command: `mdos software clean`/);
+  assert.match(applications, /Clean command: `cortex software clean`/);
 
   const services = fs.readFileSync(servicesPath, 'utf8');
   assert.match(services, /# Software Services/);
@@ -130,7 +130,7 @@ test('software bootstrap can print boot screen without JSON payload', () => {
   assert.ok(fs.existsSync(path.join(workspace, 'md-os/ops/local/software/software_registry.json')));
 });
 
-test('mdos software bootstrap command is wired through the CLI', () => {
+test('cortex software bootstrap command is wired through the CLI', () => {
   const workspace = makeWorkspace();
 
   const result = spawnSync(process.execPath, [

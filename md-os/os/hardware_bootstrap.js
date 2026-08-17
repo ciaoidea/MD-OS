@@ -504,7 +504,7 @@ function buildRegistry() {
       scope: 'host_local',
       portable: false,
       output_dir: rel(HARDWARE_DIR),
-      clean_command: 'mdos hardware clean',
+      clean_command: 'cortex hardware clean',
       notes: 'This inventory describes the current host machine and is safe to delete and regenerate.',
     },
     host,
@@ -675,7 +675,7 @@ function buildBootstrapReportMarkdown(registry, bootLines) {
     `- \`${rel(BOOTSTRAP_REPORT_MD)}\``,
     `- \`${rel(OBSERVATIONS_NDJSON)}\``,
     '',
-    'These files are host-local and can be deleted with `mdos hardware clean`.',
+    'These files are host-local and can be deleted with `cortex hardware clean`.',
     '',
     '## Safety',
     '',
@@ -866,7 +866,7 @@ function hardwareClean({ jsonOnly = false, printJsonPayload = true } = {}) {
     }
     process.stdout.write(`[SCRUB] ${journalScrub.journal_file}: ${journalScrub.removed_event_count} hardware scan event(s)\n`);
     for (const item of refreshedViews) process.stdout.write(`[REBUILD] ${item.script}\n`);
-    process.stdout.write('[READY] regenerate with: mdos hardware bootstrap\n');
+    process.stdout.write('[READY] regenerate with: cortex hardware bootstrap\n');
   }
 
   if (printJsonPayload) printJson(payload);

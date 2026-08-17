@@ -287,7 +287,7 @@ a stable KB correction note
 Use append-only proposals for contested edits:
 
 ```text
-mdos propose-change <target_path> <summary>
+cortex propose-change <target_path> <summary>
 ```
 
 ### 8. Persisted Result

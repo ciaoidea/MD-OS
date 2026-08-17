@@ -942,7 +942,7 @@ function buildImportedIdentityPatch(sourceDir, importId, createdAt) {
         'node md-os/os/build_self_release_index.js',
         'node md-os/os/build_global_index.js',
         'node md-os/os/build_health_dashboard.js',
-        'mdos replay',
+        'cortex replay',
       ],
     },
   };

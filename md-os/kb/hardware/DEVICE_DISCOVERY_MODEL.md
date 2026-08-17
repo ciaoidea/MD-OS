@@ -6,7 +6,7 @@ MD-OS APFC.
 The command:
 
 ```bash
-mdos hardware bootstrap
+cortex hardware bootstrap
 ```
 
 scans host-exposed hardware and peripheral surfaces, then writes normalized
@@ -20,7 +20,7 @@ This directory is a cleanable cache for the current computer, not portable
 project knowledge. Remove it with:
 
 ```bash
-mdos hardware clean
+cortex hardware clean
 ```
 
 Cleanup must also rebuild derived runtime views and scrub hardware scan events
@@ -109,4 +109,4 @@ discovery -> registry -> explicit user intent -> connector -> artifact/action lo
 Input-producing actions, such as desktop capture or future camera look-once,
 write host-local artifacts. Output-producing actions, such as audio volume or
 future robot controller commands, write host-local action records and controller
-results. Both are removable with `mdos hardware clean`.
+results. Both are removable with `cortex hardware clean`.

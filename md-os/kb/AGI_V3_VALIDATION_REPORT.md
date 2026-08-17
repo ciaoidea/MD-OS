@@ -11,7 +11,7 @@ agi_generality_reference_20260718_v3
 Command:
 
 ```bash
-mdos agi prove \
+cortex agi prove \
   --experiment-id agi_generality_reference_20260718_v3 \
   --cycles 96 \
   --sessions 6

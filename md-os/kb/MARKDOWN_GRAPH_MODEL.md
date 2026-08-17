@@ -70,7 +70,7 @@ The canonical graph builder is:
 
 ```bash
 node md-os/os/build_markdown_graph.js
-mdos graph build
+cortex graph build
 ```
 
 It scans Markdown files in the workspace, similar to a bounded `find`, then
@@ -101,14 +101,14 @@ knowledge graph would create a self-referential graph and make volatile
 orientation output look like durable source knowledge.
 
 ```bash
-mdos graphify bootstrap
-mdos graphify build .
-mdos graphify connector-map
-mdos graphify neural-map
-mdos graphify orient "agentic task scheduling and verification"
+cortex graphify bootstrap
+cortex graphify build .
+cortex graphify connector-map
+cortex graphify neural-map
+cortex graphify orient "agentic task scheduling and verification"
 ```
 
-`mdos graphify orient <question>` reads three bounded maps before selecting
+`cortex graphify orient <question>` reads three bounded maps before selecting
 context:
 
 - the structural Graphify graph
@@ -129,13 +129,13 @@ Operationally, Graphify has two default roles:
 The default refresh path is:
 
 ```bash
-mdos graphify build .
+cortex graphify build .
 ```
 
 The default orientation path is:
 
 ```bash
-mdos graphify orient "<question>"
+cortex graphify orient "<question>"
 ```
 
 ## Generated Graph Role

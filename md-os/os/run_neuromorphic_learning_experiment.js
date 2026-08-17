@@ -7,7 +7,7 @@ const { runNeuromorphicLearningExperiment } = require('../kernel/cognition/neuro
 function usage() {
   process.stderr.write([
     'Usage:',
-    '  mdos agi accelerate [--experiment-id <append_only_id>]',
+    '  cortex agi accelerate [--experiment-id <append_only_id>]',
     '  node md-os/os/run_neuromorphic_learning_experiment.js [--experiment-id <append_only_id>]',
     '',
   ].join('\n'));

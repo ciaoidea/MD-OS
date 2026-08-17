@@ -28,14 +28,14 @@ md-os/ops/journal.ndjson                     connector run events
 ```bash
 node md-os/os/api_connector.js list
 npm run connector:api:list
-mdos connector api list
+cortex connector api list
 ```
 
 ## Run A Request
 
 ```bash
 node md-os/os/api_connector.js run <project_id> <request_id>
-mdos connector api run <project_id> <request_id>
+cortex connector api run <project_id> <request_id>
 ```
 
 The connector writes a snapshot like:

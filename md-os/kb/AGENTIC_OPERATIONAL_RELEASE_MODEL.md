@@ -26,7 +26,7 @@ The public display name is:
 MD-OS (Artificial Prefrontal Cortex) v5.0
 ```
 
-The npm package is `md-os-apfc@5.0.1`; the stable command is `mdos`.
+The npm package is `md-os-apfc@5.0.1`; the stable command is `cortex`.
 
 ## Agentic operational id
 
@@ -36,7 +36,7 @@ mdos_5_0_artificial_prefrontal_cortex_agentic_operating_filesystem__host_exec__m
 
 | Segment | Meaning |
 | --- | --- |
-| `mdos` | MD-OS system family |
+| `cortex` | MD-OS system family |
 | `5_0` | v5.0 release line |
 | `artificial_prefrontal_cortex` | APFC executive-control architecture |
 | `agentic_operating_filesystem` | small agentic processes composed through files and verified artifacts |

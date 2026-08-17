@@ -130,7 +130,7 @@ The system should prefer useful uncertainty over false certainty.
 Use:
 
 ```bash
-mdos role sensemake <role_id>
+cortex role sensemake <role_id>
 ```
 
 or:
@@ -139,6 +139,6 @@ or:
 node md-os/os/build_role_sensemaking.js <role_id>
 ```
 
-Run `mdos role intake <role_id>` first. Sensemaking can run without perfect
+Run `cortex role intake <role_id>` first. Sensemaking can run without perfect
 extractors, but non-text formats remain weak evidence until extracted into
 readable text.

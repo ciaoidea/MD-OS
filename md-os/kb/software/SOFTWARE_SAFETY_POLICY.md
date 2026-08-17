@@ -57,7 +57,7 @@ md-os/ops/local/software/
 It must remain cleanable with:
 
 ```bash
-mdos software clean
+cortex software clean
 ```
 
 The portable MD-OS package should include the software model and connector

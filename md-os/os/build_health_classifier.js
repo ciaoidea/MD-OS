@@ -535,7 +535,7 @@ function buildFindings(inputs) {
     publication_blocking: true,
     local_only: true,
     reason: 'Host-local hardware cache is present.',
-    suggested_action: 'Run `mdos hardware clean` before packaging or distributing this workspace.',
+    suggested_action: 'Run `cortex hardware clean` before packaging or distributing this workspace.',
     paths: listOf(publication.host_local_hardware_files),
   });
   addCountFinding(findings, {
@@ -548,7 +548,7 @@ function buildFindings(inputs) {
     publication_blocking: true,
     local_only: true,
     reason: 'Host-local software cache is present.',
-    suggested_action: 'Run `mdos software clean` before packaging or distributing this workspace.',
+    suggested_action: 'Run `cortex software clean` before packaging or distributing this workspace.',
     paths: listOf(publication.host_local_software_files),
   });
   addCountFinding(findings, {

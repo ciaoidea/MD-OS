@@ -12,7 +12,7 @@ ontological claim.
 Run inside the untouched evaluated workspace:
 
 ```bash
-mdos agi evaluation-request
+cortex agi evaluation-request
 ```
 
 Archive, outside the workspace:
@@ -155,7 +155,7 @@ and key possession; they do not by themselves prove institutional independence.
 Run from the evaluated workspace while keeping all evidence paths external:
 
 ```bash
-mdos agi certify \
+cortex agi certify \
   --report /external/evaluator_a_report.json \
   --report /external/evaluator_b_report.json \
   --trust-store /external/agi_sal_trust_store.json

@@ -22,7 +22,7 @@ Direct deterministic builders may rewrite their known outputs. Human or agent
 edits that could collide with another writer should use:
 
 ```bash
-mdos propose-change <target_path> <summary>
+cortex propose-change <target_path> <summary>
 ```
 
 Large histories should be read through:

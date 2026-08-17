@@ -103,7 +103,7 @@ This is the base operating loop for the system.
 After rebuilding, verify that compiled state can be reconstructed:
 
 ```bash
-mdos replay
+cortex replay
 ```
 
 or:

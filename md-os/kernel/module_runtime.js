@@ -368,7 +368,7 @@ function buildRegistryMarkdown(registry) {
   lines.push('', '## CLI Commands', '');
   if (!registry.cli_commands.length) lines.push('- None.');
   for (const command of registry.cli_commands) {
-    lines.push(`- \`mdos ${command.command}\` -> \`${command.module_id}.${command.command_name}\``);
+    lines.push(`- \`cortex ${command.command}\` -> \`${command.module_id}.${command.command_name}\``);
   }
   lines.push('', '## MCP Tools', '');
   if (!registry.mcp_tools.length) lines.push('- None.');

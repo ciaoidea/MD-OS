@@ -54,7 +54,7 @@ function seedRegistry(workspace, tools) {
       scope: 'host_local',
       portable: false,
       output_dir: 'md-os/ops/local/hardware',
-      clean_command: 'mdos hardware clean',
+      clean_command: 'cortex hardware clean',
     },
     discovered_tools: tools.map((tool) => ({
       tool,

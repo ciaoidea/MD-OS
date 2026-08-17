@@ -182,7 +182,7 @@ function main() {
         read_capabilities: ['wolfram_profile_read', 'wolfram_script_hashing', 'mathematical_output_capture'],
         write_capabilities: ['bounded_wolframscript_execution', 'wolfram_artifact_emit', 'connector_snapshot_emit'],
         allowed_commands: ['wolframscript'],
-        notes: 'Run mdos wolfram bootstrap to verify the local wolframscript prerequisite and write availability readback.'
+        notes: 'Run cortex wolfram bootstrap to verify the local wolframscript prerequisite and write availability readback.'
       },
       {
         connector_id: 'hardware_discovery',
@@ -337,8 +337,8 @@ function main() {
     token_budget_role: 'primary_context_reduction_surface',
     dynamic_graph_evolution: true,
     graph_evolution_mode: 'bounded_local_update',
-    default_refresh_command: 'mdos graphify build .',
-    default_orient_command: 'mdos graphify orient <question>',
+    default_refresh_command: 'cortex graphify build .',
+    default_orient_command: 'cortex graphify orient <question>',
     output_dir: 'graphify-out',
     graph_json: 'graphify-out/graph.json',
     graph_html: 'graphify-out/graph.html',

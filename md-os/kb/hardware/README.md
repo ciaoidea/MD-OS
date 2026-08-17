@@ -25,7 +25,7 @@ md-os/ops/local/hardware/
 It is not portable project knowledge. It can be removed with:
 
 ```bash
-mdos hardware clean
+cortex hardware clean
 ```
 
 Deterministic hardware discovery and future hardware connectors live under:
@@ -37,7 +37,7 @@ md-os/os/
 Initial bootstrap command:
 
 ```bash
-mdos hardware bootstrap
+cortex hardware bootstrap
 ```
 
 The Codex bootstrap launcher runs this read-only scan at startup
@@ -50,10 +50,10 @@ change volume, move devices, or perform hardware writes.
 Explicit control commands use a separate connector:
 
 ```bash
-mdos hardware list
-mdos hardware run "turn up the volume"
-mdos screen capture
-mdos display status
+cortex hardware list
+cortex hardware run "turn up the volume"
+cortex screen capture
+cortex display status
 ```
 
 Control actions write host-local audit records and artifacts under

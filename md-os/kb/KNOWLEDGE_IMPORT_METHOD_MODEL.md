@@ -78,7 +78,7 @@ must see.
 The standard operational entrypoint is one builder:
 
 ```bash
-mdos knowledge import <import_id> <source_dir>
+cortex knowledge import <import_id> <source_dir>
 node md-os/os/build_knowledge_import.js <import_id> <source_dir>
 ```
 
@@ -91,10 +91,10 @@ When source material must survive archival of the external source directory,
 use an explicit raw-copy profile or explicit raw-copy selectors:
 
 ```bash
-mdos knowledge import <import_id> <source_dir> --copy-theory-sources
+cortex knowledge import <import_id> <source_dir> --copy-theory-sources
 node md-os/os/build_knowledge_import.js <import_id> <source_dir> --copy-theory-sources
 
-mdos knowledge import <import_id> <source_dir> --copy-raw-ext=.tex,.svg --copy-raw-suffix=.schema.json
+cortex knowledge import <import_id> <source_dir> --copy-raw-ext=.tex,.svg --copy-raw-suffix=.schema.json
 node md-os/os/build_knowledge_import.js <import_id> <source_dir> --copy-raw-ext=.tex,.svg --copy-raw-suffix=.schema.json
 ```
 
@@ -171,7 +171,7 @@ An initial MD-OS repository may be deliberately initialized from another MD-OS
 release:
 
 ```bash
-mdos knowledge import <import_id> <source_dir> --initial-repository
+cortex knowledge import <import_id> <source_dir> --initial-repository
 node md-os/os/build_knowledge_import.js <import_id> <source_dir> --initial-repository
 ```
 
@@ -404,7 +404,7 @@ final report
 Contested imports use:
 
 ```text
-mdos propose-change <target_path> <summary>
+cortex propose-change <target_path> <summary>
 ```
 
 ### 9. Rebuild And Readback

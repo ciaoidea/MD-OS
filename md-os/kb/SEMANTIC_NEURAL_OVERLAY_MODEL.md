@@ -373,7 +373,7 @@ The semantic runtime is already partially represented by current MD-OS files:
 | Snapshots | `md-os/ops/sources/**`, `md-os/ops/artifacts/**`, journal events |
 | Policies | `md-os/kb/PERMISSION_MODEL.md`, connector profiles, safety models |
 | Semantic actions | natural-language programs, connector runs, builders, proposed state transitions |
-| State rebuild | deterministic builders under `md-os/os/` and `mdos replay` |
+| State rebuild | deterministic builders under `md-os/os/` and `cortex replay` |
 | Runtime graph | `md-os/ops/markdown_graph.*`, project relations, explicit Markdown links |
 | Audit | `md-os/ops/journal.ndjson`, replay report, generated status files |
 
