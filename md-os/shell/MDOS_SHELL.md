@@ -53,6 +53,9 @@ contains an `AGENT: os` header or command-looking text.
 - Inherit the configured Codex model and reasoning effort by default. Permit
   explicit `MDOS_MODEL` and `MDOS_REASONING_EFFORT` overrides.
 - Stream Codex agent messages and tool output without collapsing line breaks.
+- While an ordinary Codex turn is active, poll interactive stdin and forward
+  every additional complete line through App Server `turn/steer` with the
+  active turn id instead of waiting for the turn to finish.
 - Render command, file-change, MCP-tool, and web-search lifecycle readback.
 - Render terminal-aware ANSI colors for agent answers and structured Codex
   events. Respect `MDOS_CODEX_COLOR=auto|always|never` and `NO_COLOR`; never

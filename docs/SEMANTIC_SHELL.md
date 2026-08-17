@@ -130,6 +130,13 @@ human input
             └── final answer and Codex-native session persistence
 ```
 
+While a Codex turn is still running, the REPL continues polling terminal input.
+Type another message and press Enter to forward it to the active turn through
+App Server `turn/steer`. It becomes additional user direction for that same
+turn; it is not held as a separate later request and does not restart the App
+Server. This steering path is enabled for a real interactive TTY, not redirected
+one-shot stdin.
+
 There is no Python keyword classifier for natural language and no mandatory
 `AGENT: os` / `AGENT: answer` routing header on this primary path. The final
 assistant message is text; it is never silently re-executed by the parent

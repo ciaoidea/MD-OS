@@ -118,6 +118,10 @@ explain what is consuming the most disk space
 inspect this repository, fix the failing test, verify it, and report the result
 ```
 
+You can add direction while Codex is still working: type the follow-up and press
+Enter. Cortex forwards it immediately to the active App Server turn through
+`turn/steer`, matching Codex's intermediate-message behavior.
+
 The primary dispatch rule is:
 
 ```text

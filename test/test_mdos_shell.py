@@ -275,6 +275,11 @@ class FakeCodex:
                             }},
                         }}), flush=True)
                         turn_index += 1
+                    elif method == "turn/steer":
+                        print(json.dumps({{
+                            "id": request_id,
+                            "result": {{"turnId": message["params"]["expectedTurnId"]}},
+                        }}), flush=True)
                 raise SystemExit(0)
 
             output_index = arguments.index("--output-last-message") + 1
@@ -425,6 +430,37 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(requests[0]["prompt"], "che cosa è un tensore?")
             self.assertNotIn("MANDATORY RUNTIME OUTPUT CONTRACT", requests[0]["prompt"])
             self.assertNotIn("Stable repository purpose", requests[0]["prompt"])
+
+    def test_active_turn_accepts_intermediate_steering_message(self):
+        with FakeCodex("Updated result.") as fake, mock.patch.dict(
+            os.environ,
+            {"MDOS_CODEX_BIN": str(fake.executable)},
+        ):
+            client = ENGINE.CodexAppServerClient(ENGINE.load_runtime())
+            steering = iter(["aggiungi anche i test", None])
+            try:
+                result = client.run_turn(
+                    "implementa la modifica",
+                    steering_reader=lambda: next(steering, None),
+                )
+                self.assertEqual(result.text, "Updated result.")
+                for _ in range(20):
+                    messages = fake.protocol_requests()
+                    if any(item.get("method") == "turn/steer" for item in messages):
+                        break
+                    __import__("time").sleep(0.01)
+            finally:
+                client.close()
+            steer = next(
+                item
+                for item in fake.protocol_requests()
+                if item.get("method") == "turn/steer"
+            )
+            self.assertEqual(steer["params"]["expectedTurnId"], "turn-1")
+            self.assertEqual(
+                steer["params"]["input"],
+                [{"type": "text", "text": "aggiungi anche i test"}],
+            )
 
     def test_native_codex_answer_is_not_reexecuted_by_the_outer_shell(self):
         with FakeCodex("AGENT: os\nprintf semantic-ok") as fake:
