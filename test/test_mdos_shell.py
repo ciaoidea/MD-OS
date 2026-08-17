@@ -280,6 +280,8 @@ class FakeCodex:
                             "id": request_id,
                             "result": {{"turnId": message["params"]["expectedTurnId"]}},
                         }}), flush=True)
+                    elif method == "turn/interrupt":
+                        print(json.dumps({{"id": request_id, "result": {{}}}}), flush=True)
                     elif method == "thread/goal/get":
                         print(json.dumps({{"id": request_id, "result": {{"goal": None}}}}), flush=True)
                     elif method == "thread/goal/set":
@@ -497,6 +499,23 @@ class SemanticShellParityTests(unittest.TestCase):
             )
             self.assertEqual(goal["params"]["objective"], "Keep tests green")
             self.assertEqual(goal["params"]["status"], "active")
+
+    def test_escape_requests_active_turn_interrupt(self):
+        with FakeCodex("Stopped.") as fake, mock.patch.dict(
+            os.environ, {"MDOS_CODEX_BIN": str(fake.executable)}
+        ):
+            client = ENGINE.CodexAppServerClient(ENGINE.load_runtime())
+            keys = iter([ENGINE.STEERING_INTERRUPT, None])
+            try:
+                client.run_turn("long task", steering_reader=lambda: next(keys, None))
+                for _ in range(20):
+                    if any(item.get("method") == "turn/interrupt" for item in fake.protocol_requests()):
+                        break
+                    __import__("time").sleep(0.01)
+            finally:
+                client.close()
+            interrupt = next(item for item in fake.protocol_requests() if item.get("method") == "turn/interrupt")
+            self.assertEqual(interrupt["params"]["turnId"], "turn-1")
 
     def test_native_codex_answer_is_not_reexecuted_by_the_outer_shell(self):
         with FakeCodex("AGENT: os\nprintf semantic-ok") as fake:

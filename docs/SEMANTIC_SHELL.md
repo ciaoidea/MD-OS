@@ -137,6 +137,10 @@ turn; it is not held as a separate later request and does not restart the App
 Server. This steering path is enabled for a real interactive TTY, not redirected
 one-shot stdin.
 
+Pressing `Esc` while a turn is active sends App Server `turn/interrupt`
+immediately, without requiring Enter. At the ordinary prompt, `Esc` aborts the
+current editable line like `Ctrl-C`; neither action exits the Cortex REPL.
+
 ## Codex slash commands
 
 Cortex reserves every currently documented Codex slash-command name, so slash

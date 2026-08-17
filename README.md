@@ -127,6 +127,10 @@ core commands including `/goal`, `/compact`, `/rename`, `/fork`, `/new`,
 `/clear`, `/status`, `/model`, `/diff`, and `/review` have native Cortex or App
 Server adapters. UI-only commands stay visible and return a capability notice.
 
+Press `Esc` during an active turn to interrupt it immediately, just like
+`Ctrl-C`, while keeping the Cortex REPL open. At an idle prompt, `Esc` cancels
+the current input line.
+
 The primary dispatch rule is:
 
 ```text

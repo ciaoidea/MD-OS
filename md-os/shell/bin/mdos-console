@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -29,6 +30,13 @@ try:
 except ImportError:  # Windows and minimal Python builds may not provide it.
     readline = None
 
+try:
+    import termios
+    import tty
+except ImportError:  # Windows does not expose POSIX terminal controls.
+    termios = None
+    tty = None
+
 
 RUNTIME_SCHEMA = "mdos.shell.runtime/v1"
 AGENT_SCHEMA = "mdos.shell.agent/v1"
@@ -39,6 +47,8 @@ MAX_CONFIG_BYTES = 64 * 1024
 MAX_SHELL_EVENTS = 32
 MAX_SHELL_EVENT_OUTPUT_CHARS = 16 * 1024
 MAX_SHELL_CONTEXT_CHARS = 64 * 1024
+STEERING_INTERRUPT = "\x1b"
+STEERING_INPUT_BUFFER = ""
 FORBIDDEN_MARKDOWN_CONTRACTS = (
     "```mdos-console-config",
     "```mdos-console-program",
@@ -1809,6 +1819,8 @@ class CodexAppServerClient:
         active_turn_id: str | None = None
         pending_steering: list[str] = []
         steer_request_ids: set[int] = set()
+        interrupt_requested = False
+        interrupted = False
         completed = False
         final_messages: list[str] = []
         unclassified_messages: list[str] = []
@@ -1818,8 +1830,21 @@ class CodexAppServerClient:
         while not (response_received and completed):
             if steering_reader is not None:
                 steering_text = steering_reader()
-                if steering_text:
+                if steering_text == STEERING_INTERRUPT:
+                    interrupt_requested = True
+                    pending_steering.clear()
+                elif steering_text:
                     pending_steering.append(steering_text)
+            if active_turn_id is not None and interrupt_requested:
+                interrupt_request_id = self._next_request_id()
+                self._send({
+                    "method": "turn/interrupt",
+                    "id": interrupt_request_id,
+                    "params": {"threadId": binding.thread_id, "turnId": active_turn_id},
+                })
+                interrupt_requested = False
+                if render_tool_events:
+                    print(codex_styled("CORTEX: active turn interrupted", ANSI_YELLOW, sys.stderr), file=sys.stderr)
             while active_turn_id is not None and pending_steering:
                 steer_text = pending_steering.pop(0)
                 steer_request_id = self._next_request_id()
@@ -2036,6 +2061,10 @@ class CodexAppServerClient:
                 if not isinstance(turn, dict):
                     fail("Codex app-server returned an invalid completed turn", 70)
                 status = turn.get("status")
+                if status == "interrupted":
+                    interrupted = True
+                    completed = True
+                    continue
                 if status != "completed":
                     error = turn.get("error")
                     detail = (
@@ -2051,9 +2080,12 @@ class CodexAppServerClient:
         responses = final_messages or unclassified_messages
         if not responses:
             streamed_text = "".join(streamed_fragments).strip()
-            if not streamed_text:
+            if interrupted and not streamed_text:
+                responses = ["Turn interrupted."]
+            elif not streamed_text:
                 fail("Codex app-server response is missing model output", 70)
-            responses = [streamed_text]
+            else:
+                responses = [streamed_text]
         return CodexTurnResult(
             text="\n".join(responses),
             streamed=bool(streamed_fragments),
@@ -2167,6 +2199,7 @@ class NativeAgentStreamer:
 
 def read_interactive_steering_line() -> str | None:
     """Return one complete line typed while a Codex turn is active, if any."""
+    global STEERING_INPUT_BUFFER
     if not sys.stdin.isatty():
         return None
     try:
@@ -2175,11 +2208,41 @@ def read_interactive_steering_line() -> str | None:
         return None
     if not readable:
         return None
-    line = sys.stdin.readline()
-    if not line:
+    try:
+        chunk = os.read(sys.stdin.fileno(), 4096).decode(errors="replace")
+    except OSError:
         return None
+    if not chunk:
+        return None
+    if STEERING_INTERRUPT in chunk:
+        STEERING_INPUT_BUFFER = ""
+        return STEERING_INTERRUPT
+    STEERING_INPUT_BUFFER += chunk
+    if "\n" not in STEERING_INPUT_BUFFER and "\r" not in STEERING_INPUT_BUFFER:
+        return None
+    line, _, remainder = STEERING_INPUT_BUFFER.replace("\r\n", "\n").replace("\r", "\n").partition("\n")
+    STEERING_INPUT_BUFFER = remainder
     text = line.strip()
     return text or None
+
+
+@contextmanager
+def interactive_turn_terminal():
+    """Make Esc observable during a turn and restore the terminal exactly."""
+    if termios is None or tty is None or not sys.stdin.isatty():
+        yield
+        return
+    descriptor = sys.stdin.fileno()
+    try:
+        original = termios.tcgetattr(descriptor)
+        tty.setcbreak(descriptor)
+    except (OSError, termios.error):
+        yield
+        return
+    try:
+        yield
+    finally:
+        termios.tcsetattr(descriptor, termios.TCSADRAIN, original)
 
 
 def build_native_codex_input(
@@ -2220,17 +2283,18 @@ def run_native_codex_turn(
         app_server = session.app_server
     streamer = NativeAgentStreamer()
     try:
-        result = app_server.run_turn(
-            build_native_codex_input(human_request, session),
-            streamer.feed,
-            cwd=Path.cwd(),
-            resume_existing=session is not None,
-            ephemeral=session is None,
-            render_tool_events=True,
-            steering_reader=(
-                read_interactive_steering_line if session is not None else None
-            ),
-        )
+        with interactive_turn_terminal():
+            result = app_server.run_turn(
+                build_native_codex_input(human_request, session),
+                streamer.feed,
+                cwd=Path.cwd(),
+                resume_existing=session is not None,
+                ephemeral=session is None,
+                render_tool_events=True,
+                steering_reader=(
+                    read_interactive_steering_line if session is not None else None
+                ),
+            )
         final_text = result.text.strip()
         if final_text and final_text not in streamer.emitted:
             if streamer.emitted and not streamer.emitted.endswith("\n"):
@@ -2896,6 +2960,7 @@ def configure_line_editor() -> None:
         readline.parse_and_bind("bind ^I rl_complete")
     else:
         readline.parse_and_bind("tab: complete")
+        readline.parse_and_bind('"\\e": abort')
 
 
 def handle_repl_builtin(

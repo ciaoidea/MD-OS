@@ -56,6 +56,9 @@ contains an `AGENT: os` header or command-looking text.
 - While an ordinary Codex turn is active, poll interactive stdin and forward
   every additional complete line through App Server `turn/steer` with the
   active turn id instead of waiting for the turn to finish.
+- Treat `Esc` as an immediate active-turn cancellation through
+  `turn/interrupt`, and bind it to abort the current prompt line when idle,
+  matching the non-destructive cancellation role of `Ctrl-C`.
 - Render command, file-change, MCP-tool, and web-search lifecycle readback.
 - Render terminal-aware ANSI colors for agent answers and structured Codex
   events. Respect `MDOS_CODEX_COLOR=auto|always|never` and `NO_COLOR`; never
