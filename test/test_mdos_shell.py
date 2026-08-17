@@ -34,8 +34,13 @@ ENGINE = load_engine_module()
 
 
 class FakeCodex:
-    def __init__(self, response: str = "AGENT: os\nprintf runtime-ok") -> None:
-        self.response = response
+    THREAD_ID = "01900000-0000-7000-8000-000000000001"
+
+    def __init__(
+        self,
+        response: str | list[str] = "AGENT: os\nprintf runtime-ok",
+    ) -> None:
+        self.responses = [response] if isinstance(response, str) else response
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         self.executable = self.root / "codex"
@@ -51,9 +56,17 @@ class FakeCodex:
             output_index = arguments.index("--output-last-message") + 1
             output_path = Path(arguments[output_index])
             prompt = sys.stdin.read()
-            with Path({str(self.calls)!r}).open("a", encoding="utf-8") as stream:
+            calls_path = Path({str(self.calls)!r})
+            call_index = 0
+            if calls_path.exists():
+                call_index = len([line for line in calls_path.read_text(encoding="utf-8").splitlines() if line])
+            with calls_path.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps({{"arguments": arguments, "prompt": prompt}}) + "\\n")
-            output_path.write_text({self.response!r}, encoding="utf-8")
+            responses = {self.responses!r}
+            response = responses[min(call_index, len(responses) - 1)]
+            output_path.write_text(response, encoding="utf-8")
+            if "--json" in arguments:
+                print(json.dumps({{"type": "thread.started", "thread_id": {self.THREAD_ID!r}}}))
             """
         )
         self.executable.write_text(source, encoding="utf-8")
@@ -139,6 +152,54 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(result.stdout, "semantic-ok")
             self.assertEqual(result.stderr, "COMMAND: printf semantic-ok\n")
 
+    def test_repl_preserves_codex_thread_and_observes_native_shell_events(self):
+        responses = [
+            "AGENT: answer\nHai eseguito printf shell-memory-ok.",
+            "AGENT: answer\nL'ultimo comando nativo è printf shell-memory-ok.",
+        ]
+        with FakeCodex(responses) as fake, tempfile.TemporaryDirectory() as temporary:
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            result = subprocess.run(
+                [sys.executable, str(ENGINE_PATH)],
+                input=(
+                    "printf shell-memory-ok\n"
+                    "che cosa ho appena fatto?\n"
+                    "qual è l'ultimo comando nativo?\n"
+                    "exit\n"
+                ),
+                cwd=temporary,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("shell-memory-ok", result.stdout)
+            requests = fake.requests()
+            self.assertEqual(len(requests), 2)
+            first_arguments = requests[0]["arguments"]
+            second_arguments = requests[1]["arguments"]
+            self.assertIn("--json", first_arguments)
+            self.assertNotIn("--ephemeral", first_arguments)
+            self.assertNotIn("resume", first_arguments)
+            self.assertIn("resume", second_arguments)
+            self.assertIn(FakeCodex.THREAD_ID, second_arguments)
+            self.assertIn('"origin":"native-input"', requests[0]["prompt"])
+            self.assertIn('"command":"printf shell-memory-ok"', requests[0]["prompt"])
+            self.assertIn('"output":"shell-memory-ok"', requests[0]["prompt"])
+            self.assertIn("che cosa ho appena fatto?", requests[0]["prompt"])
+            self.assertIn("qual è l'ultimo comando nativo?", requests[1]["prompt"])
+            self.assertIn("MD-OS SEMANTIC SHELL CONTINUATION", requests[1]["prompt"])
+            self.assertRegex(
+                requests[1]["prompt"],
+                r"previous_codex_turn_duration_ms=\d+",
+            )
+            self.assertNotIn("Stable repository purpose", requests[1]["prompt"])
+
     def test_prompt_matches_native_shape_and_completion(self):
         plain = ENGINE.native_fallback_prompt(use_color=False)
         colored = ENGINE.native_fallback_prompt(use_color=True)
@@ -158,18 +219,24 @@ class SemanticShellParityTests(unittest.TestCase):
                 parent = Path(temporary).resolve()
                 child = parent / "child directory"
                 child.mkdir()
+                session = ENGINE.ShellSession()
                 os.chdir(child)
                 os.environ["PWD"] = str(child)
                 os.environ.pop("OLDPWD", None)
-                self.assertTrue(ENGINE.handle_repl_builtin("cd .."))
+                self.assertTrue(ENGINE.handle_repl_builtin("cd ..", session))
                 self.assertEqual(Path.cwd(), parent)
                 self.assertEqual(os.environ["OLDPWD"], str(child))
                 output = io.StringIO()
                 with contextlib.redirect_stdout(output):
-                    self.assertTrue(ENGINE.handle_repl_builtin("cd -"))
+                    self.assertTrue(ENGINE.handle_repl_builtin("cd -", session))
                 self.assertEqual(Path.cwd(), child)
                 self.assertEqual(output.getvalue(), f"{child}\n")
                 self.assertFalse(ENGINE.handle_repl_builtin("ls -l"))
+                self.assertEqual(
+                    [event.command for event in session.pending_events],
+                    ["cd ..", "cd -"],
+                )
+                self.assertEqual(session.pending_events[-1].cwd_after, str(child))
         finally:
             os.chdir(previous_directory)
             if previous_pwd is None:

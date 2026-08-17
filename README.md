@@ -130,14 +130,34 @@ simulation. It preserves the actual current directory, persistent `cd`,
 completion, pipes, redirections, substitutions, and the native command
 language of Linux, macOS, BSD, or Windows. Valid native commands bypass Codex
 entirely. Natural-language lines invoke an ephemeral `codex exec` reasoning
-turn; if the validated result is an OS action, MD-OS executes it through the
-detected host shell.
+turn in one-shot mode. Inside the interactive REPL, the first natural-language
+line creates one Codex thread and every later natural-language line resumes
+that exact thread. Native commands still bypass the model, but MD-OS retains a
+bounded observation of their command, directory, exit code, and terminal
+output for the next semantic turn:
+
+```text
+native input -> real shell -> bounded observation ─┐
+                                                   ├-> continuing Codex thread
+natural input -------------------------------------┘
+```
+
+The observation queue is volatile and is not written into tracked repository
+files. This gives Codex working context inside the live shell without silently
+promoting a raw terminal transcript into canonical MD-OS memory. If a validated
+Codex result is an OS action, MD-OS executes it through the detected host shell
+and observes its outcome in the same way. The next turn also receives the
+measured duration of the preceding Codex turn, so a complaint about response
+latency is grounded in runtime evidence rather than mistaken for a request to
+write more briefly.
 
 **Authority warning:** commands entered directly and commands produced from a
 natural-language request run with the current user's host-shell authority, as
 they did in Cortex. Codex itself is invoked read-only, but the validated native
 command is real. Read it at the `COMMAND:` line and use the same care you would
-use in Bash, Zsh, Fish, or PowerShell.
+use in Bash, Zsh, Fish, or PowerShell. Bounded terminal output is sent to Codex
+with the next natural-language turn and becomes part of the resumable session;
+do not print secrets in a session that will subsequently invoke the model.
 
 The installer is itself ported from Cortex. It adds the checked-out
 `md-os/shell/bin` directory to the selected shell's `PATH`, sources the matching
@@ -1720,8 +1740,9 @@ scan is visible in generated indices.
 
 `mdos-console` is the Cortex-derived semantic-shell path: MD-OS owns the REPL,
 executes already-valid native input without a model call, and invokes an
-ephemeral Codex process only for semantic interpretation. The existing shell
-mechanics are preserved; Ollama is not used. See
+persistent, resumable Codex thread for semantic interpretation. Native command
+and output readback is queued as bounded sensory context for that thread. The
+existing shell mechanics are preserved; Ollama is not used. See
 [docs/SEMANTIC_SHELL.md](docs/SEMANTIC_SHELL.md).
 
 More detail: [docs/HOST_RUNTIME_INTEGRATION.md](docs/HOST_RUNTIME_INTEGRATION.md)

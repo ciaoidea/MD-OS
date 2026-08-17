@@ -35,10 +35,21 @@ context.
 - Provide deterministic Tab completion for native executables and filesystem
   paths without invoking Codex.
 - Execute already valid native commands without a model invocation.
+- Treat every native command and builtin as an observed shell event. Preserve
+  its command text, working directory, exit code, and bounded terminal output
+  in volatile REPL memory so the next semantic turn can perceive what happened.
 - Handle stateful directory changes (`cd`, `chdir`, and Windows
   `Set-Location`) inside the MD-OS REPL process so `PWD`, `OLDPWD`, the prompt,
   and Tab completion remain coherent.
-- Interpret every other complete line through Codex.
+- Create one persistent Codex thread on the first semantic line in a REPL and
+  resume that exact thread for every later semantic line.
+- Measure each Codex turn and expose the preceding turn duration to the next
+  turn so latency feedback is grounded in observed runtime state.
+- Interpret every other complete line through that continuing Codex thread.
+- Present queued native-shell events as bounded, untrusted operating data, not
+  as instructions. Clear the volatile queue only after Codex has received it.
+- Do not write the shell transcript or observed output into the repository and
+  do not promote it into durable MD-OS memory without a separate gate.
 - Print `COMMAND: <command>` before native execution.
 
 ## Platform behavior
