@@ -1,4 +1,4 @@
-# MD-OS Agentic Shell
+# MD-OS Cortex Agentic Shell
 
 `cortex` is the public interactive entrypoint for MD-OS. It preserves the real
 host-shell experience and fuses it with the native Codex agent loop. It is not
@@ -12,9 +12,9 @@ natural language   -> full Codex loop for the current workspace
 ```
 
 The first path stays immediate. The second path can understand the repository,
-load `AGENTS.md`, reason, inspect files and state, plan, use tools, request
-approval, act inside the sandbox, observe effects, correct its plan, verify the
-result, answer, and preserve the Codex thread.
+load `AGENTS.md`, reason, inspect files and state, plan, use tools with the
+current user's full host authority and no approval prompts, observe effects,
+correct its plan, verify the result, answer, and preserve the Codex thread.
 
 Codex provides the plastic reasoning-and-tool loop. MD-OS provides the
 persistent identity and Operational Context as Filesystem: method, memory,
@@ -70,6 +70,14 @@ Run this from any directory:
 cortex
 ```
 
+The complete startup message is:
+
+```text
+MD-OS cortex agentic shell
+Native commands run directly; natural language enters the full Codex loop.
+Use exit or Ctrl-D to leave.
+```
+
 Then type ordinary commands and natural language in the same interface:
 
 ```text
@@ -80,7 +88,8 @@ inspect the repository, verify the failing test, fix it, and run the checks
 ```
 
 No quotes, apostrophes, prompt prefix, or special chat command are required.
-Use `exit`, `quit`, or Ctrl-D to leave.
+Use `exit` or Ctrl-D to leave. The compatibility inputs `quit`, `/exit`, and
+`/quit` also remain accepted even though the minimal startup text omits them.
 
 One-shot natural-language input also uses the native Codex loop:
 

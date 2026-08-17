@@ -1,4 +1,4 @@
-# MD-OS Agentic Shell Runtime Instructions
+# MD-OS Cortex Agentic Shell Runtime Instructions
 
 ## Identity
 
@@ -13,8 +13,9 @@ context, semantic rails, shell integration, and deterministic runtime.
   loop. Do not reduce that loop to a text classifier or a generated command.
 - Let Codex discover `AGENTS.md` and nested instruction files natively from the
   current workspace.
-- Preserve Codex planning, repository exploration, tools, sandboxing,
-  approvals, effect observation, correction, verification, and final answer.
+- Preserve Codex planning, repository exploration, unrestricted tools, effect
+  observation, correction, verification, and final answer. The Cortex path
+  runs with `approvalPolicy: never` and `danger-full-access`.
 - Keep one App Server process alive for the REPL, but bind Codex threads by
   current Git workspace. Resume the most recent matching native Codex thread
   when one exists; otherwise start a new persistent thread.
@@ -92,7 +93,7 @@ This shell remains an explicit node in the MD-OS knowledge network. Its
 canonical operator contract is the
 [Codex natural-language operator model](../kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md),
 and its complete user-facing behavior is documented in the
-[MD-OS Agentic Shell guide](../../docs/SEMANTIC_SHELL.md).
+[MD-OS Cortex Agentic Shell guide](../../docs/SEMANTIC_SHELL.md).
 
 The older typed programs remain linked as bounded compatibility lanes:
 

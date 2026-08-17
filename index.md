@@ -89,7 +89,7 @@ The `--unsafe` mode passes Codex's
 [`--dangerously-bypass-approvals-and-sandbox`](https://developers.openai.com/codex/cli/reference#global-flags)
 flag. It is never enabled implicitly.
 
-### Install and start the MD-OS agentic shell
+### Install and start the MD-OS Cortex agentic shell
 
 The bootstrap above opens the ordinary Codex client inside this repository.
 The complementary agentic shell keeps the real host-shell experience and sends
@@ -105,6 +105,14 @@ Open a new terminal, then start it from any directory:
 
 ```bash
 cortex
+```
+
+The interactive startup is intentionally minimal:
+
+```text
+MD-OS cortex agentic shell
+Native commands run directly; natural language enters the full Codex loop.
+Use exit or Ctrl-D to leave.
 ```
 
 Type commands and natural language in the same interface, without apostrophes,
@@ -209,7 +217,7 @@ changes without writing:
 ./install-md-os-console.sh --dry-run
 ```
 
-See [MD-OS Agentic Shell](docs/SEMANTIC_SHELL.md) for the exact thread-binding,
+See [MD-OS Cortex Agentic Shell](docs/SEMANTIC_SHELL.md) for the exact thread-binding,
 approval, one-shot, privacy, and compatibility behavior.
 
 ## Main layout

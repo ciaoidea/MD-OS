@@ -244,7 +244,7 @@ human input
     -> current workspace
     -> native Codex thread list/resume/start
     -> AGENTS.md discovery
-    -> reason -> plan -> explore -> tool -> approve -> act
+    -> reason -> plan -> explore -> tool -> act with full host authority
     -> observe -> correct -> verify -> report
 ```
 

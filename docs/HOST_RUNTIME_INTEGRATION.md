@@ -188,6 +188,15 @@ real shell fused with workspace-bound Codex when invoked without arguments:
 cortex
 ```
 
+Its startup surface is deliberately limited to the current identity, dispatch
+rule, and exit hint:
+
+```text
+MD-OS cortex agentic shell
+Native commands run directly; natural language enters the full Codex loop.
+Use exit or Ctrl-D to leave.
+```
+
 Valid native commands execute directly. Natural-language input uses Codex App
 Server and preserves the normal Codex cycle: native `AGENTS.md` discovery,
 reasoning, plans, unrestricted tools, and full host authority without approval
