@@ -3153,7 +3153,7 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
 
 def semantic_shell() -> int:
     configure_line_editor()
-    print("MD-OS agentic shell")
+    print("MD-OS cortex agentic shell")
     print("Native commands run directly; natural language enters the full Codex loop.")
     print("Codex uses full host access with no approval prompts.")
     print("Enter commands or natural language without a special prefix or quotes.")

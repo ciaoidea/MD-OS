@@ -911,7 +911,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 timeout=30,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("MD-OS agentic shell", result.stdout)
+            self.assertIn("MD-OS cortex agentic shell", result.stdout)
             self.assertIn(str(cwd), result.stdout)
             self.assertEqual(fake.requests(), [])
 
@@ -952,7 +952,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 timeout=30,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("MD-OS agentic shell", result.stdout)
+            self.assertIn("MD-OS cortex agentic shell", result.stdout)
             self.assertIn(str(Path(temporary)), result.stdout)
 
     def test_mdos_compatibility_alias_opens_the_agentic_shell(self):
@@ -972,7 +972,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 timeout=30,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("MD-OS agentic shell", result.stdout)
+            self.assertIn("MD-OS cortex agentic shell", result.stdout)
 
 
 if __name__ == "__main__":
