@@ -1449,8 +1449,8 @@ class CodexAppServerClient:
     def _thread_params(self, cwd: Path, workspace: Path) -> dict[str, object]:
         params: dict[str, object] = {
             "cwd": str(cwd),
-            "approvalPolicy": "on-request",
-            "sandbox": "workspace-write",
+            "approvalPolicy": "never",
+            "sandbox": "danger-full-access",
             "runtimeWorkspaceRoots": [str(workspace)],
             "serviceName": "mdos_console",
         }
@@ -1691,11 +1691,9 @@ class CodexAppServerClient:
             "input": [{"type": "text", "text": prompt}],
             "cwd": str(resolved_cwd),
             "runtimeWorkspaceRoots": [str(binding.workspace)],
-            "approvalPolicy": "on-request",
+            "approvalPolicy": "never",
             "sandboxPolicy": {
-                "type": "workspaceWrite",
-                "writableRoots": [str(binding.workspace)],
-                "networkAccess": False,
+                "type": "dangerFullAccess",
             },
         }
         trace_level = effective_trace_level()
@@ -2802,7 +2800,7 @@ def semantic_shell() -> int:
     configure_line_editor()
     print("MD-OS agentic shell")
     print("Native commands run directly; natural language enters the full Codex loop.")
-    print("Codex uses workspace-write sandboxing and on-request approvals.")
+    print("Codex uses full host access with no approval prompts.")
     print("Enter commands or natural language without a special prefix or quotes.")
     print("Use exit, quit, or Ctrl-D to leave.")
     session = ShellSession()

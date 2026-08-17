@@ -260,8 +260,8 @@ MD-OS = identity, method, persistent operational context, semantic gates,
 MD-OS must preserve Codex's native agent cycle on this path. It may orient,
 constrain, observe, verify, and persist commitments, but it must not replace the
 cycle with a classifier whose final output is executed as one unrestricted
-host command. Direct human commands retain host-shell authority. Agent-selected
-actions remain inside Codex sandbox and approval handling. Final assistant text
+host command. Direct human commands retain host-shell authority. Agent-selected actions run with full current-user host authority and no approval
+prompts. Final assistant text
 is never itself an executable capability.
 
 Codex-native thread history remains outside the repository. Workspace changes

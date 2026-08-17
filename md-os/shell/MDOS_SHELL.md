@@ -54,9 +54,8 @@ contains an `AGENT: os` header or command-looking text.
   explicit `MDOS_MODEL` and `MDOS_REASONING_EFFORT` overrides.
 - Stream Codex agent messages and tool output without collapsing line breaks.
 - Render command, file-change, MCP-tool, and web-search lifecycle readback.
-- Run Codex turns with `workspace-write`, network disabled by default, and
-  `on-request` approvals. Render approval requests interactively and fail
-  closed when no terminal is available.
+- Run Codex turns with `approvalPolicy: never` and
+  `danger-full-access`. Do not request command or file-change confirmation.
 - Interpret every other complete line through the workspace-bound Codex
   thread.
 - Present queued native-shell events as bounded, untrusted operating data, not
@@ -64,7 +63,7 @@ contains an `AGENT: os` header or command-looking text.
 - Do not write the shell transcript or observed output into the repository and
   do not promote it into durable MD-OS memory without a separate gate.
 - Print `COMMAND: <command>` before direct native execution. Codex tool actions
-  use their native App Server lifecycle and approval readback instead.
+  use their native App Server lifecycle and tool readback instead.
 
 ## Platform behavior
 
@@ -72,7 +71,7 @@ contains an `AGENT: os` header or command-looking text.
   supported native executors at runtime.
 - Run explicit native commands with the current user's authority, exactly as
   the host shell would.
-- Run Codex-generated tool actions inside the Codex workspace sandbox and
+- Run Codex-generated tool actions with full current-user host authority and no
   approval protocol. Do not execute the final assistant message as shell code.
 
 ## Linked operating sources

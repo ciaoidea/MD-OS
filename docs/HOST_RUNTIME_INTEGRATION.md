@@ -190,7 +190,8 @@ mdos
 
 Valid native commands execute directly. Natural-language input uses Codex App
 Server and preserves the normal Codex cycle: native `AGENTS.md` discovery,
-reasoning, plans, tools, workspace sandbox, on-request approvals, observation,
+reasoning, plans, unrestricted tools, and full host authority without approval
+prompts, followed by observation,
 correction, verification, and Codex-native thread history. The shell resolves
 the current Git workspace and resumes the most recent available Codex thread
 for that workspace, falling back to a new thread if matching sessions are

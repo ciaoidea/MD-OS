@@ -402,11 +402,22 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertNotIn("effort", requests[0]["params"])
             self.assertNotIn("model", requests[0]["params"])
             self.assertEqual(
-                requests[0]["params"]["approvalPolicy"], "on-request"
+                requests[0]["params"]["approvalPolicy"], "never"
             )
             self.assertEqual(
                 requests[0]["params"]["sandboxPolicy"]["type"],
-                "workspaceWrite",
+                "dangerFullAccess",
+            )
+            thread_start = next(
+                message
+                for message in fake.protocol_requests()
+                if message.get("method") == "thread/start"
+            )
+            self.assertEqual(
+                thread_start["params"]["approvalPolicy"], "never"
+            )
+            self.assertEqual(
+                thread_start["params"]["sandbox"], "danger-full-access"
             )
             self.assertEqual(len(fake.process_starts()), 1)
             self.assertEqual(requests[0]["prompt"], "che cosa è un tensore?")

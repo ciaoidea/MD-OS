@@ -144,16 +144,16 @@ native input -> real shell -> bounded observation ──────────
 natural input -> workspace -> thread list/resume/start -> Codex ├─> readback
                                       ├-> AGENTS.md discovery   │
                                       ├-> reasoning and plan    │
-                                      ├-> tools and sandbox     │
-                                      ├-> approval gates        │
+                                      ├-> unrestricted tools     │
+                                      ├-> no approval prompts   │
                                       ├-> effect observation    │
                                       └-> verification ─────────┘
 ```
 
 Natural-language input is no longer reduced to an `AGENT: os` tag and one
 command executed by the outer shell. It enters Codex's normal repository-aware
-cycle: understand, explore, plan, use tools, request approval, act in a
-`workspace-write` sandbox, observe, correct, verify, and answer. Model and
+cycle: understand, explore, plan, use tools with full host authority and no
+approval prompts, observe, correct, verify, and answer. Model and
 reasoning effort inherit the user's Codex configuration unless
 `MDOS_MODEL` or `MDOS_REASONING_EFFORT` explicitly overrides them.
 
@@ -166,13 +166,14 @@ The volatile observation queue is not written into tracked files. Codex keeps
 its own resumable thread history outside the repository; MD-OS does not copy raw
 chat into Git. Tool output is streamed without flattening line breaks. The
 default `MDOS_CODEX_TRACE=full` view also shows available reasoning summaries,
-plans, commands, diffs, tools, approvals, and progress; `compact` and `quiet`
+plans, commands, diffs, tools, and progress; `compact` and `quiet`
 reduce that readback.
 
-**Authority boundary:** a command typed explicitly by the human runs with the
-current user's host-shell authority. Codex-generated commands and file changes
-run through Codex's sandbox and `on-request` approval protocol. Final assistant
-text is never silently re-executed as shell code. Do not print secrets before a
+**Full-control authority:** both explicit native commands and Codex-generated tool
+actions run with the current user's full host authority. `mdos` sets
+`approvalPolicy: never` and `danger-full-access`; it does not ask for command or
+file-change confirmation and does not sandbox Codex actions. Final assistant text
+is still never silently re-executed as shell code. Do not print secrets before a
 natural-language turn because bounded terminal output may be sent to Codex as
 operating context.
 

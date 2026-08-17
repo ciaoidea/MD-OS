@@ -122,8 +122,8 @@ human input
             ├── native AGENTS.md discovery
             ├── reasoning and planning
             ├── repository and state exploration
-            ├── tool use inside workspace-write sandbox
-            ├── on-request command/file approval
+            ├── tool use with full host authority
+            ├── no command or file approval prompts
             ├── streamed tool and agent readback
             ├── correction and verification
             └── final answer and Codex-native session persistence
@@ -132,8 +132,8 @@ human input
 There is no Python keyword classifier for natural language and no mandatory
 `AGENT: os` / `AGENT: answer` routing header on this primary path. The final
 assistant message is text; it is never silently re-executed by the parent
-shell. Real model-selected actions happen through Codex tools, sandbox policy,
-approval requests, and tool-result events.
+shell. Real model-selected actions happen through Codex tools with full host authority,
+no approval requests, and ordinary tool-result events.
 
 Explicit legacy JSON/Markdown programs and `MDOS_CODEX_BACKEND=exec` retain the
 older tagged-output protocol only as compatibility paths. They do not define
@@ -190,18 +190,16 @@ The two action paths have different authority:
 
 - a command typed explicitly by the human runs directly with the current
   user's host-shell authority;
-- a Codex-generated command or file change runs through Codex with
-  `workspace-write`, network disabled by default, and `on-request` approvals.
+- a Codex-generated command or file change runs with the same full host
+  authority, `approvalPolicy: never`, and `danger-full-access`.
 
-Interactive command and file approval requests are shown in the terminal. When
-no interactive terminal exists, requests fail closed. The console also handles
-Codex user-input requests; unsupported typed MCP elicitation forms are declined
-instead of being guessed.
-
-The sandbox and approval gate do not prove containment against an adversarial
-or compromised writer. They do prevent the earlier design error in which a
-free-form assistant message was validated as one command and then executed by
-the outer shell with full user authority.
+This is an explicit full-control policy: Codex may write outside the current
+workspace, access the network, start processes, and perform destructive actions
+without an approval prompt. MD-OS semantic policies, verification, and readback
+remain active operating instructions, but they are not a sandbox or a human
+confirmation gate. User-input requests that are part of the task itself may
+still occur when information is genuinely missing; command and file approvals
+do not.
 
 Do not print credentials, private keys, tokens, or other secrets before a
 natural-language turn: bounded shell output may be sent to Codex as context.
