@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 from typing import NoReturn
 
@@ -25,6 +27,92 @@ RUNTIME_COMMANDS = frozenset({
 })
 
 
+def resolve_workspace(cwd: Path) -> Path:
+    """Return the stable workspace boundary used for a shared terminal."""
+    resolved = cwd.resolve()
+    git = shutil.which("git")
+    if git is None:
+        return resolved
+    try:
+        result = subprocess.run(
+            [git, "rev-parse", "--show-toplevel"],
+            cwd=resolved,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return resolved
+    if result.returncode != 0 or not result.stdout.strip():
+        return resolved
+    try:
+        return Path(result.stdout.strip()).expanduser().resolve()
+    except OSError:
+        return resolved
+
+
+def shared_session_name(workspace: Path) -> str:
+    digest = hashlib.sha256(str(workspace).encode("utf-8")).hexdigest()[:12]
+    readable = "".join(
+        character if character.isalnum() else "-"
+        for character in workspace.name.casefold()
+    ).strip("-")
+    readable = readable[:32] or "workspace"
+    return f"cortex-{readable}-{digest}"
+
+
+def should_share_interactive_shell(arguments: list[str]) -> bool:
+    if arguments or os.name == "nt":
+        return False
+    if os.environ.get("MDOS_SHARED_SESSION_ACTIVE") == "1":
+        return False
+    policy = os.environ.get("MDOS_SHARED_SESSION", "auto").strip().casefold()
+    if policy in {"0", "false", "no", "never", "off"}:
+        return False
+    if policy not in {"", "1", "true", "yes", "always", "on", "auto"}:
+        print(
+            "ERROR: MDOS_SHARED_SESSION must be auto, always, or never",
+            file=sys.stderr,
+        )
+        raise SystemExit(64)
+    if shutil.which("tmux") is None:
+        if policy in {"1", "true", "yes", "always", "on"}:
+            print("ERROR: tmux is required for the shared Cortex session", file=sys.stderr)
+            raise SystemExit(69)
+        return False
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def exec_shared_shell() -> NoReturn:
+    """Attach every interactive entrypoint to one Cortex process per workspace."""
+    tmux = shutil.which("tmux")
+    if tmux is None:
+        raise SystemExit(69)
+    workspace = resolve_workspace(Path.cwd())
+    session_name = shared_session_name(workspace)
+    environment = os.environ.copy()
+    environment["MDOS_SHARED_SESSION_ACTIVE"] = "1"
+    command = [sys.executable, str(SHELL_ENGINE)]
+    tmux_arguments = [
+        tmux,
+        "new-session",
+        "-A",
+        "-s",
+        session_name,
+        "-c",
+        str(Path.cwd().resolve()),
+        *command,
+    ]
+    # A WebSSH client may already be inside its transport tmux. Clearing TMUX
+    # permits it to attach to the canonical inner Cortex session, which is also
+    # reachable from a local terminal or a normal SSH login.
+    environment.pop("TMUX", None)
+    environment.pop("TMUX_PANE", None)
+    os.execve(tmux, tmux_arguments, environment)
+
+
 def exec_shell(arguments: list[str]) -> NoReturn:
     os.execv(sys.executable, [sys.executable, str(SHELL_ENGINE), *arguments])
 
@@ -42,6 +130,8 @@ def exec_runtime(arguments: list[str]) -> NoReturn:
 def main() -> int:
     arguments = sys.argv[1:]
     if not arguments:
+        if should_share_interactive_shell(arguments):
+            exec_shared_shell()
         exec_shell([])
     first = arguments[0]
     if first == "console":

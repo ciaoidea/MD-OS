@@ -70,6 +70,13 @@ Run this from any directory:
 cortex
 ```
 
+On Linux, macOS, and BSD when `tmux` is available, an interactive invocation
+attaches to one shared Cortex session derived from the Git workspace. Running
+`cortex` from a local terminal, an SSH login, or WebSSH while inside the same
+repository therefore displays and controls the same REPL, App Server, active
+turn, and Codex thread. Multiple clients may remain attached simultaneously.
+Outside Git, the resolved current directory is the session boundary.
+
 The complete startup message is:
 
 ```text
@@ -176,7 +183,14 @@ The App Server process starts lazily on the first natural-language request and
 stays alive until the REPL exits. Native-only use therefore pays no model
 startup cost.
 
-Threads are bound by current Git workspace, falling back to the exact current
+Interactive Cortex processes are first bound to one shared terminal session by
+Git workspace on POSIX systems with `tmux`. This makes local, SSH, and WebSSH
+entrypoints converge on the same live process rather than merely opening the
+same directory in separate processes. Set `MDOS_SHARED_SESSION=never` only when
+an intentionally isolated interactive process is required; set it to `always`
+to require `tmux` rather than falling back when it is unavailable.
+
+Codex threads are also bound by current Git workspace, falling back to the exact current
 directory outside Git. On the first semantic turn in a workspace, `cortex` asks
 Codex App Server for the most recent matching `cli`, `vscode`, `exec`, or
 `appServer` thread and resumes it. If none exists, it starts one. Moving to a
@@ -196,6 +210,12 @@ cd ~/projects/project-b
 Codex's own session store remains authoritative for chat history. MD-OS does
 not invent a parallel `.bash_history` for conversation and does not copy raw
 Codex transcripts into Git.
+
+If another non-shared Cortex process already owns the latest workspace thread,
+the new process stops with attach guidance. It does not silently create a new
+thread, because doing so would split the suspended discussion into competing
+histories. Exit the isolated process and run `cortex` again to enter the shared
+workspace session.
 
 ## Shell observations
 
@@ -258,6 +278,7 @@ configuration by default. Optional overrides are explicit:
 | Variable | Meaning |
 | --- | --- |
 | `MDOS_MODEL` | select an explicit Codex model; default: inherit Codex configuration |
+| `MDOS_SHARED_SESSION` | `auto` (default), `always`, or `never`; control the POSIX per-workspace shared `tmux` session |
 | `MDOS_REASONING_EFFORT` | select a supported effort; default: inherit Codex configuration |
 | `MDOS_CODEX_BACKEND` | `app-server` (native persistent path) or `exec` compatibility mode |
 | `MDOS_CODEX_BIN` | override the `codex` executable, primarily for testing |

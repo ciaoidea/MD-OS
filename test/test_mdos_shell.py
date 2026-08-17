@@ -37,6 +37,20 @@ def load_engine_module():
 ENGINE = load_engine_module()
 
 
+def load_launcher_module():
+    loader = SourceFileLoader("mdos_cortex_launcher_test", str(LAUNCHER_PATH))
+    spec = spec_from_loader(loader.name, loader)
+    if spec is None:
+        raise RuntimeError("cannot create Cortex launcher module specification")
+    module = module_from_spec(spec)
+    sys.modules[loader.name] = module
+    loader.exec_module(module)
+    return module
+
+
+LAUNCHER = load_launcher_module()
+
+
 class FakeCodex:
     THREAD_ID = "01900000-0000-7000-8000-000000000001"
 
@@ -651,7 +665,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 self.assertEqual(methods.count("thread/resume"), 2)
                 self.assertEqual(methods.count("thread/start"), 0)
 
-    def test_busy_existing_thread_falls_back_to_a_new_workspace_thread(self):
+    def test_busy_existing_thread_reports_conflict_without_forking_history(self):
         with tempfile.TemporaryDirectory() as temporary:
             cwd = str(Path(temporary).resolve())
             busy = "01900000-0000-7000-8000-000000000099"
@@ -675,11 +689,35 @@ class SemanticShellParityTests(unittest.TestCase):
                     timeout=30,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("Attach to the shared Cortex session", result.stderr)
                 methods = [
                     message.get("method") for message in fake.protocol_requests()
                 ]
                 self.assertEqual(methods.count("thread/resume"), 1)
-                self.assertEqual(methods.count("thread/start"), 1)
+                self.assertEqual(methods.count("thread/start"), 0)
+
+    def test_shared_session_name_is_stable_and_workspace_specific(self):
+        first = LAUNCHER.shared_session_name(Path("/tmp/project-a"))
+        second = LAUNCHER.shared_session_name(Path("/tmp/project-b"))
+        self.assertEqual(first, LAUNCHER.shared_session_name(Path("/tmp/project-a")))
+        self.assertRegex(first, r"^cortex-project-a-[0-9a-f]{12}$")
+        self.assertNotEqual(first, second)
+
+    def test_interactive_launcher_uses_tmux_unless_already_in_shared_session(self):
+        with mock.patch.dict(os.environ, {}, clear=False), mock.patch.object(
+            LAUNCHER.shutil, "which", return_value="/usr/bin/tmux"
+        ), mock.patch.object(LAUNCHER.sys.stdin, "isatty", return_value=True), mock.patch.object(
+            LAUNCHER.sys.stdout, "isatty", return_value=True
+        ):
+            os.environ.pop("MDOS_SHARED_SESSION_ACTIVE", None)
+            os.environ.pop("MDOS_SHARED_SESSION", None)
+            self.assertTrue(LAUNCHER.should_share_interactive_shell([]))
+            os.environ["MDOS_SHARED_SESSION_ACTIVE"] = "1"
+            self.assertFalse(LAUNCHER.should_share_interactive_shell([]))
+
+    def test_shared_session_can_be_disabled_explicitly(self):
+        with mock.patch.dict(os.environ, {"MDOS_SHARED_SESSION": "never"}):
+            self.assertFalse(LAUNCHER.should_share_interactive_shell([]))
 
     def test_exec_backend_remains_an_explicit_compatibility_path(self):
         responses = [

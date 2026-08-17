@@ -16,9 +16,13 @@ context, semantic rails, shell integration, and deterministic runtime.
 - Preserve Codex planning, repository exploration, unrestricted tools, effect
   observation, correction, verification, and final answer. The Cortex path
   runs with `approvalPolicy: never` and `danger-full-access`.
-- Keep one App Server process alive for the REPL, but bind Codex threads by
-  current Git workspace. Resume the most recent matching native Codex thread
-  when one exists; otherwise start a new persistent thread.
+- On POSIX hosts with `tmux`, attach every interactive `cortex` invocation to
+  one shared terminal session per Git workspace. Local terminals, SSH, and
+  WebSSH therefore operate the same REPL process, App Server, and Codex thread.
+- Keep one App Server process alive for that shared REPL and bind Codex threads
+  by current Git workspace. Resume the most recent matching native Codex thread
+  when one exists; otherwise start a new persistent thread. Never silently
+  fork a new thread merely because the matching thread has an active writer.
 - When the current directory changes to another workspace, select that
   workspace's thread before the next natural-language turn.
 - Keep Codex-native session history in the Codex store outside the repository.

@@ -157,7 +157,15 @@ On the first natural-language request, `cortex` starts one Codex App Server
 process. It resolves the current Git workspace, resumes the most recent matching
 native Codex thread when one exists, or starts a new one. Moving to another
 repository selects that repository's thread; moving back restores the earlier
-binding:
+binding.
+
+On POSIX systems with `tmux`, interactive invocations from a local terminal,
+SSH, and WebSSH attach to one shared Cortex session per Git workspace. They
+therefore continue the same live REPL, App Server, active turn, and Codex thread
+instead of creating parallel chats. Cortex refuses to silently fork the latest
+workspace history when another process already owns its active writer.
+
+The resulting flow is:
 
 ```text
 native input -> real shell -> bounded observation ──────────────┐

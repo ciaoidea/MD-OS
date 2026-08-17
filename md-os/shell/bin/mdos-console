@@ -1658,10 +1658,17 @@ class CodexAppServerClient:
                     resume_params = self._thread_params(resolved_cwd, workspace)
                     resume_params.pop("serviceName", None)
                     resume_params["threadId"] = thread_id
-                    result, _resume_error = self._try_request(
+                    result, resume_error = self._try_request(
                         "thread/resume", resume_params
                     )
                     if result is None:
+                        if resume_error and "already has an active" in resume_error:
+                            fail(
+                                "The latest Codex thread for this workspace is active "
+                                "in another Cortex process. Attach to the shared Cortex "
+                                "session instead of creating a divergent chat.",
+                                75,
+                            )
                         continue
                     binding = self._binding_from_result(
                         result,

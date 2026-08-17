@@ -257,6 +257,14 @@ MD-OS = identity, method, persistent operational context, semantic gates,
         policy, bounded authority, executors, sensors, verifiers, and ledger
 ```
 
+On POSIX interactive hosts, all `cortex` entrypoints for the same Git workspace
+attach to one stable `tmux` session. A local terminal, ordinary SSH login, and
+WebSSH can therefore continue the same live Cortex process and Codex thread.
+Workspace identity selects the shared session; the current directory alone is
+only the fallback outside Git. If an external process already owns the latest
+thread, Cortex must fail with explicit attach guidance instead of silently
+starting a divergent conversation.
+
 MD-OS must preserve Codex's native agent cycle on this path. It may orient,
 constrain, observe, verify, and persist commitments, but it must not replace the
 cycle with a classifier whose final output is executed as one unrestricted
@@ -264,6 +272,7 @@ host command. Direct human commands retain host-shell authority. Agent-selected 
 prompts. Final assistant text
 is never itself an executable capability.
 
-Codex-native thread history remains outside the repository. Workspace changes
-select workspace-specific threads; raw conversation and shell history do not
+Codex-native thread history remains outside the repository. Shared interactive
+sessions preserve the live thread across terminal transports, while workspace
+changes select workspace-specific threads; raw conversation and shell history do not
 become canonical MD-OS memory without the semantic commitment gate.
