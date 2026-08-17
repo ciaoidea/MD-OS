@@ -3155,10 +3155,7 @@ def semantic_shell() -> int:
     configure_line_editor()
     print("MD-OS cortex agentic shell")
     print("Native commands run directly; natural language enters the full Codex loop.")
-    print("Codex uses full host access with no approval prompts.")
-    print("Enter commands or natural language without a special prefix or quotes.")
-    print("While Codex is working, type another line and press Enter to steer it.")
-    print("Use exit, quit, or Ctrl-D to leave.")
+    print("Use exit or Ctrl-D to leave.")
     session = ShellSession()
     try:
         while True:

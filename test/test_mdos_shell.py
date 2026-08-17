@@ -912,6 +912,14 @@ class SemanticShellParityTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("MD-OS cortex agentic shell", result.stdout)
+            self.assertIn(
+                "MD-OS cortex agentic shell\n"
+                "Native commands run directly; natural language enters the full Codex loop.\n"
+                "Use exit or Ctrl-D to leave.\n",
+                result.stdout,
+            )
+            self.assertNotIn("Codex uses full host access", result.stdout)
+            self.assertNotIn("While Codex is working", result.stdout)
             self.assertIn(str(cwd), result.stdout)
             self.assertEqual(fake.requests(), [])
 
