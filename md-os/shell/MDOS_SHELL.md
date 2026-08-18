@@ -73,23 +73,18 @@ contains an `AGENT: os` header or command-looking text.
 - Public legibility means inspectable observation, question, hypothesis,
   uncertainty, decision, evidence, and progress as relevant. It is not a claim
   to expose unavailable private chain-of-thought or subjective experience.
+- When a material doubt, ambiguity, contradiction, or consequential hidden
+  premise is present, perform critical self-questioning inside the same
+  ordinary turn: formulate the decisive question, test the premise or failure
+  case, revise the candidate answer, and expose the correction when it changes
+  the result. The operator must not need a slash command to trigger thinking.
 - While an ordinary Codex turn is active, poll interactive stdin and forward
   every additional complete line through App Server `turn/steer` with the
   active turn id instead of waiting for the turn to finish.
-- Do not implement automatic reciprocal presence, idle timers, or background
-  model calls. Never operate Readline concurrently from worker threads.
-  Provide bounded foreground reflection only after a real conversational
-  turn. Speak proactively inside an ordinary response only when the integrated
-  recent state yields a specific
-  unresolved curiosity, contradiction, concern, meaningful surprise, or
-  relational need; prefer silence, permit only one unanswered initiative, and
-  carry that initiative into the next human turn.
-- Render safe foreground reflection as bounded observation, question,
-  hypothesis, uncertainty, and decision fields. Treat this as public rationale,
-  never as private chain-of-thought, and reject incomplete structured output.
-- Keep reflection readback under `md-os/ops/local/`, never store raw
-  conversation in it, and expose `/presence status|reflect` as immediate
-  operator controls. Legacy `/presence on|off` must never start a process.
+- Do not implement automatic reciprocal presence, idle reflection timers,
+  background model calls, or a separate inner-voice evaluator. Critical
+  reflection belongs to the already active ordinary turn and consumes no
+  tokens while the shell is idle.
 - Treat `Esc` as an immediate active-turn cancellation through
   `turn/interrupt`, and bind it to abort the current prompt line when idle,
   matching the non-destructive cancellation role of `Ctrl-C`.
