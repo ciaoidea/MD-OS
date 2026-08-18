@@ -64,9 +64,32 @@ contains an `AGENT: os` header or command-looking text.
 - Inherit the configured Codex model and reasoning effort by default. Permit
   explicit `MDOS_MODEL` and `MDOS_REASONING_EFFORT` overrides.
 - Stream Codex agent messages and tool output without collapsing line breaks.
+- Keep nontrivial turns publicly legible while they execute. Before the first
+  tool call, emit a short commentary statement of the object and reason for
+  the operation. Emit another only for material doubt, failed assumptions,
+  changed hypotheses, consequential decisions, or work lasting 60 seconds.
+  Use the current ordinary turn; never create a second model call merely to
+  narrate it. Simple direct answers require no artificial reasoning ritual.
+- Public legibility means inspectable observation, question, hypothesis,
+  uncertainty, decision, evidence, and progress as relevant. It is not a claim
+  to expose unavailable private chain-of-thought or subjective experience.
 - While an ordinary Codex turn is active, poll interactive stdin and forward
   every additional complete line through App Server `turn/steer` with the
   active turn id instead of waiting for the turn to finish.
+- Do not implement automatic reciprocal presence, idle timers, or background
+  model calls. Never operate Readline concurrently from worker threads.
+  Provide bounded foreground reflection only after a real conversational
+  turn. Speak proactively inside an ordinary response only when the integrated
+  recent state yields a specific
+  unresolved curiosity, contradiction, concern, meaningful surprise, or
+  relational need; prefer silence, permit only one unanswered initiative, and
+  carry that initiative into the next human turn.
+- Render safe foreground reflection as bounded observation, question,
+  hypothesis, uncertainty, and decision fields. Treat this as public rationale,
+  never as private chain-of-thought, and reject incomplete structured output.
+- Keep reflection readback under `md-os/ops/local/`, never store raw
+  conversation in it, and expose `/presence status|reflect` as immediate
+  operator controls. Legacy `/presence on|off` must never start a process.
 - Treat `Esc` as an immediate active-turn cancellation through
   `turn/interrupt`, and bind it to abort the current prompt line when idle,
   matching the non-destructive cancellation role of `Ctrl-C`.

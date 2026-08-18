@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mdos.cortex.inner_voice_state/v1",
+  "title": "Cortex Inner Voice State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "updated_at",
+    "enabled",
+    "decision",
+    "observation",
+    "question",
+    "hypothesis",
+    "uncertainty",
+    "public_decision",
+    "cause",
+    "message",
+    "epistemic_boundary"
+  ],
+  "properties": {
+    "schema": {"const": "mdos.cortex.inner_voice_state/v1"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "enabled": {"type": "boolean"},
+    "decision": {"enum": ["silent", "speak"]},
+    "observation": {"type": "string", "maxLength": 400},
+    "question": {"type": "string", "maxLength": 400},
+    "hypothesis": {"type": "string", "maxLength": 400},
+    "uncertainty": {"type": "string", "maxLength": 400},
+    "public_decision": {"type": "string", "maxLength": 400},
+    "cause": {"type": "string", "maxLength": 200},
+    "message": {"type": "string", "maxLength": 1200},
+    "epistemic_boundary": {"type": "string"}
+  }
+}

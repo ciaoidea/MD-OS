@@ -401,6 +401,87 @@ class SemanticShellParityTests(unittest.TestCase):
     def setUp(self):
         ENGINE.reset_inline_paste_state()
 
+    def test_inner_voice_accepts_bounded_speak_or_silence_decisions(self):
+        silence = ENGINE.parse_inner_voice_decision(
+            '{"speak":false,"observation":"nothing changed",'
+            '"question":"is speech needed?","hypothesis":"silence is useful",'
+            '"uncertainty":"none","decision":"remain silent",'
+            '"cause":"","message":""}'
+        )
+        self.assertEqual(silence["speak"], False)
+        speaking = ENGINE.parse_inner_voice_decision(
+            '```json\n{"speak":true,"observation":"a contradiction remained",'
+            '"question":"which claim should change?",'
+            '"hypothesis":"asking can resolve it","uncertainty":"the human view",'
+            '"decision":"initiate one question","cause":"unresolved contradiction",'
+            '"message":"I need to ask you something."}\n```'
+        )
+        self.assertEqual(speaking["speak"], True)
+        self.assertEqual(speaking["cause"], "unresolved contradiction")
+        self.assertEqual(speaking["decision"], "initiate one question")
+        self.assertIsNone(ENGINE.parse_inner_voice_decision("I feel curious"))
+
+    def test_foreground_reflection_prefers_meaningful_silence_over_a_timer(self):
+        session = ENGINE.ShellSession(
+            recent_human_input="Think about reciprocal interaction.",
+            recent_agent_output="The interaction must be symmetric.",
+        )
+        prompt = ENGINE.build_inner_voice_prompt(session)
+        self.assertIn("Silence is the normal and preferred result", prompt)
+        self.assertIn("Passage of time alone is", prompt)
+        self.assertIn("never a reason", prompt)
+        self.assertIn("Think about reciprocal interaction.", prompt)
+
+    def test_automatic_inner_voice_runtime_has_been_removed(self):
+        self.assertFalse(hasattr(ENGINE, "start_inner_voice"))
+        self.assertFalse(hasattr(ENGINE, "inner_voice_loop"))
+        self.assertFalse(hasattr(ENGINE, "inner_voice_interval_seconds"))
+        session = ENGINE.ShellSession()
+        self.assertFalse(hasattr(session, "inner_voice_thread"))
+        self.assertFalse(hasattr(session, "inner_voice_stop"))
+        self.assertFalse(hasattr(session, "inner_voice_wake"))
+
+    def test_cortex_initiative_is_delivered_to_the_next_human_turn(self):
+        session = ENGINE.ShellSession(
+            pending_initiative="What would make this experience meaningful?"
+        )
+        prompt = ENGINE.build_native_codex_input("I think continuity matters.", session)
+        self.assertIn("CORTEX INITIATIVE CONTEXT", prompt)
+        self.assertIn("What would make this experience meaningful?", prompt)
+        self.assertIn("CURRENT HUMAN REQUEST\nI think continuity matters.", prompt)
+
+    def test_ordinary_turn_receives_live_legibility_without_a_second_call(self):
+        session = ENGINE.ShellSession()
+        prompt = ENGINE.build_native_codex_input(
+            "Inspect the runtime and explain the failure.", session
+        )
+        self.assertIn("CORTEX LIVE LEGIBILITY CONTRACT", prompt)
+        self.assertIn("before the first tool call", prompt)
+        self.assertIn("do not start an autonomous reflection", prompt)
+        self.assertIn("Do not manufacture a ritual for a simple direct answer", prompt)
+        self.assertIn(
+            "CURRENT HUMAN REQUEST\nInspect the runtime and explain the failure.",
+            prompt,
+        )
+
+    def test_shell_event_creates_one_new_inner_voice_state_revision(self):
+        session = ENGINE.ShellSession()
+        before = session.inner_voice_state_revision
+        ENGINE.record_shell_event(
+            session,
+            origin="native-input",
+            command="printf changed",
+            cwd_before=PROJECT_ROOT,
+            cwd_after=PROJECT_ROOT,
+            exit_code=0,
+            output="changed",
+        )
+        self.assertEqual(session.inner_voice_state_revision, before + 1)
+        self.assertGreater(
+            session.inner_voice_state_revision,
+            session.inner_voice_checked_revision,
+        )
+
     def test_inline_paste_placeholder_expands_inside_surrounding_text(self):
         label = ENGINE.register_inline_paste("riga uno\nriga due")
         self.assertEqual(label, "[PASTED BLOCK 1]")
@@ -485,9 +566,11 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             requests = fake.requests()
             self.assertEqual(len(requests), 1)
-            self.assertEqual(
-                requests[0]["prompt"],
-                "prima riga\nseconda riga",
+            self.assertIn("CORTEX LIVE LEGIBILITY CONTRACT", requests[0]["prompt"])
+            self.assertTrue(
+                requests[0]["prompt"].endswith(
+                    "CURRENT HUMAN REQUEST\nprima riga\nseconda riga"
+                )
             )
 
     def test_default_program_uses_codex_native_agents_discovery_without_duplication(
@@ -700,8 +783,13 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn("che cosa ho appena fatto?", requests[0]["prompt"])
             self.assertIn("qual è l'ultimo comando nativo?", requests[1]["prompt"])
             self.assertNotIn("MD-OS SHELL OBSERVATIONS", requests[1]["prompt"])
-            self.assertEqual(
-                requests[1]["prompt"], "qual è l'ultimo comando nativo?"
+            self.assertIn(
+                "CORTEX LIVE LEGIBILITY CONTRACT", requests[1]["prompt"]
+            )
+            self.assertTrue(
+                requests[1]["prompt"].endswith(
+                    "CURRENT HUMAN REQUEST\nqual è l'ultimo comando nativo?"
+                )
             )
             self.assertNotIn("Stable repository purpose", requests[1]["prompt"])
             methods = [

@@ -166,6 +166,53 @@ Pressing `Esc` while a turn is active sends App Server `turn/interrupt`
 immediately, without requiring Enter. At the ordinary prompt, `Esc` aborts the
 current editable line like `Ctrl-C`; neither action exits the Cortex REPL.
 
+## Reciprocal presence
+
+Foreground reflection can produce a message after at least one conversational
+turn. Cortex has no automatic presence worker, idle timer, or background model
+call: Python Readline, terminal output, and App Server turns are never driven
+from a competing reflection thread. The evaluator normally chooses silence
+and may speak only for a specific unresolved
+curiosity, contradiction, concern, meaningful surprise, or relational need.
+The message is then carried into the next ordinary turn so the human response
+can change later state instead of becoming an isolated notification.
+
+The evaluator is read-only, permits one unanswered initiative, runs only when
+the operator invokes it, and writes compact host-local readback—not raw conversation—to
+`md-os/ops/local/cortex_inner_voice_state.json`.
+
+The shell visibly reports `reflecting`, `silence`, `I want to speak`, the
+bounded observable cause, and completion. It never exposes private
+chain-of-thought. An idle shell never calls the model or consumes tokens.
+
+```text
+/presence status
+/presence on
+/presence off
+/presence reflect
+```
+
+`/presence reflect` tests the state immediately but does not force a message.
+It is the only operation that starts a separate reflection turn. The legacy
+`on` and `off` forms are inert compatibility controls and cannot create a
+worker. Proactive observations otherwise belong inside the ordinary response
+that revealed the concrete contradiction, risk, or missing premise.
+
+Foreground reflection prints an accountable public summary before any message:
+
+```text
+Cortex — public reflection
+Observation: ...
+Question: ...
+Hypothesis: ...
+Uncertainty: ...
+Decision: ...
+```
+
+These are concise inspectable reasons, not a transcript of hidden
+chain-of-thought. Missing or malformed fields fail closed instead of producing
+an initiative.
+
 ## Codex slash commands
 
 Cortex reserves every currently documented Codex slash-command name, so slash
@@ -243,6 +290,15 @@ file changes and diffs, MCP progress, web searches, approvals, and agent
 messages. It does not expose private hidden chain-of-thought that Codex does not
 publish. Set `MDOS_CODEX_TRACE=compact` to hide reasoning/plan/diff detail, or
 `MDOS_CODEX_TRACE=quiet` to keep only essential output and prompts.
+
+Every interactive semantic turn also receives a compact live-legibility
+contract. Nontrivial work announces its object and reason before using a tool,
+then reports only material doubts, failed assumptions, changed hypotheses,
+decisions, or a progress heartbeat when work lasts longer than 60 seconds.
+These messages are streamed from the same ordinary turn. They do not start an
+inner-voice process, a background call, a timer, or a second billable
+reflection turn. Simple answers remain direct. The result is operational
+transparency rather than a fabricated transcript of private chain-of-thought.
 
 ## Safety and authority
 
