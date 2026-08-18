@@ -44,6 +44,12 @@ contains an `AGENT: os` header or command-looking text.
   replacing MD-OS with a separate native-shell process.
 - Preserve the available Readline, libedit, or platform console editing
   backend.
+- Enable bracketed paste when supported so embedded newlines remain one
+  complete semantic request. Intercept the paste event inside the active
+  editable line, store its body in volatile memory, and insert only
+  `[PASTED BLOCK n]` at the cursor. Expand that placeholder to the original
+  text only when constructing the Codex request. Keep `/paste` only as a
+  compatibility fallback for terminals that remove bracketed-paste events.
 - Provide deterministic Tab completion for native executables and filesystem
   paths without invoking Codex.
 - Execute already valid native commands without a model invocation.

@@ -126,6 +126,14 @@ explain what is consuming the most disk space
 inspect this repository, fix the failing test, verify it, and report the result
 ```
 
+Paste long multiline text directly anywhere in the editable line. Cortex
+immediately inserts `[PASTED BLOCK n]` at that position, so you can keep typing
+before or after it without displaying the pasted document. When you press
+Enter, Cortex sends the surrounding text plus the complete original block; the
+visual label is not included. No `/paste`, `.end`, or Ctrl-D is needed on
+terminals that support bracketed paste; `/paste` remains a compatibility
+fallback.
+
 You can add direction while Codex is still working: type the follow-up and press
 Enter. Cortex forwards it immediately to the active App Server turn through
 `turn/steer`, matching Codex's intermediate-message behavior.

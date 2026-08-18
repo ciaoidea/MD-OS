@@ -98,6 +98,15 @@ No quotes, apostrophes, prompt prefix, or special chat command are required.
 Use `exit` or Ctrl-D to leave. The compatibility inputs `quit`, `/exit`, and
 `/quit` also remain accepted even though the minimal startup text omits them.
 
+Cortex enables terminal bracketed-paste mode. When a paste occurs inside the
+editable line, Cortex immediately stores its complete text in volatile memory
+and inserts `[PASTED BLOCK 1]` at the cursor. The operator may continue typing
+before or after that placeholder. On submission, Cortex replaces the
+placeholder with the original multiline text before sending the request to
+Codex; the label itself is never sent. No special command, `.end`, or Ctrl-D is
+required. `/paste` remains only as a compatibility fallback for terminals that
+remove bracketed-paste events.
+
 One-shot natural-language input also uses the native Codex loop:
 
 ```bash

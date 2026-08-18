@@ -8,6 +8,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+import ctypes
+import ctypes.util
 import getpass
 import hashlib
 import json
@@ -49,6 +51,10 @@ MAX_SHELL_EVENT_OUTPUT_CHARS = 16 * 1024
 MAX_SHELL_CONTEXT_CHARS = 64 * 1024
 STEERING_INTERRUPT = "\x1b"
 STEERING_INPUT_BUFFER = ""
+INLINE_PASTE_BLOCKS: dict[str, str] = {}
+INLINE_PASTE_COUNTER = 0
+READLINE_PASTE_CALLBACK = None
+READLINE_LIBRARY = None
 FORBIDDEN_MARKDOWN_CONTRACTS = (
     "```mdos-console-config",
     "```mdos-console-program",
@@ -131,6 +137,7 @@ class ShellSession:
     last_codex_turn_duration_ms: int | None = None
     app_server: "CodexAppServerClient | None" = None
     event_sequence: int = 0
+    pasted_block_count: int = 0
     pending_events: list[ShellEvent] = field(default_factory=list)
 
 
@@ -2966,8 +2973,170 @@ def configure_line_editor() -> None:
     if "libedit" in backend:
         readline.parse_and_bind("bind ^I rl_complete")
     else:
+        readline.parse_and_bind("set enable-bracketed-paste on")
         readline.parse_and_bind("tab: complete")
         readline.parse_and_bind('"\\e": abort')
+        configure_inline_bracketed_paste()
+
+
+def reset_inline_paste_state() -> None:
+    global INLINE_PASTE_COUNTER
+    INLINE_PASTE_BLOCKS.clear()
+    INLINE_PASTE_COUNTER = 0
+
+
+def register_inline_paste(text: str) -> str:
+    global INLINE_PASTE_COUNTER
+    INLINE_PASTE_COUNTER += 1
+    label = f"[PASTED BLOCK {INLINE_PASTE_COUNTER}]"
+    INLINE_PASTE_BLOCKS[label] = normalize_pasted_text(text)
+    return label
+
+
+def expand_inline_pastes(text: str) -> str:
+    expanded = text
+    for label, pasted_text in INLINE_PASTE_BLOCKS.items():
+        expanded = expanded.replace(label, pasted_text)
+    INLINE_PASTE_BLOCKS.clear()
+    return expanded
+
+
+def configure_inline_bracketed_paste() -> bool:
+    """Bind GNU Readline's paste-start event to an inline placeholder."""
+    global READLINE_LIBRARY, READLINE_PASTE_CALLBACK
+    if readline is None or os.name == "nt":
+        return False
+    library_name = ctypes.util.find_library("readline")
+    if not library_name:
+        return False
+    try:
+        library = ctypes.CDLL(library_name)
+        callback_type = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_int, ctypes.c_int)
+        library.rl_bind_keyseq.argtypes = [ctypes.c_char_p, callback_type]
+        library.rl_bind_keyseq.restype = ctypes.c_int
+        library.rl_insert_text.argtypes = [ctypes.c_char_p]
+        library.rl_insert_text.restype = ctypes.c_int
+
+        @callback_type
+        def receive_paste(_count: int, _key: int) -> int:
+            terminator = b"\x1b[201~"
+            collected = bytearray()
+            remainder = b""
+            try:
+                while True:
+                    chunk = os.read(sys.stdin.fileno(), 4096)
+                    if not chunk:
+                        break
+                    collected.extend(chunk)
+                    boundary = collected.find(terminator)
+                    if boundary >= 0:
+                        remainder = bytes(collected[boundary + len(terminator):])
+                        del collected[boundary:]
+                        break
+                pasted_text = collected.decode("utf-8", errors="replace")
+                label = register_inline_paste(pasted_text)
+                library.rl_insert_text(label.encode("utf-8"))
+                if remainder:
+                    library.rl_insert_text(remainder.decode("utf-8", errors="replace").encode("utf-8"))
+                return 0
+            except Exception:
+                return 1
+
+        READLINE_LIBRARY = library
+        READLINE_PASTE_CALLBACK = receive_paste
+        return library.rl_bind_keyseq(b"\x1b[200~", receive_paste) == 0
+    except (AttributeError, OSError, TypeError):
+        READLINE_LIBRARY = None
+        READLINE_PASTE_CALLBACK = None
+        return False
+
+
+def normalize_pasted_text(text: str) -> str:
+    """Preserve pasted content while normalizing terminal newline encoding."""
+    return text.replace("\r\n", "\n").replace("\r", "\n").strip("\n")
+
+
+def compact_multiline_echo(
+    text: str,
+    prompt: str,
+    label: str,
+    *,
+    output=sys.stdout,
+    columns: int | None = None,
+    enabled: bool | None = None,
+) -> bool:
+    """Replace Readline's submitted multiline echo with one visual label."""
+    if enabled is None:
+        enabled = bool(sys.stdin.isatty() and output.isatty())
+    if not enabled:
+        return False
+    width = columns or shutil.get_terminal_size(fallback=(80, 24)).columns
+    width = max(1, width)
+    logical_lines = normalize_pasted_text(text).split("\n")
+    prompt_width = len(strip_prompt_ansi(prompt).expandtabs(8))
+    rows = 0
+    for index, content in enumerate(logical_lines):
+        content_width = len(content.expandtabs(8))
+        occupied = content_width + (prompt_width if index == 0 else 0)
+        rows += max(1, (occupied + width - 1) // width)
+    output.write(f"\x1b[{rows}A")
+    for index in range(rows):
+        output.write("\r\x1b[2K")
+        if index < rows - 1:
+            output.write("\x1b[1B")
+    if rows > 1:
+        output.write(f"\x1b[{rows - 1}A")
+    visible_prompt = prompt.replace("\001", "").replace("\002", "")
+    output.write(f"\r{visible_prompt}{label}\n")
+    output.flush()
+    return True
+
+
+def read_multiline_block(block_number: int = 1, reader=input) -> str:
+    """Read a literal multi-line request, hiding its terminal echo when safe."""
+    print("Paste the complete message. Finish with .end or Ctrl-D.")
+    lines: list[str] = []
+    silent_tty = bool(
+        reader is input
+        and termios is not None
+        and sys.stdin.isatty()
+    )
+    original_terminal = None
+    if silent_tty:
+        original_terminal = termios.tcgetattr(sys.stdin.fileno())
+        hidden_terminal = original_terminal.copy()
+        hidden_terminal[3] &= ~termios.ECHO
+        termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, hidden_terminal)
+    try:
+        while True:
+            try:
+                if silent_tty:
+                    raw_line = sys.stdin.readline()
+                    if raw_line == "":
+                        raise EOFError
+                    line = raw_line.rstrip("\r\n")
+                else:
+                    line = reader("... ")
+            except EOFError:
+                break
+            if line == ".end":
+                break
+            lines.append(line)
+    finally:
+        if original_terminal is not None:
+            termios.tcsetattr(
+                sys.stdin.fileno(),
+                termios.TCSADRAIN,
+                original_terminal,
+            )
+    if not lines:
+        if silent_tty:
+            print()
+        return ""
+    if silent_tty:
+        print()
+    print(f"[PASTED BLOCK {block_number}]")
+    return normalize_pasted_text("\n".join(lines))
 
 
 def handle_repl_builtin(
@@ -3090,7 +3259,7 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
     if command in {"help", "commands"} or not command:
         print("Codex slash commands:")
         print("  " + "  ".join(f"/{item}" for item in CODEX_SLASH_COMMANDS))
-        print("Core Cortex adapters: /goal /compact /rename /fork /new /clear /status /diff /model /review")
+        print("Core Cortex adapters: /goal /compact /rename /fork /new /clear /status /diff /model /review /paste")
         return True
     if command not in CODEX_SLASH_COMMANDS:
         print(f"cortex: unknown Codex slash command /{command}", file=sys.stderr)
@@ -3159,6 +3328,7 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
 
 
 def semantic_shell() -> int:
+    reset_inline_paste_state()
     configure_line_editor()
     print("MD-OS cortex agentic shell")
     print("Native commands run directly; natural language enters the full Codex loop.")
@@ -3167,14 +3337,34 @@ def semantic_shell() -> int:
     try:
         while True:
             try:
-                line = input(native_fallback_prompt())
+                current_prompt = native_fallback_prompt()
+                line = input(current_prompt)
             except EOFError:
                 print()
                 return 0
             except KeyboardInterrupt:
                 print()
                 continue
-            stripped = line.strip()
+            had_inline_paste = any(label in line for label in INLINE_PASTE_BLOCKS)
+            if had_inline_paste:
+                session.pasted_block_count = max(
+                    session.pasted_block_count,
+                    INLINE_PASTE_COUNTER,
+                )
+            line = expand_inline_pastes(line)
+            if "\n" in line or "\r" in line:
+                if not had_inline_paste:
+                    block_number = session.pasted_block_count + 1
+                    compact_multiline_echo(
+                        line,
+                        current_prompt,
+                        f"[PASTED BLOCK {block_number}]",
+                    )
+                    if line.strip():
+                        session.pasted_block_count = block_number
+                stripped = normalize_pasted_text(line)
+            else:
+                stripped = line.strip()
             if not stripped:
                 continue
             if stripped.casefold() in {"exit", "quit"}:
@@ -3187,6 +3377,12 @@ def semantic_shell() -> int:
                 stripped = stripped[1:-1]
             if not stripped:
                 continue
+            if stripped.casefold() == "/paste":
+                block_number = session.pasted_block_count + 1
+                stripped = read_multiline_block(block_number).strip()
+                if not stripped:
+                    continue
+                session.pasted_block_count = block_number
             try:
                 if handle_codex_slash_command(stripped, session):
                     continue
