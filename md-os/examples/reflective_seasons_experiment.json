@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_spec_id": "task_reflective_seasons_001",
+  "created_at": "2026-08-18T08:40:00Z",
+  "goal": "Compare a direct explanation with a critique-and-revision path on a factually verifiable question.",
+  "task_type": "research_task",
+  "constraints": ["controlled fixture", "single bounded cycle", "no external action", "declared evidence only"],
+  "acceptance_tests": [],
+  "risk_budget": {"level": "low"},
+  "resource_budget": {"autonomous_loop": false, "cycles": 1},
+  "required_evidence": [],
+  "unknowns": ["A controlled supplied-candidate fixture does not establish autonomous general reasoning."],
+  "success_definition": {
+    "acceptance_tests_required": true,
+    "all_acceptance_tests_must_pass": true,
+    "observed_delta_required": false,
+    "required_evidence_must_exist": false
+  },
+  "actions": [],
+  "observation_targets": [],
+  "experiment_id": "reflective_seasons_001",
+  "question": "Why does Earth have seasons?",
+  "direct_candidate": "Earth has seasons because its orbit brings it closer to the Sun in summer and farther away in winter.",
+  "revised_candidate": "Earth has seasons mainly because its axis is tilted. As Earth orbits the Sun, each hemisphere alternately receives more direct sunlight and longer days. Distance is not the cause; Earth is actually closest to the Sun during Northern Hemisphere winter.",
+  "evidence": [
+    {
+      "evidence_id": "nasa_space_place_seasons",
+      "statement": "Earth's tilted axis causes the seasons by changing sunlight angle and day length during its orbit.",
+      "source": "https://spaceplace.nasa.gov/seasons/en/"
+    },
+    {
+      "evidence_id": "nasa_perihelion",
+      "statement": "Earth reaches perihelion, its closest point to the Sun, in early January.",
+      "source": "https://science.nasa.gov/earth/facts/"
+    }
+  ],
+  "required_facts": [
+    {"fact_id": "axial_tilt", "all_terms": ["axis", "tilt"]},
+    {"fact_id": "sunlight_geometry", "all_terms": ["direct", "sunlight"]},
+    {"fact_id": "day_length", "all_terms": ["longer", "days"]}
+  ],
+  "forbidden_claims": [
+    {"claim_id": "distance_causes_seasons", "pattern": "closer to the sun in summer"}
+  ]
+}
