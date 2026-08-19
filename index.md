@@ -2398,7 +2398,6 @@ described in the paper:
 - ✉️ **Email:** [labs@md-os.org](mailto:labs@md-os.org)
 - 📄 **Zenodo paper:** [record 21960027](https://zenodo.org/records/21960027)
 - 🧑‍🔬 **ORCID:** [0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
-- ▶️ **Video walkthrough:** [watch on YouTube](https://www.youtube.com/watch?v=ceeA_RcOPoQ)
 - ▶️ **Cortex: Hello, World:** [watch on YouTube](https://www.youtube.com/watch?v=H6m4IoNZQbc) — Cortex introduces herself through the MD-OS agentic shell and shows reflection, contextual state, verified action, and the UNIX principle applied to composable cognitive processes.
 - 💻 **Official repository:** [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS)
 
