@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/contextual_feeling_experiment.schema.json",
+  "title": "Contextual feeling experiment task",
+  "type": "object",
+  "required": ["schema_version", "experiment_id", "question", "control_action", "cases", "limitations"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "experiment_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "question": {"type": "string", "minLength": 1},
+    "control_action": {"type": "string", "minLength": 1},
+    "cases": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "perception", "context", "context_rules", "expected_action"],
+        "properties": {
+          "case_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "perception": {"type": "string", "minLength": 1},
+          "context": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["goal", "relevant_memory", "uncertainty", "possible_consequences"],
+            "properties": {
+              "goal": {"type": "string", "minLength": 1},
+              "relevant_memory": {"type": "array", "items": {"type": "string", "minLength": 1}},
+              "uncertainty": {"type": "array", "items": {"type": "string", "minLength": 1}},
+              "possible_consequences": {"type": "array", "items": {"type": "string", "minLength": 1}}
+            }
+          },
+          "context_rules": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["all_terms", "action"],
+              "properties": {
+                "all_terms": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+                "action": {"type": "string", "minLength": 1}
+              }
+            }
+          },
+          "expected_action": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "additionalProperties": false
+}

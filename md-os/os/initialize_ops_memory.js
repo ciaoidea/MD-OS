@@ -269,6 +269,22 @@ function main() {
         notes: 'Simulation-only robot connector for mission state, telemetry, safety policy, and action proposal audit.'
       },
       {
+        connector_id: 'vector_robot',
+        name: 'Cortex-Vector Robotic Bridge Connector',
+        kind: 'robotic_system',
+        status: 'beta',
+        implemented: true,
+        execution_mode: 'bounded_external_runtime',
+        permission_profile: 'physical_actuation_explicit_approval',
+        risk_level: 'high',
+        requires_approval: true,
+        read_capabilities: ['service_status', 'robot_probe', 'camera_capture_private', 'animation_inventory', 'voice_request_ingress'],
+        write_capabilities: ['bounded_speech', 'bounded_motion', 'head_motion', 'lift_motion', 'stop', 'facial_expression'],
+        allowed_commands: ['vector-cortex'],
+        allowed_paths: ['md-os/connectors/vector/**', 'md-os/os/vector_connector.js', 'md-os/ops/connectors/vector_connector.json'],
+        notes: 'Repository-bundled beta connector with Wi-Fi/gRPC bridge and BLE provisioning. Private sensory payloads and credentials remain outside MD-OS.'
+      },
+      {
         connector_id: 'graphify_connector',
         name: 'Graphify Document Graph Connector',
         kind: 'default_knowledge_graph_runtime',
@@ -387,6 +403,37 @@ function main() {
     notes: 'Directly integrated default MD-OS graph orientation surface. It reduces token load by routing work through bounded graph context first, and it evolves the graph dynamically through bounded local update builds.'
   }, 'json')) {
     created.push('md-os/ops/connectors/graphify_connector.json');
+  }
+  if (ensureFile(path.join(OPS_DIR, 'connectors', 'vector_connector.json'), {
+    schema_version: 1,
+    connector_id: 'vector_robot',
+    release_stage: 'beta',
+    name: 'Cortex-Vector Robotic Bridge Connector',
+    kind: 'robotic_system',
+    bridge_command: 'vector-cortex',
+    package_manifest: 'md-os/connectors/vector/connector.json',
+    installer: 'md-os/connectors/vector/install.sh',
+    execution_mode: 'bounded_external_runtime',
+    runtime_data_policy: {
+      sensory_root: 'private_volatile_runtime',
+      copy_sensor_payloads_into_mdos: false,
+      publish_sensor_payloads: false,
+      receipt_content: 'bounded metadata only'
+    },
+    safety: {
+      max_drive_mm: 200,
+      max_turn_degrees: 180,
+      movement_requires_explicit_approval: true,
+      workspace_clear_confirmation_required: true,
+      continuous_autonomous_motion: false,
+      destructive_or_remote_actions: false
+    },
+    capabilities: {
+      read: ['service_status', 'robot_probe', 'camera_capture_private', 'animation_inventory'],
+      write: ['bounded_speech', 'bounded_motion', 'head_motion', 'lift_motion', 'stop', 'facial_expression']
+    }
+  }, 'json')) {
+    created.push('md-os/ops/connectors/vector_connector.json');
   }
   if (!fs.existsSync(path.join(OPS_DIR, 'journal.ndjson'))) {
     fs.closeSync(fs.openSync(path.join(OPS_DIR, 'journal.ndjson'), 'a'));

@@ -37,6 +37,35 @@ def load_engine_module():
 ENGINE = load_engine_module()
 
 
+class VectorVoiceReceiptTests(unittest.TestCase):
+    def test_voice_prompt_authorizes_only_bounded_robot_motion(self):
+        prompt = ENGINE.build_vector_voice_prompt("Move forward a little.")
+        self.assertIn("bounded local robot motions", prompt)
+        self.assertIn("Do not perform any other external", prompt)
+
+    def test_structured_motion_is_separate_from_speech(self):
+        speech, motion, emotion = ENGINE.parse_vector_voice_response(
+            '{"speech":"I will turn left.","motion":{"kind":"left","value":30},"emotion":null}'
+        )
+        self.assertEqual(speech, "I will turn left.")
+        self.assertEqual(motion, {"kind": "left", "value": 30})
+        self.assertIsNone(emotion)
+
+    def test_semantic_emotion_is_bounded(self):
+        speech, motion, emotion = ENGINE.parse_vector_voice_response(
+            '{"speech":"That was kind.","motion":null,"emotion":"happy"}'
+        )
+        self.assertEqual(speech, "That was kind.")
+        self.assertIsNone(motion)
+        self.assertEqual(emotion, "happy")
+
+    def test_plain_response_falls_back_to_speech_without_motion(self):
+        speech, motion, emotion = ENGINE.parse_vector_voice_response("An ordinary answer.")
+        self.assertEqual(speech, "An ordinary answer.")
+        self.assertIsNone(motion)
+        self.assertIsNone(emotion)
+
+
 def load_launcher_module():
     loader = SourceFileLoader("mdos_cortex_launcher_test", str(LAUNCHER_PATH))
     spec = spec_from_loader(loader.name, loader)

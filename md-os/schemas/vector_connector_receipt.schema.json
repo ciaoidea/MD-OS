@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/vector_connector_receipt.schema.json",
+  "title": "Cortex-Vector Connector Receipt",
+  "type": "object",
+  "required": ["schema_version", "connector_id", "operation", "ok", "physical_action_performed", "captured_at", "duration_ms"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "connector_id": { "const": "vector_robot" },
+    "operation": { "enum": ["status", "probe", "animations", "camera", "say", "move", "emotion"] },
+    "ok": { "type": "boolean" },
+    "physical_action_performed": { "type": "boolean" },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "bridge_available": { "type": "boolean" },
+    "robot_reachable": { "type": "boolean" },
+    "private_sensor_payload_retained_outside_mdos": { "type": "boolean" },
+    "action": { "type": ["string", "null"] },
+    "value": { "type": ["number", "null"] },
+    "animation_count": { "type": "integer", "minimum": 0 },
+    "error": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}

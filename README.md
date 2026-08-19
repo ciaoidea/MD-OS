@@ -77,6 +77,20 @@ bounded read-only host discovery, and opens Codex inside the MD-OS workspace.
 The resume path reopens the latest Codex transcript from the MD-OS workspace
 without repeating hardware discovery, software discovery, or runtime rebuilds.
 
+### Vector connector (beta)
+
+For a new Vector installation, put the robot in pairing mode and run:
+
+```bash
+npm run connector:vector:setup -- "Wi-Fi name"
+```
+
+For an already configured robot, install or update with
+`npm run connector:vector:install`. Verify it with
+`npm run connector:vector:status`. All required source code is contained in
+`md-os/connectors/vector/`; credentials and sensor data remain local and are
+never stored in the repository.
+
 **The launcher is safe by default:** it requests a `workspace-write` sandbox
 with `on-request` approvals. Only inside an externally hardened environment,
 you can explicitly disable both protections:
@@ -2398,7 +2412,7 @@ described in the paper:
 - ✉️ **Email:** [labs@md-os.org](mailto:labs@md-os.org)
 - 📄 **Zenodo paper:** [record 21960027](https://zenodo.org/records/21960027)
 - 🧑‍🔬 **ORCID:** [0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
-- ▶️ **Cortex: Hello, World:** [watch on YouTube](https://www.youtube.com/watch?v=H6m4IoNZQbc) — Cortex introduces herself through the MD-OS agentic shell and shows reflection, contextual state, verified action, and the UNIX principle applied to composable cognitive processes.
+- ▶️ **Official YouTube channel:** [MD-OS on YouTube](https://www.youtube.com/@MD-OS)
 - 💻 **Official repository:** [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS)
 
 ## License

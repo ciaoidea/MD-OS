@@ -45,3 +45,8 @@ state is subjectively felt. The scientific question remains open.
 Future work should test whether interventions on this integrated state cause
 coherent changes in attention, memory, prediction, choice, and correction. A
 self-description without such causal consequences is not sufficient evidence.
+
+The first controlled intervention is defined by
+`CONTEXTUAL_FEELING_MODEL.md`. It treats operational feeling as context: a
+perception acquires situated meaning by interacting with goals, memory,
+uncertainty, and possible consequences, then causally changes a choice.

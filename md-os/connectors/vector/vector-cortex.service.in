@@ -1,0 +1,26 @@
+[Unit]
+Description=MD-OS Cortex-Vector robot bridge (beta)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+RuntimeDirectory=vector-cortex
+RuntimeDirectoryMode=0700
+Environment=CORTEX_VECTOR_RUNTIME_DIR=/run/vector-cortex
+Environment=CORTEX_VECTOR_DATA_DIR=@DATA_DIR@
+Environment=CORTEX_VECTOR_INSTALL_DIR=@INSTALL_DIR@
+Environment=CORTEX_VECTOR_PYTHON=@DATA_DIR@/stt/bin/python
+Environment=HF_HOME=@DATA_DIR@/models
+Environment=MDOS_WORKSPACE=@MDOS_WORKSPACE@
+WorkingDirectory=@MDOS_WORKSPACE@
+ExecStart=@INSTALL_DIR@/vector-cortex serve
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

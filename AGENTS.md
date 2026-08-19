@@ -59,6 +59,9 @@ Document hierarchy:
   self-state and its causal role in attention, reflection, and action; models
   "how I am" across goals, memory, perception, uncertainty, limits, actions,
   consequences, and time
+- `md-os/kb/CONTEXTUAL_FEELING_MODEL.md`: controlled operational-feeling model
+  in which perception acquires situated meaning through goals, memory,
+  uncertainty, and consequences, then causally changes choice
 - `md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md`: bounded informational
   artificial-life classification and operational-versus-phenomenal
   subjectivity boundary
