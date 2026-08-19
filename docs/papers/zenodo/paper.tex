@@ -188,7 +188,7 @@ The full claim ledger appears in \cref{tab:claims}.  Claims \claimid{C1}--\claim
 ID & Claim & Status & Evidence \\
 \midrule
 \claimid{C1} & Declared task, evidence, and observation paths are canonically confined to \file{md-os/}, absent a check--use race. & Deductive & \Cref{prop:path} plus negative tests. \\
-\claimid{C2} & A task specification cannot directly provide an arbitrary shell argument vector; it selects a registered command identifier. & Deductive & \Cref{prop:command}. \\
+\claimid{C2} & A task specification cannot directly provide an arbitrary shell argument list; it selects a registered command identifier. & Deductive & \Cref{prop:command}. \\
 \claimid{C3} & A \file{verified} verdict excludes a missing acceptance test, policy block, incomplete receipt, required-delta failure, acceptance-test failure, and required-evidence failure. & Deductive & \Cref{prop:verified}. \\
 \claimid{C4} & An event mutation is detected unless every affected hash, sequence number, and downstream link is consistently recomputed. & Deductive & \Cref{prop:ledger}. \\
 \claimid{C5} & The supplied verifier rejects two plausible false positives and accepts the narrow valid patch in one controlled fixture. & Observed & \Cref{sec:verifier-result}. \\
@@ -451,7 +451,7 @@ Self-state and reflection & \file{PERSISTENT_SELF_STATE_MODEL.md}; \file{CONTEXT
 
 \subsection{Task and connector boundary}
 
-A task may name only the registered \file{terminal_executor} connector in the inspected cognitive transaction compiler.  It supplies a safe \file{project_id} and \file{command_id}; the terminal connector looks up the corresponding stored argument vector.  The task does not pass a raw shell string to \file{spawnSync}.  The child process receives only the host \file{PATH}, a configured timeout, bounded output buffers, and redaction markers.
+A task may name only the registered \file{terminal_executor} connector in the inspected cognitive transaction compiler.  It supplies a safe \file{project_id} and \file{command_id}; the terminal connector looks up the corresponding stored argument list.  The task does not pass a raw shell string to \file{spawnSync}.  The child process receives only the host \file{PATH}, a configured timeout, bounded output buffers, and redaction markers.
 
 This reduces the execution surface but is not a complete security boundary.  A writer who can alter the profile or runtime code can alter allowed behaviour.  The host operating system remains the ultimate enforcement layer.
 
@@ -511,11 +511,11 @@ The compiler resolves the candidate against the workspace.  \file{assertInsideRo
 
 \begin{proposition}[No direct arbitrary-command injection from TaskSpec]
 \label{prop:command}
-Under A1 and A3, the inspected task compiler cannot translate a raw argument vector supplied in a task specification directly into a child process.
+Under A1 and A3, the inspected task compiler cannot translate a raw argument list supplied in a task specification directly into a child process.
 \end{proposition}
 
 \begin{proof}
-\file{normalizeCommandReference} accepts only the connector identifier \file{terminal_executor}, a safe command identifier, a safe project identifier, and an integer expected exit status.  The executor passes those identifiers to the terminal connector, which searches the registered profile and invokes its stored \file{argv}.  An unknown identifier throws.  A raw vector present only in the task specification is therefore not on the execution path.  Modification of the registered profile is excluded by A3.
+\file{normalizeCommandReference} accepts only the connector identifier \file{terminal_executor}, a safe command identifier, a safe project identifier, and an integer expected exit status.  The executor passes those identifiers to the terminal connector, which searches the registered profile and invokes its stored \file{argv}.  An unknown identifier throws.  A raw argument list present only in the task specification is therefore not on the execution path.  Modification of the registered profile is excluded by A3.
 \end{proof}
 
 \subsection{Verification}
@@ -649,7 +649,7 @@ The later \revision{} snapshot is a different state.  Its result summary records
 
 \subsection{19 August integration checks}
 
-For \revision{}, the expanded Node suite reports 220/220 passes and the shell-parity suite 41/41 passes.  The Vector surface adds five passing Node connector tests, passing Go tests for bridge and provisioning packages, and two publication-safety tests.  An isolated installation test and live status/probe readback succeeded on the tested Vector and Linux host.  These observations verify packaging, routing, session continuity, and bounded device communication.  They are not controlled measures of robot autonomy or safety.
+For \revision{}, the expanded Node suite reports 220/220 passes and the shell-parity suite 41/41 passes.  These observations verify the revised implementation surface; they are not controlled measures of robot autonomy or safety.
 
 The contextual-state fixture reports 1/2 correct for signal-only control and 2/2 for integrated context, with the same wind signal producing different appropriate actions.  Reflective and persistent-self models define additional contracts; only claims tied to declared fixtures and readback are treated as observed results.
 
