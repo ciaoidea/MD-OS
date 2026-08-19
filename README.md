@@ -84,27 +84,24 @@ Clone the repository:
 ```bash
 git clone https://github.com/ciaoidea/MD-OS.git
 cd MD-OS
-./bootstrap-md-os-codex.sh
+./install-md-os-console.sh
 ```
 
 Or [download the ZIP](https://github.com/ciaoidea/MD-OS/archive/refs/heads/main.zip),
 extract it, open a terminal inside `MD-OS-main`, and run:
 
 ```bash
-./bootstrap-md-os-codex.sh
+./install-md-os-console.sh
 ```
 
-The first bootstrap initializes a fresh local runtime when needed, performs
-bounded read-only host discovery, and opens Codex inside the MD-OS workspace.
-
-**For every later session, resume directly with:**
+Open a new terminal and start Cortex from any directory:
 
 ```bash
-./bootstrap-md-os-codex.sh resume
+cortex
 ```
 
-The resume path reopens the latest Codex transcript from the MD-OS workspace
-without repeating hardware discovery, software discovery, or runtime rebuilds.
+Type ordinary shell commands for direct control, or describe an objective in
+natural language to delegate it to Cortex.
 
 ### Vector connector (beta)
 
@@ -127,35 +124,7 @@ For an already configured robot, install or update with
 `md-os/connectors/vector/`; credentials and sensor data remain local and are
 never stored in the repository.
 
-**The launcher is safe by default:** it requests a `workspace-write` sandbox
-with `on-request` approvals. Only inside an externally hardened environment,
-you can explicitly disable both protections:
-
-```bash
-./bootstrap-md-os-codex.sh --unsafe
-```
-
-The `--unsafe` mode passes Codex's
-[`--dangerously-bypass-approvals-and-sandbox`](https://developers.openai.com/codex/cli/reference#global-flags)
-flag. It is never enabled implicitly.
-
-### Install and start the MD-OS Cortex agentic shell
-
-The bootstrap above opens the ordinary Codex client inside this repository.
-The complementary agentic shell keeps the real host-shell experience and sends
-natural language into the full Codex agent loop for the current workspace.
-
-Install it once from the repository:
-
-```bash
-./install-md-os-console.sh
-```
-
-Open a new terminal, then start it from any directory:
-
-```bash
-cortex
-```
+### Use the MD-OS Cortex agentic shell
 
 The interactive startup is intentionally minimal:
 
@@ -1480,24 +1449,21 @@ command is available:
 codex --help
 ```
 
-The launcher in this repository assumes that `codex` is already installed and
-on `PATH`:
+The Cortex shell assumes that `codex` is already installed and on `PATH`:
 
 ```bash
-./bootstrap-md-os-codex.sh
+cortex
 ```
 
-That launcher starts the Codex host runtime inside this workspace, injects the
-MD-OS cognitive bootstrap, and refreshes read-only local runtime views. Without
-Codex, the low-level filesystem runtime still works through `cortex`,
+Without Codex, the low-level filesystem runtime still works through
 `node md-os/os/*.js`, the MCP adapter, or another host loop, but the primary
-agent-operated path for this release is incomplete until Codex is available.
+agent-operated Cortex path for this release is unavailable.
 
 OpenCode can be used as a secondary host path only to the extent that it can
 follow the same files, commands, and permission discipline. It should not be
-documented as equally compatible with Codex unless the Codex bootstrap behavior,
-working-directory handling, command forwarding, permission prompts, and runtime
-readback have been explicitly tested for OpenCode.
+documented as equally compatible with Codex unless working-directory handling,
+command forwarding, permission behavior, and runtime readback have been
+explicitly tested for OpenCode.
 
 ## Runtime initialization
 
@@ -1811,8 +1777,8 @@ MD-OS (Artificial Prefrontal Cortex) v5.0 is the persistent agent and control pl
 
 OpenCode and other coding-agent CLIs may operate the same filesystem layer, but
 they are secondary compatibility targets. Treat them as less compatible than
-Codex until they have verified support for the same bootstrap prompt, launcher
-flow, command semantics, permission behavior, and `md-os/ops/` readback.
+Codex until they have verified support for the same command semantics,
+permission behavior, continuity, and `md-os/ops/` readback.
 
 A host runtime should:
 
@@ -1825,32 +1791,6 @@ A host runtime should:
 6. Write new observations as source snapshots under `md-os/ops/sources/`.
 7. Run deterministic scripts from `md-os/os/`.
 8. Report back using the rebuilt Markdown and JSON state.
-
-The repository includes two Codex-backed entrypoints with different control
-directions:
-
-```bash
-./bootstrap-md-os-codex.sh
-cortex
-```
-
-`bootstrap-md-os-codex.sh` is the repository-development path: Codex owns the
-interactive session and operates MD-OS. By default it starts Codex with the
-`workspace-write` sandbox and `on-request` approvals, then injects the MD-OS
-bootstrap prompt. The explicit `--unsafe` wrapper option disables both Codex
-protections and is reserved for externally hardened environments. The broader
-architecture remains host-portable, but MD-OS APFC must stay functional with
-Codex. To recover the last Codex session, use `./bootstrap-md-os-codex.sh
-resume` or `MDOS_CODEX_RECOVERY=1 ./bootstrap-md-os-codex.sh`.
-
-`bootstrap-md-os-codex.sh` injects the repository cognitive bootstrap as the
-default initial prompt for an interactive Codex session while still forwarding
-Codex subcommands unchanged. The launcher also shows an English MD-OS startup
-banner and runs quick read-only hardware and software discovery into
-`md-os/ops/local/hardware/` and `md-os/ops/local/software/`. Set
-`MDOS_SKIP_HARDWARE_BOOTSTRAP=1` or `MDOS_SKIP_SOFTWARE_BOOTSTRAP=1` to skip
-either startup scan. The launcher then refreshes the local runtime views so the
-scan is visible in generated indices.
 
 `cortex` is the Cortex-derived agentic-shell path: MD-OS owns the persistent REPL
 and executes already-valid native input without a model call; natural language
@@ -1885,9 +1825,9 @@ MD-OS (Artificial Prefrontal Cortex) v5.0 provides:
 In short:
 
 ```text
-Repository bootstrap: Codex client operates MD-OS for the human.
-Agentic shell:        MD-OS binds the real shell to workspace-native Codex loops.
-MD-OS:                persistent agent, control plane, and Operating Filesystem.
+Direct shell:  the human operates the computer.
+Cortex:        MD-OS binds the real shell to workspace-native Codex loops.
+MD-OS:         persistent agent, control plane, and Operating Filesystem.
 ```
 
 The host can change. The MD-OS state, rules, and continuity model remain.
@@ -2064,9 +2004,6 @@ journal.
 The bootstrap only discovers host-exposed hardware surfaces. It does not open
 camera streams, record audio, print, change volume, or write to serial/GPIO.
 
-The Codex bootstrap launcher runs this scan automatically at startup unless
-`MDOS_SKIP_HARDWARE_BOOTSTRAP=1` is set.
-
 Explicit hardware control is a separate layer:
 
 ```bash
@@ -2160,9 +2097,6 @@ cortex software clean
 The bootstrap only discovers host-exposed software surfaces. It does not launch
 applications, inspect windows, start services, stop services, restart services,
 install packages, remove packages, or kill processes.
-
-The Codex bootstrap launcher runs this scan automatically at startup unless
-`MDOS_SKIP_SOFTWARE_BOOTSTRAP=1` is set.
 
 ## Main folders
 
