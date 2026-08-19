@@ -213,7 +213,7 @@ ID & Claim & Status & Evidence \\
 
 Language-model agents commonly interleave reasoning and action.  ReAct couples reasoning traces to external actions; Reflexion stores verbal feedback in episodic memory; Generative Agents combine observation, reflection, and planning; MemGPT uses operating-system-inspired memory tiers; and Voyager accumulates an executable skill library from environmental feedback \citep{yao2023react,shinn2023reflexion,park2023generative,packer2023memgpt,wang2023voyager}.
 
-OpenClaw is an important comparator because it already provides a self-hosted gateway, sessions, bootstrap files, memory, tools, skills, plugins, and automation \citep{openclaw2026docs,openclaw2026agent,openclaw2026tools}.  This rules out a weak novelty claim: files plus tool calls do not by themselves make MD-OS new.  The distinction proposed here is the unit that carries validity.  A host runtime makes an agent reachable and capable; MD-OS defines what must remain true before, during, and after an operation before that operation may alter durable state.
+OpenClaw is an important comparator because it already provides a self-hosted gateway, sessions, memory, tools, skills, plugins, and automation \citep{openclaw2026docs,openclaw2026tools}.  This rules out a weak novelty claim: files plus tool calls do not by themselves make MD-OS new.  The distinction proposed here is the unit that carries validity.  A host runtime makes an agent reachable and capable; MD-OS defines what must remain true before, during, and after an operation before that operation may alter durable state.
 
 The evaluated implementation uses the composition
 \begin{equation}
