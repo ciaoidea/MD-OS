@@ -2177,7 +2177,7 @@ md-os/examples/                     Versioned templates and demo seeds
   Zenodo manuscript package, editable figures, manifest, and build commands for
   "Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial
   Prefrontal Cortex (APFC)".
-- [docs/papers/zenodo/paper.pdf](docs/papers/zenodo/paper.pdf): reviewed PDF
+- [docs/papers/zenodo/MD_OS_CORTEX_Clarity_Revision.pdf](docs/papers/zenodo/MD_OS_CORTEX_Clarity_Revision.pdf): final clarity-revised PDF
   built from the versioned Zenodo manuscript source and linked to the official
   [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS) repository.
 - [docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md](docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md):
