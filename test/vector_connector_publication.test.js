@@ -53,6 +53,11 @@ test('Vector manifest keeps downloads and private runtime outside the repository
   assert.equal(manifest.connector_id, 'vector_robot');
   assert.equal(manifest.release_stage, 'beta');
   assert.equal(manifest.external_downloads.bundled_in_repository, false);
+  assert.equal(manifest.vendor_material_policy.robot_firmware_distributed, false);
+  assert.equal(manifest.vendor_material_policy.vendor_media_assets_distributed, false);
+  assert.equal(manifest.vendor_material_policy.vendor_credentials_distributed, false);
+  assert.equal(manifest.vendor_material_policy.proprietary_cloud_service_distributed, false);
+  assert.ok(fs.existsSync(path.join(connectorRoot, 'THIRD_PARTY_NOTICES.md')));
   assert.equal(manifest.private_data_policy.repository_contains_credentials, false);
   assert.equal(manifest.private_data_policy.repository_contains_sensor_payloads, false);
 });

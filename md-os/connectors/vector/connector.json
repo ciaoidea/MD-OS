@@ -2,6 +2,7 @@
   "schema_version": 1,
   "connector_id": "vector_robot",
   "release_stage": "beta",
+  "non_affiliation_notice": "Vector and Anki identify compatible hardware only. MD-OS is independent and is not affiliated with, endorsed by, or sponsored by Anki or Digital Dream Labs. Product names and trademarks belong to their respective owners.",
   "supported_hardware": {
     "protocol_family": "Anki/Digital Dream Labs Vector using the legacy Vector BLE provisioning and Vector gRPC interfaces",
     "hardware_generation": "not identified from available profile data",
@@ -24,6 +25,13 @@
     "python_dependencies": "bridge/requirements.txt",
     "speech_model": "Systran faster-whisper base model downloaded to private local state",
     "bundled_in_repository": false
+  },
+  "vendor_material_policy": {
+    "robot_firmware_distributed": false,
+    "vendor_media_assets_distributed": false,
+    "vendor_credentials_distributed": false,
+    "proprietary_cloud_service_distributed": false,
+    "third_party_notices": "md-os/connectors/vector/THIRD_PARTY_NOTICES.md"
   },
   "private_data_policy": {
     "repository_contains_credentials": false,
