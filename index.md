@@ -44,6 +44,35 @@ MD-OS: agentic task -> verified artifact -> agentic task
 Small bounded tasks, typed artifacts, and explicit composition: the UNIX
 philosophy applied to agentic work.
 
+## You drive. Cortex can take over when you ask.
+
+MD-OS turns the ordinary computer shell into a shared control surface between
+a human and an AI agent.
+
+You can operate the computer directly by typing normal shell commands, exactly
+as you always have. Or you can describe an objective in natural language and
+delegate the work to Cortex.
+
+While Cortex is operating, you remain in control: you can give it new
+directions, correct its course, interrupt it immediately, or return to direct
+shell operation at any time.
+
+Think of it as a car with two driving modes. You can drive manually, or ask
+Cortex to drive toward a goal while you supervise. The computer remains yours;
+Cortex is the delegated driver, not the owner.
+
+```text
+shell command     -> you operate the computer directly
+natural language  -> Cortex plans, acts, observes, and verifies
+new instruction   -> you steer the active operation
+Esc               -> you interrupt Cortex immediately
+```
+
+Delegating control grants Cortex real access to the host according to the
+active permission profile. It is an operational agent, not a simulated
+chatbot. Use full-control mode only in an environment where that authority is
+appropriate.
+
 ## Quick start
 
 **Prerequisites: [Codex CLI](https://developers.openai.com/codex/cli)
