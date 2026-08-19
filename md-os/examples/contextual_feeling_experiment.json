@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "experiment_id": "contextual_feeling_wind_001",
+  "question": "Does integrated context give the same perception a useful, action-changing meaning?",
+  "control_action": "continue",
+  "cases": [
+    {
+      "case_id": "wind_during_sensitive_measurement",
+      "perception": "wind detected",
+      "context": {
+        "goal": "obtain an accurate temperature measurement",
+        "relevant_memory": ["the exposed sensor is sensitive to moving air"],
+        "uncertainty": ["the current reading may be disturbed"],
+        "possible_consequences": ["accepting the reading could create a false result"]
+      },
+      "context_rules": [
+        {
+          "all_terms": ["accurate", "sensor", "disturbed"],
+          "action": "shield_sensor_and_repeat"
+        }
+      ],
+      "expected_action": "shield_sensor_and_repeat"
+    },
+    {
+      "case_id": "wind_during_robust_observation",
+      "perception": "wind detected",
+      "context": {
+        "goal": "count fixed trail markers",
+        "relevant_memory": ["the fixed markers do not move in ordinary wind"],
+        "uncertainty": [],
+        "possible_consequences": ["ordinary wind does not alter the count"]
+      },
+      "context_rules": [
+        {
+          "all_terms": ["fixed", "do not move", "does not alter"],
+          "action": "continue"
+        }
+      ],
+      "expected_action": "continue"
+    }
+  ],
+  "limitations": [
+    "controlled deterministic fixture",
+    "declared context rules are supplied rather than learned",
+    "does not establish phenomenal experience or biological emotion",
+    "does not establish generalization beyond the tested cases"
+  ]
+}

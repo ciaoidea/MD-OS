@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "connector_id": "vector_robot",
+  "release_stage": "beta",
+  "supported_hardware": {
+    "protocol_family": "Anki/Digital Dream Labs Vector using the legacy Vector BLE provisioning and Vector gRPC interfaces",
+    "hardware_generation": "not identified from available profile data",
+    "vector_2_0_status": "not independently verified"
+  },
+  "supported_host": {
+    "os": "Linux",
+    "service_manager": "systemd",
+    "required_tools": ["Node.js/npm", "Go 1.22+", "Python 3 with venv", "OpenSSL", "sudo"],
+    "required_runtime_libraries": ["libsodium"]
+  },
+  "adapter": "md-os/os/vector_connector.js",
+  "bridge_source": "md-os/connectors/vector/bridge",
+  "provisioning_source": "md-os/connectors/vector/provisioning",
+  "installer": "md-os/connectors/vector/install.sh",
+  "setup": "md-os/connectors/vector/setup.sh",
+  "commands": ["vector-cortex", "vector-cli"],
+  "external_downloads": {
+    "go_dependencies": ["bridge/go.mod", "provisioning/go.mod"],
+    "python_dependencies": "bridge/requirements.txt",
+    "speech_model": "Systran faster-whisper base model downloaded to private local state",
+    "bundled_in_repository": false
+  },
+  "private_data_policy": {
+    "repository_contains_credentials": false,
+    "repository_contains_sensor_payloads": false,
+    "persistent_state": "host-private data directory",
+    "volatile_state": "host-private runtime directory"
+  }
+}

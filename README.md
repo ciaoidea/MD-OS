@@ -77,6 +77,20 @@ bounded read-only host discovery, and opens Codex inside the MD-OS workspace.
 The resume path reopens the latest Codex transcript from the MD-OS workspace
 without repeating hardware discovery, software discovery, or runtime rebuilds.
 
+### Vector connector (beta)
+
+For a new Vector installation, put the robot in pairing mode and run:
+
+```bash
+npm run connector:vector:setup -- "Wi-Fi name"
+```
+
+For an already configured robot, install or update with
+`npm run connector:vector:install`. Verify it with
+`npm run connector:vector:status`. All required source code is contained in
+`md-os/connectors/vector/`; credentials and sensor data remain local and are
+never stored in the repository.
+
 **The launcher is safe by default:** it requests a `workspace-write` sandbox
 with `on-request` approvals. Only inside an externally hardened environment,
 you can explicitly disable both protections:
@@ -2163,7 +2177,7 @@ md-os/examples/                     Versioned templates and demo seeds
   Zenodo manuscript package, editable figures, manifest, and build commands for
   "Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial
   Prefrontal Cortex (APFC)".
-- [docs/papers/zenodo/paper.pdf](docs/papers/zenodo/paper.pdf): reviewed PDF
+- [docs/papers/zenodo/MD_OS_CORTEX_Clarity_Revision.pdf](docs/papers/zenodo/MD_OS_CORTEX_Clarity_Revision.pdf): final clarity-revised PDF
   built from the versioned Zenodo manuscript source and linked to the official
   [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS) repository.
 - [docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md](docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md):
