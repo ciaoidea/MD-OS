@@ -133,14 +133,13 @@ node md-os/os/build_system_hygiene_status.js
 node md-os/os/build_health_dashboard.js
 ```
 
-Regenerate the official presentation paper whenever architecture, positioning,
+Regenerate the definitive paper whenever architecture, positioning,
 Codex runtime framing, MCP connector framing, role onboarding, AGI-like claim
 language, or production limits change:
 
 ```bash
-latexmk -pdf -interaction=nonstopmode -halt-on-error \
-  -output-directory=docs/papers \
-  docs/papers/text_native_agentic_os_paper.tex
+(cd docs/papers/zenodo && \
+  latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex)
 ```
 
 Then inspect:
@@ -180,13 +179,13 @@ Do not publish local runtime state:
 Review carefully before publishing:
 
 - host configs with broad permission defaults
-- generated paper PDFs under `docs/papers/`
+- the single definitive paper PDF at `docs/papers/zenodo/paper.pdf`
 - declared elevated launchers, especially the root Codex launcher
   `bootstrap-md-os-codex.sh`, because its explicit `--unsafe` mode passes
   `--dangerously-bypass-approvals-and-sandbox`; the default path remains
   sandboxed and approval-gated
 
-The paper source under `docs/papers/text_native_agentic_os_paper.tex` is not
+The paper source under `docs/papers/zenodo/paper.tex` is not
 optional or separate from the system. It is official presentation material for
 MD-OS (Artificial Prefrontal Cortex) v5.0 and must stay aligned with the README, architecture docs,
 knowledge base, connector model, role onboarding model, and production limits.

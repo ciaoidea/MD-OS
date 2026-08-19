@@ -1,11 +1,11 @@
-# MD-OS CORTEX — clarity revision
+# MD-OS CORTEX — definitive paper
 
 Files:
 
 - `paper.tex` — editable LaTeX manuscript.
 - `references.bib` — bibliography database.
 - `figures/` — publication figures used by the manuscript.
-- `MD_OS_CORTEX_Clarity_Revision.pdf` — compiled manuscript.
+- `paper.pdf` — the single definitive compiled manuscript.
 - `REVISION_NOTES.md` — editorial and structural changes.
 - `SHA256SUMS` — file-integrity manifest.
 
