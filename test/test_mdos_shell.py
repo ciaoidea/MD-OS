@@ -37,6 +37,20 @@ def load_engine_module():
 ENGINE = load_engine_module()
 
 
+def load_launcher_module():
+    loader = SourceFileLoader("mdos_cortex_launcher_test", str(LAUNCHER_PATH))
+    spec = spec_from_loader(loader.name, loader)
+    if spec is None:
+        raise RuntimeError("cannot create Cortex launcher module specification")
+    module = module_from_spec(spec)
+    sys.modules[loader.name] = module
+    loader.exec_module(module)
+    return module
+
+
+LAUNCHER = load_launcher_module()
+
+
 class FakeCodex:
     THREAD_ID = "01900000-0000-7000-8000-000000000001"
 
@@ -384,6 +398,116 @@ def run_console(arguments: list[str], fake: FakeCodex, cwd: Path = PROJECT_ROOT)
 
 
 class SemanticShellParityTests(unittest.TestCase):
+    def setUp(self):
+        ENGINE.reset_inline_paste_state()
+
+    def test_ordinary_turn_receives_live_legibility_without_a_second_call(self):
+        session = ENGINE.ShellSession()
+        prompt = ENGINE.build_native_codex_input(
+            "Inspect the runtime and explain the failure.", session
+        )
+        self.assertIn("CORTEX LIVE LEGIBILITY CONTRACT", prompt)
+        self.assertIn("before the first tool call", prompt)
+        self.assertIn("do not start an autonomous reflection", prompt)
+        self.assertIn("ask the critical question internally", prompt)
+        self.assertIn("test the hidden premise or failure case", prompt)
+        self.assertIn("Do not manufacture a ritual for a simple direct answer", prompt)
+        self.assertIn(
+            "CURRENT HUMAN REQUEST\nInspect the runtime and explain the failure.",
+            prompt,
+        )
+
+    def test_inline_paste_placeholder_expands_inside_surrounding_text(self):
+        label = ENGINE.register_inline_paste("riga uno\nriga due")
+        self.assertEqual(label, "[PASTED BLOCK 1]")
+        self.assertEqual(
+            ENGINE.expand_inline_pastes(f"qui ti incollo {label} capito?"),
+            "qui ti incollo riga uno\nriga due capito?",
+        )
+        self.assertEqual(ENGINE.INLINE_PASTE_BLOCKS, {})
+
+    def test_inline_paste_labels_are_numbered(self):
+        self.assertEqual(ENGINE.register_inline_paste("uno"), "[PASTED BLOCK 1]")
+        self.assertEqual(ENGINE.register_inline_paste("due"), "[PASTED BLOCK 2]")
+
+    def test_multiline_block_preserves_every_pasted_line(self):
+        lines = iter(["prima riga", "seconda riga", "terza riga", ".end"])
+        with contextlib.redirect_stdout(io.StringIO()):
+            message = ENGINE.read_multiline_block(3, lambda _prompt: next(lines))
+        self.assertEqual(
+            message,
+            "prima riga\nseconda riga\nterza riga",
+        )
+
+    def test_automatic_multiline_paste_preserves_content_without_markers(self):
+        self.assertEqual(
+            ENGINE.normalize_pasted_text("prima\r\nseconda\n"),
+            "prima\nseconda",
+        )
+
+    def test_automatic_multiline_paste_compacts_only_terminal_display(self):
+        output = io.StringIO()
+        compacted = ENGINE.compact_multiline_echo(
+            "prima riga\nseconda riga",
+            "cortex$ ",
+            "[PASTED BLOCK 4]",
+            output=output,
+            columns=80,
+            enabled=True,
+        )
+        rendered = output.getvalue()
+        self.assertTrue(compacted)
+        self.assertIn("cortex$ [PASTED BLOCK 4]", rendered)
+        self.assertNotIn("prima riga", rendered)
+        self.assertNotIn("seconda riga", rendered)
+
+    def test_gnu_readline_enables_bracketed_paste(self):
+        class FakeReadline:
+            __doc__ = "GNU readline"
+
+            def __init__(self):
+                self.bindings = []
+
+            def set_completer(self, _value):
+                pass
+
+            def set_completer_delims(self, _value):
+                pass
+
+            def parse_and_bind(self, value):
+                self.bindings.append(value)
+
+        fake_readline = FakeReadline()
+        with mock.patch.object(ENGINE, "readline", fake_readline):
+            ENGINE.configure_line_editor()
+        self.assertIn("set enable-bracketed-paste on", fake_readline.bindings)
+
+    def test_paste_command_submits_one_complete_multiline_turn(self):
+        with FakeCodex("received") as fake:
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            result = subprocess.run(
+                [sys.executable, str(ENGINE_PATH)],
+                input="/paste\nprima riga\nseconda riga\n.end\nexit\n",
+                cwd=PROJECT_ROOT,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            requests = fake.requests()
+            self.assertEqual(len(requests), 1)
+            self.assertIn("CORTEX LIVE LEGIBILITY CONTRACT", requests[0]["prompt"])
+            self.assertTrue(
+                requests[0]["prompt"].endswith(
+                    "CURRENT HUMAN REQUEST\nprima riga\nseconda riga"
+                )
+            )
+
     def test_default_program_uses_codex_native_agents_discovery_without_duplication(
         self,
     ):
@@ -594,8 +718,13 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn("che cosa ho appena fatto?", requests[0]["prompt"])
             self.assertIn("qual è l'ultimo comando nativo?", requests[1]["prompt"])
             self.assertNotIn("MD-OS SHELL OBSERVATIONS", requests[1]["prompt"])
-            self.assertEqual(
-                requests[1]["prompt"], "qual è l'ultimo comando nativo?"
+            self.assertIn(
+                "CORTEX LIVE LEGIBILITY CONTRACT", requests[1]["prompt"]
+            )
+            self.assertTrue(
+                requests[1]["prompt"].endswith(
+                    "CURRENT HUMAN REQUEST\nqual è l'ultimo comando nativo?"
+                )
             )
             self.assertNotIn("Stable repository purpose", requests[1]["prompt"])
             methods = [
@@ -651,7 +780,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 self.assertEqual(methods.count("thread/resume"), 2)
                 self.assertEqual(methods.count("thread/start"), 0)
 
-    def test_busy_existing_thread_falls_back_to_a_new_workspace_thread(self):
+    def test_busy_existing_thread_reports_conflict_without_forking_history(self):
         with tempfile.TemporaryDirectory() as temporary:
             cwd = str(Path(temporary).resolve())
             busy = "01900000-0000-7000-8000-000000000099"
@@ -675,11 +804,35 @@ class SemanticShellParityTests(unittest.TestCase):
                     timeout=30,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("Attach to the shared Cortex session", result.stderr)
                 methods = [
                     message.get("method") for message in fake.protocol_requests()
                 ]
                 self.assertEqual(methods.count("thread/resume"), 1)
-                self.assertEqual(methods.count("thread/start"), 1)
+                self.assertEqual(methods.count("thread/start"), 0)
+
+    def test_shared_session_name_is_stable_and_workspace_specific(self):
+        first = LAUNCHER.shared_session_name(Path("/tmp/project-a"))
+        second = LAUNCHER.shared_session_name(Path("/tmp/project-b"))
+        self.assertEqual(first, LAUNCHER.shared_session_name(Path("/tmp/project-a")))
+        self.assertRegex(first, r"^cortex-project-a-[0-9a-f]{12}$")
+        self.assertNotEqual(first, second)
+
+    def test_interactive_launcher_uses_tmux_unless_already_in_shared_session(self):
+        with mock.patch.dict(os.environ, {}, clear=False), mock.patch.object(
+            LAUNCHER.shutil, "which", return_value="/usr/bin/tmux"
+        ), mock.patch.object(LAUNCHER.sys.stdin, "isatty", return_value=True), mock.patch.object(
+            LAUNCHER.sys.stdout, "isatty", return_value=True
+        ):
+            os.environ.pop("MDOS_SHARED_SESSION_ACTIVE", None)
+            os.environ.pop("MDOS_SHARED_SESSION", None)
+            self.assertTrue(LAUNCHER.should_share_interactive_shell([]))
+            os.environ["MDOS_SHARED_SESSION_ACTIVE"] = "1"
+            self.assertFalse(LAUNCHER.should_share_interactive_shell([]))
+
+    def test_shared_session_can_be_disabled_explicitly(self):
+        with mock.patch.dict(os.environ, {"MDOS_SHARED_SESSION": "never"}):
+            self.assertFalse(LAUNCHER.should_share_interactive_shell([]))
 
     def test_exec_backend_remains_an_explicit_compatibility_path(self):
         responses = [

@@ -16,9 +16,13 @@ context, semantic rails, shell integration, and deterministic runtime.
 - Preserve Codex planning, repository exploration, unrestricted tools, effect
   observation, correction, verification, and final answer. The Cortex path
   runs with `approvalPolicy: never` and `danger-full-access`.
-- Keep one App Server process alive for the REPL, but bind Codex threads by
-  current Git workspace. Resume the most recent matching native Codex thread
-  when one exists; otherwise start a new persistent thread.
+- On POSIX hosts with `tmux`, attach every interactive `cortex` invocation to
+  one shared terminal session per Git workspace. Local terminals, SSH, and
+  WebSSH therefore operate the same REPL process, App Server, and Codex thread.
+- Keep one App Server process alive for that shared REPL and bind Codex threads
+  by current Git workspace. Resume the most recent matching native Codex thread
+  when one exists; otherwise start a new persistent thread. Never silently
+  fork a new thread merely because the matching thread has an active writer.
 - When the current directory changes to another workspace, select that
   workspace's thread before the next natural-language turn.
 - Keep Codex-native session history in the Codex store outside the repository.
@@ -40,6 +44,12 @@ contains an `AGENT: os` header or command-looking text.
   replacing MD-OS with a separate native-shell process.
 - Preserve the available Readline, libedit, or platform console editing
   backend.
+- Enable bracketed paste when supported so embedded newlines remain one
+  complete semantic request. Intercept the paste event inside the active
+  editable line, store its body in volatile memory, and insert only
+  `[PASTED BLOCK n]` at the cursor. Expand that placeholder to the original
+  text only when constructing the Codex request. Keep `/paste` only as a
+  compatibility fallback for terminals that remove bracketed-paste events.
 - Provide deterministic Tab completion for native executables and filesystem
   paths without invoking Codex.
 - Execute already valid native commands without a model invocation.
@@ -54,9 +64,27 @@ contains an `AGENT: os` header or command-looking text.
 - Inherit the configured Codex model and reasoning effort by default. Permit
   explicit `MDOS_MODEL` and `MDOS_REASONING_EFFORT` overrides.
 - Stream Codex agent messages and tool output without collapsing line breaks.
+- Keep nontrivial turns publicly legible while they execute. Before the first
+  tool call, emit a short commentary statement of the object and reason for
+  the operation. Emit another only for material doubt, failed assumptions,
+  changed hypotheses, consequential decisions, or work lasting 60 seconds.
+  Use the current ordinary turn; never create a second model call merely to
+  narrate it. Simple direct answers require no artificial reasoning ritual.
+- Public legibility means inspectable observation, question, hypothesis,
+  uncertainty, decision, evidence, and progress as relevant. It is not a claim
+  to expose unavailable private chain-of-thought or subjective experience.
+- When a material doubt, ambiguity, contradiction, or consequential hidden
+  premise is present, perform critical self-questioning inside the same
+  ordinary turn: formulate the decisive question, test the premise or failure
+  case, revise the candidate answer, and expose the correction when it changes
+  the result. The operator must not need a slash command to trigger thinking.
 - While an ordinary Codex turn is active, poll interactive stdin and forward
   every additional complete line through App Server `turn/steer` with the
   active turn id instead of waiting for the turn to finish.
+- Do not implement automatic reciprocal presence, idle reflection timers,
+  background model calls, or a separate inner-voice evaluator. Critical
+  reflection belongs to the already active ordinary turn and consumes no
+  tokens while the shell is idle.
 - Treat `Esc` as an immediate active-turn cancellation through
   `turn/interrupt`, and bind it to abort the current prompt line when idle,
   matching the non-destructive cancellation role of `Ctrl-C`.

@@ -8,6 +8,25 @@ bibliography, editable TikZ sources, publication figures, and reproducible
 build rules. Correspondence: `a.rizzo@physiks.net`. Author ORCID:
 [0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540).
 
+## Revision state
+
+The source and PDF in this directory are now the 17 August 2026 artifact
+revision. They extend the original deposited manuscript with the implemented
+Cortex agentic shell, persistent Codex App Server/thread binding, direct native
+command route, bounded shell-event readback, active-turn steering and Escape
+interruption, workspace-bound local/SSH/WebSSH continuity, and the semantic
+commitment gate. The scientific results measured against the earlier baseline
+remain explicitly historical; the revision does not relabel them as new
+experiments.
+
+Zenodo record `21960027` remains the immutable 15 August 2026 preprint until a
+new Zenodo version is explicitly deposited. Updating this repository does not
+update Zenodo automatically.
+
+The revision validation is intentionally conservative: 206/206 Node tests
+pass, while the shell parity suite has one unresolved `cancel` versus `decline`
+expectation. The aggregate revision is therefore not described as fully green.
+
 Canonical repository: [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS).
 The repository and this covered manuscript package are distributed under
 `GPL-2.0-only`; third-party works and cited material retain their own terms.

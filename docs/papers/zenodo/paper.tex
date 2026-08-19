@@ -116,7 +116,7 @@ Markdown Operating System for Robotic Agents (MD-OS CORTEX)\\[0.35em]
 Correspondence: \href{mailto:a.rizzo@physiks.net}{a.rizzo@physiks.net}\\
 ORCID: \href{https://orcid.org/0000-0002-8030-3540}{0000-0002-8030-3540}\\
 Repository: \href{https://github.com/ciaoidea/MD-OS}{github.com/ciaoidea/MD-OS}}
-\date{}
+\date{Revised artifact manuscript, 17 August 2026}
 
 \begin{document}
 
@@ -175,6 +175,14 @@ adapter, followed by sealed promotion and reduced APFC intervention during
 verified flow.  Parameter consolidation, biological equivalence, AGI, host
 security, and physical-robot safety are not demonstrated; in robotics, an
 independent real-time safety controller retains final veto authority.
+
+This revised manuscript also documents the subsequently implemented Cortex
+agentic shell.  It places a persistent MD-OS process around one Codex App
+Server and thread, routes native commands without a model call, presents
+bounded command observations to later semantic turns, and preserves one
+workspace-bound interactive session across local terminals, SSH, and WebSSH.
+This control of the pre-model and post-model flow is an implementation result,
+not a claim that MD-OS controls the model service or its internal parameters.
 
 \keywords{language-model agents, artificial prefrontal cortex, robotic agents,
 sensorimotor self-model, operational self-perception, operating filesystem,
@@ -320,6 +328,14 @@ learned APFC future-action filter.
 & Demonstration plus testable mechanism
 & \Cref{sec:sensory-agentic-loop}; quantitative learning and ablation remain
 to be run. \\
+
+\claimid{C10}
+& The revised Cortex shell mediates observable input and output around a
+persistent Codex App Server turn while retaining native-command readback and
+workspace-bound interactive continuity.
+& Implemented, host-dependent
+& \Cref{sec:cortex-shell}; shared-process behavior requires the documented
+POSIX terminal and \file{tmux} preconditions. \\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -336,6 +352,12 @@ The paper contributes:
   filter future actions;
   \item an operational semantics separating proposal, authorization,
   execution, verification, and durable commitment;
+  \item a Cortex agentic shell that controls the observable pre-model and
+  post-model flow, preserves one App Server/thread binding per workspace, and
+  accepts steering or interruption while a turn is active;
+  \item a semantic commitment gate that distinguishes proposal, challenge,
+  editorial preservation, empirical evidence, and authorized canonical
+  replacement;
   \item four implementation-level propositions with stated assumptions and
   proofs;
   \item a reproducible implementation audit covering static checks, 194 tests,
@@ -955,6 +977,19 @@ Replay
 & \file{md-os/os/replay_runtime.js}
 & Runs deterministic builders and compares a semantic fingerprint before and
 after replay. \\
+
+Cortex agentic shell
+& \file{md-os/shell/bin/cortex} and
+\file{md-os/shell/bin/mdos-console}
+& Routes native commands directly, maintains the parent REPL state, streams
+App Server events, queues bounded shell observations, and binds interactive
+continuity to the current Git workspace. \\
+
+Semantic commitment gate
+& \file{md-os/apfc/action/semantic_commitment_gate.js} and
+\file{md-os/os/build_semantic_commitment_gate.js}
+& Classifies provenance and semantic deltas, preserves challenges, requires
+claim-appropriate authority, and emits deterministic decision readback. \\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -995,6 +1030,38 @@ sequence, and compares the new fingerprint.  This is more informative than
 byte-for-byte equality because timestamps and journals can change without
 changing the intended semantic state.  It is nevertheless an implementation
 metric, not a proof that all external effects are deterministic.
+
+\subsection{Cortex shell and bidirectional flow control}
+\label{sec:cortex-shell}
+
+The revised artifact exposes \file{cortex} as the public interactive entry
+point.  A line whose first token resolves to a native executable is executed
+by the detected host shell without a model invocation.  The REPL retains a
+bounded volatile observation containing command text, working directories,
+exit status, and normalized output.  The next natural-language turn receives
+those records explicitly as untrusted operating data; successful delivery
+clears the volatile queue.  Raw shell transcripts are not thereby promoted
+into durable MD-OS knowledge.
+
+Natural-language input is sent through one lazily started Codex App Server.
+The shell reuses a Codex-native thread selected by Git workspace, falling back
+to the exact directory outside Git.  On supported POSIX hosts, \file{tmux}
+binds local terminal, SSH, and WebSSH clients to the same live Cortex process,
+REPL, active turn, and thread.  This is stronger than independently reopening
+the same directory: multiple clients observe and steer one process rather
+than silently forking competing conversations.  While a turn runs, additional
+input is delivered through \file{turn/steer}; Escape invokes
+\file{turn/interrupt}.  Codex slash-command names are reserved and either
+mapped to protocol-backed behavior or rejected with an explicit capability
+notice.
+
+The boundary is deliberately precise.  Cortex controls the observable request
+and event flow before and after inference, but it neither exposes hidden
+chain-of-thought nor controls hosted model parameters.  Full host authority
+removes per-command approval prompts; it does not remove MD-OS semantic,
+publication, privacy, verification, or commitment rules.  Canonical claims
+still require provenance, a classified before/after proposition delta, the
+appropriate authority, and verifier readback.
 
 \section{Assumptions and Formal Properties}
 \label{sec:assumptions}
@@ -1576,6 +1643,14 @@ method, and APFCG preserves that method as a readable, executable, verifiable
 network.  Connectors extend this composed cortex to the world without becoming
 its identity.
 
+The revised Cortex shell makes the composition operationally observable.  It
+controls which native events bypass inference, which bounded observations enter
+a semantic turn, which App Server events are rendered afterward, and which
+workspace-bound thread is resumed across local, SSH, and WebSSH access.  The
+result is a persistent control surface around inference rather than an
+unmediated entry into a transient model session.  This is flow mediation, not
+ownership of the external model or proof of end-to-end host security.
+
 In the embodied case, the contribution is sharper.  The robot acts and sees
 itself act.  Verified command-dependent bodily changes become a predictive
 self-model in APFCG; APFC then uses that model to admit, reject, or select the
@@ -1631,6 +1706,19 @@ node --check test/*.js
 node scripts/prepare-test-runtime.js
 node --test
 \end{lstlisting}
+
+For the revised Cortex shell surface, run the parity suite separately so a
+protocol mismatch cannot be hidden by the core test count:
+
+\begin{lstlisting}
+python3 test/test_mdos_shell.py
+\end{lstlisting}
+
+At revision commit \texttt{a447abe},
+the Node suite reports 206 passes and no failures.  The shell suite retains one
+open expectation mismatch: a non-interactive approval request returns
+\file{cancel} where the test expects \file{decline}.  The revised artifact is
+therefore not represented as having a completely closed aggregate test run.
 
 \subsection{Controlled verifier fixture}
 
@@ -1711,6 +1799,20 @@ collision
 & Interface diagram and explicit authority ordering
 & APFC bypasses the independent controller in an implementation
 & Design proposal; not built or tested here. \\
+
+\claimid{C9}
+& Demonstration video and the specified command--body--effect protocol
+& Self-observation fails to improve sealed future behavior or survives APFC
+self-model ablation
+& Physical demonstration only; controlled learning evidence remains open. \\
+
+\claimid{C10}
+& Cortex shell implementation, shell parity tests, App Server event handling,
+and workspace/session binding
+& Native input is silently sent to the model, observations are durably
+promoted without a gate, or separate clients silently fork the owned thread
+& Depends on host terminal facilities, Codex App Server behavior, and the
+availability of \file{tmux} for shared POSIX attachment. \\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -1737,6 +1839,16 @@ Package version & 5.0.1 \\
 Repository license & GPL-2.0-only \\
 Node.js / host & 24.19.0 / Linux 6.18.35 x86-64 \\
 Test result & 194 pass; 0 fail; 0 skip \\
+Revised artifact commit
+& \footnotesize\texttt{a447abe5d312f1da0dc87a78b4e}
+  \allowbreak\texttt{87c8379aa632f} \\
+Revision validation status
+& 206/206 Node tests pass; the shell parity suite has one unresolved
+\file{cancel} versus \file{decline} expectation and is not reported as closed \\
+Revision health readback
+& APFC and commitment gate \file{ok}; compiler and aggregate health
+\file{critical}; two requested replay passes completed but neither reported
+\file{matched_before:true} \\
 Verifier fixture & 1 verified; 2 rejected; \SI{368}{\milli\second} \\
 Learning holdout & 0/2 before; 2/2 after; equal one-attempt budgets \\
 Hypothesis reduction & 16 to 1; 4 bits \\

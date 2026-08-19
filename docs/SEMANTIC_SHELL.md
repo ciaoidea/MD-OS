@@ -70,6 +70,13 @@ Run this from any directory:
 cortex
 ```
 
+On Linux, macOS, and BSD when `tmux` is available, an interactive invocation
+attaches to one shared Cortex session derived from the Git workspace. Running
+`cortex` from a local terminal, an SSH login, or WebSSH while inside the same
+repository therefore displays and controls the same REPL, App Server, active
+turn, and Codex thread. Multiple clients may remain attached simultaneously.
+Outside Git, the resolved current directory is the session boundary.
+
 The complete startup message is:
 
 ```text
@@ -90,6 +97,15 @@ inspect the repository, verify the failing test, fix it, and run the checks
 No quotes, apostrophes, prompt prefix, or special chat command are required.
 Use `exit` or Ctrl-D to leave. The compatibility inputs `quit`, `/exit`, and
 `/quit` also remain accepted even though the minimal startup text omits them.
+
+Cortex enables terminal bracketed-paste mode. When a paste occurs inside the
+editable line, Cortex immediately stores its complete text in volatile memory
+and inserts `[PASTED BLOCK 1]` at the cursor. The operator may continue typing
+before or after that placeholder. On submission, Cortex replaces the
+placeholder with the original multiline text before sending the request to
+Codex; the label itself is never sent. No special command, `.end`, or Ctrl-D is
+required. `/paste` remains only as a compatibility fallback for terminals that
+remove bracketed-paste events.
 
 One-shot natural-language input also uses the native Codex loop:
 
@@ -176,7 +192,14 @@ The App Server process starts lazily on the first natural-language request and
 stays alive until the REPL exits. Native-only use therefore pays no model
 startup cost.
 
-Threads are bound by current Git workspace, falling back to the exact current
+Interactive Cortex processes are first bound to one shared terminal session by
+Git workspace on POSIX systems with `tmux`. This makes local, SSH, and WebSSH
+entrypoints converge on the same live process rather than merely opening the
+same directory in separate processes. Set `MDOS_SHARED_SESSION=never` only when
+an intentionally isolated interactive process is required; set it to `always`
+to require `tmux` rather than falling back when it is unavailable.
+
+Codex threads are also bound by current Git workspace, falling back to the exact current
 directory outside Git. On the first semantic turn in a workspace, `cortex` asks
 Codex App Server for the most recent matching `cli`, `vscode`, `exec`, or
 `appServer` thread and resumes it. If none exists, it starts one. Moving to a
@@ -197,6 +220,12 @@ Codex's own session store remains authoritative for chat history. MD-OS does
 not invent a parallel `.bash_history` for conversation and does not copy raw
 Codex transcripts into Git.
 
+If another non-shared Cortex process already owns the latest workspace thread,
+the new process stops with attach guidance. It does not silently create a new
+thread, because doing so would split the suspended discussion into competing
+histories. Exit the isolated process and run `cortex` again to enter the shared
+workspace session.
+
 ## Shell observations
 
 Valid native commands bypass the model completely, but the REPL retains a
@@ -214,6 +243,18 @@ file changes and diffs, MCP progress, web searches, approvals, and agent
 messages. It does not expose private hidden chain-of-thought that Codex does not
 publish. Set `MDOS_CODEX_TRACE=compact` to hide reasoning/plan/diff detail, or
 `MDOS_CODEX_TRACE=quiet` to keep only essential output and prompts.
+
+Every interactive semantic turn also receives a compact live-legibility
+contract. Nontrivial work announces its object and reason before using a tool,
+then reports only material doubts, failed assumptions, changed hypotheses,
+decisions, or a progress heartbeat when work lasts longer than 60 seconds.
+When a material doubt exists, Cortex asks the critical question within the
+same turn, tests the hidden premise or failure case, and revises the answer
+before committing to it.
+These messages are streamed from the same ordinary turn. They do not start an
+inner-voice process, a background call, a timer, or a second turn. Simple
+answers remain direct. The result is operational
+transparency rather than a fabricated transcript of private chain-of-thought.
 
 ## Safety and authority
 
@@ -258,6 +299,7 @@ configuration by default. Optional overrides are explicit:
 | Variable | Meaning |
 | --- | --- |
 | `MDOS_MODEL` | select an explicit Codex model; default: inherit Codex configuration |
+| `MDOS_SHARED_SESSION` | `auto` (default), `always`, or `never`; control the POSIX per-workspace shared `tmux` session |
 | `MDOS_REASONING_EFFORT` | select a supported effort; default: inherit Codex configuration |
 | `MDOS_CODEX_BACKEND` | `app-server` (native persistent path) or `exec` compatibility mode |
 | `MDOS_CODEX_BIN` | override the `codex` executable, primarily for testing |

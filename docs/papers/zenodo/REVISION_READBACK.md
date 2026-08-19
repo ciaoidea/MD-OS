@@ -1,5 +1,56 @@
 # MD-OS CORTEX paper revision readback
 
+## 17 August 2026 artifact revision
+
+This revision updates the manuscript from the immutable Zenodo snapshot at
+record `21960027` to repository commit
+`a447abe5d312f1da0dc87a78b4e87c8379aa632f`. It adds the implemented Cortex
+agentic-shell control surface without rewriting the original bounded
+experiments as new results.
+
+Added manuscript coverage:
+
+- `cortex` as the public MD-OS interactive entry point;
+- direct native-command execution without a model call;
+- bounded volatile command/output/exit readback delivered as untrusted data;
+- one lazily started Codex App Server and workspace-bound Codex thread;
+- one shared `tmux`-backed Cortex process across local, SSH, and WebSSH clients;
+- active-turn `turn/steer` input and Escape/`turn/interrupt` behavior;
+- explicit limits of pre-model/post-model flow mediation;
+- separation of full host authority from semantic, privacy, publication, and
+  commitment authorization;
+- the semantic commitment gate and its provenance, semantic-delta, challenge,
+  authority, and verifier-readback boundaries.
+
+Validation observed before rebuilding this revision:
+
+- `npm run check`: passed;
+- Node test suite: 206/206 passed;
+- Python shell parity suite: 28 passed and 1 failed;
+- open mismatch: non-interactive approval produced `cancel`, while the test
+  expected `decline`;
+- aggregate test closure: **not closed** until that mismatch is resolved or the
+  expected contract is explicitly revised.
+
+Build and runtime readback after the manuscript update:
+
+- `make paper`: passed;
+- revised PDF: 18 A4 pages, 4,286,560 bytes;
+- undefined references, multiply defined labels, overfull boxes, and fatal
+  LaTeX errors: none after the second build;
+- `npm run build:all`: completed with exit status 0;
+- APFC graph and semantic commitment gate: `ok`;
+- semantic operational compiler and aggregate health: `critical`;
+- principal compiler contamination: ignored host-local Kokoro `.venv`
+  Markdown/license material was indexed as semantic source, producing
+  duplicate claims and broken third-party documentation links;
+- additional semantic findings: six disconnected Cortex shell Markdown nodes;
+- two consecutive `npm run replay` invocations completed, but the final
+  readback remained `matched_before: false`;
+- release closure and publication readiness: **not closed**.
+
+The section below remains the readback for the original 15 August manuscript.
+
 Date: 15 August 2026
 Author: Alessandro Rizzo (`a.rizzo@physiks.net`),
 [ORCID 0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)

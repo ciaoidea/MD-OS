@@ -126,6 +126,14 @@ explain what is consuming the most disk space
 inspect this repository, fix the failing test, verify it, and report the result
 ```
 
+Paste long multiline text directly anywhere in the editable line. Cortex
+immediately inserts `[PASTED BLOCK n]` at that position, so you can keep typing
+before or after it without displaying the pasted document. When you press
+Enter, Cortex sends the surrounding text plus the complete original block; the
+visual label is not included. No `/paste`, `.end`, or Ctrl-D is needed on
+terminals that support bracketed paste; `/paste` remains a compatibility
+fallback.
+
 You can add direction while Codex is still working: type the follow-up and press
 Enter. Cortex forwards it immediately to the active App Server turn through
 `turn/steer`, matching Codex's intermediate-message behavior.
@@ -157,7 +165,15 @@ On the first natural-language request, `cortex` starts one Codex App Server
 process. It resolves the current Git workspace, resumes the most recent matching
 native Codex thread when one exists, or starts a new one. Moving to another
 repository selects that repository's thread; moving back restores the earlier
-binding:
+binding.
+
+On POSIX systems with `tmux`, interactive invocations from a local terminal,
+SSH, and WebSSH attach to one shared Cortex session per Git workspace. They
+therefore continue the same live REPL, App Server, active turn, and Codex thread
+instead of creating parallel chats. Cortex refuses to silently fork the latest
+workspace history when another process already owns its active writer.
+
+The resulting flow is:
 
 ```text
 native input -> real shell -> bounded observation ──────────────┐
@@ -2382,7 +2398,7 @@ described in the paper:
 - ✉️ **Email:** [labs@md-os.org](mailto:labs@md-os.org)
 - 📄 **Zenodo paper:** [record 21960027](https://zenodo.org/records/21960027)
 - 🧑‍🔬 **ORCID:** [0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
-- ▶️ **Video walkthrough:** [watch on YouTube](https://www.youtube.com/watch?v=ceeA_RcOPoQ)
+- ▶️ **Cortex: Hello, World:** [watch on YouTube](https://www.youtube.com/watch?v=H6m4IoNZQbc) — Cortex introduces herself through the MD-OS agentic shell and shows reflection, contextual state, verified action, and the UNIX principle applied to composable cognitive processes.
 - 💻 **Official repository:** [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS)
 
 ## License
