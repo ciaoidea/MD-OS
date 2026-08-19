@@ -66,7 +66,7 @@ README.md
 docs/**/*.md
 docs/**/*.svg
 docs/**/*.png
-docs/papers/text_native_agentic_os_paper.tex
+docs/papers/zenodo/paper.tex
 md-os/kb/**
 md-os/kb/imports/*/{README,SOURCE_MANIFEST,KNOWLEDGE_NODES,RELATIONS,IDENTITY_FRAME,OPERATING_BINDING}.md
 md-os/kb/imports/*/canonical_import.json
@@ -148,7 +148,7 @@ md-os/ops/roles/*/analysis/role_understanding.md
 md-os/ops/roles/*/analysis/root_cause_candidates.md
 md-os/ops/roles/*/analysis/work_patterns.md
 md-os/ops/roles/*/analysis/questions_for_expert.md
-docs/papers/text_native_agentic_os_paper.pdf
+docs/papers/zenodo/paper.pdf
 ```
 
 Generated state should be reproducible. Builders may rewrite their known

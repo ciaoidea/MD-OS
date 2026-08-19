@@ -2175,17 +2175,12 @@ md-os/examples/                     Versioned templates and demo seeds
   ecosystems.
 - [md-os/kb/MARKDOWN_GRAPH_MODEL.md](md-os/kb/MARKDOWN_GRAPH_MODEL.md):
   Obsidian-oriented graph model for logical and structural Markdown links.
-- [docs/papers/text_native_agentic_os_paper.tex](docs/papers/text_native_agentic_os_paper.tex):
-  official paper source, "A Text-Native Operating Filesystem for
-  Natural-Language Robotic-Agentic Programming".
-- `docs/papers/text_native_agentic_os_paper.pdf`: optional generated paper PDF
-  for review and presentation; it may be absent from a clean source checkout.
 - [docs/papers/zenodo/README.md](docs/papers/zenodo/README.md): reproducible
-  Zenodo manuscript package, editable figures, manifest, and build commands for
+  definitive manuscript package, figures, manifest, and build commands for
   "Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial
   Prefrontal Cortex (APFC)".
-- [docs/papers/zenodo/MD_OS_CORTEX_Clarity_Revision.pdf](docs/papers/zenodo/MD_OS_CORTEX_Clarity_Revision.pdf): final clarity-revised PDF
-  built from the versioned Zenodo manuscript source and linked to the official
+- [docs/papers/zenodo/paper.pdf](docs/papers/zenodo/paper.pdf): the single
+  definitive PDF, built from `docs/papers/zenodo/paper.tex` and linked to the official
   [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS) repository.
 - [docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md](docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md):
   explicit layer between MD-OS and OS, hardware, applications, services, and
