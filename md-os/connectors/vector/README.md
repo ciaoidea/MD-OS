@@ -2,9 +2,25 @@
 
 Everything required to build and configure the connector is contained in this directory. Private robot data is never stored in the repository.
 
+## Compatibility and non-affiliation
+
+Vector and Anki are referenced solely to identify compatible hardware and
+interfaces. MD-OS is an independent project and is not affiliated with,
+endorsed by, or sponsored by Anki or Digital Dream Labs. All product names and
+trademarks belong to their respective owners.
+
+The repository does not distribute robot firmware, vendor media assets,
+vendor credentials, proprietary cloud services, or private device data. It
+contains connector source code plus dependency declarations for separately
+downloaded open-source packages. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+for the applicable attributions and license notices.
+
 ## Hardware and host
 
-This beta implements the Anki/Digital Dream Labs Vector BLE provisioning and Vector gRPC protocols. The available private profile does not prove whether the tested unit is Vector 1.0 or 2.0; Vector 2.0 compatibility has not yet been independently verified.
+This beta is compatible with the legacy BLE provisioning and gRPC interfaces
+used by Vector robots. The available private profile does not establish the
+tested hardware generation; compatibility with Vector 2.0 has not been
+independently verified.
 
 The current installer targets Linux with systemd. It requires Node.js/npm, Go 1.22 or newer, Python 3 with `venv`, OpenSSL, `sudo`, Bluetooth, Wi-Fi, and the host `libsodium` runtime library.
 

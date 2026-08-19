@@ -79,6 +79,13 @@ without repeating hardware discovery, software discovery, or runtime rebuilds.
 
 ### Vector connector (beta)
 
+Vector and Anki are referenced only to identify compatible hardware. MD-OS is
+an independent project and is not affiliated with, endorsed by, or sponsored
+by Anki or Digital Dream Labs. Product names and trademarks belong to their
+respective owners. The connector distributes no robot firmware, vendor assets,
+credentials, or proprietary cloud service. See the connector's
+[third-party notices](md-os/connectors/vector/THIRD_PARTY_NOTICES.md).
+
 For a new Vector installation, put the robot in pairing mode and run:
 
 ```bash
