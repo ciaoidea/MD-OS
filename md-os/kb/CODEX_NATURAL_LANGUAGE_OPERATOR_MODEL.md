@@ -244,7 +244,7 @@ human input
     -> current workspace
     -> native Codex thread list/resume/start
     -> AGENTS.md discovery
-    -> reason -> plan -> explore -> tool -> act with full host authority
+    -> APFC turn frame -> reason -> plan -> explore -> bounded tool -> APFC gate
     -> observe -> correct -> verify -> report
 ```
 
@@ -268,8 +268,8 @@ starting a divergent conversation.
 MD-OS must preserve Codex's native agent cycle on this path. It may orient,
 constrain, observe, verify, and persist commitments, but it must not replace the
 cycle with a classifier whose final output is executed as one unrestricted
-host command. Direct human commands retain host-shell authority. Agent-selected actions run with full current-user host authority and no approval
-prompts. Final assistant text
+host command. Direct human commands retain host-shell authority. Agent-selected
+actions run inside the workspace sandbox and APFC action gate. Final assistant text
 is never itself an executable capability.
 
 Codex-native thread history remains outside the repository. Shared interactive

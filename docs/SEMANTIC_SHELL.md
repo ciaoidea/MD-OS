@@ -12,8 +12,8 @@ natural language   -> full Codex loop for the current workspace
 ```
 
 The first path stays immediate. The second path can understand the repository,
-load `AGENTS.md`, reason, inspect files and state, plan, use tools with the
-current user's full host authority and no approval prompts, observe effects,
+load `AGENTS.md`, reason, inspect files and state, plan, use workspace-bounded
+tools through the APFC action gate, observe effects,
 correct its plan, verify the result, answer, and preserve the Codex thread.
 
 Codex provides the plastic reasoning-and-tool loop. MD-OS provides the
@@ -141,6 +141,12 @@ human input
 │       └── preserve bounded command/output/exit readback
 └── natural language
     └── resolve current cwd and Git workspace
+        └── APFC dynamic input filter
+            ├── read bounded canonical operational views
+            ├── update or retain bounded private turn attention
+            ├── retain mandatory goal/core state
+            ├── select additional Markdown blocks by input relevance
+            └── expose selected and omitted source paths
         └── reuse the in-process workspace binding when available
             or thread/list -> latest matching native Codex thread
             or thread/start -> a new persistent Codex thread
@@ -148,8 +154,8 @@ human input
             ├── native AGENTS.md discovery
             ├── reasoning and planning
             ├── repository and state exploration
-            ├── tool use with full host authority
-            ├── no command or file approval prompts
+            ├── workspace-bounded tool use
+            ├── deterministic APFC approval decisions
             ├── streamed tool and agent readback
             ├── correction and verification
             └── final answer and Codex-native session persistence
@@ -157,7 +163,7 @@ human input
 
 While a Codex turn is still running, the REPL continues polling terminal input.
 Type another message and press Enter to forward it to the active turn through
-App Server `turn/steer`. It becomes additional user direction for that same
+the same APFC dynamic input filter and App Server `turn/steer`. It becomes additional user direction for that same
 turn; it is not held as a separate later request and does not restart the App
 Server. This steering path is enabled for a real interactive TTY, not redirected
 one-shot stdin.
@@ -179,8 +185,28 @@ an explicit capability notice instead of pretending the operation occurred.
 There is no Python keyword classifier for natural language and no mandatory
 `AGENT: os` / `AGENT: answer` routing header on this primary path. The final
 assistant message is text; it is never silently re-executed by the parent
-shell. Real model-selected actions happen through Codex tools with full host authority,
-no approval requests, and ordinary tool-result events.
+shell. Real model-selected actions happen through Codex tools constrained by
+the APFC turn frame, workspace sandbox, and ordinary tool-result events.
+
+The APFC input filter is contextual rather than lexical: it does not classify
+requests from a fixed phrase list and does not rewrite the human statement. For
+each ordinary input and steering message, it selects bounded Markdown blocks
+from the current operational core, active work, continuity, last verified
+summary, and health state. Mandatory and relevance-selected sources are
+declared inside the context sent to Codex. This makes the APFC causally present
+before `turn/start` and `turn/steer`; it is not claimed to be an infallible
+safety classifier or an output gate.
+
+Before selecting those blocks, Cortex maintains a private JSON contract at
+`md-os/ops/local/apfc/attention.json`: `theme` holds the stable general
+objective and `focus` the current point. Substantive requests advance focus; a
+minimal continuation retains it; an explicit `theme:` declaration changes both.
+Theme is bounded to 384 characters, focus to 256, and the complete dynamic
+context to 2 KiB. The frame applies `focus -> theme -> smallest authorized step
+-> verifier evidence`. The state is mode `0600`, excluded from publication, and
+does not start an autonomous turn or replace `/goal`. The small
+continuation recognizer affects only focus retention; it does not classify,
+rewrite, authorize, or execute the human request.
 
 Explicit legacy JSON/Markdown programs and `MDOS_CODEX_BACKEND=exec` retain the
 older tagged-output protocol only as compatibility paths. They do not define
@@ -262,16 +288,15 @@ The two action paths have different authority:
 
 - a command typed explicitly by the human runs directly with the current
   user's host-shell authority;
-- a Codex-generated command or file change runs with the same full host
-  authority, `approvalPolicy: never`, and `danger-full-access`.
+- a Codex-generated command or file change runs with `approvalPolicy:
+  untrusted`, `workspaceWrite`, network disabled, and an APFC decision for
+  approval requests.
 
-This is an explicit full-control policy: Codex may write outside the current
-workspace, access the network, start processes, and perform destructive actions
-without an approval prompt. MD-OS semantic policies, verification, and readback
-remain active operating instructions, but they are not a sandbox or a human
-confirmation gate. User-input requests that are part of the task itself may
-still occur when information is genuinely missing; command and file approvals
-do not.
+The APFC gate fails closed without an active turn frame. It rejects external
+working directories, network authority, destructive commands, and additional
+permission requests. It may approve bounded local commands and workspace file
+changes without interrupting the human. Explicit native commands remain a
+separate human-controlled path and retain ordinary host-shell authority.
 
 Do not print credentials, private keys, tokens, or other secrets before a
 natural-language turn: bounded shell output may be sent to Codex as context.

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_turn_receipt.schema.json",
+  "title": "MD-OS APFC Turn Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "frame_id",
+    "input_hash",
+    "output_hash",
+    "status",
+    "goal_present",
+    "attention_present",
+    "selected_sources",
+    "approval_decisions",
+    "observed_actions",
+    "assistant_output_epistemic_status",
+    "verified_claims",
+    "verification_contract"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "receipt_id": { "type": "string", "pattern": "^apfc_receipt_[a-f0-9]{20}$" },
+    "frame_id": { "type": "string", "pattern": "^apfc_turn_[a-f0-9]{20}$" },
+    "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "output_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "status": { "enum": ["completed", "interrupted", "failed"] },
+    "goal_present": { "type": "boolean" },
+    "attention_present": { "type": "boolean" },
+    "selected_sources": { "type": "array", "items": { "type": "string" } },
+    "approval_decisions": { "type": "array", "items": { "type": "object" } },
+    "observed_actions": { "type": "array", "items": { "type": "object" } },
+    "assistant_output_epistemic_status": { "const": "proposal" },
+    "verified_claims": { "type": "array", "items": { "type": "object" } },
+    "verification_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_result", "verifier", "evidence", "verdict"],
+      "properties": {
+        "expected_result": { "const": "satisfy_current_human_request" },
+        "verifier": { "const": "independent_observable_readback" },
+        "evidence": { "type": "array", "items": { "type": "object" } },
+        "verdict": { "enum": ["pass", "fail", "unknown"] }
+      }
+    }
+  }
+}

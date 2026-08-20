@@ -8,6 +8,7 @@ Files:
 - `paper.pdf` — the single definitive compiled manuscript.
 - `REVISION_NOTES.md` — editorial and structural changes.
 - `SHA256SUMS` — file-integrity manifest.
+- `MD-OS_CORTEX_Zenodo.zip` — upload-ready source, figures, bibliography, and definitive PDF.
 
 ## Build
 

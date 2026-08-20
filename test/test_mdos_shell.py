@@ -4,6 +4,7 @@ from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_loader
 import contextlib
 import io
+import json
 import os
 from pathlib import Path
 import re
@@ -575,27 +576,92 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertNotIn("effort", requests[0]["params"])
             self.assertNotIn("model", requests[0]["params"])
             self.assertEqual(
-                requests[0]["params"]["approvalPolicy"], "never"
+                requests[0]["params"]["approvalPolicy"], "untrusted"
             )
             self.assertEqual(
                 requests[0]["params"]["sandboxPolicy"]["type"],
-                "dangerFullAccess",
+                "workspaceWrite",
             )
+            self.assertFalse(requests[0]["params"]["sandboxPolicy"]["networkAccess"])
             thread_start = next(
                 message
                 for message in fake.protocol_requests()
                 if message.get("method") == "thread/start"
             )
             self.assertEqual(
-                thread_start["params"]["approvalPolicy"], "never"
+                thread_start["params"]["approvalPolicy"], "untrusted"
             )
             self.assertEqual(
-                thread_start["params"]["sandbox"], "danger-full-access"
+                thread_start["params"]["sandbox"], "workspace-write"
             )
+            self.assertIn("APFC TURN FRAME", requests[0]["prompt"])
             self.assertEqual(len(fake.process_starts()), 1)
-            self.assertEqual(requests[0]["prompt"], "che cosa è un tensore?")
+            self.assertIn("APFC DYNAMIC INPUT CONTEXT", requests[0]["prompt"])
+            self.assertIn(
+                "CURRENT HUMAN REQUEST\nche cosa è un tensore?",
+                requests[0]["prompt"],
+            )
             self.assertNotIn("MANDATORY RUNTIME OUTPUT CONTRACT", requests[0]["prompt"])
             self.assertNotIn("Stable repository purpose", requests[0]["prompt"])
+
+    def test_apfc_input_context_is_bounded_and_selects_relevant_state(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(
+                ["git", "init", "-q"], cwd=workspace, check=True
+            )
+            active = workspace / "md-os/ops/summary/active_work_items.md"
+            core = workspace / "md-os/ops/core/agentic_core.md"
+            continuity = workspace / "md-os/ops/continuity.md"
+            active.parent.mkdir(parents=True)
+            core.parent.mkdir(parents=True)
+            active.write_text(
+                "# Active work\n\nGoal: repair the camera connector.\n",
+                encoding="utf-8",
+            )
+            core.write_text(
+                "# Core\n\nNever claim execution without evidence.\n",
+                encoding="utf-8",
+            )
+            continuity.write_text(
+                "# Continuity\n\nCamera calibration remains open.\n\n"
+                "Unrelated accounting notes.\n",
+                encoding="utf-8",
+            )
+            context = ENGINE.build_apfc_input_context(
+                "continue camera calibration", workspace
+            )
+            self.assertLessEqual(len(context.text), ENGINE.MAX_APFC_CONTEXT_CHARS + 1024)
+            self.assertIn(
+                "md-os/ops/summary/active_work_items.md", context.selected_sources
+            )
+            self.assertIn("md-os/ops/continuity.md", context.selected_sources)
+            self.assertIn("Camera calibration remains open", context.text)
+            self.assertNotIn("Unrelated accounting notes", context.text)
+
+    def test_apfc_input_context_changes_with_the_human_subject(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            active = workspace / "md-os/ops/summary/active_work_items.md"
+            core = workspace / "md-os/ops/core/agentic_core.md"
+            continuity = workspace / "md-os/ops/continuity.md"
+            active.parent.mkdir(parents=True)
+            core.parent.mkdir(parents=True)
+            active.write_text("# Work\n\nGoal: ship safely.\n", encoding="utf-8")
+            core.write_text("# Core\n\nVerify results.\n", encoding="utf-8")
+            continuity.write_text(
+                "# State\n\nCamera focus needs calibration.\n\n"
+                "GitHub publication needs a secret audit.\n",
+                encoding="utf-8",
+            )
+            camera = ENGINE.build_apfc_input_context("calibrate camera focus", workspace)
+            github = ENGINE.build_apfc_input_context("audit GitHub publication", workspace)
+            self.assertIn("Camera focus needs calibration", camera.text)
+            self.assertNotIn("GitHub publication", camera.text)
+            self.assertIn("GitHub publication needs a secret audit", github.text)
+            self.assertEqual(github.theme, "calibrate camera focus")
+            self.assertEqual(github.focus, "audit GitHub publication")
 
     def test_active_turn_accepts_intermediate_steering_message(self):
         with FakeCodex("Updated result.") as fake, mock.patch.dict(
@@ -623,9 +689,11 @@ class SemanticShellParityTests(unittest.TestCase):
                 if item.get("method") == "turn/steer"
             )
             self.assertEqual(steer["params"]["expectedTurnId"], "turn-1")
-            self.assertEqual(
-                steer["params"]["input"],
-                [{"type": "text", "text": "aggiungi anche i test"}],
+            steering_text = steer["params"]["input"][0]["text"]
+            self.assertIn("APFC DYNAMIC INPUT CONTEXT", steering_text)
+            self.assertIn(
+                "CURRENT HUMAN STEERING INPUT\naggiungi anche i test",
+                steering_text,
             )
 
     def test_goal_slash_command_uses_app_server_goal_protocol(self):
@@ -973,6 +1041,152 @@ class SemanticShellParityTests(unittest.TestCase):
             replies,
             [{"id": 77, "result": {"decision": "decline"}}],
         )
+
+    def test_apfc_action_gate_allows_bounded_command_and_denies_escape(self):
+        context = ENGINE.ApfcInputContext("context", (), ())
+        frame = ENGINE.build_apfc_turn_frame(
+            "run tests", context, PROJECT_ROOT, "Keep tests green"
+        )
+        allowed = ENGINE.decide_apfc_command_approval(
+            {"command": "npm test", "cwd": str(PROJECT_ROOT)}, frame
+        )
+        outside = ENGINE.decide_apfc_command_approval(
+            {"command": "pwd", "cwd": "/tmp"}, frame
+        )
+        destructive = ENGINE.decide_apfc_command_approval(
+            {"command": "git reset --hard", "cwd": str(PROJECT_ROOT)}, frame
+        )
+        network = ENGINE.decide_apfc_command_approval(
+            {
+                "command": "curl https://example.com",
+                "cwd": str(PROJECT_ROOT),
+                "networkApprovalContext": {"host": "example.com"},
+            },
+            frame,
+        )
+        self.assertEqual(allowed[0], "accept")
+        self.assertEqual(outside[0], "decline")
+        self.assertEqual(destructive[0], "decline")
+        self.assertEqual(network[0], "decline")
+
+    def test_apfc_file_gate_confines_grants_to_workspace(self):
+        context = ENGINE.ApfcInputContext("context", (), ())
+        frame = ENGINE.build_apfc_turn_frame(
+            "edit the file", context, PROJECT_ROOT, None
+        )
+        self.assertEqual(
+            ENGINE.decide_apfc_file_approval(
+                {"grantRoot": str(PROJECT_ROOT / "md-os")}, frame
+            )[0],
+            "accept",
+        )
+        self.assertEqual(
+            ENGINE.decide_apfc_file_approval(
+                {"grantRoot": "/tmp/outside"}, frame
+            )[0],
+            "decline",
+        )
+
+    def test_apfc_receipt_hashes_private_content_and_feeds_next_turn(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            context = ENGINE.ApfcInputContext(
+                "context", ("md-os/ops/core/agentic_core.md",), ()
+            )
+            frame = ENGINE.build_apfc_turn_frame(
+                "private human text", context, workspace, "Finish safely"
+            )
+            receipt_path = ENGINE.write_apfc_turn_receipt(
+                frame,
+                status="completed",
+                output="private assistant text",
+                decisions=[],
+                observed_actions=[],
+            )
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertNotIn("private human text", json.dumps(receipt))
+            self.assertNotIn("private assistant text", json.dumps(receipt))
+            self.assertEqual(receipt["assistant_output_epistemic_status"], "proposal")
+            self.assertEqual(receipt["verification_contract"]["verdict"], "unknown")
+            last_turn = workspace / "md-os/ops/local/apfc/last_turn.md"
+            self.assertTrue(last_turn.is_file())
+            self.assertIn("output remains a proposal", last_turn.read_text())
+
+    def test_apfc_verification_requires_observable_verifier_evidence(self):
+        passed = ENGINE.evaluate_apfc_verification(
+            "completed", [{"type": "commandExecution", "status": "completed",
+                           "exit_code": 0, "verification_candidate": True,
+                           "output_hash": "a" * 64}]
+        )
+        unknown = ENGINE.evaluate_apfc_verification("completed", [])
+        failed = ENGINE.evaluate_apfc_verification(
+            "completed", [{"type": "commandExecution", "status": "failed",
+                           "exit_code": 1, "verification_candidate": True,
+                           "output_hash": "b" * 64}]
+        )
+        self.assertEqual(passed["verdict"], "pass")
+        self.assertEqual(unknown["verdict"], "unknown")
+        self.assertEqual(failed["verdict"], "fail")
+
+    def test_apfc_turn_runtime_classes_have_schemas(self):
+        for name in (
+            "apfc_attention.schema.json",
+            "apfc_turn_frame.schema.json",
+            "apfc_turn_receipt.schema.json",
+        ):
+            payload = json.loads(
+                (PROJECT_ROOT / "md-os/schemas" / name).read_text(encoding="utf-8")
+            )
+            self.assertEqual(payload["type"], "object")
+
+
+    def test_apfc_attention_updates_on_subject_and_survives_short_followup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            first = ENGINE.build_apfc_input_context(
+                "Implement automatic APFC attention for every input", workspace
+            )
+            followup = ENGINE.build_apfc_input_context("procedi", workspace)
+            self.assertEqual(first.theme, followup.theme)
+            self.assertEqual(first.focus, followup.focus)
+            self.assertIn("automatic APFC attention", followup.text)
+            self.assertIn("OPERATING METHOD", followup.text)
+            self.assertIn("observable verifier evidence", followup.text)
+            self.assertLessEqual(len(followup.text), ENGINE.MAX_APFC_CONTEXT_CHARS)
+            frame = ENGINE.build_apfc_turn_frame(
+                "procedi", followup, workspace, None
+            )
+            payload = json.loads(ENGINE.render_apfc_turn_frame(frame).split("\n", 1)[1])
+            self.assertEqual(payload["method"]["target"], "theme")
+            self.assertEqual(payload["method"]["closure"], "verifier_evidence")
+            state = workspace / "md-os/ops/local/apfc/attention.json"
+            self.assertEqual(state.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(json.loads(state.read_text(encoding="utf-8"))["schema_version"], 2)
+            self.assertNotIn("procedi", state.read_text(encoding="utf-8"))
+
+    def test_apfc_focus_changes_while_theme_remains_stable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            initial = ENGINE.build_apfc_input_context("Repair the camera connector", workspace)
+            changed = ENGINE.build_apfc_input_context(
+                "Audit the publication for private data", workspace
+            )
+            self.assertEqual(
+                changed.focus, "Audit the publication for private data"
+            )
+            self.assertEqual(changed.theme, initial.theme)
+
+    def test_apfc_explicit_theme_updates_theme_and_focus(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            context = ENGINE.build_apfc_input_context(
+                "il tema è Rigorous APFC verification", workspace
+            )
+            self.assertEqual(context.theme, "Rigorous APFC verification")
+            self.assertEqual(context.focus, "Rigorous APFC verification")
 
     def test_codex_protocol_errors_are_visible(self):
         client = object.__new__(ENGINE.CodexAppServerClient)

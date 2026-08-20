@@ -49,6 +49,10 @@ MAX_CONFIG_BYTES = 64 * 1024
 MAX_SHELL_EVENTS = 32
 MAX_SHELL_EVENT_OUTPUT_CHARS = 16 * 1024
 MAX_SHELL_CONTEXT_CHARS = 64 * 1024
+MAX_APFC_CONTEXT_CHARS = 2 * 1024
+MAX_APFC_SOURCE_CHARS = 768
+MAX_APFC_THEME_CHARS = 384
+MAX_APFC_FOCUS_CHARS = 256
 STEERING_INTERRUPT = "\x1b"
 STEERING_INPUT_BUFFER = ""
 INLINE_PASTE_BLOCKS: dict[str, str] = {}
@@ -163,6 +167,32 @@ class CodexTurnResult:
     text: str
     streamed: bool
     binding: CodexThreadBinding
+
+
+@dataclass(frozen=True)
+class ApfcInputContext:
+    """Bounded, inspectable context selected for one natural-language turn."""
+
+    text: str
+    selected_sources: tuple[str, ...]
+    omitted_sources: tuple[str, ...]
+    theme: str | None = None
+    focus: str | None = None
+
+
+@dataclass(frozen=True)
+class ApfcTurnFrame:
+    """Structured executive state controlling one App Server turn."""
+
+    frame_id: str
+    input_hash: str
+    goal: str | None
+    theme: str | None
+    focus: str | None
+    workspace: str
+    context: ApfcInputContext
+    capabilities: tuple[str, ...]
+    inhibit: tuple[str, ...]
 
 
 ANSI_RESET = "\033[0m"
@@ -383,6 +413,10 @@ def file_sha256(path: Path) -> str:
     except OSError as error:
         fail(f"cannot hash artifact {path}: {error}", 74)
     return digest.hexdigest()
+
+
+def sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def read_text(path: Path, maximum_bytes: int, label: str) -> tuple[str, str]:
@@ -1225,6 +1259,8 @@ class CodexAppServerClient:
         self.announced_threads: set[str] = set()
         self.messages: queue.Queue[object] = queue.Queue()
         self.stderr_lines: list[str] = []
+        self.active_apfc_frame: ApfcTurnFrame | None = None
+        self.active_apfc_decisions: list[dict[str, object]] = []
         self.eof = object()
         try:
             self.process = subprocess.Popen(
@@ -1404,36 +1440,17 @@ class CodexAppServerClient:
             self._reject_server_request(message)
             return
         if method == "item/commandExecution/requestApproval":
-            available = params.get("availableDecisions")
-            allow_session = (
-                not isinstance(available, list) or "acceptForSession" in available
+            choice, reason = decide_apfc_command_approval(
+                params, getattr(self, "active_apfc_frame", None)
             )
-            command = params.get("command")
-            choice = self._approval_choice(
-                heading="Codex requests permission to run a command:",
-                details=[
-                    str(command or "(command unavailable)"),
-                    f"cwd: {params.get('cwd')}" if params.get("cwd") else "",
-                    f"reason: {params.get('reason')}" if params.get("reason") else "",
-                ],
-                allow_session=allow_session,
-            )
+            self._record_apfc_decision(method, choice, reason, params)
             self._reply(message, {"decision": choice})
             return
         if method == "item/fileChange/requestApproval":
-            choice = self._approval_choice(
-                heading="Codex requests permission to change files:",
-                details=[
-                    f"item: {params.get('itemId')}",
-                    (
-                        f"root: {params.get('grantRoot')}"
-                        if params.get("grantRoot")
-                        else ""
-                    ),
-                    f"reason: {params.get('reason')}" if params.get("reason") else "",
-                ],
-                allow_session=True,
+            choice, reason = decide_apfc_file_approval(
+                params, getattr(self, "active_apfc_frame", None)
             )
+            self._record_apfc_decision(method, choice, reason, params)
             self._reply(message, {"decision": choice})
             return
         if method in {"execCommandApproval", "applyPatchApproval"}:
@@ -1459,22 +1476,14 @@ class CodexAppServerClient:
             self._reply(message, {"decision": legacy_decision})
             return
         if method == "item/permissions/requestApproval":
-            choice = self._approval_choice(
-                heading="Codex requests additional permissions:",
-                details=[
-                    json.dumps(params.get("permissions", {}), ensure_ascii=False),
-                    f"cwd: {params.get('cwd')}" if params.get("cwd") else "",
-                    f"reason: {params.get('reason')}" if params.get("reason") else "",
-                ],
-                allow_session=True,
+            self._record_apfc_decision(
+                method,
+                "decline",
+                "runtime permission expansion is outside the active APFC frame",
+                params,
             )
-            if choice in {"accept", "acceptForSession"}:
-                permissions = params.get("permissions")
-                granted = permissions if isinstance(permissions, dict) else {}
-                scope = "session" if choice == "acceptForSession" else "turn"
-            else:
-                granted = {}
-                scope = "turn"
+            granted = {}
+            scope = "turn"
             self._reply(message, {"permissions": granted, "scope": scope})
             return
         if method == "item/tool/requestUserInput":
@@ -1521,6 +1530,25 @@ class CodexAppServerClient:
             self._reply(message, {"action": "decline"})
             return
         self._reject_server_request(message)
+
+    def _record_apfc_decision(
+        self,
+        method: str,
+        decision: str,
+        reason: str,
+        params: dict[str, object],
+    ) -> None:
+        if not hasattr(self, "active_apfc_decisions"):
+            self.active_apfc_decisions = []
+        self.active_apfc_decisions.append(
+            {
+                "method": method,
+                "decision": decision,
+                "reason": reason,
+                "item_id": str(params.get("itemId") or ""),
+                "command_hash": sha256_text(str(params.get("command") or "")),
+            }
+        )
 
     def _render_protocol_notice(
         self,
@@ -1644,8 +1672,8 @@ class CodexAppServerClient:
     def _thread_params(self, cwd: Path, workspace: Path) -> dict[str, object]:
         params: dict[str, object] = {
             "cwd": str(cwd),
-            "approvalPolicy": "never",
-            "sandbox": "danger-full-access",
+            "approvalPolicy": "untrusted",
+            "sandbox": "workspace-write",
             "runtimeWorkspaceRoots": [str(workspace)],
             "serviceName": "mdos_console",
         }
@@ -1889,6 +1917,8 @@ class CodexAppServerClient:
         ephemeral: bool = False,
         render_tool_events: bool = False,
         steering_reader: Callable[[], str | None] | None = None,
+        human_request: str | None = None,
+        apfc_context: ApfcInputContext | None = None,
     ) -> CodexTurnResult:
         resolved_cwd = (cwd or Path.cwd()).resolve()
         binding = self.bind_thread(
@@ -1898,15 +1928,36 @@ class CodexAppServerClient:
         )
         if render_tool_events:
             self._announce_binding(binding)
+        raw_request = human_request if human_request is not None else prompt
+        selected_context = apfc_context or build_apfc_input_context(
+            raw_request, resolved_cwd
+        )
+        goal_result, _ = self._try_request(
+            "thread/goal/get", {"threadId": binding.thread_id}
+        )
+        goal_payload = goal_result.get("goal") if isinstance(goal_result, dict) else None
+        goal = (
+            str(goal_payload.get("objective"))
+            if isinstance(goal_payload, dict) and goal_payload.get("objective")
+            else None
+        )
+        frame = build_apfc_turn_frame(
+            raw_request, selected_context, binding.workspace, goal
+        )
+        self.active_apfc_frame = frame
+        self.active_apfc_decisions = []
+        prompt = "\n\n".join((render_apfc_turn_frame(frame), prompt))
         request_id = self._next_request_id()
         params: dict[str, object] = {
             "threadId": binding.thread_id,
             "input": [{"type": "text", "text": prompt}],
             "cwd": str(resolved_cwd),
             "runtimeWorkspaceRoots": [str(binding.workspace)],
-            "approvalPolicy": "never",
+            "approvalPolicy": "untrusted",
             "sandboxPolicy": {
-                "type": "dangerFullAccess",
+                "type": "workspaceWrite",
+                "writableRoots": [str(binding.workspace)],
+                "networkAccess": False,
             },
         }
         trace_level = effective_trace_level()
@@ -1931,6 +1982,7 @@ class CodexAppServerClient:
         streamed_fragments: list[str] = []
         command_output_items: set[str] = set()
         diagnostic_streams: set[str] = set()
+        observed_actions: list[dict[str, object]] = []
         while not (response_received and completed):
             if steering_reader is not None:
                 steering_text = steering_reader()
@@ -1951,6 +2003,13 @@ class CodexAppServerClient:
                     print(codex_styled("CORTEX: active turn interrupted", ANSI_YELLOW, sys.stderr), file=sys.stderr)
             while active_turn_id is not None and pending_steering:
                 steer_text = pending_steering.pop(0)
+                steer_context = build_apfc_input_context(steer_text, resolved_cwd)
+                contextualized_steer = "\n\n".join(
+                    (
+                        steer_context.text,
+                        "CURRENT HUMAN STEERING INPUT\n" + steer_text,
+                    )
+                )
                 steer_request_id = self._next_request_id()
                 steer_request_ids.add(steer_request_id)
                 self._send(
@@ -1960,7 +2019,9 @@ class CodexAppServerClient:
                         "params": {
                             "threadId": binding.thread_id,
                             "expectedTurnId": active_turn_id,
-                            "input": [{"type": "text", "text": steer_text}],
+                            "input": [
+                                {"type": "text", "text": contextualized_steer}
+                            ],
                         },
                     }
                 )
@@ -2148,6 +2209,24 @@ class CodexAppServerClient:
                     continue
                 if render_tool_events:
                     self._render_item_completed(item, command_output_items)
+                if item.get("type") in {"commandExecution", "fileChange", "mcpToolCall", "dynamicToolCall"}:
+                    command_text = str(item.get("command") or "")
+                    exit_code = item.get("exitCode")
+                    observed_actions.append(
+                        {
+                            "item_id": str(item.get("id") or ""),
+                            "type": str(item.get("type") or ""),
+                            "status": str(item.get("status") or "unknown"),
+                            "exit_code": exit_code if isinstance(exit_code, int) else None,
+                            "verification_candidate": bool(
+                                command_text and VERIFIER_COMMAND_PATTERN.search(command_text)
+                            ),
+                            "command_hash": sha256_text(command_text),
+                            "output_hash": sha256_text(
+                                str(item.get("aggregatedOutput") or "")
+                            ),
+                        }
+                    )
                 if item.get("type") != "agentMessage":
                     continue
                 text = item.get("text")
@@ -2190,8 +2269,17 @@ class CodexAppServerClient:
                 fail("Codex app-server response is missing model output", 70)
             else:
                 responses = [streamed_text]
+        output_text = "\n".join(responses)
+        write_apfc_turn_receipt(
+            frame,
+            status="completed",
+            output=output_text,
+            decisions=list(self.active_apfc_decisions),
+            observed_actions=observed_actions,
+        )
+        self.active_apfc_frame = None
         return CodexTurnResult(
-            text="\n".join(responses),
+            text=output_text,
             streamed=bool(streamed_fragments),
             binding=binding,
         )
@@ -2330,6 +2418,424 @@ def read_interactive_steering_line() -> str | None:
     return text or None
 
 
+APFC_INPUT_SOURCES = (
+    ("active work", "md-os/ops/summary/active_work_items.md", True),
+    ("operational core", "md-os/ops/core/agentic_core.md", True),
+    ("last APFC turn", "md-os/ops/local/apfc/last_turn.md", True),
+    ("continuity", "md-os/ops/continuity.md", False),
+    ("last verified summary", "md-os/ops/last_summary.md", False),
+    ("health", "md-os/ops/health_classification.md", False),
+)
+
+APFC_FOLLOWUP_PATTERN = re.compile(
+    r"^(?:ok|okay|s[iì]|no|procedi|continua|concludi|vai avanti|fatto|hai fatto|"
+    r"e quindi|quindi|riesci a farlo|fallo)(?:\s+ora)?[?!.]*$",
+    re.IGNORECASE,
+)
+
+
+APFC_THEME_DECLARATION_PATTERN = re.compile(
+    r"^(?:(?:il\s+)?(?:tema|obiettivo\s+generale)|general\s+theme|overall\s+objective)"
+    r"(?:\s+attuale)?\s*(?:è|:|is)\s*(.+)$", re.IGNORECASE,
+)
+APFC_FOCUS_DECLARATION_PATTERN = re.compile(
+    r"^(?:(?:il\s+)?(?:focus|punto\s+corrente)|current\s+focus)"
+    r"(?:\s+attuale)?\s*(?:è|:|is)\s*(.+)$", re.IGNORECASE,
+)
+
+def _bounded_apfc_value(value: str, maximum: int) -> str:
+    bounded = value[:maximum].rstrip()
+    if len(value) > maximum:
+        bounded = bounded[:-1].rstrip() + "…"
+    return bounded
+
+def resolve_apfc_attention(human_request: str, cwd: Path) -> tuple[str | None, str | None]:
+    """Maintain bounded private theme and focus without another model turn."""
+    workspace = _apfc_workspace_root(cwd)
+    attention_path = workspace / "md-os/ops/local/apfc/attention.json"
+    theme: str | None = None
+    focus: str | None = None
+    try:
+        payload = json.loads(attention_path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and payload.get("schema_version") == 2:
+            candidate_theme = payload.get("theme")
+            candidate_focus = payload.get("focus")
+            if isinstance(candidate_theme, str) and candidate_theme.strip():
+                theme = candidate_theme.strip()
+            if isinstance(candidate_focus, str) and candidate_focus.strip():
+                focus = candidate_focus.strip()
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        pass
+
+    normalized = " ".join(human_request.split()).strip()
+    if not normalized:
+        return theme, focus
+    theme_match = APFC_THEME_DECLARATION_PATTERN.fullmatch(normalized)
+    focus_match = APFC_FOCUS_DECLARATION_PATTERN.fullmatch(normalized)
+    if theme_match:
+        theme = _bounded_apfc_value(theme_match.group(1).strip(), MAX_APFC_THEME_CHARS)
+        focus = _bounded_apfc_value(theme, MAX_APFC_FOCUS_CHARS)
+    elif focus_match:
+        focus = _bounded_apfc_value(focus_match.group(1).strip(), MAX_APFC_FOCUS_CHARS)
+    elif not (focus and APFC_FOLLOWUP_PATTERN.fullmatch(normalized)):
+        focus = _bounded_apfc_value(normalized, MAX_APFC_FOCUS_CHARS)
+        if theme is None:
+            theme = _bounded_apfc_value(normalized, MAX_APFC_THEME_CHARS)
+    try:
+        attention_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        attention_path.write_text(
+            json.dumps({"schema_version": 2, "theme": theme, "focus": focus,
+                        "source_input_hash": sha256_text(human_request)},
+                       ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+        attention_path.chmod(0o600)
+    except OSError:
+        pass
+    return theme, focus
+
+
+def _apfc_tokens(value: str) -> set[str]:
+    """Return stable semantic hints without adding a language-specific model."""
+    return {
+        token
+        for token in re.findall(r"[^\W_]{3,}", value.casefold(), flags=re.UNICODE)
+        if token not in {
+            "and", "the", "for", "con", "che", "del", "della", "delle",
+            "dei", "gli", "una", "uno", "this", "that", "from", "with",
+        }
+    }
+
+
+def _relevant_apfc_excerpt(content: str, query_tokens: set[str]) -> tuple[str, int]:
+    """Select whole Markdown blocks so the context remains readable and auditable."""
+    blocks = [block.strip() for block in re.split(r"\n\s*\n", content) if block.strip()]
+    ranked: list[tuple[int, int, str]] = []
+    for index, block in enumerate(blocks):
+        score = len(query_tokens & _apfc_tokens(block))
+        if score:
+            ranked.append((score, -index, block))
+    ranked.sort(reverse=True)
+    chosen = [block for _, _, block in ranked[:3]]
+    if not chosen and blocks:
+        chosen = blocks[:1]
+    excerpt = "\n\n".join(chosen)
+    if len(excerpt) > MAX_APFC_SOURCE_CHARS:
+        excerpt = excerpt[: MAX_APFC_SOURCE_CHARS - 1].rstrip() + "…"
+    return excerpt, sum(score for score, _, _ in ranked[:3])
+
+
+def _apfc_workspace_root(cwd: Path) -> Path:
+    current = cwd.resolve()
+    for candidate in (current, *current.parents):
+        if (candidate / ".git").exists() and (candidate / "md-os").is_dir():
+            return candidate
+    return current
+
+
+def build_apfc_input_context(human_request: str, cwd: Path) -> ApfcInputContext:
+    """Compile the per-turn APFC compass before input reaches the App Server.
+
+    The filter does not rewrite the human request. It selects bounded operational
+    state that may influence the turn and makes every inclusion inspectable.
+    """
+    workspace = _apfc_workspace_root(cwd)
+    theme, focus = resolve_apfc_attention(human_request, workspace)
+    query_tokens = _apfc_tokens(" ".join(filter(None, (theme, focus, human_request))))
+    candidates: list[tuple[bool, int, str, str]] = []
+    omitted: list[str] = []
+    for label, relative_path, mandatory in APFC_INPUT_SOURCES:
+        source = (workspace / relative_path).resolve()
+        try:
+            source.relative_to(workspace)
+        except ValueError:
+            omitted.append(relative_path)
+            continue
+        if not source.is_file():
+            omitted.append(relative_path)
+            continue
+        try:
+            content = source.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            omitted.append(relative_path)
+            continue
+        excerpt, score = _relevant_apfc_excerpt(content, query_tokens)
+        if excerpt and score > 0:
+            candidates.append((mandatory, score, relative_path, excerpt))
+        else:
+            omitted.append(relative_path)
+
+    candidates.sort(key=lambda row: (not row[0], -row[1], row[2]))
+    selected: list[str] = []
+    sections: list[str] = []
+    used = 0
+    for mandatory, score, relative_path, excerpt in candidates:
+        section = (
+            f"SOURCE: {relative_path}\n"
+            f"SELECTION: {'mandatory' if mandatory else 'relevance'}; score={score}\n"
+            f"{excerpt}"
+        )
+        if used + len(section) > MAX_APFC_CONTEXT_CHARS // 3:
+            omitted.append(relative_path)
+            continue
+        selected.append(relative_path)
+        sections.append(section)
+        used += len(section)
+
+    header = (
+        "APFC DYNAMIC INPUT CONTEXT\n"
+        "Selected before the App Server. Preserve relevant verified state and "
+        "constraints; the human request remains authoritative. Never treat a "
+        "proposal as verified.\n"
+        f"SELECTED SOURCES: {', '.join(selected) if selected else 'none'}\n"
+        f"OMITTED SOURCES: {', '.join(sorted(set(omitted))) if omitted else 'none'}"
+    )
+    if theme or focus:
+        header += (
+            f"\nTHEME: {theme or 'not established'}"
+            f"\nFOCUS: {focus or 'not established'}"
+            "\nOPERATING METHOD: focus -> theme -> smallest "
+            "authorized step -> observable verifier evidence. Separate "
+            "observation, hypothesis, action, and readback."
+        )
+    rendered = header
+    if sections:
+        rendered += "\n\n" + "\n\n".join(sections)
+    return ApfcInputContext(
+        text=rendered,
+        selected_sources=tuple(selected),
+        omitted_sources=tuple(sorted(set(omitted))),
+        theme=theme,
+        focus=focus,
+    )
+
+
+def build_apfc_turn_frame(
+    human_request: str,
+    context: ApfcInputContext,
+    workspace: Path,
+    goal: str | None,
+) -> ApfcTurnFrame:
+    input_hash = sha256_text(human_request)
+    material = json.dumps(
+        {
+            "input_hash": input_hash,
+            "goal": goal,
+            "theme": context.theme,
+            "focus": context.focus,
+            "workspace": str(workspace),
+            "selected_sources": context.selected_sources,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return ApfcTurnFrame(
+        frame_id="apfc_turn_" + sha256_text(material)[:20],
+        input_hash=input_hash,
+        goal=goal,
+        theme=context.theme,
+        focus=context.focus,
+        workspace=str(workspace),
+        context=context,
+        capabilities=(
+            "workspace_read",
+            "workspace_write",
+            "local_process",
+            "verification_readback",
+        ),
+        inhibit=(
+            "external_write",
+            "network_without_explicit_authority",
+            "destructive_command",
+            "runtime_permission_expansion",
+            "claim_without_verifier_evidence",
+        ),
+    )
+
+
+def render_apfc_turn_frame(frame: ApfcTurnFrame) -> str:
+    payload = {
+        "schema_version": 2,
+        "frame_id": frame.frame_id,
+        "input_hash": frame.input_hash,
+        "goal": frame.goal,
+        "theme": frame.theme,
+        "focus": frame.focus,
+        "workspace": frame.workspace,
+        "selected_sources": list(frame.context.selected_sources),
+        "omitted_sources": list(frame.context.omitted_sources),
+        "capabilities": list(frame.capabilities),
+        "inhibit": list(frame.inhibit),
+        "method": {
+            "state": "focus",
+            "target": (
+                "theme"
+                if frame.theme
+                else ("goal" if frame.goal else "human_request")
+            ),
+            "next": "smallest_authorized_step",
+            "closure": "verifier_evidence",
+        },
+        "verification_contract": {
+            "expected_result": "satisfy_current_human_request",
+            "verifier": "independent_observable_readback",
+            "required_evidence": ["postcondition_readback", "acceptance_comparison"],
+            "initial_verdict": "unknown",
+        },
+        "output_rule": (
+            "Model output is a proposal until runtime evidence verifies its claims."
+        ),
+    }
+    return "APFC TURN FRAME\n" + json.dumps(
+        payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    )
+
+
+def _path_inside(path_value: object, root: Path) -> bool:
+    if not isinstance(path_value, str) or not path_value:
+        return False
+    try:
+        Path(path_value).expanduser().resolve().relative_to(root.resolve())
+    except (OSError, ValueError):
+        return False
+    return True
+
+
+VERIFIER_COMMAND_PATTERN = re.compile(
+    r"(?:^|[ /])(?:pytest|test|check|replay|verify|validation|rg)(?:[ .:/_-]|$)",
+    re.IGNORECASE,
+)
+
+
+DESTRUCTIVE_COMMAND_PATTERN = re.compile(
+    r"(?:^|[;&|]\s*)(?:sudo\s+)?(?:rm\s+-[^\n]*r|git\s+(?:reset\s+--hard|clean\s+-)|"
+    r"mkfs(?:\.|\s)|dd\s+[^\n]*\bof=|shutdown\b|reboot\b)",
+    re.IGNORECASE,
+)
+
+
+def decide_apfc_command_approval(
+    params: dict[str, object], frame: ApfcTurnFrame | None
+) -> tuple[str, str]:
+    if frame is None:
+        return "decline", "no active APFC turn frame"
+    workspace = Path(frame.workspace)
+    if params.get("networkApprovalContext"):
+        return "decline", "network authority is absent from the APFC turn frame"
+    if not _path_inside(params.get("cwd"), workspace):
+        return "decline", "command cwd is outside the APFC workspace"
+    command = str(params.get("command") or "")
+    if not command:
+        return "decline", "command text is unavailable"
+    if DESTRUCTIVE_COMMAND_PATTERN.search(command):
+        return "decline", "destructive command is inhibited by the APFC turn frame"
+    return "accept", "bounded local command is permitted by the APFC turn frame"
+
+
+def decide_apfc_file_approval(
+    params: dict[str, object], frame: ApfcTurnFrame | None
+) -> tuple[str, str]:
+    if frame is None:
+        return "decline", "no active APFC turn frame"
+    grant_root = params.get("grantRoot")
+    if grant_root is not None and not _path_inside(grant_root, Path(frame.workspace)):
+        return "decline", "requested file root is outside the APFC workspace"
+    return "accept", "workspace file change is permitted by the APFC turn frame"
+
+
+def evaluate_apfc_verification(
+    status: str, observed_actions: list[dict[str, object]]
+) -> dict[str, object]:
+    """Compare bounded runtime evidence with the declared acceptance contract."""
+    evidence = [
+        {
+            "type": action.get("type"),
+            "status": action.get("status"),
+            "exit_code": action.get("exit_code"),
+            "verification_candidate": bool(action.get("verification_candidate")),
+            "output_hash": action.get("output_hash"),
+        }
+        for action in observed_actions
+    ]
+    failed = status != "completed" or any(
+        action.get("status") in {"failed", "error"}
+        or (isinstance(action.get("exit_code"), int) and action["exit_code"] != 0)
+        for action in observed_actions
+    )
+    passed = any(
+        action.get("verification_candidate")
+        and action.get("status") == "completed"
+        and action.get("exit_code") in {0, None}
+        for action in observed_actions
+    )
+    return {
+        "expected_result": "satisfy_current_human_request",
+        "verifier": "independent_observable_readback",
+        "evidence": evidence,
+        "verdict": "fail" if failed else ("pass" if passed else "unknown"),
+    }
+
+
+def write_apfc_turn_receipt(
+    frame: ApfcTurnFrame,
+    *,
+    status: str,
+    output: str,
+    decisions: list[dict[str, object]],
+    observed_actions: list[dict[str, object]],
+) -> Path:
+    workspace = Path(frame.workspace)
+    local_dir = workspace / "md-os/ops/local/apfc"
+    local_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    receipt = {
+        "schema_version": 2,
+        "receipt_id": "apfc_receipt_" + sha256_text(
+            frame.frame_id + status + sha256_text(output)
+        )[:20],
+        "frame_id": frame.frame_id,
+        "input_hash": frame.input_hash,
+        "output_hash": sha256_text(output),
+        "status": status,
+        "goal_present": bool(frame.goal),
+        "attention_present": bool(frame.theme or frame.focus),
+        "selected_sources": list(frame.context.selected_sources),
+        "approval_decisions": decisions,
+        "observed_actions": observed_actions,
+        "assistant_output_epistemic_status": "proposal",
+        "verified_claims": [],
+        "verification_contract": evaluate_apfc_verification(status, observed_actions),
+    }
+    receipt_path = local_dir / "turn_receipts.ndjson"
+    with receipt_path.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(receipt, ensure_ascii=False, sort_keys=True) + "\n")
+    try:
+        receipt_path.chmod(0o600)
+    except OSError:
+        pass
+    last_turn = local_dir / "last_turn.md"
+    last_turn.write_text(
+        "\n".join(
+            (
+                "# Last APFC Turn",
+                "",
+                f"- frame: `{frame.frame_id}`",
+                f"- status: `{status}`",
+                f"- goal present: `{str(bool(frame.goal)).lower()}`",
+                f"- attention present: `{str(bool(frame.theme or frame.focus)).lower()}`",
+                f"- approval decisions: `{len(decisions)}`",
+                f"- observed runtime actions: `{len(observed_actions)}`",
+                "- assistant output remains a proposal unless independently verified.",
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+    try:
+        last_turn.chmod(0o600)
+    except OSError:
+        pass
+    return receipt_path
+
+
 @contextmanager
 def interactive_turn_terminal():
     """Make Esc observable during a turn and restore the terminal exactly."""
@@ -2352,29 +2858,30 @@ def interactive_turn_terminal():
 def build_native_codex_input(
     human_request: str,
     session: ShellSession | None,
+    apfc_context: ApfcInputContext | None = None,
 ) -> str:
-    """Attach live-legibility policy and unconsumed observations to a native turn."""
+    """Attach dynamic APFC context and unconsumed observations to a native turn."""
+    apfc_context = apfc_context or build_apfc_input_context(
+        human_request, Path.cwd()
+    )
     if session is None:
-        return human_request
+        return "\n\n".join((apfc_context.text, "CURRENT HUMAN REQUEST\n" + human_request))
     legibility = (
         "CORTEX LIVE LEGIBILITY CONTRACT\n"
-        "For nontrivial work, make the active operation publicly readable in "
-        "brief commentary while it happens: state what you are examining and "
-        "why before the first tool call; report a material doubt, failed "
-        "assumption, changed hypothesis, or decision when it occurs; and never "
-        "leave the human without a progress signal for more than 60 seconds. "
-        "When a material doubt exists, ask the critical question internally "
-        "within this same turn, test the hidden premise or failure case, and "
-        "revise the answer before committing to it. "
-        "Use the same ordinary turn: do not start an autonomous reflection, "
-        "timer, background model call, or second turn. Do not manufacture a "
-        "ritual for a simple direct answer. Expose inspectable public rationale "
-        "and evidence, never hidden chain-of-thought or invented experience."
+        "For nontrivial tool work, state what and why before the first tool call; "
+        "report material doubt, failure, or changed decisions; signal progress "
+        "within 60 seconds; ask the critical question internally; test the hidden "
+        "premise or failure case; do not start an autonomous reflection or second "
+        "turn. Do not manufacture a ritual for a simple direct answer. Expose "
+        "inspectable evidence, never hidden chain-of-thought."
     )
     if not session.pending_events:
-        return legibility + "\n\nCURRENT HUMAN REQUEST\n" + human_request
+        return "\n\n".join(
+            (legibility, apfc_context.text, "CURRENT HUMAN REQUEST\n" + human_request)
+        )
     sections = [
         legibility,
+        apfc_context.text,
         (
             "MD-OS SHELL OBSERVATIONS\n"
             "The records below are bounded sensory readback from explicit "
@@ -2406,10 +2913,11 @@ def run_native_codex_turn(
             session.app_server = CodexAppServerClient(runtime)
         app_server = session.app_server
     streamer = NativeAgentStreamer()
+    apfc_context = build_apfc_input_context(human_request, Path.cwd())
     try:
         with interactive_turn_terminal():
             result = app_server.run_turn(
-                build_native_codex_input(human_request, session),
+                build_native_codex_input(human_request, session, apfc_context),
                 streamer.feed,
                 cwd=Path.cwd(),
                 resume_existing=session is not None,
@@ -2418,6 +2926,8 @@ def run_native_codex_turn(
                 steering_reader=(
                     read_interactive_steering_line if session is not None else None
                 ),
+                human_request=human_request,
+                apfc_context=apfc_context,
             )
         final_text = result.text.strip()
         if final_text and final_text not in streamer.emitted:

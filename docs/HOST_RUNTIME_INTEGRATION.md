@@ -199,9 +199,16 @@ Use exit or Ctrl-D to leave.
 
 Valid native commands execute directly. Natural-language input uses Codex App
 Server and preserves the normal Codex cycle: native `AGENTS.md` discovery,
-reasoning, plans, unrestricted tools, and full host authority without approval
-prompts, followed by observation,
+an APFC turn frame, reasoning, plans, workspace-bounded tools, and deterministic
+APFC approval decisions, followed by observation,
 correction, verification, and Codex-native thread history. The shell resolves
+Before each turn, Cortex updates a bounded private JSON contract with a stable
+general `theme` and a current `focus`. Substantive requests advance the focus,
+short continuations retain it, and explicit `theme:` declarations change the
+theme. The App Server receives this state in a context capped at 2 KiB, using
+`focus -> theme -> smallest authorized step -> verifier evidence`. The state
+remains under `md-os/ops/local/`, creates no background execution, and does
+not change the Codex persistent goal.
 the current Git workspace and resumes the most recent available Codex thread
 for that workspace, falling back to a new thread if matching sessions are
 absent or already owned by another active writer.

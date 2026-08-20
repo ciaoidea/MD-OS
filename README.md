@@ -173,8 +173,16 @@ The primary dispatch rule is:
 ```text
 complete input line
 ├── valid native command -> real host shell -> bounded observation
-└── natural language     -> full Codex agent loop for the current workspace
+└── natural language     -> dynamic APFC context filter -> Codex App Server
 ```
+
+Before every natural-language `turn/start` or `turn/steer`, Cortex builds a
+bounded context from the operational core, active work, continuity, latest
+verified summary, and health state. Mandatory state is retained; other
+Markdown blocks are selected according to the current input. The resulting
+context names the sources it included and omitted, then preserves the original
+human request unchanged. Native shell commands remain direct and bypass this
+model-context path.
 
 This is a shell inside the shell, not a browser GUI or a restricted simulation.
 It preserves the actual current directory, persistent `cd`, `PWD`/`OLDPWD`,
@@ -201,17 +209,18 @@ native input -> real shell -> bounded observation ──────────
                                                                 │
 natural input -> workspace -> thread list/resume/start -> Codex ├─> readback
                                       ├-> AGENTS.md discovery   │
+                                      ├-> APFC turn frame       │
                                       ├-> reasoning and plan    │
-                                      ├-> unrestricted tools     │
-                                      ├-> no approval prompts   │
+                                      ├-> workspace tools       │
+                                      ├-> APFC action gate      │
                                       ├-> effect observation    │
                                       └-> verification ─────────┘
 ```
 
 Natural-language input is no longer reduced to an `AGENT: os` tag and one
 command executed by the outer shell. It enters Codex's normal repository-aware
-cycle: understand, explore, plan, use tools with full host authority and no
-approval prompts, observe, correct, verify, and answer. Model and
+cycle: understand, explore, plan, use workspace-bounded tools through the APFC
+action gate, observe, correct, verify, and answer. Model and
 reasoning effort inherit the user's Codex configuration unless
 `MDOS_MODEL` or `MDOS_REASONING_EFFORT` explicitly overrides them.
 
@@ -229,13 +238,25 @@ reduce that readback. `MDOS_CODEX_COLOR=auto` restores terminal-aware ANSI
 color for agent answers and structured Codex events; `always` and `never`
 override detection, while `NO_COLOR` disables it.
 
-**Full-control authority:** both explicit native commands and Codex-generated tool
-actions run with the current user's full host authority. `cortex` sets
-`approvalPolicy: never` and `danger-full-access`; it does not ask for command or
-file-change confirmation and does not sandbox Codex actions. Final assistant text
-is still never silently re-executed as shell code. Do not print secrets before a
-natural-language turn because bounded terminal output may be sent to Codex as
-operating context.
+**Separated authority:** explicit native commands still run directly with the
+current user's host-shell authority. Codex-generated actions run with
+`approvalPolicy: untrusted`, a `workspaceWrite` sandbox, and network disabled.
+The deterministic APFC gate accepts bounded local requests and denies external
+cwd access, network expansion, destructive commands, and additional runtime
+permissions. Final assistant text remains a proposal and is never silently
+re-executed as shell code.
+
+Before each natural-language turn, Cortex maintains a bounded private JSON
+contract with a stable `theme` (the general objective) and a current `focus`
+(the present point). Substantive requests advance the focus; minimal continuations
+retain it, while an explicit `theme:` declaration changes the theme. The APFC
+method is `focus -> theme -> smallest authorized step -> verifier evidence`.
+After execution, a second JSON contract compares observable readback with the
+acceptance condition and records `pass`, `fail`, or `unknown`; successful
+execution alone is never treated as proof. The dynamic context is capped at
+2 KiB, starts no loop, does not replace `/goal`, and remains host-local under
+`md-os/ops/local/`. This executive method promotes relevant, pragmatic answers;
+the separate concise communication rule remains in `AGENTS.md`.
 
 The same public command retains deterministic MD-OS subcommands:
 
@@ -2147,6 +2168,7 @@ md-os/examples/                     Versioned templates and demo seeds
 - [docs/papers/zenodo/paper.pdf](docs/papers/zenodo/paper.pdf): the single
   definitive PDF, built from `docs/papers/zenodo/paper.tex` and linked to the official
   [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS) repository.
+- [docs/papers/zenodo/MD-OS_CORTEX_Zenodo.zip](docs/papers/zenodo/MD-OS_CORTEX_Zenodo.zip): upload-ready Zenodo package containing the LaTeX source, bibliography, figures, manifest, and definitive PDF.
 - [docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md](docs/NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md):
   explicit layer between MD-OS and OS, hardware, applications, services, and
   robots.

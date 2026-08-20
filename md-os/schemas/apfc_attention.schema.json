@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_attention.schema.json",
+  "title": "MD-OS APFC Attention State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "theme", "focus", "source_input_hash"],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "theme": { "type": ["string", "null"], "maxLength": 384 },
+    "focus": { "type": ["string", "null"], "maxLength": 256 },
+    "source_input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

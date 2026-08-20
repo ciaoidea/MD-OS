@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_turn_frame.schema.json",
+  "title": "MD-OS APFC Turn Frame",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "frame_id",
+    "input_hash",
+    "goal",
+    "theme",
+    "focus",
+    "workspace",
+    "selected_sources",
+    "omitted_sources",
+    "capabilities",
+    "inhibit",
+    "method",
+    "verification_contract",
+    "output_rule"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "frame_id": { "type": "string", "pattern": "^apfc_turn_[a-f0-9]{20}$" },
+    "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "goal": { "type": ["string", "null"] },
+    "theme": { "type": ["string", "null"], "maxLength": 384 },
+    "focus": { "type": ["string", "null"], "maxLength": 256 },
+    "workspace": { "type": "string", "minLength": 1 },
+    "selected_sources": { "type": "array", "items": { "type": "string" } },
+    "omitted_sources": { "type": "array", "items": { "type": "string" } },
+    "capabilities": { "type": "array", "items": { "type": "string" } },
+    "inhibit": { "type": "array", "items": { "type": "string" } },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "target", "next", "closure"],
+      "properties": {
+        "state": { "const": "focus" },
+        "target": { "enum": ["theme", "goal", "human_request"] },
+        "next": { "const": "smallest_authorized_step" },
+        "closure": { "const": "verifier_evidence" }
+      }
+    },
+    "verification_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_result", "verifier", "required_evidence", "initial_verdict"],
+      "properties": {
+        "expected_result": { "const": "satisfy_current_human_request" },
+        "verifier": { "const": "independent_observable_readback" },
+        "required_evidence": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+        "initial_verdict": { "const": "unknown" }
+      }
+    },
+    "output_rule": { "type": "string", "minLength": 1 }
+  }
+}
