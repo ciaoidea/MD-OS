@@ -2359,7 +2359,6 @@ described in the paper:
 - 📄 **Zenodo paper:** [record 21960027](https://zenodo.org/records/21960027)
 - 🧑‍🔬 **ORCID:** [0000-0002-8030-3540](https://orcid.org/0000-0002-8030-3540)
 - ▶️ **Official YouTube channel:** [MD-OS on YouTube](https://www.youtube.com/@MD-OS)
-- 🎬 **Project video:** [Markdown Operating System for Robotic Agents — MD-OS](https://www.youtube.com/watch?v=ceeA_RcOPoQ)
 - 💻 **Official repository:** [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS)
 
 ## License
