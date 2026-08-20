@@ -28,6 +28,8 @@ const OUTPUT_SUMMARY_JSON_REL = 'md-os/ops/semantic_knowledge_summary.json';
 const MARKDOWN_GRAPH_JSON = path.join(OPS_DIR, 'markdown_graph.json');
 const RUNTIME_LIFECYCLE_JSON = path.join(OPS_DIR, 'runtime_lifecycle_index.json');
 const SKIPPED_DIRS = new Set(['.git', 'node_modules', '.cache', 'graphify-out']);
+const SKIPPED_PATH_PREFIXES = ['md-os/ops/local/'];
+const SKIPPED_DERIVED_MARKDOWN = new Set(['index.md']);
 const VIRTUAL_GENERATED_MD_NODES = [
   'md-os/ops/agenda/global_agenda.md',
   'md-os/ops/compiled/programs.md',
@@ -128,11 +130,14 @@ function collectMarkdownFiles(rootDir) {
       const fullPath = path.join(current, entry.name);
       if (entry.isDirectory()) {
         if (SKIPPED_DIRS.has(entry.name)) continue;
+        const relativeDir = `${rel(fullPath).replace(/\/$/, '')}/`;
+        if (SKIPPED_PATH_PREFIXES.some((prefix) => relativeDir.startsWith(prefix))) continue;
         stack.push(fullPath);
         continue;
       }
       if (!entry.isFile() || path.extname(entry.name).toLowerCase() !== '.md') continue;
       const relative = rel(fullPath);
+      if (SKIPPED_DERIVED_MARKDOWN.has(relative)) continue;
       if (relative === OUTPUT_MD_REL || relative === OUTPUT_SUMMARY_MD_REL) continue;
       if (DETERMINISTIC_GENERATED_MD_NODE_SET.has(relative)) continue;
       const stats = fs.statSync(fullPath);

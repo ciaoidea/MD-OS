@@ -21,6 +21,8 @@ const OUTPUT_MD = path.join(OPS_DIR, 'markdown_graph.md');
 const OUTPUT_MD_REL = 'md-os/ops/markdown_graph.md';
 const OUTPUT_JSON_REL = 'md-os/ops/markdown_graph.json';
 const SKIPPED_DIRS = new Set(['.git', 'node_modules', '.cache', 'graphify-out']);
+const SKIPPED_PATH_PREFIXES = ['md-os/ops/local/'];
+const SKIPPED_DERIVED_MARKDOWN = new Set(['index.md']);
 const SKIPPED_GENERATED_MARKDOWN_OUTPUTS = new Set([
   OUTPUT_MD_REL,
   'md-os/ops/health_classification.md',
@@ -114,11 +116,14 @@ function collectMarkdownFiles(rootDir) {
       const fullPath = path.join(current, entry.name);
       if (entry.isDirectory()) {
         if (SKIPPED_DIRS.has(entry.name)) continue;
+        const relativeDir = `${rel(fullPath).replace(/\/$/, '')}/`;
+        if (SKIPPED_PATH_PREFIXES.some((prefix) => relativeDir.startsWith(prefix))) continue;
         stack.push(fullPath);
         continue;
       }
       if (!entry.isFile() || path.extname(entry.name).toLowerCase() !== '.md') continue;
       const relative = rel(fullPath);
+      if (SKIPPED_DERIVED_MARKDOWN.has(relative)) continue;
       if (SKIPPED_GENERATED_MARKDOWN_OUTPUTS.has(relative)) continue;
       const stats = fs.statSync(fullPath);
       files.push({

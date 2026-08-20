@@ -103,5 +103,8 @@ test('agentic core materializes compact identity objectives and ethics', () => {
   assert.equal(payload.core.identity.name, 'MD-OS APFC');
   assert.equal(payload.core.objectives.length, 1);
   assert.equal(payload.core.ethics.length, 1);
-  assert.ok(fs.existsSync(path.join(workspace, 'md-os/ops/core/agentic_core.md')));
+  const compact = fs.readFileSync(path.join(workspace, 'md-os/ops/core/agentic_core.md'), 'utf8');
+  assert.match(compact, /# Agentic Core/);
+  assert.match(compact, /The complete validated core remains available/);
+  assert.ok(Buffer.byteLength(compact) < 7000);
 });

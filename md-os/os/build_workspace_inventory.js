@@ -16,7 +16,8 @@ const { appendJournal } = require('./lib/journal');
 
 const OUTPUT_JSON = path.join(MDOS_ROOT, 'ops', 'workspace_inventory.json');
 const OUTPUT_MD = path.join(MDOS_ROOT, 'ops', 'workspace_inventory.md');
-const SKIPPED_DIRS = new Set(['.git', 'node_modules', '.cache']);
+const SKIPPED_DIRS = new Set(['.git', 'node_modules', '.cache', 'graphify-out', '.venv', 'venv']);
+const SKIPPED_PATH_PREFIXES = ['md-os/ops/local/'];
 
 function rel(filePath) {
   return path.relative(WORKSPACE_ROOT, filePath);
@@ -43,6 +44,8 @@ function collectFilesRecursive(rootDir) {
       const fullPath = path.join(current, entry.name);
       if (entry.isDirectory()) {
         if (SKIPPED_DIRS.has(entry.name)) continue;
+        const relativeDir = `${rel(fullPath).replace(/\\/g, '/').replace(/\/$/, '')}/`;
+        if (SKIPPED_PATH_PREFIXES.some((prefix) => relativeDir.startsWith(prefix))) continue;
         stack.push(fullPath);
         continue;
       }

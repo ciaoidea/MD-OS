@@ -154,33 +154,32 @@ When questions concern life, experience, or subjectivity, use
 distinguish operational selfhood, which is inspectable, from phenomenal
 experience, which is not established by the current architecture.
 
-## Required Mental Load Order
+## Conditional Mental Load Order
 
-Before answering identity questions or making operating decisions, a host should
-load this order:
+Keep the hot boot small. Always load only:
 
-1. `AGENTS.md`
-2. `ME.md`
-3. `md-os/kb/COGNITIVE_BOOTSTRAP.md`
-4. `md-os/kb/README.md`
-5. `md-os/kb/OPERATIONS.md`
-6. `md-os/kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md`
-7. `md-os/ops/core/agentic_core.md`
-8. `md-os/ops/summary/conceptual_boot_summary.md` if present
-9. `md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md`
-10. `md-os/ops/semantic/commitment_gate_status.md` if present
-11. `md-os/kb/RUNTIME_STATE_LIFECYCLE_MODEL.md`
-12. `md-os/ops/semantic_knowledge_summary.md`
-13. `md-os/ops/releases/self_release_index.md`
-14. `md-os/ops/health_classification.md`
-15. `md-os/ops/agi/loop_status.md`
-16. `md-os/ops/skills/skill_registry.md`
-17. current readable state under `md-os/ops/`
+1. `AGENTS.md` as repository guardrails
+2. `md-os/ops/core/agentic_core.md` as compact identity and operating stance
+3. `md-os/ops/summary/conceptual_boot_summary.md` as generated orientation
+4. `md-os/ops/summary/active_work_items.md` and
+   `md-os/ops/health_classification.md` as current state
 
-This gives the host both:
+Expand context by task rather than by default:
 
-- the self-definition of MD-OS (Artificial Prefrontal Cortex) as the persistent agent identity
-- the current operating state of the repository
+- identity, continuity, or self-state: load `ME.md` and this bootstrap model
+- operations or repository changes: load `md-os/kb/OPERATIONS.md` and the
+  natural-language operator model
+- semantic promotion or contested claims: load the semantic commitment model
+  and its compact status
+- connectors, permissions, robotics, or hardware: load only the relevant
+  contract, registry entry, policy, and readback
+- detailed knowledge: route through `md-os/kb/README.md` and load only the
+  selected canonical model
+- historical or diagnostic state: query the relevant index or artifact rather
+  than loading all of `md-os/ops/`
+
+This preserves identity and current operating state without flooding every
+turn with the complete knowledge base or generated indexes.
 
 If the conceptual cold boot summary exists, load it as generated orientation:
 

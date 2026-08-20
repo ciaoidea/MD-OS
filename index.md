@@ -105,6 +105,7 @@ cortex
 Type ordinary shell commands for direct control, or describe an objective in
 natural language to delegate it to Cortex.
 
+
 ### Use the MD-OS Cortex agentic shell
 
 The interactive startup is intentionally minimal:

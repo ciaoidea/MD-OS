@@ -66,6 +66,7 @@
     "build:agenda": "node md-os/os/build_global_agenda.js",
     "build:core": "node md-os/os/build_agentic_core.js",
     "build:index": "node md-os/os/build_global_index.js",
+    "build:site-index": "node scripts/build-site-index.js",
     "build:inventory": "node md-os/os/build_workspace_inventory.js",
     "build:graph": "node md-os/os/build_markdown_graph.js",
     "graphify:status": "node md-os/os/mdos.js graphify status",
