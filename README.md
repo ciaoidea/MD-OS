@@ -2,7 +2,9 @@
 
 ![MD-OS Artificial Prefrontal Cortex v5.0 — Your agent, now with an Artificial Prefrontal Cortex](banner.png)
 
-> **The Agentic Operating Filesystem.**
+> **The Agentic Operating Filesystem**
+>
+> **One Control Layer for AI, Software, and Robots — While You Stay in Control.**
 >
 > **The model reasons. MD-OS remembers, coordinates, constrains, and verifies.**
 
