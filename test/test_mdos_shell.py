@@ -595,6 +595,8 @@ class SemanticShellParityTests(unittest.TestCase):
                 thread_start["params"]["sandbox"], "workspace-write"
             )
             self.assertIn("APFC TURN FRAME", requests[0]["prompt"])
+            self.assertIn("cognitive_route", requests[0]["prompt"])
+            self.assertIn("reflect-intent <intent.json>", requests[0]["prompt"])
             self.assertEqual(len(fake.process_starts()), 1)
             self.assertIn("APFC DYNAMIC INPUT CONTEXT", requests[0]["prompt"])
             self.assertIn(

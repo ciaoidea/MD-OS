@@ -83,6 +83,7 @@
 \newcommand{\bounded}{\textcolor{SafetyOrange!90!black}{\textbf{bounded}}}
 \newcommand{\baseline}{\textsf{B0}}
 \newcommand{\revision}{\textsf{B1}}
+\newcommand{\cognitive}{\textsf{B2}}
 \graphicspath{{figures/}}
 
 \lstset{
@@ -109,7 +110,7 @@ Markdown Operating System for Robotic Agents\\[-0.05em]
 Correspondence: \href{mailto:labs@md-os.org}{labs@md-os.org}\\
 ORCID: \href{https://orcid.org/0000-0002-8030-3540}{0000-0002-8030-3540}\\
 Repository: \href{https://github.com/ciaoidea/MD-OS}{github.com/ciaoidea/MD-OS}}
-\date{Version, 20 August 2026}
+\date{Version, 21 August 2026}
 
 \begin{document}
 
@@ -124,7 +125,7 @@ MD-OS implements this method as a file-native supervisory layer around a model-a
 
 The same architecture closes an embodied loop.  A robot acts, observes the resulting change in its own body, binds command to bodily effect, verifies the relation, and uses the learned forward model to filter later actions.  The resulting operational self-perception is causal and testable; it is not by itself evidence of phenomenal consciousness.
 
-At the evaluated baseline, the artifact passes 194/194 tests and the declared build.  In a controlled repair fixture, all three candidate patches pass the visible test, but the independent verifier admits only the narrow valid repair.  In a finite synthetic family, two verified episodes reduce 16 hypotheses to one and change sealed holdout success from 0/2 to 2/2 under equal budgets.  Replay reaches a fixed point for that evaluated state.  A later integration revision reports 223/223 Node tests and 51/51 shell-parity tests; these are implementation validations, not a second controlled learning result.
+At the evaluated baseline, the artifact passes 194/194 tests and the declared build.  In a controlled repair fixture, all three candidate patches pass the visible test, but the independent verifier admits only the narrow valid repair.  In a finite synthetic family, two verified episodes reduce 16 hypotheses to one and change sealed holdout success from 0/2 to 2/2 under equal budgets.  Replay reaches a fixed point for that evaluated state.  A later integration revision reports 223/223 Node tests and 51/51 shell-parity tests.  A subsequent bounded cognitive-routing extension reports 232/232 Node tests and 51/51 shell-parity tests, including controlled multilingual intent equivalence, false-positive rejection, continuous-autonomy inhibition, and one live Italian cycle that correctly remained unverified without evidence.  These are implementation validations, not additional controlled learning results.
 
 The supported conclusion is bounded: verified operation can be made an architectural property of explicit contracts, evidence, and independent checks rather than a linguistic property of a confident answer.  The paper does not establish open-world learning, parameter consolidation, host security, certified robot safety, biological equivalence, consciousness, or general intelligence.
 
@@ -176,7 +177,7 @@ The paper makes four contributions.
   \item It documents a persistent Cortex shell and semantic commitment gate while keeping hard safety downstream of the language-level supervisor.
 \end{enumerate}
 
-The full claim ledger appears in \cref{tab:claims}.  Claims \claimid{C1}--\claimid{C9} refer to the evaluated v5.0 baseline and its specified embodied mechanism.  Claims \claimid{C10}--\claimid{C12} refer to the later 20 August integration revision and its bounded fixtures.
+The full claim ledger appears in \cref{tab:claims}.  Claims \claimid{C1}--\claimid{C9} refer to the evaluated v5.0 baseline and its specified embodied mechanism.  Claims \claimid{C10}--\claimid{C12} refer to the 20 August integration revision and its bounded fixtures; claim \claimid{C13} refers to the 21 August cognitive-routing extension.
 
 \begin{table*}[!t]
 \centering
@@ -199,6 +200,7 @@ ID & Claim & Status & Evidence \\
 \claimid{C10} & The revised Cortex shell mediates observable input and output around a persistent Codex App Server turn while preserving native-command readback and workspace-bound continuity. & Implemented, host-dependent & \Cref{sec:shell}. \\
 \claimid{C11} & In two controlled cases with the same wind signal, integrated goal, memory, uncertainty, and consequence context changes the selected action and improves fixture accuracy from 1/2 to 2/2. & Observed, narrow & \Cref{sec:contextual}; no phenomenal inference. \\
 \claimid{C12} & Before each App Server turn, the Cortex shell supplies a bounded JSON frame with a stable theme, current focus, explicit inhibitions, and a verification contract; the post-turn receipt records pass, fail, or unknown rather than equating execution with proof. & Implemented, bounded & \Cref{sec:shell}; no claim of universal semantic verification. \\
+\claimid{C13} & A model-normalized, language-independent critical-reflection intent can be routed through a deterministic gate to exactly one APFC pathfinding cycle; unsupported success creates no persistent cognitive anchor. & Implemented, bounded & \Cref{sec:critical-routing}; four controlled language variants and one live Italian no-evidence cycle. \\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -280,6 +282,15 @@ G_{\mathrm{APFC}}=(V_c\cup V_o,\;E_c\cup E_o\cup E_x),
 where $V_c,E_c$ are conceptual nodes and relations; $V_o,E_o$ are operational nodes and transitions; and $E_x$ binds meaning to action and action outcomes back to knowledge.
 
 Conceptual nodes include Markdown pages, claims, schemas, counterexamples, and explanatory relations.  Operational nodes include JSON/NDJSON state and evidence, workflows, connector calls, receipts, and bounded executors.  Obsidian exposes the linked-Markdown projection.  It is neither the whole graph nor the mechanism that acts on it.
+
+\subsection{Bounded critical reflection and cognitive anchors}
+\label{sec:critical-routing}
+
+The cognitive-routing extension separates linguistic interpretation from deterministic admission.  The host model may normalize a request in any supported language to the semantic intent \file{critical_reflection}; the runtime does not attempt universal language understanding with a keyword dictionary.  It accepts the route only when the request is relevant to the active problem, requires verification, exceeds the declared confidence gate, contains the complete critical method, and limits autonomy to one bounded cycle.  Generic opinion, ambiguity, and continuous reflection are rejected or left to the ordinary response path.
+
+For admitted requests, APFC ranks uncertainties by goal impact, expected information gain, reducibility, and blocking effect.  It ranks authorized actions by expected progress and information gain minus normalized token, time, action-count, and risk costs.  Unauthorized, previously falsified, or irrelevant actions are inhibited.  A cycle can create a persistent cognitive anchor only if readback passes, names the selected action, and cites evidence.  An unknown or failed readback records a transition but creates no learned anchor.  Later cycles can reuse a verified anchor; disabling anchor memory provides the causal ablation needed to test whether the retained correction changes subsequent choice.
+
+This is operational error learning: verified error and correction may alter later action selection through persistent external state.  It is not parameter learning in the language model, universal multilingual understanding, phenomenal self-reflection, or evidence of general intelligence.
 
 \subsection{A relative origin for meaning and experience}
 
@@ -424,6 +435,9 @@ The controlled evaluation uses commit \file{8e988b7f3fa677993afa5040ff8534002b1b
 \paragraph{Integration revision \revision.}
 The 20 August integration revision is the repository state distributed with this manuscript. It adds the persistent Cortex shell, semantic commitment gate, contextual-state fixtures, and bounded dynamic APFC turn contracts. It reports 223/223 Node tests and 51/51 shell-parity tests.  These validate the added implementation surfaces; they are not substituted for the controlled \baseline{} experiments.
 
+\paragraph{Bounded cognitive-routing extension \cognitive.}
+The 21 August development state adds a language-independent intent contract, deterministic critical-reflection router, cost-aware uncertainty and action pathfinder, evidence-qualified cognitive anchors, and a compact route in the pre-model APFC frame.  The expanded suite reports 232/232 Node tests and 51/51 shell-parity tests.  Four model-normalized fixtures in Italian, English, Spanish, and Japanese reach the same semantic route; a generic opinion and continuous-autonomy request are inhibited.  A live Italian request executes exactly one cycle, selects the declared paired holdout ablation, inhibits an unsupported victory declaration, and produces \file{unverified} with no anchor because no evidence was supplied.  This validates routing and fail-closed persistence, not arbitrary-language comprehension or open-world cognitive improvement.
+
 The public Git and package surfaces contained no absolute host paths, credentials, private keys, or local runtime cache.  Host-local operational state remained outside the published source.  The active local workspace was nevertheless classified as not publishable because ignored host-local artifacts remained on disk.  Passing tests and a clean package do not imply that an arbitrary working tree is ready for release.
 
 \subsection{Implementation elements}
@@ -445,6 +459,7 @@ APFC event ledger & \file{md-os/apfc/executive/event_recorder.js} & Validates sh
 Replay & \file{md-os/os/replay_runtime.js} & Runs deterministic builders and compares semantic fingerprints before and after replay. \\
 Cortex shell & \file{md-os/shell/bin/cortex}; \file{md-os/shell/bin/mdos-console} & Routes native commands, streams App Server events, queues bounded observations, and binds continuity to the Git workspace. \\
 Dynamic APFC turn control & \file{md-os/shell/bin/mdos-console}; \file{md-os/schemas/apfc\_turn\_frame.schema.json}; \file{md-os/schemas/apfc\_turn\_receipt.schema.json} & Maintains bounded theme and focus before the model, constrains authority, and records evidence-qualified three-valued verification after the turn. \\
+Critical-reflection routing & \file{md-os/apfc/executive/cognitive\_intent\_router.js}; \file{cognitive\_pathfinder.js}; \file{md-os/os/apfc\_cognitive\_intent\_runtime.js} & Normalizes model-classified multilingual intent, inhibits unsafe or irrelevant routes, chooses a cost-aware informative step, and admits persistent correction only after matching evidence-bearing readback. \\
 Semantic commitment gate & \file{md-os/apfc/action/semantic_commitment_gate.js} & Classifies provenance and semantic deltas, preserves challenges, requires claim-appropriate authority, and emits deterministic readback. \\
 Self-state and reflection & \file{PERSISTENT_SELF_STATE_MODEL.md}; \file{CONTEXTUAL_FEELING_MODEL.md}; \file{REFLECTIVE_OPERATION_MODEL.md} & Defines inspectable identity, integrated context, and self-questioning whose validity depends on measurable downstream correction. \\
 \bottomrule
@@ -651,7 +666,7 @@ The later \revision{} snapshot is a different state.  Its result summary records
 
 \subsection{20 August integration checks}
 
-For \revision{}, the expanded Node suite reports 223/223 passes and the shell-parity suite 51/51 passes.  These observations verify the revised implementation surface; they are not controlled measures of robot autonomy or safety.
+For \revision{}, the expanded Node suite reports 223/223 passes and the shell-parity suite 51/51 passes.  For \cognitive{}, the expanded Node suite reports 232/232 passes and the shell-parity suite remains 51/51 passes.  These observations verify the revised implementation surface; they are not controlled measures of robot autonomy or safety.
 
 The contextual-state fixture reports 1/2 correct for signal-only control and 2/2 for integrated context, with the same wind signal producing different appropriate actions.  Reflective and persistent-self models define additional contracts; only claims tied to declared fixtures and readback are treated as observed results.
 
@@ -726,6 +741,8 @@ A weaker model with APFC beats an unaided stronger model & \unsupported & A fals
 Parameter-native sleep consolidation or artificial flow & \unsupported & v5.0 changes external context and graph state, not model weights. \\
 Physical-robot safety or real-time control & \unsupported & Device communication was demonstrated; no controlled hazard or certified-safety experiment was performed. \\
 Phenomenal feeling follows from contextual choice & \unsupported & The fixture shows a causal operational effect on two choices, not subjective experience. \\
+Critical-reflection routing proves universal multilingual understanding & \unsupported & Four normalized language fixtures test route invariance; the host model still supplies semantic classification. \\
+Operational cognitive anchors prove parameter learning or AGI & \unsupported & Anchors are evidence-gated external state; model weights are unchanged and open-world superiority is untested. \\
 Consciousness or biological PFC equivalence & \unsupported & APFC is biologically inspired at the functional level; no anatomical, cellular, or neurophysiological equivalence is claimed. \\
 \bottomrule
 \end{tabularx}
@@ -845,6 +862,7 @@ ID & Evidence source & Falsifier & Residual boundary \\
 \claimid{C10} & Cortex shell, parity tests, App Server events, workspace binding & Native input is silently sent to the model, observations are durably promoted without a gate, or clients fork the owned thread & Depends on host terminal facilities, App Server behaviour, and \file{tmux}. \\
 \claimid{C11} & Contextual fixture report with matched wind signal & Integrated context fails to improve the declared choice or fails to select different actions & Two authored cases; no phenomenal or open-domain inference. \\
 \claimid{C12} & APFC turn-frame and receipt schemas, shell parity tests, bounded context measurement, and deterministic replay & Theme or focus is absent from the pre-model frame, execution alone yields pass, or a failed verifier does not yield fail & Deterministic routing and runtime evidence only; no universal semantic verifier. \\
+\claimid{C13} & Cognitive intent schema, router and pathfinder tests, public runtime readback, and the persisted live cycle & A generic opinion is routed to reflection, an unbounded cycle executes, or missing evidence creates an anchor & Model classification remains in the trust boundary; four normalized languages do not prove universal language understanding. \\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -877,6 +895,8 @@ Revision replay status & \revision & APFC, semantic integrity, publication, and 
 Revision replay hash & \revision & \scriptsize\file{67904c420b4b79593149488f9ae59b496d733f01c734523347717f24231085d9} \\
 Revision learning counts & \revision & 3 episodes; 0 promoted; 0 runtime-eligible promotions \\
 Contextual fixture & \revision & signal-only 1/2; integrated context 2/2; accuracy delta 0.5 \\
+Cognitive-routing tests & \cognitive & 232/232 Node; 51/51 shell parity; 4-language normalized route equivalence; opinion and continuous autonomy rejected \\
+Live critical-reflection cycle & \cognitive & Italian route accepted; one cycle; paired ablation selected; unsupported declaration inhibited; \file{unverified}; 0 anchors \\
 Release health & both & runtime operable; active local workspace not publishable \\
 \bottomrule
 \end{tabularx}

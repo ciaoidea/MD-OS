@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_cognitive_anchor_memory.schema.json",
+  "title": "MD-OS APFC Cognitive Anchor Memory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "memory_id", "anchors", "transitions"],
+  "properties": {
+    "schema_version": {"const": 1}, "memory_id": {"const": "apfc_cognitive_anchor_memory"},
+    "anchors": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["anchor_id", "status", "theme_id", "semantic_intent", "uncertainty_id", "action_id", "learned_fact", "correction", "evidence_refs", "confidence", "created_at", "reuse_count"], "properties": {"anchor_id": {"type": "string", "pattern": "^anchor_[a-f0-9]{20}$"}, "status": {"enum": ["verified", "stale", "falsified"]}, "theme_id": {"type": "string"}, "semantic_intent": {"type": "string"}, "uncertainty_id": {"type": "string"}, "action_id": {"type": "string"}, "learned_fact": {"type": "string"}, "correction": {"type": "string"}, "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}, "created_at": {"type": ["string", "null"]}, "reuse_count": {"type": "integer", "minimum": 0}}}},
+    "transitions": {"type": "array", "items": {"type": "object"}}
+  }
+}

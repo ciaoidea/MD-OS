@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_cognitive_intent.schema.json",
+  "title": "MD-OS APFC Language-independent Cognitive Intent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source_language", "source_text", "classification", "path_request"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "source_language": {"type": "string", "minLength": 1},
+    "source_text": {"type": "string", "minLength": 1},
+    "classification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cognitive_intent", "problem_relevant", "verification_required", "autonomy", "confidence", "operations"],
+      "properties": {
+        "cognitive_intent": {"enum": ["critical_reflection", "opinion", "explanation", "ordinary_task", "uncertain"]},
+        "problem_relevant": {"type": "boolean"}, "verification_required": {"type": "boolean"},
+        "autonomy": {"enum": ["none", "single_bounded_cycle", "continuous"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "operations": {"type": "array", "uniqueItems": true, "items": {"enum": ["identify_uncertainty", "formulate_question", "compare_hypotheses", "select_informative_action", "require_readback", "persist_verified_correction"]}}
+      }
+    },
+    "path_request": {"$ref": "apfc_cognitive_path_request.schema.json"}
+  }
+}

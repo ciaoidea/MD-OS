@@ -2675,6 +2675,12 @@ def render_apfc_turn_frame(frame: ApfcTurnFrame) -> str:
             "next": "smallest_authorized_step",
             "closure": "verifier_evidence",
         },
+        "cognitive_route": {
+            "intent": "critical_reflection",
+            "semantic_multilingual": True,
+            "command": "cortex apfc cognitive reflect-intent <intent.json>",
+            "activation": "problem_relevant_verified_single_cycle",
+        },
         "verification_contract": {
             "expected_result": "satisfy_current_human_request",
             "verifier": "independent_observable_readback",

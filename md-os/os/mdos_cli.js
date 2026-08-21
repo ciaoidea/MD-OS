@@ -111,6 +111,8 @@ function usage() {
     `  ${cli} apfc cognitive gate [frame_id]`,
     `  ${cli} apfc cognitive predict [frame_id]`,
     `  ${cli} apfc cognitive run-cycle <source.json>`,
+    `  ${cli} apfc cognitive reflect <request.json>`,
+    `  ${cli} apfc cognitive reflect-intent <intent.json>`,
     `  ${cli} apfc cognitive status`,
     `  ${cli} knowledge import <import_id> <source_dir> [--initial-repository] [--copy-theory-sources] [--copy-raw-ext=.tex,.svg] [--copy-raw-suffix=.schema.json]`,
     `  ${cli} self release status`,
@@ -520,8 +522,10 @@ function main() {
     if (!subcommand) runScript('apfc_runtime.js', ['status']);
     if (subcommand === 'cognitive') {
       const [operation = 'status', ...cognitiveArgs] = rest;
-      if (['ingest', 'bind', 'workspace', 'gate', 'predict', 'run-cycle', 'cycle', 'status'].includes(operation)) {
-        runScript('apfc_cognitive_runtime.js', [operation, ...cognitiveArgs]);
+      if (['ingest', 'bind', 'workspace', 'gate', 'predict', 'run-cycle', 'cycle', 'reflect', 'reflect-intent', 'status'].includes(operation)) {
+        if (operation === 'reflect') runScript('apfc_cognitive_path_runtime.js', ['run-once', ...cognitiveArgs]);
+        else if (operation === 'reflect-intent') runScript('apfc_cognitive_intent_runtime.js', ['route-once', ...cognitiveArgs]);
+        else runScript('apfc_cognitive_runtime.js', [operation, ...cognitiveArgs]);
       }
       usage();
     }
