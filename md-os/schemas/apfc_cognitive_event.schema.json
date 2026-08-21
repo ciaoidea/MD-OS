@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_cognitive_event.schema.json",
+  "title": "MD-OS APFC Cognitive Reflection Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "expected",
+    "observed",
+    "problem_relevant",
+    "verification_required",
+    "autonomy",
+    "path_request"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "enum": [
+        "postcondition_readback",
+        "verifier_readback",
+        "prediction_error"
+      ]
+    },
+    "expected": {
+    },
+    "observed": {
+    },
+    "problem_relevant": {
+      "type": "boolean"
+    },
+    "verification_required": {
+      "type": "boolean"
+    },
+    "autonomy": {
+      "enum": [
+        "none",
+        "single_bounded_cycle",
+        "continuous"
+      ]
+    },
+    "path_request": {
+      "$ref": "apfc_cognitive_path_request.schema.json"
+    }
+  }
+}

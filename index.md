@@ -235,7 +235,7 @@ After execution, a second JSON contract compares observable readback with the
 acceptance condition and records `pass`, `fail`, or `unknown`; successful
 execution alone is never treated as proof. The dynamic context is capped at
 2 KiB, starts no loop, does not replace `/goal`, and remains host-local under
-`md-os/ops/local/`. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `cortex apfc cognitive reflect-intent <intent.json>`. The deterministic router admits only a complete, verification-required, single bounded cycle; generic opinions, low-confidence classifications, and continuous autonomy remain ordinary or inhibited. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
+`md-os/ops/local/`. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
 
 This executive method promotes relevant, pragmatic answers;
 the separate concise communication rule remains in `AGENTS.md`.
