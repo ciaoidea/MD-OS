@@ -10,7 +10,8 @@ This revision aligns the manuscript with the verified 20 August Cortex integrati
 - Separates their test counts, replay hashes, episode counts, and promotion states, removing the apparent contradictions in the previous layout.
 - Preserves the controlled results: 194/194 baseline tests, 1/3 verifier acceptance, 16-to-1 finite hypothesis reduction, 0/2-to-2/2 sealed transfer, and baseline fixed-point replay.
 - Preserves the 20 August B1 checks at 223/223 Node tests and 51/51 shell-parity tests.
-- Adds the 21 August B2 cognitive-routing snapshot: 232/232 Node tests, 51/51 shell-parity tests, four-language normalized route equivalence, false-positive rejection, bounded autonomy, and a live fail-closed Italian cycle.
+- Adds the 21 August B2 cognitive-routing snapshot: 236/236 Node tests, 51/51 shell-parity tests, four-language normalized route equivalence, expected--observed event triggering, false-positive rejection, bounded autonomy, and a live fail-closed Italian cycle.
+- Adds the deterministic `reflect-event` boundary: mismatch may open one cycle; matching readback and continuous event-driven reflection are inhibited.
 - Documents semantic multilingual routing without claiming universal language understanding: the host model classifies intent and the deterministic runtime gates execution.
 - Documents the bounded dynamic APFC turn contract: stable theme, current focus, explicit inhibitions, and post-turn `pass`, `fail`, or `unknown` readback.
 - States explicitly that successful execution alone is not proof and that the mechanism is not a universal semantic verifier.

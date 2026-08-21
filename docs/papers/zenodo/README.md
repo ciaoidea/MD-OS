@@ -29,4 +29,4 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
-The 21 August B2 snapshot documents bounded critical-reflection routing, cost-aware path selection, evidence-qualified cognitive anchors, controlled multilingual intent equivalence, and the live fail-closed readback. It does not claim universal language understanding, parameter learning, consciousness, AGI, or cross-model superiority.
+The 21 August B2 snapshot documents bounded critical-reflection routing from semantic intent and expected--observed event mismatch, cost-aware path selection, evidence-qualified cognitive anchors, controlled multilingual intent equivalence, and fail-closed readback. It does not claim universal language understanding, parameter learning, consciousness, AGI, or cross-model superiority.
