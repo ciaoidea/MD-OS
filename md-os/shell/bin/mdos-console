@@ -302,6 +302,9 @@ Environment:
   MDOS_CODEX_BACKEND  Set app-server (persistent REPL default) or exec.
   MDOS_CODEX_BIN      Override the Codex CLI executable path.
   MDOS_CODEX_TRACE    Set full (default), compact, or quiet event rendering.
+  MDOS_CODEX_IDLE_TIMEOUT_SECONDS
+                     Abort an App Server turn only after this many seconds
+                     without any protocol activity (default: 600).
   MDOS_CODEX_COLOR    Set auto (default), always, or never for Codex ANSI colors.
   MDOS_PROMPT_COLOR
                      Set to auto (default), always, or never.
@@ -955,6 +958,26 @@ def effective_trace_level() -> str:
     return trace
 
 
+def effective_codex_idle_timeout_seconds() -> int:
+    """Return the inactivity limit for one App Server turn."""
+    raw = os.environ.get("MDOS_CODEX_IDLE_TIMEOUT_SECONDS", "600").strip()
+    try:
+        timeout = int(raw)
+    except ValueError:
+        fail("MDOS_CODEX_IDLE_TIMEOUT_SECONDS must be an integer", 64)
+    if timeout < 30 or timeout > 86400:
+        fail(
+            "MDOS_CODEX_IDLE_TIMEOUT_SECONDS must be between 30 and 86400",
+            64,
+        )
+    return timeout
+
+
+def codex_idle_deadline(timeout_seconds: int) -> float:
+    """Create or refresh an App Server inactivity deadline."""
+    return time.monotonic() + timeout_seconds
+
+
 def bounded_shell_output(output: str) -> tuple[str, bool]:
     normalized = output.replace("\r\n", "\n").replace("\r", "\n")
     normalized = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", normalized)
@@ -1354,17 +1377,18 @@ class CodexAppServerClient:
         deadline: float,
         *,
         max_wait: float | None = None,
+        timeout_message: str = "Codex app-server response timed out",
     ) -> dict[str, object] | None:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            fail("Codex app-server timed out after 600 seconds", 70)
+            fail(timeout_message, 70)
         try:
             wait = remaining if max_wait is None else min(remaining, max_wait)
             message = self.messages.get(timeout=wait)
         except queue.Empty:
             if max_wait is not None:
                 return None
-            fail("Codex app-server timed out after 600 seconds", 70)
+            fail(timeout_message, 70)
         if message is self.eof:
             detail = self._stderr_detail() or (
                 f"exit status {self.process.poll()}"
@@ -1969,7 +1993,12 @@ class CodexAppServerClient:
         if model and model.casefold() != "default":
             params["model"] = model
         self._send({"method": "turn/start", "id": request_id, "params": params})
-        deadline = time.monotonic() + 600
+        idle_timeout = effective_codex_idle_timeout_seconds()
+        deadline = codex_idle_deadline(idle_timeout)
+        idle_timeout_message = (
+            "Codex app-server produced no protocol activity for "
+            f"{idle_timeout} seconds"
+        )
         response_received = False
         active_turn_id: str | None = None
         pending_steering: list[str] = []
@@ -2033,9 +2062,11 @@ class CodexAppServerClient:
             message = self._receive(
                 deadline,
                 max_wait=0.1 if steering_reader is not None else None,
+                timeout_message=idle_timeout_message,
             )
             if message is None:
                 continue
+            deadline = codex_idle_deadline(idle_timeout)
             if message.get("id") == request_id and "method" not in message:
                 error = message.get("error")
                 if isinstance(error, dict):

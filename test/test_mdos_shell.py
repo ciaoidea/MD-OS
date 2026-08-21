@@ -81,6 +81,38 @@ def load_launcher_module():
 LAUNCHER = load_launcher_module()
 
 
+class CodexTimeoutContractTests(unittest.TestCase):
+    def test_idle_timeout_defaults_to_ten_minutes(self):
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("MDOS_CODEX_IDLE_TIMEOUT_SECONDS", None)
+            self.assertEqual(ENGINE.effective_codex_idle_timeout_seconds(), 600)
+
+    def test_idle_timeout_is_configurable(self):
+        with mock.patch.dict(os.environ, {"MDOS_CODEX_IDLE_TIMEOUT_SECONDS": "1800"}):
+            self.assertEqual(ENGINE.effective_codex_idle_timeout_seconds(), 1800)
+
+    def test_idle_timeout_rejects_invalid_values(self):
+        for value in ("not-a-number", "0", "86401"):
+            with self.subTest(value=value), mock.patch.dict(
+                os.environ, {"MDOS_CODEX_IDLE_TIMEOUT_SECONDS": value}
+            ), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as raised:
+                    ENGINE.effective_codex_idle_timeout_seconds()
+                self.assertEqual(raised.exception.code, 64)
+
+    def test_protocol_activity_refreshes_the_idle_deadline(self):
+        with mock.patch.object(ENGINE.time, "monotonic", side_effect=[10.0, 25.0]):
+            self.assertEqual(ENGINE.codex_idle_deadline(600), 610.0)
+            self.assertEqual(ENGINE.codex_idle_deadline(600), 625.0)
+
+    def test_receive_reports_supplied_idle_timeout(self):
+        client = object.__new__(ENGINE.CodexAppServerClient)
+        with mock.patch.object(ENGINE.time, "monotonic", return_value=100.0), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as raised:
+                client._receive(99.0, timeout_message="idle timeout marker")
+        self.assertEqual(raised.exception.code, 70)
+
+
 class FakeCodex:
     THREAD_ID = "01900000-0000-7000-8000-000000000001"
 
