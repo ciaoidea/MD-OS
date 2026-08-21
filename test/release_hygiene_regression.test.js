@@ -55,6 +55,18 @@ function openwaProfile() {
   };
 }
 
+function npmPackFiles() {
+  const result = spawnSync('npm', ['pack', '--dry-run', '--json'], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+    maxBuffer: 20 * 1024 * 1024,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.length, 1);
+  return report[0].files.map((entry) => entry.path).sort();
+}
+
 test('.gitignore protects active md-os runtime state', () => {
   const gitignore = readRepoText('.gitignore');
 
@@ -81,6 +93,25 @@ test('OpenWA release files do not contain private host paths', () => {
 
   for (const relativePath of checkedFiles) {
     assert.doesNotMatch(readRepoText(relativePath), privatePathPattern, relativePath);
+  }
+});
+
+test('npm release surface excludes host-local and scratch artifacts', () => {
+  const files = npmPackFiles();
+  const forbiddenPath = /(^|\/)(?:\.venv(?:\/|$)|\.ruff_cache(?:\/|$)|__pycache__(?:\/|$)|task-spec-outside-mdos-)|^md-os\/ops\/(?!\.gitkeep$)|paper\.(?:aux|bbl|blg|log|out|toc|fls|fdb_latexmk|synctex\.gz)$/;
+
+  for (const relativePath of files) assert.doesNotMatch(relativePath, forbiddenPath, relativePath);
+});
+
+test('npm release text contains no private absolute home paths', () => {
+  const privatePathPattern = /\/home\/[^\/\s]+(?:\/|$)|\/Users\/[^\/\s]+(?:\/|$)|[A-Za-z]:\\Users\\[^\\\s]+(?:\\|$)/;
+  const textExtensions = new Set(['.cff', '.go', '.js', '.json', '.md', '.py', '.sh', '.tex', '.txt', '.yaml', '.yml']);
+
+  for (const relativePath of npmPackFiles()) {
+    if (!textExtensions.has(path.extname(relativePath).toLowerCase())) continue;
+    const filePath = path.join(REPO_ROOT, relativePath);
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) continue;
+    assert.doesNotMatch(fs.readFileSync(filePath, 'utf8'), privatePathPattern, relativePath);
   }
 });
 

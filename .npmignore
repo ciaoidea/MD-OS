@@ -30,3 +30,14 @@ token.json
 
 !docs/papers/zenodo/paper.pdf
 !docs/papers/zenodo/figures/standalone/*_standalone.pdf
+
+# Keep publication sources, but never ship local LaTeX build scratch files.
+docs/papers/zenodo/*.aux
+docs/papers/zenodo/*.bbl
+docs/papers/zenodo/*.blg
+docs/papers/zenodo/*.log
+docs/papers/zenodo/*.out
+docs/papers/zenodo/*.toc
+docs/papers/zenodo/*.fdb_latexmk
+docs/papers/zenodo/*.fls
+docs/papers/zenodo/*.synctex.gz

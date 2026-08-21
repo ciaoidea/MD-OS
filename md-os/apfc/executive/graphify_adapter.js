@@ -112,17 +112,29 @@ function renderHtml(view) {
 </body></html>\n`;
 }
 
-function writeViews(apfcDir, graph, liveGraph = null) {
+function portablePath(workspaceRoot, targetPath) {
+  return path.relative(workspaceRoot, targetPath).replace(/\\/g, '/');
+}
+
+function writeViews(apfcDir, graph, liveGraph = null, options = {}) {
   const views = buildViews(graph, liveGraph);
   const viewsDir = path.join(apfcDir, 'views');
   const htmlDir = path.join(apfcDir, 'graphify');
+  const workspaceRoot = options.workspace_root || path.resolve(apfcDir, '..', '..', '..', '..');
   ensureDir(viewsDir);
   ensureDir(htmlDir);
   for (const viewId of VIEW_IDS) {
     atomicWriteJson(path.join(viewsDir, `${viewId}.json`), views[viewId]);
     atomicWriteText(path.join(htmlDir, `${viewId}.html`), renderHtml(views[viewId]));
   }
-  return { ok: true, graph_id: graph.graph_id, graph_hash: sha256Json(graph), view_ids: VIEW_IDS.slice(), json_dir: viewsDir, html_dir: htmlDir };
+  return {
+    ok: true,
+    graph_id: graph.graph_id,
+    graph_hash: sha256Json(graph),
+    view_ids: VIEW_IDS.slice(),
+    json_dir: portablePath(workspaceRoot, viewsDir),
+    html_dir: portablePath(workspaceRoot, htmlDir),
+  };
 }
 
 function buildGraphifyFromFiles(apfcDir) {

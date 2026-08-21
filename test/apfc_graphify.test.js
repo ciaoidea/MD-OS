@@ -15,6 +15,10 @@ test('Graphify emits five read-only views preserving identifiers, edge semantics
   const live = minimalGraph([liveNode]);
   const result = writeViews(env.apfc, graph, live);
   assert.deepEqual(result.view_ids, VIEW_IDS);
+  assert.equal(result.json_dir, 'md-os/ops/apfc/executive/views');
+  assert.equal(result.html_dir, 'md-os/ops/apfc/executive/graphify');
+  assert.equal(path.isAbsolute(result.json_dir), false);
+  assert.equal(path.isAbsolute(result.html_dir), false);
   for (const viewId of VIEW_IDS) {
     const payload = JSON.parse(fs.readFileSync(path.join(env.apfc, 'views', `${viewId}.json`), 'utf8'));
     assert.equal(payload.graph_hash, result.graph_hash);
