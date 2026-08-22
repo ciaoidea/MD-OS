@@ -81,26 +81,15 @@ appropriate.
 installed and signed in, Python 3.10 or newer, Node.js 20 or newer, and a
 supported shell (Bash, Zsh, Fish, or PowerShell).**
 
-Clone the repository:
+Clone the repository and start its local Cortex launcher:
 
 ```bash
 git clone https://github.com/ciaoidea/MD-OS.git
 cd MD-OS
-./install-md-os-console.sh
+./cortex
 ```
 
-Or [download the ZIP](https://github.com/ciaoidea/MD-OS/archive/refs/heads/main.zip),
-extract it, open a terminal inside `MD-OS-main`, and run:
-
-```bash
-./install-md-os-console.sh
-```
-
-Open a new terminal and start Cortex from any directory:
-
-```bash
-cortex
-```
+Or [download the ZIP](https://github.com/ciaoidea/MD-OS/archive/refs/heads/main.zip), extract it, open a terminal inside `MD-OS-main`, and run `./cortex`. No global launcher is installed: each checkout runs its own Cortex, avoiding accidental execution from another repository.
 
 Type ordinary shell commands for direct control, or describe an objective in
 natural language to delegate it to Cortex.
@@ -255,7 +244,7 @@ After execution, a second JSON contract compares observable readback with the
 acceptance condition and records `pass`, `fail`, or `unknown`; successful
 execution alone is never treated as proof. The dynamic context is capped at
 2 KiB, starts no loop, does not replace `/goal`, and remains host-local under
-`md-os/ops/local/`. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
+`md-os/ops/local/`. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
 
 This executive method promotes relevant, pragmatic answers;
 the separate concise communication rule remains in `AGENTS.md`.
@@ -263,19 +252,12 @@ the separate concise communication rule remains in `AGENTS.md`.
 The same public command retains deterministic MD-OS subcommands:
 
 ```bash
-cortex health
-cortex graphify status
-cortex replay
+./cortex health
+./cortex graphify status
+./cortex replay
 ```
 
-`cortex` is the primary launcher. `mdos` remains a deprecated compatibility
-alias for existing scripts, and `mdos-console` remains the compatibility engine
-name. Preview installer
-changes without writing:
-
-```bash
-./install-md-os-console.sh --dry-run
-```
+`./cortex` is the only supported interactive launcher for a repository checkout. It resolves its engine relative to that checkout. `mdos` remains an internal compatibility alias and `mdos-console` remains the internal shell engine; neither requires a global `cortex` command.
 
 See [MD-OS Cortex Agentic Shell](docs/SEMANTIC_SHELL.md) for the exact thread-binding,
 approval, one-shot, privacy, and compatibility behavior.
@@ -785,7 +767,7 @@ Core discipline documents:
   indexes, capability indexes, context packs, eval readback, and epistemic
   health reports.
 - A verified single-cycle learning loop, exposed through the historical
-  `cortex agi` compatibility command family, that records task episodes, analyzes
+  `./cortex agi` compatibility command family, that records task episodes, analyzes
   failures, distills skill candidates, runs evals, applies promotion gates, and
   rebuilds the runtime compiler without claiming consciousness, AGI, or
   unrestricted autonomy.
@@ -880,18 +862,18 @@ accumulates verified operational competence, not context volume or
 self-declared success:
 
 ```bash
-cortex cognition run-once --task-spec md-os/ops/tasks/task_repair.json
-cortex agi eval
-cortex agi learn
-cortex agi promote
-cortex agi accelerate --experiment-id neuromorphic_transfer_20260718_v2
-cortex agi prove \
+./cortex cognition run-once --task-spec md-os/ops/tasks/task_repair.json
+./cortex agi eval
+./cortex agi learn
+./cortex agi promote
+./cortex agi accelerate --experiment-id neuromorphic_transfer_20260718_v2
+./cortex agi prove \
   --experiment-id agi_generality_reference_20260718_v3 \
   --cycles 96 \
   --sessions 6
 ```
 
-`cortex agi ...` remains a compatibility alias, not a separate AGI layer. A
+`./cortex agi ...` remains a compatibility alias, not a separate AGI layer. A
 transaction writes typed TaskSpecs under `md-os/ops/tasks/`, ActionReceipts
 under `md-os/ops/action_receipts/`, VerificationResults produced by a separate
 deterministic verifier under `md-os/ops/verifications/`, and proof-carrying
@@ -906,14 +888,14 @@ regression tests, an oracle outside the candidate worktree, diff policy, and
 explicit experimental configurations:
 
 ```bash
-cortex benchmark software-repair configurations
+./cortex benchmark software-repair configurations
 
-cortex benchmark software-repair generate \
+./cortex benchmark software-repair generate \
   --case md-os/benchmarks/software_repair/cases/missing_boundary_validation.json \
   --provider md-os/benchmarks/software_repair/providers/missing_boundary_validation_controlled.json \
   --configuration mdos_verified_runtime
 
-cortex benchmark software-repair run \
+./cortex benchmark software-repair run \
   --case md-os/benchmarks/software_repair/cases/missing_boundary_validation.json \
   --provider md-os/benchmarks/software_repair/providers/missing_boundary_validation_controlled.json \
   --configuration mdos_verified_runtime
@@ -970,9 +952,9 @@ The v5 SAL evidence layer turns that remaining boundary into an executable
 score instead of a conversational percentage:
 
 ```bash
-cortex agi score
-cortex agi evaluation-request
-cortex agi certify \
+./cortex agi score
+./cortex agi evaluation-request
+./cortex agi certify \
   --report /external/evaluator_a.json \
   --report /external/evaluator_b.json \
   --trust-store /external/trust_store.json
@@ -1080,7 +1062,7 @@ MD-OS should be readable as files and navigable as a graph.
 Run the graph builder after documentation or knowledge-base changes:
 
 ```bash
-cortex graph build
+./cortex graph build
 npm run build:graph
 node md-os/os/build_markdown_graph.js
 ```
@@ -1089,7 +1071,7 @@ Run the semantic graph builder when semantic, epistemic, cognitive, or import
 cohesion matters:
 
 ```bash
-cortex semantic graph build
+./cortex semantic graph build
 npm run build:semantic
 node md-os/os/build_semantic_knowledge_graph.js
 ```
@@ -1131,7 +1113,7 @@ Compile the semantic-operational runtime after semantic graph, import,
 connector, permission, identity, or natural-language program changes:
 
 ```bash
-cortex compile-runtime
+./cortex compile-runtime
 npm run build:runtime
 node md-os/os/build_runtime_compiler.js
 ```
@@ -1161,7 +1143,7 @@ Use one import command for external repositories, notes, papers, exports, or
 documentation directories:
 
 ```bash
-cortex knowledge import <import_id> <source_dir>
+./cortex knowledge import <import_id> <source_dir>
 ```
 
 The import command scans the source in read-only mode and writes audit/readback
@@ -1190,7 +1172,7 @@ For a virgin or deliberately reset repository, an MD-OS release source can be
 used as the initial identity and operating knowledge source:
 
 ```bash
-cortex knowledge import <import_id> <source_dir> --initial-repository
+./cortex knowledge import <import_id> <source_dir> --initial-repository
 ```
 
 Initial mode applies the imported identity bootstrap and path-preserving
@@ -1206,7 +1188,7 @@ MD-OS evolves itself through explicit self-release proposals and generated
 readback, not through implicit session decisions.
 
 ```bash
-cortex self release status
+./cortex self release status
 npm run build:release
 node md-os/os/build_self_release_index.js
 ```
@@ -1269,7 +1251,7 @@ When a new urgent ticket appears for an active project.
 Compile them:
 
 ```bash
-cortex compile-programs
+./cortex compile-programs
 ```
 
 or:
@@ -1477,7 +1459,7 @@ codex --help
 The Cortex shell assumes that `codex` is already installed and on `PATH`:
 
 ```bash
-cortex
+./cortex
 ```
 
 Without Codex, the low-level filesystem runtime still works through
@@ -1508,7 +1490,7 @@ cd MD-OS
 npm run build:all
 ```
 
-`cortex init <target_dir>` creates a fresh MD-OS (Artificial Prefrontal Cortex) v5.0 workspace, copies the
+`./cortex init <target_dir>` creates a fresh MD-OS (Artificial Prefrontal Cortex) v5.0 workspace, copies the
 public kernel and docs, initializes demo state, and leaves local runtime memory
 under `md-os/ops/`.
 
@@ -1539,13 +1521,13 @@ Resolution order:
 2. The nearest MD-OS workspace found by walking upward from the current working
    directory.
 3. The installed package location, as a fallback for package operations such as
-   `cortex init`.
+   `./cortex init`.
 
 After moving a workspace, run commands from inside the new directory:
 
 ```bash
 cd /path/to/moved-md-os
-cortex build all
+./cortex build all
 ```
 
 Absolute paths may still appear in `md-os/ops/local/**` because that directory is
@@ -1553,14 +1535,14 @@ host-local discovery cache for hardware, software, desktop, and similar
 substrates. Clean and refresh it after a move with:
 
 ```bash
-cortex hardware clean
-cortex software clean
-cortex hardware bootstrap
-cortex software bootstrap
+./cortex hardware clean
+./cortex software clean
+./cortex hardware bootstrap
+./cortex software bootstrap
 ```
 
 External host configurations may also need absolute paths so the host knows
-where to start MD-OS. If a globally linked `cortex` command points to an old
+where to start MD-OS. The repository-local `./cortex` prevents an old global command from deciding
 checkout, reinstall or relink it from the new checkout; the workspace contents
 remain path-portable.
 
@@ -1675,7 +1657,7 @@ md-os/ops/roles/<role_id>/intake/raw/
 Put the raw material for one role into `intake/raw/`, then run:
 
 ```bash
-cortex role intake <role_id>
+./cortex role intake <role_id>
 ```
 
 or directly:
@@ -1702,7 +1684,7 @@ extractor-required until a connector turns them into readable operational text.
 After intake, run role sensemaking:
 
 ```bash
-cortex role sensemake <role_id>
+./cortex role sensemake <role_id>
 ```
 
 This creates the first role-first operational map:
@@ -1730,7 +1712,7 @@ npm run replay
 or, when installed as a package:
 
 ```bash
-cortex replay
+./cortex replay
 ```
 
 Replay removes only known compiled outputs, preserves sources, project
@@ -1745,7 +1727,7 @@ When an agent or human may be editing the same Markdown/runtime file, register
 a proposal instead of overwriting the target:
 
 ```bash
-cortex propose-change md-os/ops/continuity.md "Clarify the next resume note"
+./cortex propose-change md-os/ops/continuity.md "Clarify the next resume note"
 ```
 
 MD-OS writes:
@@ -1782,7 +1764,7 @@ canonical `work_items.ndjson`.
 Build the hot active summary and non-destructive terminal archive:
 
 ```bash
-cortex compact
+./cortex compact
 ```
 
 Outputs:
@@ -1902,7 +1884,7 @@ npm run connector:api:list
 Run a configured request:
 
 ```bash
-cortex connector api run <project_id> <request_id>
+./cortex connector api run <project_id> <request_id>
 ```
 
 The API connector writes the same kind of normalized source snapshot as the
@@ -1921,16 +1903,16 @@ connectors, schemas, audit artifacts, and knowledge nodes change.
 Bootstrap the Graphify connector and build the native topology maps:
 
 ```bash
-cortex graphify bootstrap
-cortex graphify build .
-cortex graphify connector-map
-cortex graphify neural-map
+./cortex graphify bootstrap
+./cortex graphify build .
+./cortex graphify connector-map
+./cortex graphify neural-map
 ```
 
 Ask for a bounded routing pack before reading large parts of the repository:
 
 ```bash
-cortex graphify orient "agentic task scheduling and verification"
+./cortex graphify orient "agentic task scheduling and verification"
 ```
 
 The orientation pack reads the structural Graphify graph, the semantic neural
@@ -1978,9 +1960,9 @@ npm run live:stop
 Equivalent CLI:
 
 ```bash
-cortex live start
-cortex live status
-cortex live stop
+./cortex live start
+./cortex live status
+./cortex live stop
 ```
 
 Live mode keeps a heartbeat and scheduled rebuild loop under
@@ -1989,20 +1971,20 @@ sentience: turning it on makes MD-OS interactive and continuously maintained;
 turning it off leaves readable state available for ordinary resume and replay.
 
 In Codex or another host chat, "turn live mode on" should map to
-`cortex live start`; "turn live mode off" should map to `cortex live stop`.
+`./cortex live start`; "turn live mode off" should map to `./cortex live stop`.
 
 ## Hardware bootstrap
 
 MD-OS can run a read-only hardware substrate bootstrap:
 
 ```bash
-cortex hardware bootstrap
+./cortex hardware bootstrap
 ```
 
 Alias:
 
 ```bash
-cortex device discover
+./cortex device discover
 ```
 
 This produces a boot-style scan and writes:
@@ -2019,7 +2001,7 @@ This directory is host-local, machine-specific, and safe to delete before
 packaging, copying, or distributing an MD-OS workspace:
 
 ```bash
-cortex hardware clean
+./cortex hardware clean
 ```
 
 Cleaning also refreshes derived runtime views so stale hardware summaries are
@@ -2032,18 +2014,18 @@ camera streams, record audio, print, change volume, or write to serial/GPIO.
 Explicit hardware control is a separate layer:
 
 ```bash
-cortex hardware list
-cortex hardware run "turn up the volume"
-cortex audio volume up
-cortex audio volume down
-cortex audio volume zero
-cortex audio speak "<text>"
-cortex screen capture
-cortex display status
-cortex display brightness set 80
+./cortex hardware list
+./cortex hardware run "turn up the volume"
+./cortex audio volume up
+./cortex audio volume down
+./cortex audio volume zero
+./cortex audio speak "<text>"
+./cortex screen capture
+./cortex display status
+./cortex display brightness set 80
 ```
 
-`cortex audio speak` uses the system voice path by default. The system voice
+`./cortex audio speak` uses the system voice path by default. The system voice
 path now prefers a more intelligible Italian synthesis voice
 (`Italian+sandro`) with a slightly slower rate. Set `MDOS_AUDIO_SPEAK_VOICE=tts`
 to prefer gTTS, `MDOS_AUDIO_SPEAK_VOICE=kokoro` to use local Kokoro-ONNX, and
@@ -2089,14 +2071,14 @@ MD-OS can run a read-only software substrate bootstrap for installed
 applications and host services:
 
 ```bash
-cortex software bootstrap
+./cortex software bootstrap
 ```
 
 Aliases:
 
 ```bash
-cortex apps discover
-cortex services discover
+./cortex apps discover
+./cortex services discover
 ```
 
 This writes:
@@ -2116,7 +2098,7 @@ This directory is host-local, machine-specific, and safe to delete before
 packaging, copying, or distributing an MD-OS workspace:
 
 ```bash
-cortex software clean
+./cortex software clean
 ```
 
 The bootstrap only discovers host-exposed software surfaces. It does not launch
@@ -2291,53 +2273,53 @@ node md-os/os/mcp_server.js
 Installed CLI equivalents:
 
 ```bash
-cortex init
-cortex init my-agent-os
-cortex demo
-cortex compile-programs
-cortex signal <project_id> "Signal summary"
-cortex build <project_id>
-cortex build all
-cortex graph build
-cortex graphify status
-cortex graphify bootstrap
-cortex graphify build .
-cortex graphify connector-map
-cortex graphify neural-map
-cortex graphify orient "agentic task scheduling and verification"
-cortex hardware bootstrap
-cortex hardware list
-cortex hardware run "turn up the volume"
-cortex hardware clean
-cortex device discover
-cortex device clean
-cortex software bootstrap
-cortex software list
-cortex software clean
-cortex apps discover
-cortex services discover
-cortex paths
-cortex audio volume up
-cortex audio volume down
-cortex audio volume zero
-cortex audio speak "<text>"
-cortex screen capture
-cortex live status
-cortex live start
-cortex live stop
-cortex continuity status
-cortex continuity start
-cortex continuity stop
-cortex role intake <role_id>
-cortex role sensemake <role_id>
-cortex connector list
-cortex connector run <project_id> <command_id>
-cortex connector api list
-cortex connector api run <project_id> <request_id>
-cortex mcp-server
-cortex replay
-cortex hygiene
-cortex audit
+./cortex init
+./cortex init my-agent-os
+./cortex demo
+./cortex compile-programs
+./cortex signal <project_id> "Signal summary"
+./cortex build <project_id>
+./cortex build all
+./cortex graph build
+./cortex graphify status
+./cortex graphify bootstrap
+./cortex graphify build .
+./cortex graphify connector-map
+./cortex graphify neural-map
+./cortex graphify orient "agentic task scheduling and verification"
+./cortex hardware bootstrap
+./cortex hardware list
+./cortex hardware run "turn up the volume"
+./cortex hardware clean
+./cortex device discover
+./cortex device clean
+./cortex software bootstrap
+./cortex software list
+./cortex software clean
+./cortex apps discover
+./cortex services discover
+./cortex paths
+./cortex audio volume up
+./cortex audio volume down
+./cortex audio volume zero
+./cortex audio speak "<text>"
+./cortex screen capture
+./cortex live status
+./cortex live start
+./cortex live stop
+./cortex continuity status
+./cortex continuity start
+./cortex continuity stop
+./cortex role intake <role_id>
+./cortex role sensemake <role_id>
+./cortex connector list
+./cortex connector run <project_id> <command_id>
+./cortex connector api list
+./cortex connector api run <project_id> <request_id>
+./cortex mcp-server
+./cortex replay
+./cortex hygiene
+./cortex audit
 ```
 
 ## Current demo projects

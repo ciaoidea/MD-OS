@@ -12,6 +12,6 @@
     "model.invoke",
     "process.execute"
   ],
-  "max_input_chars": 4096,
+  "max_input_chars": 1000000,
   "max_output_chars": 4096
 }

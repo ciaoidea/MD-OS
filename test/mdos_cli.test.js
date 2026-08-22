@@ -30,7 +30,9 @@ test('cortex init <target_dir> scaffolds a fresh MD-OS workspace', () => {
   assert.ok(fs.existsSync(path.join(target, '.gitignore')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/os/mdos.js')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/shell/bin/mdos-console')));
-  assert.ok(fs.existsSync(path.join(target, 'install-md-os-console.sh')));
+  assert.ok(fs.existsSync(path.join(target, 'cortex')));
+  assert.ok(fs.statSync(path.join(target, 'cortex')).mode & 0o111);
+  assert.ok(!fs.existsSync(path.join(target, 'install-md-os-console.sh')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/apfc/README.md')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/kb/README.md')));
   assert.ok(fs.existsSync(path.join(target, 'md-os/examples/projects/demo_general_system/project.json')));

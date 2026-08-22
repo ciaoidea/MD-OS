@@ -1,6 +1,6 @@
 # MD-OS Cortex Agentic Shell
 
-`cortex` is the public interactive entrypoint for MD-OS. It preserves the real
+`./cortex` is the repository-local interactive entrypoint for MD-OS. It preserves the real
 host-shell experience and fuses it with the native Codex agent loop. It is not
 a browser console, a simulated filesystem, or a one-command text generator.
 
@@ -27,52 +27,22 @@ interactive shell.
 - Python 3.10 or newer;
 - Codex CLI installed, authenticated, and available as `codex`;
 - Node.js 20 or newer for deterministic `cortex` runtime subcommands;
-- Bash, Zsh, Fish, or PowerShell for the installed adapter.
-
-## Install
-
-From the MD-OS checkout:
-
-```bash
-./install-md-os-console.sh
-```
-
-The installer:
-
-1. makes the public `md-os/shell/bin/cortex` launcher and its compatibility
-   engine executable;
-2. puts that checked-out `bin` directory on the selected shell's `PATH`;
-3. sources the corresponding adapter from `md-os/shell/adapters/`;
-4. backs up an existing profile before changing it.
-
-Preview the exact paths without writing:
-
-```bash
-./install-md-os-console.sh --dry-run
-```
-
-Select an adapter explicitly when needed:
-
-```bash
-./install-md-os-console.sh --shell bash
-./install-md-os-console.sh --shell zsh
-./install-md-os-console.sh --shell fish
-./install-md-os-console.sh --shell powershell
-```
-
-Open a new terminal or reload the configured shell profile after installation.
+- a POSIX shell for the repository-local launcher (Windows uses the packaged command wrapper).
 
 ## Start
 
-Run this from any directory:
+No installation or PATH modification is required. From the checkout root:
 
 ```bash
-cortex
+./cortex
 ```
+
+
+Run `./cortex` from the checkout root. From another directory, use the explicit path to that checkout, for example `/path/to/MD-OS/cortex`.
 
 On Linux, macOS, and BSD when `tmux` is available, an interactive invocation
 attaches to one shared Cortex session derived from the Git workspace. Running
-`cortex` from a local terminal, an SSH login, or WebSSH while inside the same
+`./cortex` from a local terminal, an SSH login, or WebSSH while inside the same
 repository therefore displays and controls the same REPL, App Server, active
 turn, and Codex thread. Multiple clients may remain attached simultaneously.
 Outside Git, the resolved current directory is the session boundary.
@@ -110,15 +80,15 @@ remove bracketed-paste events.
 One-shot natural-language input also uses the native Codex loop:
 
 ```bash
-cortex "explain the architecture of this repository"
+./cortex "explain the architecture of this repository"
 ```
 
 The deterministic MD-OS runtime remains under the same command:
 
 ```bash
-cortex health
-cortex graphify status
-cortex replay
+./cortex health
+./cortex graphify status
+./cortex replay
 ```
 
 `cortex` dispatches known deterministic subcommands to `md-os/os/mdos.js`.
@@ -347,7 +317,7 @@ The bootstrap still exists and has a separate role:
 ./bootstrap-md-os-codex.sh
   -> opens the ordinary interactive Codex client in this repository
 
-cortex
+./cortex
   -> opens the MD-OS shell from any directory
   -> native input stays shell-native
   -> natural language enters a workspace-bound ordinary Codex agent thread

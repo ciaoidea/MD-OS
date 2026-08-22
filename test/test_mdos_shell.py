@@ -19,7 +19,7 @@ from unittest import mock
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ENGINE_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos-console"
-LAUNCHER_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "cortex"
+LAUNCHER_PATH = PROJECT_ROOT / "cortex"
 COMPATIBILITY_LAUNCHER_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos"
 INSTALLER_PATH = PROJECT_ROOT / "md-os" / "shell" / "install.py"
 
@@ -460,6 +460,14 @@ def run_console(arguments: list[str], fake: FakeCodex, cwd: Path = PROJECT_ROOT)
 
 
 class SemanticShellParityTests(unittest.TestCase):
+    def test_root_cortex_is_the_only_launcher(self):
+        source = LAUNCHER_PATH.read_text(encoding="utf-8")
+        self.assertTrue(os.access(LAUNCHER_PATH, os.X_OK))
+        self.assertIn("REPOSITORY_ROOT", source)
+        self.assertIn("mdos-console", source)
+        self.assertNotIn("/home/", source)
+        self.assertFalse((PROJECT_ROOT / "md-os" / "shell" / "bin" / "cortex").exists())
+
     def setUp(self):
         ENGINE.reset_inline_paste_state()
 
@@ -580,6 +588,18 @@ class SemanticShellParityTests(unittest.TestCase):
         self.assertEqual(program.kind, "agent-dispatch")
         self.assertIn("Route to `answer`", program.instructions)
         self.assertNotIn("Stable repository purpose", program.instructions)
+
+    def test_agent_programs_accept_one_million_input_characters(self):
+        runtime = ENGINE.load_runtime()
+        for reference in ("orchestrator.md", "code.md", "os.md"):
+            with self.subTest(reference=reference):
+                program = ENGINE.load_program(reference, runtime)
+                self.assertEqual(program.max_input_length, 1_000_000)
+                ENGINE.enforce_input_limit("x" * 1_000_000, program)
+                with contextlib.redirect_stderr(io.StringIO()):
+                    with self.assertRaises(SystemExit) as raised:
+                        ENGINE.enforce_input_limit("x" * 1_000_001, program)
+                self.assertEqual(raised.exception.code, 64)
 
     def test_explicit_native_command_bypasses_codex(self):
         with FakeCodex() as fake:

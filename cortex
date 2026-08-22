@@ -12,9 +12,9 @@ import sys
 from typing import NoReturn
 
 
-BIN_DIR = Path(__file__).resolve().parent
-SHELL_ENGINE = BIN_DIR / "mdos-console"
-RUNTIME_CLI = BIN_DIR.parent.parent / "os" / "mdos.js"
+REPOSITORY_ROOT = Path(__file__).resolve().parent
+SHELL_ENGINE = REPOSITORY_ROOT / "md-os" / "shell" / "bin" / "mdos-console"
+RUNTIME_CLI = REPOSITORY_ROOT / "md-os" / "os" / "mdos.js"
 RUNTIME_COMMANDS = frozenset({
     "agenda", "agi", "apfc", "apps", "archive", "audio", "audit",
     "benchmark", "boot-summary", "build", "capability", "cognition",

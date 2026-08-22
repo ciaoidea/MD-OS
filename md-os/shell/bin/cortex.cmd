@@ -7,9 +7,9 @@ echo ERROR: Python 3 was not found in PATH. 1>&2
 exit /b 69
 
 :cortex_use_py
-py -3 "%~dp0cortex" %*
+py -3 "%~dp0..\..\..\cortex" %*
 exit /b %errorlevel%
 
 :cortex_use_python
-python "%~dp0cortex" %*
+python "%~dp0..\..\..\cortex" %*
 exit /b %errorlevel%

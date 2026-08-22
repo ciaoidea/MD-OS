@@ -9,5 +9,6 @@ import sys
 
 
 BIN_DIR = Path(__file__).resolve().parent
-sys.argv[0] = str(BIN_DIR / "cortex")
+REPOSITORY_ROOT = BIN_DIR.parents[2]
+sys.argv[0] = str(REPOSITORY_ROOT / "cortex")
 runpy.run_path(sys.argv[0], run_name="__main__")

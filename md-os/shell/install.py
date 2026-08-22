@@ -16,9 +16,10 @@ from typing import NoReturn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+REPOSITORY_ROOT = PROJECT_ROOT.parent.parent
 BIN_DIR = PROJECT_ROOT / "bin"
 ENGINE_PATH = BIN_DIR / "mdos-console"
-LAUNCHER_PATH = BIN_DIR / "cortex"
+LAUNCHER_PATH = REPOSITORY_ROOT / "cortex"
 COMPATIBILITY_LAUNCHER_PATH = BIN_DIR / "mdos"
 SHELL_DIR = PROJECT_ROOT / "adapters"
 # Stable managed markers preserve idempotent upgrades from the earlier name.

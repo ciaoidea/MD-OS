@@ -41,7 +41,7 @@ const SCAFFOLD_ENTRIES = [
   'test',
   'package.json',
   'bootstrap-md-os-codex.sh',
-  'install-md-os-console.sh',
+  'cortex',
   'session-recovery.sh',
 ];
 

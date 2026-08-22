@@ -773,7 +773,7 @@ def load_program(reference: str, runtime: RuntimeSpec | None = None) -> ProgramS
         contract,
         "max_input_chars",
         minimum=1,
-        maximum=32768,
+        maximum=1_000_000,
         scope=scope,
     )
     max_output_length = require_integer(
@@ -861,6 +861,11 @@ def load_program(reference: str, runtime: RuntimeSpec | None = None) -> ProgramS
         instructions=instructions,
         context_hash=context_hash,
     )
+
+
+def enforce_input_limit(human_request: str, program: ProgramSpec) -> None:
+    if len(human_request) > program.max_input_length:
+        fail(f"input exceeds {program.max_input_length} characters", 64)
 
 
 def detect_platform() -> PlatformSpec:
@@ -4325,8 +4330,7 @@ def run_request(
         if reference is None:
             fail("missing agent reference", 64)
         program = load_program(reference, runtime)
-    if len(human_request) > program.max_input_length:
-        fail(f"input exceeds {program.max_input_length} characters", 64)
+    enforce_input_limit(human_request, program)
 
     if (
         automatic
