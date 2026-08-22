@@ -1,6 +1,6 @@
 # Revision notes
 
-This revision aligns the manuscript with the verified 20 August Cortex integration while preserving the original controlled experimental evidence.
+This revision aligns the manuscript with the verified Cortex integration through 22 August while preserving the original controlled experimental evidence.
 
 - Rewrites the abstract around one causal line: proposal -> authorization -> execution -> verification -> durable commitment.
 - Opens with the concrete “the agent says the bug is fixed” problem.
@@ -14,7 +14,7 @@ This revision aligns the manuscript with the verified 20 August Cortex integrati
 - Moves the only public launcher to repository-root `./cortex`, removes global PATH installation, retains `md-os/shell/bin/mdos-console` as the internal engine, and verifies the manifest-loaded 1,000,000/1,000,001 input boundary.
 - Adds the deterministic `reflect-event` boundary: mismatch may open one cycle; matching readback and continuous event-driven reflection are inhibited.
 - Documents semantic multilingual routing without claiming universal language understanding: the host model classifies intent and the deterministic runtime gates execution.
-- Documents the bounded dynamic APFC turn contract: stable theme, current focus, explicit inhibitions, and post-turn `pass`, `fail`, or `unknown` readback.
+- Corrects the bounded dynamic APFC turn contract: the current human request is the sole pre-model relevance query and turn target; explicit goals remain non-overriding persistent context; no semantic theme or focus is manufactured before model understanding; explicit inhibitions and post-turn `pass`, `fail`, or `unknown` readback remain unchanged.
 - States explicitly that successful execution alone is not proof and that the mechanism is not a universal semantic verifier.
 - Removes product-specific robot connector material from the manuscript; the scientific embodied-control mechanism remains hardware-neutral.
 - Keeps parameter consolidation, robotic REM-to-flow transition, AGI, consciousness, host security, and certified robot safety as explicit non-claims.

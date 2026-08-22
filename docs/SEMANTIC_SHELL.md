@@ -167,16 +167,13 @@ declared inside the context sent to Codex. This makes the APFC causally present
 before `turn/start` and `turn/steer`; it is not claimed to be an infallible
 safety classifier or an output gate.
 
-Before selecting those blocks, Cortex maintains a private JSON contract at
-`md-os/ops/local/apfc/attention.json`: `theme` holds the stable general
-objective and `focus` the current point. Substantive requests advance focus; a
-minimal continuation retains it; an explicit `theme:` declaration changes both.
-Theme is bounded to 384 characters, focus to 256, and the complete dynamic
-context to 2 KiB. The frame applies `focus -> theme -> smallest authorized step
--> verifier evidence`. The state is mode `0600`, excluded from publication, and
-does not start an autonomous turn or replace `/goal`. The small
-continuation recognizer affects only focus retention; it does not classify,
-rewrite, authorize, or execute the human request.
+The pre-model selector uses only the current human request as its relevance
+query. Cortex does not infer or persist a semantic `theme` or `focus` at this
+stage because such an unverified label can misframe unrelated later turns and
+interfere with Codex-native thread continuity. The complete dynamic context is
+capped at 2 KiB. Explicit goals, capabilities, inhibitions, selected source
+paths, and the verification contract remain inspectable in the frame. A legacy
+local `attention.json`, if present, is ignored and is not recreated.
 
 Explicit legacy JSON/Markdown programs and `MDOS_CODEX_BACKEND=exec` retain the
 older tagged-output protocol only as compatibility paths. They do not define

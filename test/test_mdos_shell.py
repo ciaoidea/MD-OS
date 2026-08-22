@@ -714,8 +714,8 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn("Camera focus needs calibration", camera.text)
             self.assertNotIn("GitHub publication", camera.text)
             self.assertIn("GitHub publication needs a secret audit", github.text)
-            self.assertEqual(github.theme, "calibrate camera focus")
-            self.assertEqual(github.focus, "audit GitHub publication")
+            self.assertIsNone(github.theme)
+            self.assertIsNone(github.focus)
 
     def test_active_turn_accepts_intermediate_steering_message(self):
         with FakeCodex("Updated result.") as fake, mock.patch.dict(
@@ -1194,7 +1194,7 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(payload["type"], "object")
 
 
-    def test_apfc_attention_updates_on_subject_and_survives_short_followup(self):
+    def test_apfc_context_does_not_manufacture_theme_or_focus(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
             subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
@@ -1202,9 +1202,11 @@ class SemanticShellParityTests(unittest.TestCase):
                 "Implement automatic APFC attention for every input", workspace
             )
             followup = ENGINE.build_apfc_input_context("procedi", workspace)
-            self.assertEqual(first.theme, followup.theme)
-            self.assertEqual(first.focus, followup.focus)
-            self.assertIn("automatic APFC attention", followup.text)
+            self.assertIsNone(first.theme)
+            self.assertIsNone(first.focus)
+            self.assertIsNone(followup.theme)
+            self.assertIsNone(followup.focus)
+            self.assertNotIn("automatic APFC attention", followup.text)
             self.assertIn("OPERATING METHOD", followup.text)
             self.assertIn("observable verifier evidence", followup.text)
             self.assertLessEqual(len(followup.text), ENGINE.MAX_APFC_CONTEXT_CHARS)
@@ -1212,35 +1214,52 @@ class SemanticShellParityTests(unittest.TestCase):
                 "procedi", followup, workspace, None
             )
             payload = json.loads(ENGINE.render_apfc_turn_frame(frame).split("\n", 1)[1])
-            self.assertEqual(payload["method"]["target"], "theme")
+            self.assertEqual(payload["method"]["target"], "human_request")
             self.assertEqual(payload["method"]["closure"], "verifier_evidence")
             state = workspace / "md-os/ops/local/apfc/attention.json"
-            self.assertEqual(state.stat().st_mode & 0o777, 0o600)
-            self.assertEqual(json.loads(state.read_text(encoding="utf-8"))["schema_version"], 2)
-            self.assertNotIn("procedi", state.read_text(encoding="utf-8"))
+            self.assertFalse(state.exists())
 
-    def test_apfc_focus_changes_while_theme_remains_stable(self):
+    def test_stale_apfc_attention_cannot_frame_a_new_subject(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
             subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
-            initial = ENGINE.build_apfc_input_context("Repair the camera connector", workspace)
+            state = workspace / "md-os/ops/local/apfc/attention.json"
+            state.parent.mkdir(parents=True)
+            state.write_text(json.dumps({
+                "schema_version": 2,
+                "theme": "Repair the camera connector",
+                "focus": "Inspect the camera stream",
+                "source_input_hash": "a" * 64,
+            }), encoding="utf-8")
             changed = ENGINE.build_apfc_input_context(
                 "Audit the publication for private data", workspace
             )
-            self.assertEqual(
-                changed.focus, "Audit the publication for private data"
+            self.assertIsNone(changed.theme)
+            self.assertIsNone(changed.focus)
+            self.assertNotIn("Repair the camera connector", changed.text)
+            frame = ENGINE.build_apfc_turn_frame(
+                "Audit the publication for private data", changed, workspace, None
             )
-            self.assertEqual(changed.theme, initial.theme)
+            payload = json.loads(ENGINE.render_apfc_turn_frame(frame).split("\n", 1)[1])
+            self.assertIsNone(payload["theme"])
+            self.assertIsNone(payload["focus"])
+            self.assertEqual(payload["method"]["target"], "human_request")
 
-    def test_apfc_explicit_theme_updates_theme_and_focus(self):
+    def test_explicit_goal_remains_context_without_overriding_human_request(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
             subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
-            context = ENGINE.build_apfc_input_context(
-                "il tema è Rigorous APFC verification", workspace
+            context = ENGINE.build_apfc_input_context("procedi", workspace)
+            frame = ENGINE.build_apfc_turn_frame(
+                "procedi", context, workspace, "Repair Cortex attention"
             )
-            self.assertEqual(context.theme, "Rigorous APFC verification")
-            self.assertEqual(context.focus, "Rigorous APFC verification")
+            payload = json.loads(
+                ENGINE.render_apfc_turn_frame(frame).split("\n", 1)[1]
+            )
+            self.assertEqual(payload["goal"], "Repair Cortex attention")
+            self.assertIsNone(payload["theme"])
+            self.assertIsNone(payload["focus"])
+            self.assertEqual(payload["method"]["target"], "human_request")
 
     def test_codex_protocol_errors_are_visible(self):
         client = object.__new__(ENGINE.CodexAppServerClient)

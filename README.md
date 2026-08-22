@@ -235,16 +235,16 @@ cwd access, network expansion, destructive commands, and additional runtime
 permissions. Final assistant text remains a proposal and is never silently
 re-executed as shell code.
 
-Before each natural-language turn, Cortex maintains a bounded private JSON
-contract with a stable `theme` (the general objective) and a current `focus`
-(the present point). Substantive requests advance the focus; minimal continuations
-retain it, while an explicit `theme:` declaration changes the theme. The APFC
-method is `focus -> theme -> smallest authorized step -> verifier evidence`.
+Before each natural-language turn, Cortex supplies a bounded APFC frame whose
+pre-model relevance query is the current human request. It does not manufacture
+or persist a semantic `theme` or `focus` before the model has understood the
+request. An explicit Codex goal remains available as persistent context, but
+does not automatically replace the current human request as the turn target;
+native thread continuity remains separate.
 After execution, a second JSON contract compares observable readback with the
 acceptance condition and records `pass`, `fail`, or `unknown`; successful
 execution alone is never treated as proof. The dynamic context is capped at
-2 KiB, starts no loop, does not replace `/goal`, and remains host-local under
-`md-os/ops/local/`. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
+2 KiB and starts no loop. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
 
 This executive method promotes relevant, pragmatic answers;
 the separate concise communication rule remains in `AGENTS.md`.
