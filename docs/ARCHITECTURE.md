@@ -112,7 +112,7 @@ does not mean that MD-OS uses a BSD license. See
 [LICENSING.md](LICENSING.md) and
 [OPEN_SOURCE_GOVERNANCE_MODEL.md](../md-os/kb/OPEN_SOURCE_GOVERNANCE_MODEL.md).
 
-## Architecture Status — 2026-07-18
+## Architecture Status — 2026-08-22
 
 MD-OS (Artificial Prefrontal Cortex) is a prototype of a bounded quasi-autonomous cognitive agent and
 its persistent operating context. Given an explicit objective and a delimited
@@ -120,6 +120,16 @@ environment, it can use an available reasoning model and permitted tools to
 investigate a problem, formulate competing hypotheses, design checks that
 distinguish them, execute allowed steps, verify the observed result, and retain
 the resulting episode for correction or later reuse.
+
+When competing explanations, counterfactuals, symmetries, or limiting cases
+can distinguish candidate paths, the reflective method may construct a bounded
+Einstein-inspired Gedankenexperiment. It declares the governing principle and
+premises, varies one relevant condition, derives necessary consequences,
+checks symmetry, limiting cases, or contradiction, exposes hidden assumptions,
+and identifies the external observation, calculation, formal proof, or
+experiment required for closure. The result remains a hypothesis or critique,
+not verifier evidence, and the method does not activate ritualistically on
+routine turns.
 
 `Quasi-autonomous` has a narrow operational meaning here. After a human or an
 authorized upstream system supplies the goal and authority envelope, the

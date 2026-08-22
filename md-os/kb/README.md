@@ -4,7 +4,7 @@ Canonical index of MD-OS (Artificial Prefrontal Cortex) v5.0, the Markdown-nativ
 Filesystem release.
 
 The stable release surface is English. The current architecture description is
-dated `2026-07-18`; this is a status date, not a replacement for the `5.0`
+dated `2026-08-22`; this is a status date, not a replacement for the `5.0`
 identity and compatibility release line. The human-facing system overview is
 [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md).
 

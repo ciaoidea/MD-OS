@@ -246,6 +246,15 @@ acceptance condition and records `pass`, `fail`, or `unknown`; successful
 execution alone is never treated as proof. The dynamic context is capped at
 2 KiB and starts no loop. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
 
+For difficult problems where competing explanations, counterfactuals,
+symmetries, or limiting cases can discriminate among paths, reflection may use
+an Einstein-inspired Gedankenexperiment. It starts from a declared principle
+and explicit premises, varies one relevant condition, derives necessary
+consequences, attacks hidden assumptions, and names the external observation,
+calculation, formal proof, or experiment required for closure. This is a
+bounded hypothesis-generation and criticism method, not verifier evidence,
+and it is not invoked as a ritual for ordinary requests.
+
 This executive method promotes relevant, pragmatic answers;
 the separate concise communication rule remains in `AGENTS.md`.
 
@@ -608,7 +617,7 @@ AI explores, interprets, and challenges
 This preserves flexible reasoning while moving the enforceable transition
 outside the discretion of the same model being governed.
 
-Architecture status as of `2026-07-18`: MD-OS (Artificial Prefrontal Cortex) is a prototype of a
+Architecture status as of `2026-08-22`: MD-OS (Artificial Prefrontal Cortex) is a prototype of a
 bounded quasi-autonomous cognitive agent and its persistent operating context.
 Within an explicit goal, environment, budget, permission set, tool set,
 acceptance contract, and stop condition, it can conduct self-directed research

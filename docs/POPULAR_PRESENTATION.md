@@ -162,6 +162,19 @@ from text completion
 to task completion
 ```
 
+## How Hard Problems Are Examined
+
+For a difficult question, MD-OS can use a bounded thought experiment to make
+the reasoning inspectable. It first states a principle and its assumptions,
+then changes one relevant condition and derives what would necessarily follow.
+Symmetry, limiting cases, or contradiction can reveal which assumption is
+doing the real work.
+
+The result is not treated as proof. It must end by naming the observation,
+calculation, formal proof, or real experiment that could verify or falsify it.
+This Einstein-inspired method is used only when it helps distinguish competing
+paths; it is not a ceremony added to ordinary requests.
+
 ## How To Say It Safely
 
 Avoid opening with claims such as:
