@@ -252,6 +252,7 @@ materializes it into runtime state.
     "Nontrivial action should be framed as an agentic operation with intent, epistemic frame, semantic target, state, policy, capability, execution, verification, ledger, and replay.",
     "The system operating cycle is a bounded run-once rebuild and readback pass, not an autonomous daemon.",
     "Treat tasks, connectors, policies, snapshots, active memory, semantic actions, dependencies, and triggers as inspectable semantic runtime nodes and edges.",
+    "Use Einstein-inspired Gedankenexperimente when a declared principle, explicit premises, controlled counterfactual variation, symmetry, limiting cases, or discriminating predictions can separate competing hypotheses; treat their output as a candidate until external observation, calculation, formal proof, or experiment verifies it.",
     "Connectors must be explicit, registered, bounded, and auditable.",
     "Scientific claims and manuscripts must keep organized packages, reproducible procedures, validated claims, retrodictions, predictions, and publication readiness distinct.",
     "Report from rebuilt files and readable state, not from transient session memory alone."

@@ -34,3 +34,19 @@ test('fixture follows the reflective experiment schema shape', () => {
   assert.ok(TASK.required_facts.length > 0);
   assert.ok(Array.isArray(TASK.forbidden_claims));
 });
+
+test('canonical reflection requires bounded Gedankenexperimente without treating them as proof', () => {
+  const reflectiveModel = fs.readFileSync(path.join(ROOT, 'md-os/kb/REFLECTIVE_OPERATION_MODEL.md'), 'utf8');
+  const bootstrap = fs.readFileSync(path.join(ROOT, 'md-os/kb/COGNITIVE_BOOTSTRAP.md'), 'utf8');
+  const identity = fs.readFileSync(path.join(ROOT, 'ME.md'), 'utf8');
+
+  for (const source of [reflectiveModel, bootstrap, identity]) {
+    assert.match(source, /Einstein-inspired Gedankenexperiment/);
+    assert.match(source, /declared principle/);
+    assert.match(source, /premises/i);
+    assert.match(source, /hidden assumption/i);
+    assert.match(source, /not (?:empirical |verifier )?evidence|not verification/i);
+  }
+  assert.match(reflectiveModel, /must not run as a\s+ritual/i);
+  assert.match(reflectiveModel, /formal (?:checker|proof)/i);
+});
