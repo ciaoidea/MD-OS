@@ -31,7 +31,10 @@
         "success_rate",
         "promoted_skill_count",
         "candidate_skill_count",
-        "regression_count"
+        "regression_count",
+        "cognitive_unity_claiming_skill_count",
+        "verified_relative_transformation_count",
+        "verified_cognitive_unity_state_count"
       ]
     }
   }

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/cognitive_frame.schema.json",
+  "title": "MD-OS Cross-Domain Cognitive Frame",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "frame_id", "domain_id", "representation_space", "basis_id", "basis_dimension", "semantic_referents", "verifier_contract_id"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "frame_id": { "type": "string", "pattern": "^frame_[a-z0-9_]+$" },
+    "domain_id": { "type": "string", "minLength": 1 },
+    "representation_space": { "type": "string", "minLength": 1 },
+    "basis_id": { "type": "string", "minLength": 1 },
+    "basis_dimension": { "type": "integer", "minimum": 1 },
+    "tensor_axes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+    "semantic_referents": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+    "verifier_contract_id": { "type": "string", "minLength": 1 }
+  }
+}

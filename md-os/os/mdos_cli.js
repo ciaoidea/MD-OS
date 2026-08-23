@@ -77,6 +77,7 @@ function usage() {
     `  ${cli} cycle run-once`,
     `  ${cli} agi run-once --task "<task>"`,
     `  ${cli} cognition run-once --task-spec md-os/ops/tasks/<id>.json`,
+    `  ${cli} cognition unity-test`,
     `  ${cli} agi eval`,
     `  ${cli} agi learn`,
     `  ${cli} agi promote`,
@@ -492,6 +493,9 @@ function main() {
     if (!subcommand) runScript('agi_loop.js', ['eval']);
     if (subcommand === 'prove' || subcommand === 'evidence' || subcommand === 'generality') {
       runScript('run_agi_evidence_suite.js', rest);
+    }
+    if (['unity-test', 'unity_test', 'cross-domain-unity'].includes(subcommand)) {
+      runScript('run_cross_domain_cognitive_unity.js', rest);
     }
     if (subcommand === 'accelerate' || subcommand === 'neuromorphic-learn') {
       runScript('run_neuromorphic_learning_experiment.js', rest);

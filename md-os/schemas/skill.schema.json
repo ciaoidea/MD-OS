@@ -36,6 +36,25 @@
     "failure_modes": { "type": "array", "items": { "type": "string" } },
     "rollback": { "type": "string", "minLength": 1 },
     "evals": { "type": "array", "items": { "type": "string" } },
-    "source_episodes": { "type": "array", "items": { "type": "string" } }
-  }
+    "source_episodes": { "type": "array", "items": { "type": "string" } },
+    "generality_claims": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["cross_domain_transfer", "tensorial_transformation", "cognitive_unity"] }
+    },
+    "relative_transformation_verification_file": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$" },
+    "relative_transformation_verification_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "cognitive_unity_state_file": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$" },
+    "cognitive_unity_state_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "generality_claims": { "minItems": 1 } }, "required": ["generality_claims"] },
+      "then": { "required": ["relative_transformation_verification_file", "relative_transformation_verification_hash"] }
+    },
+    {
+      "if": { "properties": { "generality_claims": { "contains": { "const": "cognitive_unity" } } }, "required": ["generality_claims"] },
+      "then": { "required": ["cognitive_unity_state_file", "cognitive_unity_state_hash"] }
+    }
+  ]
 }

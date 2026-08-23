@@ -4,13 +4,17 @@ This revision aligns the manuscript with the verified Cortex integration through
 
 - Rewrites the abstract around one causal line: proposal -> authorization -> execution -> verification -> durable commitment.
 - Opens with the concrete “the agent says the bug is fixed” problem.
-- Groups thirteen bounded claims into the principal contributions while retaining the full C1-C13 claim ledger.
+- Groups fourteen bounded claims into the principal contributions while retaining the full C1-C14 claim ledger.
 - Keeps APFC explicitly bio-inspired: nature supplies the functional model; no anatomical or cellular equivalence is claimed.
 - Separates the evaluated baseline B0 from the later integration revision B1.
 - Separates their test counts, replay hashes, episode counts, and promotion states, removing the apparent contradictions in the previous layout.
 - Preserves the controlled results: 194/194 baseline tests, 1/3 verifier acceptance, 16-to-1 finite hypothesis reduction, 0/2-to-2/2 sealed transfer, and baseline fixed-point replay.
 - Preserves the 20 August B1 checks at 223/223 Node tests and 51/51 shell-parity tests.
 - Adds the current B2 cognitive-routing, reflective-method, release-portability, and repository-local shell snapshot: 243/243 Node tests, 58/58 shell-parity tests, four-language normalized route equivalence, expected--observed event triggering, false-positive rejection, bounded autonomy, portable generated paths, and npm-package hygiene checks.
+- Adds the B3 cross-domain cognitive-unity formulation and bounded implementation: observable external I/O recurrence, competing law induction, sealed target separation, finite tensor transformations, declared invariants and information loss, semantic/control/contamination/reuse checks, hash-bound unity state, and fail-closed consolidation plus final-promotion gates.
+- Adds negative B3 regressions for ambiguous and post-hoc laws, sham targets, altered underlying evidence, undeclared lossy transformations, and unsupported generality claims; the integrated suite passes 260/260 Node tests and 58/58 shell-parity tests, with 25/25 in the focused cognitive-unity and promotion-gate subset.
+- Updates the title to “Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial Prefrontal Cortex and a Verifiable Operational Paradigm Toward General Intelligence.”
+- Adds `fig07_prefrontal_network.png` as a qualified conceptual APFC/Obsidian network visualization; it is explicitly not anatomical, cellular, neurophysiological, or hidden-activation evidence.
 - Adds stable-distribution regressions for semantic-shell graph anchoring, live experiment-report lifecycle ownership, reflective-report schema closure, and explicit `release_required` AGI/eval failures; exploratory attention remains visible but non-promotable.
 - Corrects the current local-candidate readback after those regressions: runtime, compiler, APFC, semantic-integrity, publication, and security health are `ok`; runtime operability and publishability are true; release blocking is false; and two consecutive replay passes reach the same fixed point.
 - Moves the only public launcher to repository-root `./cortex`, removes global PATH installation, retains `md-os/shell/bin/mdos-console` as the internal engine, and verifies the manifest-loaded 1,000,000/1,000,001 input boundary.

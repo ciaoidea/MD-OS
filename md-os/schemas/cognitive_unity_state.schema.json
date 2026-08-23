@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/cognitive_unity_state.schema.json",
+  "title": "MD-OS Operational Cognitive Unity State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "state_id", "created_at", "status", "definition", "channels", "transformation_verifications", "criteria", "open_conflicts", "non_claims", "state_hash"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "state_id": { "type": "string", "pattern": "^unity_[a-z0-9_]+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["verified", "attention"] },
+    "definition": { "type": "string", "minLength": 1 },
+    "channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operational_self_refs", "world_observation_refs", "goal_refs", "memory_refs", "frame_refs", "transformation_refs", "action_refs", "evidence_refs"],
+      "properties": {
+        "operational_self_refs": { "$ref": "#/$defs/refs" },
+        "world_observation_refs": { "$ref": "#/$defs/refs" },
+        "goal_refs": { "$ref": "#/$defs/refs" },
+        "memory_refs": { "$ref": "#/$defs/refs" },
+        "frame_refs": { "$ref": "#/$defs/refs" },
+        "transformation_refs": { "$ref": "#/$defs/refs" },
+        "action_refs": { "$ref": "#/$defs/refs" },
+        "evidence_refs": { "$ref": "#/$defs/refs" }
+      }
+    },
+    "transformation_verifications": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["verification_id", "transformation_id", "verification_hash"] } },
+    "criteria": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "boolean" } },
+    "open_conflicts": { "type": "array" },
+    "non_claims": { "type": "array", "minItems": 4, "items": { "type": "string" } },
+    "state_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": { "refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } }
+}

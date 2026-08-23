@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/verified_solver_transport_experiment.schema.json",
+  "title": "MD-OS Verified Solver Transport Experiment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "experiment_type",
+    "created_at",
+    "status",
+    "objective",
+    "preregistered_design",
+    "source_manifest",
+    "frames",
+    "source_induction",
+    "transport_tensor",
+    "target_measurements",
+    "aggregate_measurements",
+    "contamination_audit",
+    "criteria",
+    "claim_state",
+    "report_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "experiment_id": { "const": "verified_solver_transport_20260823_v1" },
+    "experiment_type": { "const": "verified_solver_transport_v1" },
+    "created_at": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "failed"] },
+    "objective": { "type": "string", "minLength": 1 },
+    "preregistered_design": { "type": "object" },
+    "source_manifest": { "type": "object" },
+    "frames": {
+      "type": "object",
+      "required": ["source", "target", "semantic_domain_overlap_count"]
+    },
+    "source_induction": { "type": "object" },
+    "transport_tensor": {
+      "type": "object",
+      "required": [
+        "representation",
+        "axes",
+        "operator_axis",
+        "frame_axis",
+        "shape",
+        "components",
+        "nonzero_component_count",
+        "transformation_law",
+        "tested_frame_permutation",
+        "permutation_matrix",
+        "equivariance_passed",
+        "preserved_invariant",
+        "scope_boundary"
+      ],
+      "properties": {
+        "representation": { "const": "finite_discrete_rank_3_solver_structure_tensor" },
+        "axes": { "const": ["frame", "solver_step", "operator_kind"] },
+        "operator_axis": { "const": ["filter", "map", "reduce"] },
+        "shape": { "const": [5, 2, 3] },
+        "equivariance_passed": { "type": "boolean" },
+        "preserved_invariant": { "const": "filter>map" }
+      }
+    },
+    "target_measurements": { "type": "array", "minItems": 3, "maxItems": 3 },
+    "aggregate_measurements": {
+      "type": "object",
+      "required": [
+        "source_frames_admitted",
+        "target_frames",
+        "hidden_target_cases",
+        "memory_disabled_success",
+        "reversed_sham_success",
+        "verified_transport_success",
+        "verified_transport_hidden_cases_passed",
+        "verified_transport_delta_over_memory_disabled"
+      ]
+    },
+    "contamination_audit": {
+      "type": "object",
+      "required": [
+        "status",
+        "source_target_frames_disjoint",
+        "target_primitives_in_source_solvers",
+        "target_programs_absent_from_learner_requests",
+        "hidden_tests_absent_from_learner_requests",
+        "independent_oracle_runs_after_candidate_generation"
+      ]
+    },
+    "criteria": { "type": "object", "minProperties": 10 },
+    "claim_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bounded_verified_solver_transport_supported",
+        "finite_discrete_transport_tensor_supported",
+        "general_tensor_representation_of_agi_supported",
+        "open_world_generalization_supported",
+        "agi_claim_supported",
+        "externally_replicated",
+        "claim_boundary"
+      ],
+      "properties": {
+        "bounded_verified_solver_transport_supported": { "type": "boolean" },
+        "finite_discrete_transport_tensor_supported": { "type": "boolean" },
+        "general_tensor_representation_of_agi_supported": { "const": false },
+        "open_world_generalization_supported": { "const": false },
+        "agi_claim_supported": { "const": false },
+        "externally_replicated": { "const": false },
+        "claim_boundary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "report_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

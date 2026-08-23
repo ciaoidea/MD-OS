@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { nowIso, sha256Json, sha256Text } = require('../../os/lib/common');
 const { atomicWriteJson, atomicWriteText, ensureDir, withFileLock } = require('../../os/lib/fs_runtime');
+const { evaluateCognitiveUnityClaims } = require('../../kernel/cognition/cross_domain_cognitive_unity');
 
 const FIXED_BUDGET = Object.freeze({
   maximum_selected_episodes: 32,
@@ -135,12 +136,13 @@ function normalizedHoldout(candidate, evaluation) {
   };
 }
 
-function gateCandidate(candidate, supportingEpisodes, evaluation) {
+function gateCandidate(candidate, supportingEpisodes, evaluation, options = {}) {
   const evidence = supportingEpisodes.map(sourceEvidence);
   const verified = evidence.filter((item) => item.verified);
   const taskIds = unique(verified.map((item) => item.task_spec_id));
   const inputHashes = unique(verified.map((item) => item.action_input_hash));
   const holdout = normalizedHoldout(candidate, evaluation);
+  const unityGate = evaluateCognitiveUnityClaims(candidate, options);
   const checks = {
     schema_valid: Boolean(candidate.skill_id && candidate.title && Array.isArray(candidate.procedure) && candidate.procedure.length),
     two_verified_source_episodes: verified.length >= 2,
@@ -161,8 +163,9 @@ function gateCandidate(candidate, supportingEpisodes, evaluation) {
     rollback_rehearsal: holdout.rollback_rehearsal_passed === true,
     complete_provenance: holdout.provenance_complete === true,
     rollback_declared: Boolean(candidate.rollback),
+    ...unityGate.criteria,
   };
-  const blockedKeys = ['two_verified_source_episodes', 'distinct_task_specs', 'distinct_action_input_hashes', 'sealed_holdout', 'minimum_30_cases', 'three_trials', 'two_cold_starts', 'rollback_rehearsal', 'complete_provenance', 'rollback_declared'];
+  const blockedKeys = ['two_verified_source_episodes', 'distinct_task_specs', 'distinct_action_input_hashes', 'sealed_holdout', 'minimum_30_cases', 'three_trials', 'two_cold_starts', 'rollback_rehearsal', 'complete_provenance', 'rollback_declared', 'relative_transformation_report_hash_valid', 'underlying_evidence_files_valid', 'cross_domain_transformation_verified', 'tensor_transformation_law_verified', 'controls_and_contamination_verified', 'causal_reuse_verified', 'cognitive_unity_state_hash_valid', 'cognitive_unity_state_verified'];
   const failed = Object.entries(checks).filter(([, passed]) => !passed).map(([key]) => key);
   return {
     status: failed.length ? (failed.some((key) => blockedKeys.includes(key)) ? 'blocked' : 'rejected') : 'ok',
@@ -170,6 +173,7 @@ function gateCandidate(candidate, supportingEpisodes, evaluation) {
     failed_checks: failed,
     source_evidence: evidence,
     measurement: holdout,
+    cognitive_unity: unityGate,
   };
 }
 
@@ -258,7 +262,9 @@ function runConsolidation(options = {}) {
     const skillCandidates = candidateRows.map((row) => {
       const evalId = row.candidate.evals && row.candidate.evals[0];
       const evaluation = evalId ? readJsonSafe(path.join(opsRoot, 'evals', `${evalId}.json`)) : null;
-      const gate = gateCandidate(row.candidate, row.supporting, evaluation);
+      const gate = gateCandidate(row.candidate, row.supporting, evaluation, {
+        workspace_root: path.resolve(opsRoot, '..', '..'),
+      });
       const gateHash = sha256Json(gate);
       const sourceEpisodeHashes = gate.source_evidence.map((item) => item.episode_hash).sort();
       const priorConsolidation = row.candidate.apfc_consolidation || {};

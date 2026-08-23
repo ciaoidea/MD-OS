@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/cross_domain_transformation_verification.schema.json",
+  "title": "MD-OS Cross-Domain Transformation Verification",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "verification_id", "transformation_id", "status", "scope", "source_frame_id", "target_frame_id", "source_domain_id", "target_domain_id", "source_shape", "target_shape", "tensor_law", "law_induction", "invariants", "roundtrip", "composition", "semantic_verification", "controls", "contamination_audit", "causal_reuse", "evidence_manifest", "criteria", "non_claims", "verification_hash"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "verification_id": { "type": "string", "pattern": "^verification_[a-z0-9_]+$" },
+    "transformation_id": { "type": "string", "pattern": "^transform_[a-z0-9_]+$" },
+    "status": { "enum": ["verified", "rejected"] },
+    "scope": { "const": "explicit_external_cross_domain_tensor_artifact" },
+    "source_frame_id": { "type": "string" },
+    "target_frame_id": { "type": "string" },
+    "source_domain_id": { "type": "string" },
+    "target_domain_id": { "type": "string" },
+    "source_shape": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+    "target_shape": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+    "tensor_law": { "$ref": "#/$defs/numericCheck" },
+    "law_induction": { "type": "object" },
+    "invariants": { "type": "array", "minItems": 1 },
+    "roundtrip": { "$ref": "#/$defs/numericCheck" },
+    "composition": { "$ref": "#/$defs/numericCheck" },
+    "semantic_verification": { "type": "object" },
+    "controls": { "type": "object" },
+    "contamination_audit": { "type": "object" },
+    "causal_reuse": { "type": "object" },
+    "evidence_manifest": { "type": "array", "minItems": 1 },
+    "criteria": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "boolean" } },
+    "non_claims": { "type": "array", "minItems": 4, "items": { "type": "string" } },
+    "verification_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "numericCheck": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["residual", "tolerance", "passed"],
+      "properties": { "residual": { "type": ["number", "null"] }, "tolerance": { "type": "number", "minimum": 0 }, "passed": { "type": "boolean" } }
+    }
+  }
+}

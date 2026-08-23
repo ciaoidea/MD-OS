@@ -60,6 +60,23 @@ invariant structure. The sequence above is an MD-OS/APFC operational synthesis
 for general reasoning; it is not a claim that Einstein published this exact
 algorithm.
 
+The separately evaluated
+[Verified Solver Transport Model](VERIFIED_SOLVER_TRANSPORT_MODEL.md) turns one
+bounded instance of this discipline into an executable mechanism: a solver
+structure induced in source frames is transported into disjoint target frames,
+instantiated under matched search budgets, and admitted only after sealed
+independent verification. Its finite rank-three tensor is a fixture-level
+representation, not a general tensor of AGI.
+
+The broader
+[Cross-Domain Cognitive Unity Model](CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md)
+makes candidate-law construction part of bounded Cortex reflection. Cortex
+compares competing laws on development evidence, seals a unique candidate
+before the target verifier is exposed, and then tests transformation law,
+invariants, controls, roundtrip, composition, and causal reuse. The inspectable
+artifact records the candidate set and falsifier; hidden reasoning or a
+post-hoc explanation cannot satisfy this contract.
+
 ## Einstein-inspired Gedankenexperiment discipline
 
 When direct observation is unavailable or a problem contains competing causal

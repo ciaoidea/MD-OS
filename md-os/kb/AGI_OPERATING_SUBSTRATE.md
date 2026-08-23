@@ -87,6 +87,14 @@ knowledge, natural-language programs, connector contracts, deterministic
 scripts, tests, and runtime state. The system expands by making new capability
 explicit and bounded.
 
+The cross-domain extension path is defined by the
+[Cross-Domain Cognitive Unity Model](CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md):
+Cortex constructs competing frame-transformation laws, seals a unique
+candidate before target evidence, verifies preserved relations and
+consequences, and reuses only hash-bound verified transformations. This is an
+implemented bounded mechanism and promotion contract, not a demonstrated AGI
+result.
+
 ## Boundary
 
 MD-OS does not replace:

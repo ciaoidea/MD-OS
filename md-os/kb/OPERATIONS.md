@@ -41,6 +41,7 @@ Canonical builders:
 - `node md-os/os/agi_loop.js eval`
 - `cortex agi run-once --task "<task>"`
 - `cortex cognition run-once --task-spec md-os/ops/tasks/<task_spec_id>.json`
+- `cortex cognition unity-test`
 - `cortex benchmark software-repair generate --case <case.json> --provider <provider.json> --configuration <configuration_id>`
 - `cortex benchmark software-repair run --case <case.json> --provider <provider.json> --configuration <configuration_id>`
 - `node md-os/os/build_software_repair_benchmark_index.js`
@@ -203,6 +204,17 @@ Ordinary operating rule:
   independent postcondition verification, formal episode, and truthful verdict;
   `md-os/kb/VERIFIED_AGI_LOOP_MODEL.md` preserves the wider learning and
   compatibility model
+- use `md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md` when a claim depends on
+  relations surviving a declared change of domain or frame: induce one unique
+  candidate law from competing development hypotheses before sealed target
+  evidence, declare the finite representation and transformation, verify
+  invariants and semantic receipts independently, bind all underlying evidence
+  by current file hash, and fail closed on ambiguity, contamination, post-hoc
+  selection, sham observations, or undeclared information loss
+- use `cortex cognition unity-test` only to verify the bounded synthetic
+  mechanism; its embedded fixture is structurally testable but cannot establish
+  production promotion, AGI, consciousness, or direct access to neural hidden
+  activations
 - use `md-os/kb/SOFTWARE_REPAIR_BENCHMARK_MODEL.md` for reproducible repair
   cases, fixed experimental configurations, independent oracles, diff policy,
   holdout contamination gates, and aggregate benchmark readback

@@ -436,8 +436,10 @@ rail against which each implementation can be tested and hardened.
 | **v5.0** | the current identity and repository compatibility release line |
 
 In this README and throughout the repository, the short name is **MD-OS**.
-“Markdown Operating Filesystem” is the technical definition; “Markdown
-Operating System for Robotic Agents” is the paper title.
+“Markdown Operating Filesystem” is the technical definition. The complete B3
+paper title is “Markdown Operating System for Robotic Agents (MD-OS CORTEX):
+Artificial Prefrontal Cortex and a Verifiable Operational Paradigm Toward
+General Intelligence.”
 
 ## Architecture and maturity
 
@@ -1313,6 +1315,55 @@ If intelligence becomes persistent operation, it needs an operating layer.
 MD-OS is a Markdown-native candidate for that layer.
 ```
 
+### Verified solver transport experiment
+
+The bounded verified_solver_transport_20260823_v1 experiment treats a talent
+as a frame-local solver and tests whether one verified structural invariant can
+be transported into disjoint target frames. Two source frames induce
+filter>map; under equal 12-candidate budgets, memory-disabled and reversed
+map>filter controls solve 0/3 targets, while verified transport solves 3/3
+targets and 6/6 independently checked hidden cases. The contamination audit
+passes.
+
+The experiment also materializes a finite binary rank-three tensor with axes
+[frame, solver_step, operator_kind], shape [5, 2, 3], and exact equivariance
+under the tested frame-basis permutation. This is controlled evidence for one
+bounded solver-transport mechanism and one finite tensor representation. It is
+not open-world generalization, a general tensor of AGI, external replication,
+or AGI. See
+[Verified Solver Transport Model](md-os/kb/VERIFIED_SOLVER_TRANSPORT_MODEL.md).
+
+### Cross-domain cognitive unity
+
+Cortex now has a bounded relative-transformation contract for cross-domain
+claims. At the observable system boundary, APFC supplies a bounded input to the
+host model, records its output, constructs competing transformation laws from
+development evidence, seals a unique candidate before target evidence, and may
+re-enter only verified artifacts in a later model call. It does not inspect
+secret chain-of-thought or neural hidden activations.
+
+For explicit external tensors, Cortex verifies the declared transformation,
+invariants, semantic outcomes, controls, contamination, roundtrip or declared
+information loss, composition, causal reuse, and the current SHA-256 of every
+production evidence file. It then binds verified transformations into a
+hash-bound operational cognitive-unity state spanning self-reference, world
+observations, goals, memory, frames, actions, and evidence.
+
+Run the deterministic local fixture with:
+
+```bash
+./cortex cognition unity-test
+```
+
+The expected bounded readback is `law=induced`, `transform=verified`, and
+`unity=verified`, while production promotion and AGI support remain false.
+The integrated B3 repository passes 260/260 Node tests and 58/58 shell-parity
+tests. The mechanism therefore extends the model's effective recurrent operation
+across calls and domains through external state; it does not establish
+unbounded law discovery, direct hidden-layer extension, phenomenal
+consciousness, or AGI. See the
+[Cross-Domain Cognitive Unity Model](md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md).
+
 ## Obsidian-friendly structure
 
 MD-OS (Artificial Prefrontal Cortex) v5.0 is intentionally easy to browse as an Obsidian vault.
@@ -2147,7 +2198,8 @@ md-os/examples/                     Versioned templates and demo seeds
 - [docs/papers/zenodo/README.md](docs/papers/zenodo/README.md): reproducible
   definitive manuscript package, figures, manifest, and build commands for
   "Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial
-  Prefrontal Cortex (APFC)".
+  Prefrontal Cortex and a Verifiable Operational Paradigm Toward General
+  Intelligence".
 - [docs/papers/zenodo/paper.pdf](docs/papers/zenodo/paper.pdf): the single
   definitive PDF, built from `docs/papers/zenodo/paper.tex` and linked to the official
   [ciaoidea/MD-OS](https://github.com/ciaoidea/MD-OS) repository.
@@ -2406,7 +2458,8 @@ MD-OS was originally created by **Alessandro Rizzo**. The architecture is
 described in the paper:
 
 > *Markdown Operating System for Robotic Agents (MD-OS CORTEX): Artificial
-> Prefrontal Cortex (APFC)* — Alessandro Rizzo
+> Prefrontal Cortex and a Verifiable Operational Paradigm Toward General
+> Intelligence* — Alessandro Rizzo
 
 - 🌐 **Website:** [www.md-os.org](https://www.md-os.org)
 - ✉️ **Email:** [labs@md-os.org](mailto:labs@md-os.org)

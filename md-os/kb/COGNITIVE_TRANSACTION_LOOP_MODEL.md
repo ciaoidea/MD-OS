@@ -157,6 +157,18 @@ holdout eval, no regression, risk review, and rollback.
 Writing an episode, candidate, eval record, or promotion-gate record is not a
 substitute for those conditions.
 
+If a skill claims `cross_domain_transfer`, `tensorial_transformation`, or
+`cognitive_unity`, ordinary source and holdout evidence is necessary but not
+sufficient. The candidate must cite current hash-bound relative-transformation
+evidence and, for unity claims, a hash-bound cognitive-unity state. Every
+production manifest
+entry must resolve to a safe workspace-relative evidence file whose current
+SHA-256 still matches; embedded fixture evidence is not promotion evidence. The
+transaction loop, APFC consolidation, and the final APFC promotion transaction
+all fail closed when those artifacts are missing, stale, altered, or
+fixture-only. See the
+[Cross-Domain Cognitive Unity Model](CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md).
+
 ## Transaction Boundary
 
 The first executor supports only command references registered in the existing

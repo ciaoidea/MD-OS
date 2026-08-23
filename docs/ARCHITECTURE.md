@@ -112,7 +112,7 @@ does not mean that MD-OS uses a BSD license. See
 [LICENSING.md](LICENSING.md) and
 [OPEN_SOURCE_GOVERNANCE_MODEL.md](../md-os/kb/OPEN_SOURCE_GOVERNANCE_MODEL.md).
 
-## Architecture Status — 2026-08-22
+## Architecture Status — 2026-08-23
 
 MD-OS (Artificial Prefrontal Cortex) is a prototype of a bounded quasi-autonomous cognitive agent and
 its persistent operating context. Given an explicit objective and a delimited
@@ -130,6 +130,23 @@ and identifies the external observation, calculation, formal proof, or
 experiment required for closure. The result remains a hypothesis or critique,
 not verifier evidence, and the method does not activate ritualistically on
 routine turns.
+
+The cross-domain cognitive-unity extension makes the next architectural step
+explicit. APFC declares source and target frames, constructs at least two
+candidate transformation laws from development evidence, rejects ambiguity,
+seals the selected candidate before target evidence, and independently tests
+its semantic consequence and declared invariants. Finite tensor operators are
+supported when axes, bases, components, and information-loss contracts are
+explicit. Verified reports may be bound into one hash-linked state spanning
+self-reference, world observations, goals, memory, frames, transformations,
+actions, and evidence.
+
+This is an external recurrent control path. Cortex can feed a verified result
+into a later host-model call, but it does not read or alter the host model's
+hidden activations or weights. The implemented fixture and promotion gates are
+bounded evidence for the mechanism, not a demonstration of AGI or
+consciousness. See the
+[Cross-Domain Cognitive Unity Model](../md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md).
 
 `Quasi-autonomous` has a narrow operational meaning here. After a human or an
 authorized upstream system supplies the goal and authority envelope, the
@@ -288,7 +305,7 @@ The architecture uses three different evidence levels:
 | Level | What may be said | What may not be inferred |
 | --- | --- | --- |
 | Implemented mechanism | the repository contains typed task, plan, receipt, verifier, episode, eval, connector, runtime, health, and replay paths, with maturity varying by component | that every connector, domain, deployment mode, or planned cognitive layer is complete |
-| Finite demonstration | controlled suites demonstrate selected transfer, invention, curriculum, continual-learning, recovery, and bounded-horizon properties under stated budgets | open-world generality, unrestricted task coverage, or independent real-world replication |
+| Finite demonstration | controlled suites demonstrate selected transfer, invention, curriculum, continual-learning, recovery, bounded-horizon properties, and one explicit cross-domain tensor transformation under stated budgets | open-world generality, unrestricted task coverage, direct hidden-state access, or independent real-world replication |
 | Unproven target | the architecture is intended to support increasingly general, persistent, correctable problem solving | that MD-OS (Artificial Prefrontal Cortex) is AGI, conscious, indefinitely autonomous, or a mature production agent runtime |
 
 Important deferred or incomplete areas include open-world evaluation,

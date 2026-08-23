@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/relative_tensor_transformation.schema.json",
+  "title": "MD-OS Relative Cross-Domain Tensor Transformation",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "transformation_id", "verification_id", "source_frame", "target_frame", "source_tensor", "observed_target_tensor", "axis_operators", "invertible", "transformation_law", "law_induction", "declared_invariants", "target_semantic_verification", "return_semantic_verification", "controls", "contamination_audit", "causal_reuse", "evidence_manifest"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "transformation_id": { "type": "string", "pattern": "^transform_[a-z0-9_]+$" },
+    "verification_id": { "type": "string", "pattern": "^verification_[a-z0-9_]+$" },
+    "source_frame": { "$ref": "cognitive_frame.schema.json" },
+    "target_frame": { "$ref": "cognitive_frame.schema.json" },
+    "source_tensor": { "type": "array", "minItems": 1 },
+    "observed_target_tensor": { "type": "array", "minItems": 1 },
+    "axis_operators": { "type": "array", "minItems": 1 },
+    "inverse_axis_operators": { "type": "array", "minItems": 1 },
+    "invertible": { "type": "boolean" },
+    "information_loss": { "type": "object", "required": ["declared", "description"], "properties": { "declared": { "type": "boolean" }, "description": { "type": "string" } } },
+    "transformation_law": { "type": "string", "minLength": 1 },
+    "law_induction": { "$ref": "#/$defs/lawInduction" },
+    "tolerance": { "type": "number", "minimum": 0 },
+    "declared_invariants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["invariant_id", "kind"],
+        "properties": {
+          "invariant_id": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["frobenius_norm", "total_sum", "trace", "component_multiset"] },
+          "tolerance": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "target_semantic_verification": { "$ref": "#/$defs/evidenceReceipt" },
+    "return_semantic_verification": { "$ref": "#/$defs/evidenceReceipt" },
+    "controls": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["disabled_status", "sham_status", "equal_budgets"],
+      "properties": { "disabled_status": { "const": "failed_as_expected" }, "sham_status": { "const": "failed_as_expected" }, "equal_budgets": { "const": true } }
+    },
+    "contamination_audit": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status", "target_evidence_exposed_before_candidate"],
+      "properties": { "status": { "const": "ok" }, "target_evidence_exposed_before_candidate": { "const": false } }
+    },
+    "causal_reuse": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status", "reuse_count", "evidence_refs"],
+      "properties": {
+        "status": { "const": "verified" },
+        "reuse_count": { "type": "integer", "minimum": 1 },
+        "evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "evidence_manifest": { "$ref": "#/$defs/evidenceManifest" }
+  },
+  "$defs": {
+    "evidenceReceipt": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status", "verifier_id", "independent_from_law_inducer", "evidence_refs"],
+      "properties": {
+        "status": { "const": "passed" },
+        "verifier_id": { "type": "string", "minLength": 1 },
+        "independent_from_law_inducer": { "const": true },
+        "evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "lawInduction": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["schema_version", "induction_id", "status", "selected_law_id", "selected_declaration", "selected_axis_operators", "candidate_count", "development_pair_count", "development_evidence_refs", "target_evidence_accessed", "sealed_before_target_verification", "falsifier", "induction_hash"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "status": { "const": "induced" },
+        "candidate_count": { "type": "integer", "minimum": 2 },
+        "development_pair_count": { "type": "integer", "minimum": 1 },
+        "development_evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "target_evidence_accessed": { "const": false },
+        "sealed_before_target_verification": { "const": true },
+        "induction_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "evidenceManifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_ref", "storage", "sha256"],
+        "properties": {
+          "evidence_ref": { "type": "string", "minLength": 1 },
+          "storage": { "enum": ["workspace_file", "embedded_fixture"] },
+          "relative_file": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  },
+  "allOf": [{ "if": { "properties": { "invertible": { "const": true } } }, "then": { "required": ["inverse_axis_operators"] }, "else": { "required": ["information_loss"] } }]
+}

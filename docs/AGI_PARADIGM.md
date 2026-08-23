@@ -64,12 +64,37 @@ episodes, one induced parameterized skill is evaluated on a distinct validation
 case and two sealed holdouts at the same one-attempt budget used by the no-skill
 baseline. The reference run improves holdout success from 0/2 to 2/2 with no
 detected contamination or regression. This supports learning and transfer only
-inside one declared four-constraint hypothesis family. Open-domain invention,
-cross-domain transfer, continual autonomous improvement, and AGI remain
-unmeasured.
+inside one declared four-constraint hypothesis family. A separate bounded
+solver-transport experiment and cognitive-unity fixture now test explicit
+frame transformations in authored finite families. Broad open-domain
+invention, general cross-domain competence, continual autonomous improvement,
+and AGI remain unmeasured.
 
 The executable and epistemic contract is defined in
 `md-os/kb/NEUROMORPHIC_LEARNING_ACCELERATOR_MODEL.md`.
+
+## Cross-Domain Cognitive Unity Research Path
+
+The candidate principle is not that one solver, model, or tensor is AGI.
+Generality is studied as the verified ability to construct transformations
+between declared frames while preserving the relations required by the task.
+Cognitive unity is the persistent causal integration of those frames,
+transformations, invariants, goals, memories, actions, and evidence into one
+governed decision process.
+
+APFC is the controller and functional intelligence extender in this model. It
+makes the recurrence observable across bounded host-model calls, generates
+competing candidate laws, protects development/target separation, schedules
+falsification tests, and reuses only evidence-bound results. When an external
+representation has declared axes and bases, finite tensor operators can express
+the candidate transformation. Cortex does not inspect or modify neural hidden
+layers; it extends their operational reach through persistent external state.
+
+The implemented fixture verifies one finite law family and fail-closed
+promotion path. It does not prove that this principle is sufficient for AGI,
+that the mind is one tensor, or that operational unity is consciousness. The
+canonical formulation and falsifiers are in
+`md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md`.
 
 ## Mental Model
 

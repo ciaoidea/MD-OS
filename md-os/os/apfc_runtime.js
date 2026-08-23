@@ -19,6 +19,7 @@ const { compileOperationalContextPack } = require('../apfc/executive/context_com
 const { readEvents, reconcile, verifyEventChain } = require('../apfc/executive/event_recorder');
 const { runConsolidation } = require('../apfc/executive/consolidator');
 const { buildGraphifyFromFiles } = require('../apfc/executive/graphify_adapter');
+const { evaluateCognitiveUnityClaims } = require('../kernel/cognition/cross_domain_cognitive_unity');
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -219,6 +220,7 @@ function promotionTransaction(skillIdInput, options = {}) {
     const promotedPath = path.join(paths.promotedDir, `${skillId}.json`);
     const candidate = readJson(candidatePath);
     if (candidate.status !== 'promotable' || candidate.promotion_gate_status !== 'ok') throw new Error('APFC_PROMOTION_CANDIDATE_NOT_PROMOTABLE');
+    if (evaluateCognitiveUnityClaims(candidate, { workspace_root: paths.workspaceRoot }).status !== 'ok') throw new Error('APFC_PROMOTION_COGNITIVE_UNITY_EVIDENCE_INVALID');
     if ((candidate.risk_level === 'high' || candidate.scope_risk === 'high') && !options.approve_high_risk) throw new Error('APFC_PROMOTION_HIGH_RISK_APPROVAL_REQUIRED');
     const cycleEntry = findCycleForSkill(paths.apfcDir, skillId);
     if (!cycleEntry) throw new Error('APFC_PROMOTION_PASSING_CYCLE_REQUIRED');

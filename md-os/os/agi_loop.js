@@ -18,6 +18,10 @@ const { appendJournal } = require('./lib/journal');
 const { compileTaskSpec } = require('../kernel/cognition/task_compiler');
 const { executeActions } = require('../kernel/cognition/executor');
 const { verifyTaskOutcome } = require('../kernel/cognition/verifier');
+const {
+  evaluateCognitiveUnityClaims,
+  summarizeCognitiveUnityRegistry,
+} = require('../kernel/cognition/cross_domain_cognitive_unity');
 
 const OPS_DIR = path.join(MDOS_ROOT, 'ops');
 const AGI_DIR = path.join(OPS_DIR, 'agi');
@@ -547,6 +551,7 @@ function buildEvalForSkill({ skill, episode, verification, options }) {
 
 function buildPromotionGate({ skill, evalResult, riskLevel, options }) {
   const hasSkill = Boolean(skill && skill.skill_id);
+  const unityGate = evaluateCognitiveUnityClaims(skill || {}, { workspace_root: WORKSPACE_ROOT });
   const requires = [
     'schema_valid',
     'source_bound',
@@ -557,6 +562,12 @@ function buildPromotionGate({ skill, evalResult, riskLevel, options }) {
     'no_regression',
     'risk_reviewed',
     'rollback_available',
+    'cross_domain_transformation_verified_if_claimed',
+    'underlying_evidence_files_valid_if_claimed',
+    'tensor_transformation_law_verified_if_claimed',
+    'controls_and_contamination_verified_if_claimed',
+    'causal_reuse_verified_if_claimed',
+    'cognitive_unity_state_verified_if_claimed',
   ];
   const blocksIf = [
     'imported_unverified_high_impact_claim',
@@ -611,6 +622,13 @@ function buildPromotionGate({ skill, evalResult, riskLevel, options }) {
       status: hasSkill && skill.rollback ? 'ok' : 'critical',
       message: 'Rollback path is mandatory.',
     },
+    ...Object.entries(unityGate.criteria).map(([checkId, passed]) => ({
+      check_id: checkId,
+      status: passed ? 'ok' : 'critical',
+      message: passed
+        ? 'The relative cross-domain cognitive-unity condition is satisfied or not claimed.'
+        : 'A claimed cross-domain, tensorial, or cognitive-unity capability lacks current hash-bound verifier evidence.',
+    })),
   ];
   const status = checks.some((check) => check.status === 'critical')
     ? 'critical'
@@ -1050,8 +1068,12 @@ function buildFailureIndex(episodes) {
 }
 
 function buildSkillRegistry(skills) {
-  const annotatedPromoted = skills.promoted.map((skill) => ({
+  const annotateUnity = (skill) => ({
     ...skill,
+    cognitive_unity_gate: evaluateCognitiveUnityClaims(skill, { workspace_root: WORKSPACE_ROOT }),
+  });
+  const annotatedPromoted = skills.promoted.map((skill) => ({
+    ...annotateUnity(skill),
     runtime_eligible: Boolean(
       skill.promotion_receipt_id
       && skill.source_consolidation_cycle_id
@@ -1063,6 +1085,11 @@ function buildSkillRegistry(skills) {
     && skill.source_consolidation_cycle_id
     && skill.promotion_evidence_hash,
   ));
+  const annotatedCandidates = skills.candidates.map(annotateUnity);
+  const cognitiveUnity = summarizeCognitiveUnityRegistry(
+    [...annotatedPromoted, ...annotatedCandidates],
+    { workspace_root: WORKSPACE_ROOT },
+  );
   return {
     schema_version: 1,
     updated_at: nowIso(),
@@ -1075,9 +1102,10 @@ function buildSkillRegistry(skills) {
     revoked_skill_count: (skills.revoked || []).length,
     promoted_skills: annotatedPromoted,
     runtime_eligible_promoted_skills: runtimeEligible,
-    candidate_skills: skills.candidates,
+    candidate_skills: annotatedCandidates,
     deprecated_skills: skills.deprecated || [],
     revoked_skills: skills.revoked || [],
+    cognitive_unity: cognitiveUnity,
   };
 }
 
@@ -1099,6 +1127,10 @@ function buildEvalReport({ episodes, skills, failureIndex }) {
   }
   const totalEpisodes = episodes.length;
   const successCount = episodes.filter((episode) => episode.verdict === 'success').length;
+  const cognitiveUnity = summarizeCognitiveUnityRegistry(
+    [...skills.promoted, ...skills.candidates],
+    { workspace_root: WORKSPACE_ROOT },
+  );
   const report = {
     schema_version: 1,
     updated_at: nowIso(),
@@ -1126,6 +1158,9 @@ function buildEvalReport({ episodes, skills, failureIndex }) {
       runtime_eligible_promoted_skill_count: skills.promoted.filter((skill) => Boolean(skill.promotion_receipt_id && skill.source_consolidation_cycle_id && skill.promotion_evidence_hash)).length,
       candidate_skill_count: skills.candidates.length,
       regression_count: episodes.reduce((sum, episode) => sum + ((episode.regressions || []).length), 0),
+      cognitive_unity_claiming_skill_count: cognitiveUnity.claiming_skill_count,
+      verified_relative_transformation_count: cognitiveUnity.verified_relative_transformation_count,
+      verified_cognitive_unity_state_count: cognitiveUnity.verified_cognitive_unity_state_count,
       cost: 'not_measured',
     },
   };
@@ -1139,9 +1174,17 @@ function buildPromotionGateReadback(skillRegistry) {
     'source_bound',
     'verifier_passed',
     'eval_passed',
+    'minimum_episode_diversity',
+    'holdout_eval_passed',
     'no_regression',
     'risk_reviewed',
     'rollback_available',
+    'cross_domain_transformation_verified_if_claimed',
+    'underlying_evidence_files_valid_if_claimed',
+    'tensor_transformation_law_verified_if_claimed',
+    'controls_and_contamination_verified_if_claimed',
+    'causal_reuse_verified_if_claimed',
+    'cognitive_unity_state_verified_if_claimed',
   ];
   const blocksIf = [
     'imported_unverified_high_impact_claim',
@@ -1149,16 +1192,23 @@ function buildPromotionGateReadback(skillRegistry) {
     'missing_readback',
     'semantic_contradiction_open',
     'eval_contamination_detected',
+    'post_hoc_transformation_law_selection',
+    'stale_relative_transformation_evidence',
   ];
+  const promotedBlocked = skillRegistry.promoted_skills.filter((skill) => skill.cognitive_unity_gate.status !== 'ok').length;
+  const candidateBlocked = skillRegistry.candidate_skills.filter((skill) => skill.cognitive_unity_gate.status !== 'ok').length;
   return {
     schema_version: 1,
     updated_at: nowIso(),
-    status: 'ok',
-    rule: 'no promotion without eval, artifact, replayable manifest, risk review, and rollback path',
+    status: promotedBlocked ? 'critical' : candidateBlocked ? 'attention' : 'ok',
+    rule: 'no promotion without eval, artifact, replayable manifest, risk review, rollback path, and current hash-bound evidence for every claimed cross-domain, tensorial, or cognitive-unity capability',
     requires,
     blocks_if: blocksIf,
     promoted_skill_count: skillRegistry.promoted_skill_count,
     candidate_skill_count: skillRegistry.candidate_skill_count,
+    blocked_promoted_generality_claim_count: promotedBlocked,
+    blocked_candidate_generality_claim_count: candidateBlocked,
+    cognitive_unity: skillRegistry.cognitive_unity,
   };
 }
 
@@ -1176,6 +1226,16 @@ function buildLoopStatus({ episodes, skillRegistry, evalReport, failureIndex, wo
       severity: failureIndex.status === 'ok' ? 'info' : 'attention',
       code: 'EPISODE_FAILURES_PRESENT',
       message: 'Some episodes contain verifier findings and should drive skill repair or context improvement.',
+    });
+  }
+  if (skillRegistry.cognitive_unity.blocked_claiming_skill_count) {
+    const promotedBlocked = skillRegistry.promoted_skills.some((skill) => (
+      skill.cognitive_unity_gate.claims.length > 0 && skill.cognitive_unity_gate.status !== 'ok'
+    ));
+    findings.push({
+      severity: promotedBlocked ? 'critical' : 'attention',
+      code: 'COGNITIVE_UNITY_CLAIM_EVIDENCE_MISSING',
+      message: 'A cross-domain, tensorial, or cognitive-unity skill claim lacks current hash-bound transformation evidence.',
     });
   }
   const status = findings.some((finding) => finding.severity === 'critical')
@@ -1205,12 +1265,14 @@ function buildLoopStatus({ episodes, skillRegistry, evalReport, failureIndex, wo
     status,
     kernel_name: 'cognitive_transaction_loop',
     compatibility_aliases: ['verified_agi_loop', 'cortex agi'],
-    definition: 'Proof-carrying cognitive transactions through typed TaskSpecs, bounded execution, ActionReceipts, independent postcondition verification, episodes, and APFC-governed skill promotion.',
+    definition: 'Proof-carrying cognitive transactions through typed TaskSpecs, bounded execution, relative cross-domain frame transformations, ActionReceipts, independent postcondition verification, episodes, and APFC-governed skill promotion.',
     non_claims: [
       'not consciousness',
       'not unrestricted autonomy',
       'not hidden self-modification',
       'not parametric model training',
+      'not direct access to host-model hidden-layer activations',
+      'not evidence of AGI or phenomenal consciousness',
     ],
     commands: [
       'cortex agi run-once --task "<task>"',
@@ -1266,6 +1328,8 @@ function renderLoopStatusMarkdown(status) {
     `- candidate skills: \`${status.metrics.candidate_skill_count}\``,
     `- failures: \`${status.metrics.failed_count}\``,
     `- autonomy horizon: \`${status.metrics.autonomy_horizon}\``,
+    `- verified relative transformations: \`${status.metrics.verified_relative_transformation_count || 0}\``,
+    `- verified cognitive-unity states: \`${status.metrics.verified_cognitive_unity_state_count || 0}\``,
     '',
     '## Non-Claims',
     '',
