@@ -43,18 +43,54 @@ test('reflective task and report runtime classes have schemas', () => {
   }
 });
 
-test('canonical reflection requires bounded Gedankenexperimente without treating them as proof', () => {
+test('canonical frame-sensitive reflection challenges hidden frames and bounds Gedankenexperimente without treating them as proof', () => {
   const reflectiveModel = fs.readFileSync(path.join(ROOT, 'md-os/kb/REFLECTIVE_OPERATION_MODEL.md'), 'utf8');
   const bootstrap = fs.readFileSync(path.join(ROOT, 'md-os/kb/COGNITIVE_BOOTSTRAP.md'), 'utf8');
   const identity = fs.readFileSync(path.join(ROOT, 'ME.md'), 'utf8');
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  const zenodoPaper = fs.readFileSync(path.join(ROOT, 'docs/papers/zenodo/paper.tex'), 'utf8');
+  const zenodoReadme = fs.readFileSync(path.join(ROOT, 'docs/papers/zenodo/README.md'), 'utf8');
+  const zenodoRevisionNotes = fs.readFileSync(path.join(ROOT, 'docs/papers/zenodo/REVISION_NOTES.md'), 'utf8');
 
-  for (const source of [reflectiveModel, bootstrap, identity]) {
+  for (const source of [reflectiveModel, bootstrap, identity, readme]) {
     assert.match(source, /Einstein-inspired Gedankenexperiment/);
     assert.match(source, /declared principle/);
     assert.match(source, /premises/i);
     assert.match(source, /hidden assumption/i);
     assert.match(source, /not (?:empirical |verifier )?evidence|not verification/i);
   }
+  for (const source of [reflectiveModel, bootstrap]) {
+    assert.match(source, /scientific/i);
+    assert.match(source, /hidden\s+frame/i);
+    assert.match(source, /source\s+domain/i);
+    assert.match(source, /target\s+domain/i);
+    assert.match(source, /admissible\s+transformation/i);
+    assert.match(source, /invariants\s+survive/i);
+    assert.match(source, /general\s+representation/i);
+    assert.match(source, /real-world\s+observation/i);
+  }
+  for (const source of [reflectiveModel, bootstrap, identity, readme]) {
+    assert.match(source, /frame-sensitive/i);
+    assert.match(source, /Einstein-inspired/i);
+    assert.match(source, /operational\s+synthesis/i);
+    assert.match(source, /not a(?: historical)?\s+claim that Einstein published this(?:\s+exact)?\s+algorithm/i);
+  }
+  assert.match(reflectiveModel, /einstein-online\.info/);
+  assert.match(reflectiveModel, /plato\.stanford\.edu\/entries\/einstein-philscience/);
+  for (const zenodoSource of [zenodoPaper, zenodoReadme, zenodoRevisionNotes]) {
+    assert.match(zenodoSource, /frame-sensitive|frame-transformation-invariant/i);
+    assert.match(zenodoSource, /hidden frame/i);
+    assert.match(zenodoSource, /source and target domains/i);
+    assert.match(zenodoSource, /admissible transformation/i);
+    assert.match(zenodoSource, /preserved structure|structure the transformation preserves/i);
+    assert.match(zenodoSource, /surviving invariants|invariants survive/i);
+    assert.match(zenodoSource, /smallest general representation/i);
+    assert.match(zenodoSource, /MD-OS\/APFC operational synthesis/i);
+    assert.match(zenodoSource, /not (?:as )?an exact algorithm published by Einstein|not a claim that Einstein published this exact algorithm/i);
+  }
+  assert.match(zenodoPaper, /poessel2010equivalence/);
+  assert.match(zenodoPaper, /howardgiovanelli2025einstein/);
   assert.match(reflectiveModel, /must not run as a\s+ritual/i);
   assert.match(reflectiveModel, /formal (?:checker|proof)/i);
+  assert.match(reflectiveModel, /must not become an automatic\s+ritual/i);
 });

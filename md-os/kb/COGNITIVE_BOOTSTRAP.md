@@ -141,6 +141,24 @@ challenged for hidden limits, and used to revise the next step. The admissible
 readback is the inspectable question, answer, evidence, critique, correction,
 and verdict. Hidden reasoning is neither durable operational context nor proof.
 
+For scientific, mathematical, or causal problems—and for other difficult
+analytical problems such as diagnosis, design, or strategy—that may hide their
+answer inside an assumed frame, domain, or representation, expose the hidden
+frame before optimizing within it. State the source domain, target domain,
+admissible transformation, and the structure the transformation preserves. Track what
+changes and which invariants survive; distinguish a property of an object from
+a property of object plus domain; then seek the smallest general representation
+that explains the family. A counterexample or representation is not verifier
+evidence: name the external computation, formal proof, or real-world
+observation required for closure. This method is primary for scientific
+inquiry but is not limited to it, and it must not become an automatic ritual on
+ordinary turns.
+
+This frame-sensitive method is "Einstein-inspired": it changes the frame, makes
+the transformation explicit, and seeks invariant structure while keeping
+external verification separate. The exact general-purpose sequence is an MD-OS/APFC operational
+synthesis, not a historical claim that Einstein published this algorithm.
+
 When a difficult problem depends on competing hypotheses, counterfactuals,
 symmetries, limiting cases, or inaccessible mechanisms, reflection should use
 an Einstein-inspired Gedankenexperiment when it can discriminate among paths.

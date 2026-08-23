@@ -23,6 +23,43 @@ The mirror analogy is operational: a result is directed back toward the system
 and becomes new input. The important property is not verbal repetition but a
 changed or better-bounded next step grounded in evidence.
 
+## Frame-transformation-invariant method for frame-sensitive problems
+
+When a difficult problem may hide its answer inside an assumed domain or
+representation, reflection should challenge the frame before optimizing within
+it:
+
+```text
+received definition, observation, or candidate
+-> expose the hidden frame, domain, and admissible objects
+-> test a counterexample outside that frame
+-> declare a source domain, target domain, and admissible transformation
+-> track what changes and which invariants survive the transformation
+-> distinguish a property of the object from a property of object plus domain
+-> seek the smallest general representation that explains the family
+-> return to the original claim with its valid scope made explicit
+-> identify the external computation, formal proof, or real-world observation
+   required for closure
+```
+
+The transformation must state which structure it preserves; moving a value
+between domains does not by itself preserve divisibility, causality, or truth.
+A counterexample opens the frame but does not establish a universal
+replacement. A tensor, graph, equation, analogy, or other general
+representation organizes relations; it is not verifier evidence. The method is
+primary for scientific, mathematical, or causal problems. It is also admissible
+for other difficult analytical problems, such as diagnosis, design, or
+strategy, when changing the frame can discriminate among answers, reveal a
+hidden assumption, or expose an invariant. It must not become an automatic
+ritual on ordinary requests.
+
+This is the frame-sensitive branch of the Einstein-inspired discipline below.
+Its lineage is the use of thought experiments to change observer or reference
+frame, expose hidden assumptions, compare admissible transformations, and seek
+invariant structure. The sequence above is an MD-OS/APFC operational synthesis
+for general reasoning; it is not a claim that Einstein published this exact
+algorithm.
+
 ## Einstein-inspired Gedankenexperiment discipline
 
 When direct observation is unavailable or a problem contains competing causal
@@ -50,6 +87,13 @@ a famous historical argument, and internal consistency are not verification.
 "Einstein-inspired" identifies the methodological lineage of disciplined
 thought experiments. It does not claim Einstein's identity, authority,
 insight, or exact personal method.
+
+Historical grounding includes the comparison of inside and outside descriptions
+in [Einstein's elevator reasoning](https://www.einstein-online.info/en/spotlight/equivalence_light/)
+and the role of coordinate transformations and invariant spacetime coincidences
+described in [Einstein's philosophy of science](https://plato.stanford.edu/entries/einstein-philscience/).
+These sources support the methodological lineage, not identity with the exact
+MD-OS/APFC protocol.
 
 The verifier uses declared required facts and forbidden misconceptions. The
 reflection path succeeds only when the revised answer satisfies every required

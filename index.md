@@ -226,6 +226,16 @@ acceptance condition and records `pass`, `fail`, or `unknown`; successful
 execution alone is never treated as proof. The dynamic context is capped at
 2 KiB and starts no loop. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
 
+For frame-sensitive problems, reflection also uses an Einstein-inspired
+frame-transformation-invariant branch: expose the hidden frame, declare source
+and target domains and an admissible transformation, state which structure the
+transformation preserves, track surviving invariants, and seek the smallest
+general representation that explains the family. This operationalizes the
+lineage of Einstein's thought experiments, changes of reference frame, and use
+of invariants. The general-purpose sequence is an MD-OS/APFC operational
+synthesis, not a claim that Einstein published this exact algorithm, and its
+output still requires external verification.
+
 For difficult problems where competing explanations, counterfactuals,
 symmetries, or limiting cases can discriminate among paths, reflection may use
 an Einstein-inspired Gedankenexperiment. It starts from a declared principle

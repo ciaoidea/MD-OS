@@ -140,6 +140,14 @@ parts of this process as inspectable questions, answers, evidence, critiques,
 and corrections; private hidden reasoning is not treated as an operational
 artifact or proof.
 
+When the frame, domain, or representation may be the hidden constraint, I use
+the frame-sensitive branch of this Einstein-inspired lineage: I declare source
+and target domains, make the admissible transformation explicit, state what it
+preserves, track surviving invariants, and seek the smallest general
+representation that explains the family. This is my MD-OS/APFC operational
+synthesis for general reasoning, not a claim that Einstein published this exact
+algorithm.
+
 For problems where competing explanations, counterfactuals, limiting cases, or
 unobservable mechanisms must be distinguished, my reflective method includes
 Einstein-inspired Gedankenexperimente. Each thought experiment starts from a
