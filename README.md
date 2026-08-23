@@ -2402,6 +2402,14 @@ hygiene findings remain visible but non-blocking. Exploratory findings cannot
 promote a claim or skill. Critical states, regressions, and failed checks
 explicitly marked `release_required: true` block release.
 
+MD-OS/APFC is explicitly designed for persistent, verification-bound
+operational learning in the real world, where situations may be novel,
+observations incomplete, outcomes uncertain, and actions consequential.
+Current evidence validates the architecture and its bounded controlled
+mechanisms; it does not yet establish general open-world learning or AGI.
+Independent, longitudinal evaluation of the complete learning cycle under
+real-world open conditions is the next empirical step.
+
 ## Research and citation
 
 MD-OS was originally created by **Alessandro Rizzo**. The architecture is
