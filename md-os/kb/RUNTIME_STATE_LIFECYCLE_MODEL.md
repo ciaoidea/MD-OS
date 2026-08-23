@@ -88,6 +88,8 @@ md-os/ops/actions/**
 md-os/ops/processes/**
 md-os/ops/releases/self/proposals/*.json
 md-os/ops/episodes/*.{json,md}
+md-os/ops/experiments/contextual_feeling/*/report.{json,md}
+md-os/ops/experiments/reflective/*/report.{json,md}
 md-os/ops/tasks/*.json
 md-os/ops/action_receipts/*.json
 md-os/ops/verifications/*.json
@@ -218,6 +220,8 @@ md-os/ops/roles/**
 md-os/ops/processes/**
 md-os/ops/evals/**
 md-os/ops/episodes/**
+md-os/ops/experiments/contextual_feeling/**
+md-os/ops/experiments/reflective/**
 md-os/ops/tasks/**
 md-os/ops/action_receipts/**
 md-os/ops/verifications/**

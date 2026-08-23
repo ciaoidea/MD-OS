@@ -254,6 +254,12 @@ function classify(filePath, ignored) {
   if (/^md-os\/ops\/episodes\/[^/]+\.(?:json|md)$/.test(filePath)) {
     return { lifecycle_class: 'live', owner: 'agi_episode_memory', rebuildable: false, publishable: false, scope: 'live_learning_episode' };
   }
+  if (/^md-os\/ops\/experiments\/contextual_feeling\/[^/]+\/report\.(?:json|md)$/.test(filePath)) {
+    return { lifecycle_class: 'live', owner: 'contextual_feeling_experiment', rebuildable: false, publishable: false, scope: 'live_contextual_feeling_experiment_evidence' };
+  }
+  if (/^md-os\/ops\/experiments\/reflective\/[^/]+\/report\.(?:json|md)$/.test(filePath)) {
+    return { lifecycle_class: 'live', owner: 'reflective_operation', rebuildable: false, publishable: false, scope: 'live_reflective_experiment_evidence' };
+  }
   if (filePath.startsWith('md-os/ops/toe/campaigns/')) {
     return { lifecycle_class: 'live', owner: 'toe_research_campaign', rebuildable: false, publishable: false, scope: 'live_theoretical_research_evidence' };
   }

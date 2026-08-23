@@ -90,6 +90,12 @@ test('runtime lifecycle index classifies source, generated, local, demo, and liv
   fs.writeFileSync(path.join(workspace, 'md-os/ops/agi/sal/external_evaluation_request.json'), '{}\n', 'utf8');
   fs.writeFileSync(path.join(workspace, 'md-os/ops/agi/sal/internal_real_world_evidence.json'), '{}\n', 'utf8');
   fs.writeFileSync(path.join(workspace, 'md-os/ops/agi/sal/external_reports/report.json'), '{}\n', 'utf8');
+  fs.mkdirSync(path.join(workspace, 'md-os/ops/experiments/contextual_feeling/context_demo'), { recursive: true });
+  fs.mkdirSync(path.join(workspace, 'md-os/ops/experiments/reflective/reflection_demo'), { recursive: true });
+  fs.writeFileSync(path.join(workspace, 'md-os/ops/experiments/contextual_feeling/context_demo/report.json'), '{}\n', 'utf8');
+  fs.writeFileSync(path.join(workspace, 'md-os/ops/experiments/contextual_feeling/context_demo/report.md'), '# Context report\n', 'utf8');
+  fs.writeFileSync(path.join(workspace, 'md-os/ops/experiments/reflective/reflection_demo/report.json'), '{}\n', 'utf8');
+  fs.writeFileSync(path.join(workspace, 'md-os/ops/experiments/reflective/reflection_demo/report.md'), '# Reflection report\n', 'utf8');
   fs.mkdirSync(path.join(workspace, 'md-os/ops/toe/campaigns/toe_demo'), { recursive: true });
   fs.writeFileSync(path.join(workspace, 'md-os/ops/toe/campaigns/toe_demo/closure_register.json'), '{}\n', 'utf8');
   fs.writeFileSync(path.join(workspace, '.mdosignore'), 'md-os/ops/\ngraphify-out/\n', 'utf8');
@@ -142,6 +148,10 @@ test('runtime lifecycle index classifies source, generated, local, demo, and liv
   assert.equal(byPath.get('md-os/ops/agi/sal/external_evaluation_request.json').lifecycle_class, 'generated');
   assert.equal(byPath.get('md-os/ops/agi/sal/internal_real_world_evidence.json').scope, 'live_agi_sal_internal_evidence');
   assert.equal(byPath.get('md-os/ops/agi/sal/external_reports/report.json').scope, 'live_agi_sal_external_evidence');
+  assert.equal(byPath.get('md-os/ops/experiments/contextual_feeling/context_demo/report.json').owner, 'contextual_feeling_experiment');
+  assert.equal(byPath.get('md-os/ops/experiments/contextual_feeling/context_demo/report.md').scope, 'live_contextual_feeling_experiment_evidence');
+  assert.equal(byPath.get('md-os/ops/experiments/reflective/reflection_demo/report.json').owner, 'reflective_operation');
+  assert.equal(byPath.get('md-os/ops/experiments/reflective/reflection_demo/report.md').scope, 'live_reflective_experiment_evidence');
   assert.equal(byPath.get('md-os/ops/toe/campaigns/toe_demo/closure_register.json').lifecycle_class, 'live');
   assert.equal(byPath.get('md-os/ops/toe/campaigns/toe_demo/closure_register.json').owner, 'toe_research_campaign');
   assert.equal(byPath.get('md-os/ops/toe/campaigns/toe_demo/closure_register.json').scope, 'live_theoretical_research_evidence');

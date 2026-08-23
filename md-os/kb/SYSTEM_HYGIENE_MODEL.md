@@ -38,3 +38,11 @@ health classifier must keep severity intact while separating:
 Each finding should state whether it is runtime-blocking, release-blocking,
 publication-blocking, security-blocking, or local-only. This lets the system
 say "runtime ok, public release blocked" without hiding the blocking issue.
+
+An exploratory experiment may remain partial or unverified without blocking a
+distribution. Its finding remains visible and cannot support claim or skill
+promotion. AGI-loop and eval findings block release when their source is
+critical, when a regression is present, or when the failed check declares
+`release_required: true`. A required distribution test must therefore declare
+that field explicitly; omitting it must never turn an exploratory result into
+a release claim.

@@ -42,6 +42,7 @@ md-os/kb/** -> md-os/kb/README.md
 md-os/kb/hardware/** -> md-os/kb/hardware/README.md
 md-os/kb/software/** -> md-os/kb/software/README.md
 md-os/ops/** -> md-os/ops/global_index.md and lifecycle model
+md-os/shell/** -> README.md and md-os/shell/MDOS_SHELL.md
 md-os/examples/** -> README.md and runtime lifecycle model
 ```
 

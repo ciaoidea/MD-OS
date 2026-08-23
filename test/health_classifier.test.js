@@ -141,6 +141,48 @@ function setupOkRuntimeInputs(workspace) {
   writeText(path.join(workspace, 'md-os/ops/journal.ndjson'), '');
 }
 
+function setupOkHygieneInput(workspace) {
+  writeJson(path.join(workspace, 'md-os/ops/system_hygiene_status.json'), {
+    schema_version: 1,
+    source_hash: 'hygiene',
+    overall_status: 'ok',
+    cleanliness: {
+      status: 'ok',
+      spurious_kb_file_count: 0,
+      zero_byte_file_count: 0,
+      exact_content_duplicate_groups: 0,
+      logical_merge_candidate_groups: 0,
+      spurious_kb_files: [],
+      zero_byte_files: [],
+    },
+    efficiency: {
+      status: 'ok',
+      secondary_obsidian_file_count: 0,
+      top_logical_merge_candidates: [],
+    },
+    stability: { status: 'ok', missing_required_files: [] },
+    publication: {
+      status: 'ok',
+      local_path_file_count: 0,
+      host_local_hardware_file_count: 0,
+      host_local_software_file_count: 0,
+      ops_artifact_file_count: 0,
+      pdf_file_count: 0,
+      authorized_elevated_launcher_count: 0,
+      unsafe_script_count: 0,
+      permissive_config_count: 0,
+      local_path_files: [],
+      host_local_hardware_files: [],
+      host_local_software_files: [],
+      ops_artifact_files: [],
+      pdf_files: [],
+      authorized_elevated_launchers: [],
+      unsafe_scripts: [],
+      permissive_configs: [],
+    },
+  });
+}
+
 test('health classifier separates runtime ok from publication, security, and local blockers', () => {
   const workspace = makeWorkspace();
   setupOkRuntimeInputs(workspace);
@@ -324,4 +366,59 @@ test('health classifier does not treat inherited global health critical as runti
   assert.equal(classification.health.runtime_health.status, 'ok');
   assert.equal(classification.release_gate.runtime_operable, true);
   assert.ok(classification.findings.some((finding) => finding.finding_id === 'self_release_inherited_global_health_critical'));
+});
+
+test('health classifier keeps exploratory AGI attention visible without blocking release', () => {
+  const workspace = makeWorkspace();
+  setupOkRuntimeInputs(workspace);
+  setupOkHygieneInput(workspace);
+  writeJson(path.join(workspace, 'md-os/ops/agi/loop_status.json'), {
+    schema_version: 1,
+    source_hash: 'agi-exploratory-attention',
+    status: 'attention',
+    metrics: { unverified_count: 1, regression_count: 0 },
+    findings: [{
+      severity: 'attention',
+      code: 'UNVERIFIED_TASK_OUTCOMES_PRESENT',
+      message: 'Exploratory evidence remains unverified.',
+    }],
+  });
+
+  const result = runScript(workspace, 'build_health_classifier.js');
+  assert.equal(result.status, 0, result.stderr);
+  const classification = JSON.parse(fs.readFileSync(path.join(workspace, 'md-os/ops/health_classification.json'), 'utf8'));
+  const finding = classification.findings.find((item) => item.finding_id === 'agi_loop_status');
+
+  assert.equal(classification.health.agi_loop_health.status, 'attention');
+  assert.equal(finding.release_blocking, false);
+  assert.equal(finding.evidence.release_required_failure_count, 0);
+  assert.equal(classification.release_gate.publishable, true);
+});
+
+test('health classifier blocks an explicitly release-required AGI failure', () => {
+  const workspace = makeWorkspace();
+  setupOkRuntimeInputs(workspace);
+  setupOkHygieneInput(workspace);
+  writeJson(path.join(workspace, 'md-os/ops/agi/loop_status.json'), {
+    schema_version: 1,
+    source_hash: 'agi-required-attention',
+    status: 'attention',
+    metrics: { unverified_count: 1, regression_count: 0 },
+    findings: [{
+      severity: 'attention',
+      code: 'REQUIRED_DISTRIBUTION_EXPERIMENT_UNVERIFIED',
+      release_required: true,
+      message: 'The required distribution experiment lacks verifier closure.',
+    }],
+  });
+
+  const result = runScript(workspace, 'build_health_classifier.js');
+  assert.equal(result.status, 0, result.stderr);
+  const classification = JSON.parse(fs.readFileSync(path.join(workspace, 'md-os/ops/health_classification.json'), 'utf8'));
+  const finding = classification.findings.find((item) => item.finding_id === 'agi_loop_status');
+
+  assert.equal(finding.release_blocking, true);
+  assert.equal(finding.evidence.release_required_failure_count, 1);
+  assert.deepEqual(finding.evidence.release_required_failure_ids, ['REQUIRED_DISTRIBUTION_EXPERIMENT_UNVERIFIED']);
+  assert.equal(classification.release_gate.publishable, false);
 });

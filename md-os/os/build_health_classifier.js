@@ -84,6 +84,30 @@ function listOf(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function releaseRequiredFailures(report) {
+  const checks = [
+    ...listOf(report && report.findings),
+    ...listOf(report && report.checks),
+  ];
+  return checks.filter((check) => {
+    if (!check || check.release_required !== true) return false;
+    if (check.passed === true) return false;
+    if (check.passed === false) return true;
+    const result = String(check.status || check.severity || check.outcome || check.verdict || '').toLowerCase();
+    return !['ok', 'pass', 'passed', 'success', 'verified', 'info'].includes(result);
+  });
+}
+
+function releaseFailureIds(failures) {
+  return failures.map((failure, index) => (
+    failure.finding_id
+    || failure.check_id
+    || failure.code
+    || failure.eval_id
+    || `required_release_check_${index + 1}`
+  ));
+}
+
 function makeFinding({
   finding_id,
   severity,
@@ -240,6 +264,8 @@ function buildFindings(inputs) {
     runtimeEpistemicHealth,
     replay,
   } = inputs;
+  const agiLoopReleaseFailures = releaseRequiredFailures(agiLoop);
+  const agiEvalReleaseFailures = releaseRequiredFailures(agiEval);
 
   addStatusFinding(findings, {
     finding_id: 'runtime_lifecycle_status',
@@ -401,20 +427,34 @@ function buildFindings(inputs) {
     status: agiLoop && agiLoop.status,
     scope: 'agi_loop',
     source: INPUT_FILES.agiLoop,
-    release_blocking: agiLoop && agiLoop.status !== 'ok',
+    release_blocking: Boolean(agiLoop && (
+      agiLoop.status === 'critical'
+      || agiLoopReleaseFailures.length > 0
+    )),
     reason: 'Verified AGI loop readback is not fully ok.',
     suggested_action: 'Run AGI eval and inspect episode, skill, eval, and failure indexes.',
-    evidence: agiLoop && agiLoop.metrics || {},
+    evidence: {
+      ...(agiLoop && agiLoop.metrics || {}),
+      release_required_failure_count: agiLoopReleaseFailures.length,
+      release_required_failure_ids: releaseFailureIds(agiLoopReleaseFailures),
+    },
   });
   addStatusFinding(findings, {
     finding_id: 'agi_eval_status',
     status: agiEval && agiEval.status,
     scope: 'agi_loop',
     source: INPUT_FILES.agiEval,
-    release_blocking: agiEval && agiEval.status !== 'ok',
+    release_blocking: Boolean(agiEval && (
+      agiEval.status === 'critical'
+      || agiEvalReleaseFailures.length > 0
+    )),
     reason: 'AGI eval report is not fully ok.',
     suggested_action: 'Inspect eval report and regressions before promoting skills.',
-    evidence: agiEval && agiEval.metrics || {},
+    evidence: {
+      ...(agiEval && agiEval.metrics || {}),
+      release_required_failure_count: agiEvalReleaseFailures.length,
+      release_required_failure_ids: releaseFailureIds(agiEvalReleaseFailures),
+    },
   });
   if (agiEval && agiEval.metrics && countOf(agiEval.metrics.regression_count) > 0) {
     findings.push(makeFinding({

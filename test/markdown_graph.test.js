@@ -76,6 +76,28 @@ test('markdown graph ignores local caches and generated Graphify Markdown', () =
   assert.ok(graph.nodes.some((node) => node.path === 'README.md'));
 });
 
+test('markdown graph anchors semantic shell documents through the shell entrypoint', () => {
+  const workspace = makeWorkspace();
+  writeFile(path.join(workspace, 'README.md'), '# Root\n');
+  writeFile(path.join(workspace, 'md-os/shell/MDOS_SHELL.md'), '# MD-OS Shell\n');
+  writeFile(path.join(workspace, 'md-os/shell/programs/code.md'), '# Code\n');
+  writeFile(path.join(workspace, 'md-os/shell/programs/os.md'), '# OS\n');
+
+  const result = runGraph(workspace);
+  assert.equal(result.status, 0, result.stderr);
+
+  const graph = JSON.parse(fs.readFileSync(path.join(workspace, 'md-os/ops/markdown_graph.json'), 'utf8'));
+  assert.equal(graph.structural_isolated_count, 0);
+  assert.ok(graph.nodes
+    .filter((node) => node.path.startsWith('md-os/shell/'))
+    .every((node) => node.zone === 'semantic_shell' && node.structurally_connected));
+  assert.ok(graph.structural_links.some((edge) => (
+    edge.source === 'md-os/shell/programs/code.md'
+    && edge.target === 'md-os/shell/MDOS_SHELL.md'
+    && edge.reason === 'semantic_shell_entrypoint'
+  )));
+});
+
 test('semantic operational network treats deterministic readback nodes as generated', () => {
   const workspace = makeWorkspace();
   const sourceCoreNodes = [

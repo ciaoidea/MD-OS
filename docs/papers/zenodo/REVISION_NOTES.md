@@ -1,6 +1,6 @@
 # Revision notes
 
-This revision aligns the manuscript with the verified Cortex integration through 22 August while preserving the original controlled experimental evidence.
+This revision aligns the manuscript with the verified Cortex integration through 23 August while preserving the original controlled experimental evidence.
 
 - Rewrites the abstract around one causal line: proposal -> authorization -> execution -> verification -> durable commitment.
 - Opens with the concrete “the agent says the bug is fixed” problem.
@@ -10,7 +10,9 @@ This revision aligns the manuscript with the verified Cortex integration through
 - Separates their test counts, replay hashes, episode counts, and promotion states, removing the apparent contradictions in the previous layout.
 - Preserves the controlled results: 194/194 baseline tests, 1/3 verifier acceptance, 16-to-1 finite hypothesis reduction, 0/2-to-2/2 sealed transfer, and baseline fixed-point replay.
 - Preserves the 20 August B1 checks at 223/223 Node tests and 51/51 shell-parity tests.
-- Adds the current B2 cognitive-routing, reflective-method, release-portability, and repository-local shell snapshot: 239/239 Node tests, 58/58 shell-parity tests, four-language normalized route equivalence, expected--observed event triggering, false-positive rejection, bounded autonomy, portable generated paths, and npm-package hygiene checks.
+- Adds the current B2 cognitive-routing, reflective-method, release-portability, and repository-local shell snapshot: 243/243 Node tests, 58/58 shell-parity tests, four-language normalized route equivalence, expected--observed event triggering, false-positive rejection, bounded autonomy, portable generated paths, and npm-package hygiene checks.
+- Adds stable-distribution regressions for semantic-shell graph anchoring, live experiment-report lifecycle ownership, reflective-report schema closure, and explicit `release_required` AGI/eval failures; exploratory attention remains visible but non-promotable.
+- Corrects the current local-candidate readback after those regressions: runtime, compiler, APFC, semantic-integrity, publication, and security health are `ok`; runtime operability and publishability are true; release blocking is false; and two consecutive replay passes reach the same fixed point.
 - Moves the only public launcher to repository-root `./cortex`, removes global PATH installation, retains `md-os/shell/bin/mdos-console` as the internal engine, and verifies the manifest-loaded 1,000,000/1,000,001 input boundary.
 - Adds the deterministic `reflect-event` boundary: mismatch may open one cycle; matching readback and continuous event-driven reflection are inhibited.
 - Documents semantic multilingual routing without claiming universal language understanding: the host model classifies intent and the deterministic runtime gates execution.

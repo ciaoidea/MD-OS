@@ -154,6 +154,7 @@ function zoneForPath(relativePath) {
   if (relativePath.startsWith('md-os/kb/software/')) return 'kb_software';
   if (relativePath.startsWith('md-os/kb/')) return 'knowledge_base';
   if (relativePath.startsWith('md-os/ops/')) return 'runtime_state';
+  if (relativePath.startsWith('md-os/shell/')) return 'semantic_shell';
   if (relativePath.startsWith('md-os/examples/')) return 'examples';
   if (relativePath.startsWith('dev/')) return 'development';
   return relativePath.split('/')[0] || 'other';
@@ -291,6 +292,11 @@ function structuralTargetsFor(node, exactPathSet) {
   if (source.startsWith('md-os/ops/')) {
     add('md-os/ops/global_index.md', 'runtime_index');
     add('md-os/kb/RUNTIME_STATE_LIFECYCLE_MODEL.md', 'runtime_lifecycle_model');
+  }
+
+  if (source.startsWith('md-os/shell/')) {
+    add('README.md', 'repository_entrypoint');
+    add('md-os/shell/MDOS_SHELL.md', 'semantic_shell_entrypoint');
   }
 
   if (source.startsWith('md-os/apfc/')) {

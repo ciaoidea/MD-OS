@@ -2362,6 +2362,26 @@ npm run verify:release
 npm run package:demo
 ```
 
+## Verified local distribution snapshot
+
+The current local distribution candidate was reverified on 23 August 2026.
+This is repository readback, not proof that an external Git or Zenodo record
+has already been updated.
+
+- 243/243 Node tests and 58/58 shell-parity tests passed.
+- Runtime, compiler, APFC, semantic-integrity, publication, and security
+  readbacks are `ok`.
+- `runtime_operable` is `true`, `publishable` is `true`, and
+  `release_blocked` is `false`.
+- Two consecutive replay passes reached the same fixed point.
+- The actual npm package contained 524 files, with no unexpected operational
+  state, LaTeX auxiliary files, private host path, or private-key header.
+
+Overall health remains `attention` because exploratory AGI evidence and local
+hygiene findings remain visible but non-blocking. Exploratory findings cannot
+promote a claim or skill. Critical states, regressions, and failed checks
+explicitly marked `release_required: true` block release.
+
 ## Research and citation
 
 MD-OS was originally created by **Alessandro Rizzo**. The architecture is

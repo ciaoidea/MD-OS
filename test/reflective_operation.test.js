@@ -35,6 +35,14 @@ test('fixture follows the reflective experiment schema shape', () => {
   assert.ok(Array.isArray(TASK.forbidden_claims));
 });
 
+test('reflective task and report runtime classes have schemas', () => {
+  for (const name of ['reflective_experiment.schema.json', 'reflective_experiment_report.schema.json']) {
+    const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'md-os/schemas', name), 'utf8'));
+    assert.equal(schema.type, 'object');
+    assert.equal(schema.additionalProperties, false);
+  }
+});
+
 test('canonical reflection requires bounded Gedankenexperimente without treating them as proof', () => {
   const reflectiveModel = fs.readFileSync(path.join(ROOT, 'md-os/kb/REFLECTIVE_OPERATION_MODEL.md'), 'utf8');
   const bootstrap = fs.readFileSync(path.join(ROOT, 'md-os/kb/COGNITIVE_BOOTSTRAP.md'), 'utf8');
