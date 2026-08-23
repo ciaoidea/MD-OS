@@ -2443,5 +2443,6 @@ automatically available under those historical MIT terms.
 
 ---
 
-*L'intelligenza può essere temporanea. Il contesto operativo deve persistere —
-e restare libero.*
+*Talent solves within a frame; general intelligence transforms both the frame
+and the solver, while persistent operational context preserves the verified
+invariants—and remains free.*
