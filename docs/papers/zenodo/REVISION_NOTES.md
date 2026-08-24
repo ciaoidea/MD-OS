@@ -3,6 +3,9 @@
 This B10 revision integrates naturally named pre-deliberative affect into the
 Unity-governed causal process while preserving the exact evidential boundary.
 
+- Replaces the release-history-style abstract with a single concise paragraph
+  focused on the problem, the Unity contribution, the B10 causal result, the
+  governance boundary, and the principal non-claims.
 - Adds claim C21 and the portable pre-deliberative affect path:
   disposition plus observation -> instinctive appraisal -> episodic emotion
   and causal token -> binding graph and bounded workspace -> Causal Unity state
@@ -25,13 +28,13 @@ Unity-governed causal process while preserving the exact evidential boundary.
   integration, examples, focused tests, and semantic invariant
   `AFFECT-INV-001`.
 - Records the final B10 local readback: 298/298 Node tests, 60/60 shell-parity
-  tests, focused subset 17/17, syntax and declared-build passes, a 27-page PDF,
+  tests, focused subset 17/17, syntax and declared-build passes, a 26-page PDF,
   semantic gate 11/0, and fixed-point replay with `matched_before: true`. The
   hash-bound receipt remains in generated local state outside the package.
   The npm package surface contains 569 files without unexpected operational
   state, LaTeX auxiliary files, absolute private host paths, or private-key
   headers. Overall health is `attention` only for exploratory AGI and
-  non-blocking local hygiene; no external Git or Zenodo publication is implied.
+  non-blocking local hygiene; no external Zenodo publication is implied.
 
 This B9 revision makes the Unity state causally active in the bounded APFC
 decision path instead of treating a tensor-shaped artifact as sufficient.

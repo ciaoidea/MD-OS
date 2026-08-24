@@ -54,7 +54,7 @@ emotion, phenomenal consciousness, or AGI.
 
 The B10 local candidate passes 298/298 Node tests, 60/60 shell-parity tests,
 the 17/17 focused pre-deliberative-affect, cognitive-runtime, and semantic-gate
-subset, syntax checks, the declared full build, and a 27-page LaTeX
+subset, syntax checks, the declared full build, and a 26-page LaTeX
 compilation. Runtime, compiler, APFC, semantic integrity, publication, and
 security are `ok`; the semantic commitment gate reports eleven invariants and
 zero findings; `runtime_operable` and `publishable` are true. Replay reaches a
