@@ -1068,6 +1068,12 @@ state, live agent state, or archived state. See
 
 MD-OS should be readable as files and navigable as a graph.
 
+![Obsidian graph view of the MD-OS Markdown knowledge and operational file network](obsidian.jpg)
+
+Obsidian graph view of the repository's linked Markdown knowledge and
+operational files. It visualizes file and link topology; it is not a neural,
+tensor, or phenomenal-consciousness readback.
+
 Run the graph builder after documentation or knowledge-base changes:
 
 ```bash
