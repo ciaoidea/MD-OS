@@ -6,6 +6,9 @@ Unity-governed causal process while preserving the exact evidential boundary.
 - Replaces the release-history-style abstract with a single concise paragraph
   focused on the problem, the Unity contribution, the B10 causal result, the
   governance boundary, and the principal non-claims.
+- Reflows the long controller-domain vectors, authorization predicate, and
+  transition equation across aligned lines so that they remain within the
+  two-column measure without changing their formal content.
 - Adds claim C21 and the portable pre-deliberative affect path:
   disposition plus observation -> instinctive appraisal -> episodic emotion
   and causal token -> binding graph and bounded workspace -> Causal Unity state

@@ -531,13 +531,14 @@ The first says only that controller telemetry, its basis change, hashes, and dec
 \label{sec:causal-unity-controller}
 B9 introduces the operational object that was absent from the telemetry and epistemic layers.  Let
 \[
-\mathcal D=(\text{identity},\text{observation},\text{intent},\text{goal},
-\text{memory},\text{frame},\text{prediction},\text{policy},\text{evidence})
-\]
-and
-\[
-\mathcal R=(\text{presence},\text{activation},\text{authority},
-\text{verifier},\text{causal-required},\text{carry-forward}).
+\begin{aligned}
+\mathcal D={}&(\text{identity},\text{observation},\text{intent},\\
+&\quad\text{goal},\text{memory},\text{frame},\\
+&\quad\text{prediction},\text{policy},\text{evidence}),\\[0.25em]
+\mathcal R={}&(\text{presence},\text{activation},\\
+&\quad\text{authority},\text{verifier},\\
+&\quad\text{causal-required},\text{carry-forward}).
+\end{aligned}
 \]
 The predecision Causal Unity state is
 \begin{equation}
@@ -547,17 +548,21 @@ The predecision Causal Unity state is
 \end{equation}
 Its companion contract hashes every referenced channel, the frame, authority boundary, prediction contract, action policy, decision basis, and previous transition.  For candidate action $a_k$, authorization is
 \begin{equation}
-\operatorname{Allow}(a_k)=
-V_{\mathrm{state}}(\mathcal U^{\mathrm{ctrl}}_k)
-\land[h_{\mathrm{consumed}}=h(\mathcal U^{\mathrm{ctrl}}_k)]
-\land F_k\land B_k\land P_k\land A_k,
+\begin{aligned}
+\operatorname{Allow}(a_k)={}&
+  V_{\mathrm{state}}(\mathcal U^{\mathrm{ctrl}}_k)\\
+&\land[h_{\mathrm{consumed}}=h(\mathcal U^{\mathrm{ctrl}}_k)]\\
+&\land F_k\land B_k\land P_k\land A_k,
+\end{aligned}
 \label{eq:causal-unity-authorization}
 \end{equation}
 where $F_k$ and $B_k$ preserve frame and decision basis, while $P_k$ and $A_k$ are policy and authority predicates.  Every mutating observed action must match a prior authorization by action identifier and hash.  Closure creates
 \begin{equation}
-\Theta_k=\operatorname{Close}(\mathcal U^{\mathrm{ctrl}}_k,y_k,
-H(A_k),H(E_k),V_k),\qquad
-\mathcal U^{\mathrm{ctrl}}_{k+1}.\mathrm{previous}=h(\Theta_k).
+\begin{aligned}
+\Theta_k={}&\operatorname{Close}(\mathcal U^{\mathrm{ctrl}}_k,y_k,\\
+&\quad H(A_k),H(E_k),V_k),\\
+\mathcal U^{\mathrm{ctrl}}_{k+1}.\mathrm{previous}={}&h(\Theta_k).
+\end{aligned}
 \label{eq:causal-unity-transition}
 \end{equation}
 Missing or invalid state inhibits authorization; an unmatched mutation makes closure incomplete; failed readback rejects the transition.
