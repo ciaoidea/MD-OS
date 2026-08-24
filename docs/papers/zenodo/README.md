@@ -33,6 +33,12 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
+The 25 August B11 candidate documents the context-sufficiency contract added to the APFC natural-language boundary. Every turn now receives a bounded, hash-bound invariant baseline containing identity, cognitive bootstrap, compact operational core, conceptual orientation, active work, continuity, and the generated context-pack catalog. Lexical overlap remains an advisory source-selection hint, never proof of meaning or completeness.
+
+The contract separates `baseline = ready | degraded` from `task_context_status = pending_turn_resolution`. A simple answer may use the request and baseline directly. Before a nontrivial project claim or action, the same turn must resolve its dependency edges through the catalog, canonical sources, and current readback, or state that context is insufficient. Frame and receipt schema v5 carry the same typed contract and reject a changed contract hash. This improves inspectable context discipline; it does not prove that the hosted model semantically used every source or that any selected context is universally sufficient.
+
+At implementation commit `ece72783f15659de1fd524078230143d63a884c3`, the repository passed 298/298 Node tests and 62/62 shell-parity tests, including zero lexical-overlap baseline loading, contract-tamper rejection, and frame/receipt parity under a 12 KiB context bound. Syntax checks and the declared full build passed; the B11 manuscript compiles to 27 pages without oversized floats, overfull boxes, or unresolved references; replay reached fixed point `aa19579515753d3060d450f43b5e7695cf5d29c29c5e97d5093719b056bd6d8f`. The public Zenodo record remains B10 until the author uploads this B11 package as a new version.
+
 The 24 August B10 candidate integrates the portable pre-deliberative affect
 layer into the Unity-governed causal path. In this architecture,
 pre-deliberative means instinctive: identity-continuity information is
@@ -63,8 +69,8 @@ generated local operational state outside the publication package.
 The npm package surface contains 569 files and no unexpected operational state,
 LaTeX auxiliary files, absolute private host path, or private-key header.
 Overall health remains `attention` only for exploratory AGI and non-blocking
-local hygiene. This is local-candidate evidence; the external Zenodo record
-remains unchanged until the author uploads this local candidate.
+local hygiene. The resulting B10 package is published as Zenodo record
+`21960027`, DOI `10.5281/zenodo.21960027`.
 
 The 24 August B9 candidate adds the missing causally active layer between
 per-turn telemetry and world-grounded verification. Its 9 x 6 predecision

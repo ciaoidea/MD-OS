@@ -1,5 +1,16 @@
 # Revision notes
 
+This B11 revision binds natural-language turns to an explicit context-sufficiency contract instead of treating lexical source selection as sufficient context.
+
+- Adds claim C22 and a closed `apfc_context_sufficiency` schema carried identically by APFC frame and receipt schema v5.
+- Loads and hashes a bounded invariant baseline on every turn: identity, cognitive bootstrap, compact operational core, conceptual orientation, active work, continuity, and the generated context-pack catalog.
+- Keeps the current human request as the turn target and uses lexical overlap only as an advisory task-source hint; zero overlap cannot remove the invariant baseline.
+- Separates baseline readiness from task-specific sufficiency. Task context remains pending same-turn resolution until a simple answer is possible or the dependencies of a nontrivial claim or action are inspected.
+- Requires nontrivial work to resolve dependency edges through the context-pack catalog, canonical sources, and current readback, or to state that context is insufficient.
+- Adds source hashes, a whole-contract hash, a 12 KiB bound, zero-overlap coverage, tamper rejection, and frame/receipt parity checks.
+- Records implementation commit `ece72783f15659de1fd524078230143d63a884c3`, 298/298 Node tests, 62/62 shell-parity tests, passing syntax and declared build, a clean 27-page PDF, and replay fixed point `aa19579515753d3060d450f43b5e7695cf5d29c29c5e97d5093719b056bd6d8f`.
+- Keeps the evidential boundary explicit: the contract verifies controller inputs and routing obligations, not hidden-model semantic use, universal understanding, truth, consciousness, or AGI. The public Zenodo record remains B10 pending author upload of B11.
+
 This B10 revision integrates naturally named pre-deliberative affect into the
 Unity-governed causal process while preserving the exact evidential boundary.
 
@@ -37,7 +48,8 @@ Unity-governed causal process while preserving the exact evidential boundary.
   The npm package surface contains 569 files without unexpected operational
   state, LaTeX auxiliary files, absolute private host paths, or private-key
   headers. Overall health is `attention` only for exploratory AGI and
-  non-blocking local hygiene; no external Zenodo publication is implied.
+  non-blocking local hygiene. The resulting B10 package was subsequently
+  published as Zenodo record `21960027`, DOI `10.5281/zenodo.21960027`.
 
 This B9 revision makes the Unity state causally active in the bounded APFC
 decision path instead of treating a tensor-shaped artifact as sufficient.
