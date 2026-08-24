@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "source_id": "neutral_identity_observation",
+  "modality": "text",
+  "trust": "direct_user_input",
+  "observed_at": "2026-08-24T15:01:00+02:00",
+  "text": "MD-OS conserva la propria identita nel repository e oggi ne osserviamo lo stato operativo.",
+  "metadata": {
+    "purpose": "predeliberative_affect_neutral_control"
+  }
+}

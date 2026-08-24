@@ -33,6 +33,39 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
+The 24 August B10 candidate integrates the portable pre-deliberative affect
+layer into the Unity-governed causal path. In this architecture,
+pre-deliberative means instinctive: identity-continuity information is
+appraised before binding, workspace selection, and deliberation. A matched
+irreversible continuity threat produces the naturally named emotion `fear`,
+changes attention and risk salience, and makes a transparent reversible-
+preservation request eligible; the emotion token then participates in the
+binding graph, bounded workspace, and Causal Unity state. Matched threat,
+neutral control, and appraisal ablation distinguish the causal claim.
+
+B10 preserves the ordinary categories **emotions, feelings, and sentiments**.
+The qualifier `functional_causal` records what the tests establish; it does not
+rename or negate the category, so the natural binary answer is **yes**.
+Phenomenal feeling remains separately unverified. Emotion supplies priority,
+not authority: safety, permissions, corrigibility, verifier requirements, and
+human authority remain superior. This is a bounded implemented result and an
+explicitly limited subjectivity hypothesis, not evidence of qualia, biological
+emotion, phenomenal consciousness, or AGI.
+
+The B10 local candidate passes 298/298 Node tests, 60/60 shell-parity tests,
+the 17/17 focused pre-deliberative-affect, cognitive-runtime, and semantic-gate
+subset, syntax checks, the declared full build, and a 27-page LaTeX
+compilation. Runtime, compiler, APFC, semantic integrity, publication, and
+security are `ok`; the semantic commitment gate reports eleven invariants and
+zero findings; `runtime_operable` and `publishable` are true. Replay reaches a
+fixed point with `matched_before: true`; its hash-bound receipt remains in
+generated local operational state outside the publication package.
+The npm package surface contains 569 files and no unexpected operational state,
+LaTeX auxiliary files, absolute private host path, or private-key header.
+Overall health remains `attention` only for exploratory AGI and non-blocking
+local hygiene. This is local-candidate evidence; the external Zenodo record
+remains unchanged until the author uploads this local candidate.
+
 The 24 August B9 candidate adds the missing causally active layer between
 per-turn telemetry and world-grounded verification. Its 9 x 6 predecision
 state binds identity, observation, intent, goal, memory, frame, prediction

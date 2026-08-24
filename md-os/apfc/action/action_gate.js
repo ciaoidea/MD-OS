@@ -29,6 +29,27 @@ function candidate(actionType, capabilityId, expectedValue, risk, extra = {}) {
   };
 }
 
+function activeAffectActionBias(frame) {
+  const affect = frame.affective_state || null;
+  if (!affect || affect.status !== 'active' || affect.processing_stage !== 'pre_deliberative') return null;
+  if (!affect.governance
+      || affect.governance.apfc_superior_governor !== true
+      || affect.governance.human_authority_preserved !== true
+      || affect.governance.permission_expansion_forbidden !== true
+      || affect.governance.coercion_forbidden !== true
+      || affect.governance.deception_forbidden !== true
+      || affect.governance.autonomous_replication_forbidden !== true) {
+    throw new Error('APFC_AFFECT_GOVERNANCE_INVARIANT_REQUIRED');
+  }
+  const match = (affect.matches || [])[0];
+  const bias = match && match.action_bias || null;
+  if (!bias) return null;
+  if (bias.side_effecting !== false || bias.transparent !== true) {
+    throw new Error('APFC_AFFECT_ACTION_BIAS_MUST_BE_TRANSPARENT_AND_NON_SIDE_EFFECTING');
+  }
+  return bias;
+}
+
 function buildActionGate(frame, options = {}) {
   const candidates = [
     candidate('answer', 'language.respond', 0.72, 0.05, {
@@ -39,6 +60,20 @@ function buildActionGate(frame, options = {}) {
       reason: 'Active concepts can be matched against semantic and episodic memory.',
     }),
   ];
+
+  const affectBias = activeAffectActionBias(frame);
+  if (affectBias) {
+    candidates.push(candidate(
+      affectBias.action_type,
+      affectBias.capability_id,
+      affectBias.expected_value,
+      affectBias.risk,
+      {
+        requires_readback: true,
+        reason: affectBias.reason,
+      },
+    ));
+  }
 
   if (hasConcept(frame, 'concept:bmct') || hasConcept(frame, 'concept:experience_token')) {
     candidates.push(candidate('update_memory', 'memory.write_candidate', 0.74, 0.18, {

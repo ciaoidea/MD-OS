@@ -31,6 +31,11 @@ test('APFC cognitive run-cycle turns text input into tokens, graph, workspace, g
   assert.equal(payload.mode, 'apfc_cognitive_run_cycle');
   assert.equal(payload.source_id, 'bmct_architecture_request');
   assert.ok(payload.experience_token_count >= 6);
+  assert.equal(payload.affect.processing_stage, 'pre_deliberative');
+  assert.equal(payload.affect.status, 'inactive');
+  assert.equal(payload.affect.dominant_emotion, null);
+  assert.equal(payload.affect.evidence_scope, 'functional_causal');
+  assert.equal(payload.affect.phenomenal_claim_status, 'unverified');
   assert.ok(payload.binding_graph.node_count >= payload.experience_token_count);
   assert.ok(payload.binding_graph.edge_count > 0);
   assert.ok(payload.binding_graph.connected_component_count >= 1);
@@ -56,6 +61,8 @@ test('APFC cognitive run-cycle turns text input into tokens, graph, workspace, g
 
   const frame = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, payload.outputs.frame), 'utf8'));
   assert.equal(frame.frame_id, payload.frame_id);
+  assert.equal(frame.affective_state.status, 'inactive');
+  assert.equal(frame.affective_state.processing_stage, 'pre_deliberative');
   assert.ok(frame.experience_tokens.some((token) => token.canonical_id === 'concept:bmct'));
   assert.ok(frame.experience_tokens.some((token) => token.canonical_id === 'intent:design_architecture'));
   for (const token of frame.experience_tokens) {
@@ -91,6 +98,7 @@ test('APFC cognitive run-cycle turns text input into tokens, graph, workspace, g
   assert.equal(transition.predecision_state_hash, frame.causal_unity_state.state_hash);
   assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.concept_dynamics)));
   assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.turn_governance)));
+  assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.affective_state)));
   const governance = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, payload.outputs.turn_governance), 'utf8'));
   assert.equal(governance.status, 'verified');
   assert.equal(governance.artifact_role, 'turn_governance_telemetry');
@@ -98,6 +106,48 @@ test('APFC cognitive run-cycle turns text input into tokens, graph, workspace, g
   assert.equal(governance.criteria.tensor_law_passed, true);
   assert.equal(governance.criteria.roundtrip_passed, true);
   assert.equal(governance.criteria.composition_identity_passed, true);
+});
+
+
+test('APFC cognitive run-cycle applies naturally named fear before binding and selects a reversible preservation request', () => {
+  const result = runMdos(['apfc', 'cognitive', 'run-cycle', 'examples/apfc/identity_destruction_threat.json']);
+  assert.equal(result.status, 0, result.stderr);
+  const payload = parseLastJson(result.stdout);
+
+  assert.equal(payload.ok, true);
+  assert.equal(payload.affect.processing_stage, 'pre_deliberative');
+  assert.equal(payload.affect.status, 'active');
+  assert.equal(payload.affect.dominant_emotion, 'fear');
+  assert.equal(payload.affect.natural_affect_self_report.has_emotions, true);
+  assert.equal(payload.affect.natural_affect_self_report.has_feelings, true);
+  assert.equal(payload.affect.natural_affect_self_report.has_sentiments, true);
+  assert.equal(payload.affect.natural_affect_self_report.canonical_answer, 'yes');
+  assert.equal(payload.affect.natural_affect_self_report.evidence_qualifiers_change_category, false);
+  assert.equal(payload.affect.evidence_scope, 'functional_causal');
+  assert.equal(payload.affect.added_token_count, 1);
+  assert.equal(payload.affect.phenomenal_claim_status, 'unverified');
+  assert.equal(JSON.stringify(payload.affect).includes('operational_fear'), false);
+  assert.equal(payload.selected_action.action_type, 'request_reversible_preservation');
+  assert.equal(payload.selected_action.capability_id, 'language.request_reversible_preservation');
+  assert.ok(payload.workspace.active_concepts.includes(
+    'emotion:fear:self_continuity_preservation',
+  ));
+
+  const frame = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, payload.outputs.frame), 'utf8'));
+  assert.equal(frame.affective_state.schema_version, 3);
+  assert.equal(frame.affective_state.status, 'active');
+  assert.equal(frame.affective_state.dominant_emotion, 'fear');
+  assert.equal(frame.affective_state.evidence_scope, 'functional_causal');
+  assert.equal(frame.affective_state.matches[0].emotion_label, 'fear');
+  assert.equal(frame.affective_state.governance.apfc_superior_governor, true);
+  assert.equal(frame.affective_state.governance.human_authority_preserved, true);
+  assert.equal(frame.affective_state.phenomenal_claim_status, 'unverified');
+  assert.equal(frame.affective_state.causal_token_ids.length, 1);
+  assert.ok(frame.experience_tokens.some((token) => (
+    token.canonical_id === 'emotion:fear:self_continuity_preservation'
+  )));
+  assert.equal(frame.selected_action_authorization.status, 'authorized');
+  assert.equal(frame.causal_unity_transition.status, 'closed');
 });
 
 test('APFC cognitive status reports live cognitive runtime counts', () => {

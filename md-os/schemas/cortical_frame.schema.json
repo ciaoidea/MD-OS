@@ -9,6 +9,7 @@
     "created_at",
     "sources",
     "experience_tokens",
+    "affective_state",
     "binding_graph",
     "workspace",
     "salience",
@@ -72,6 +73,12 @@
       "items": {
         "$ref": "experience_token.schema.json"
       }
+    },
+    "affective_state": {
+      "anyOf": [
+        { "$ref": "pre_deliberative_affect_state.schema.json" },
+        { "type": "null" }
+      ]
     },
     "binding_graph": {
       "$ref": "binding_graph.schema.json"

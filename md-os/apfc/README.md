@@ -5,13 +5,17 @@ Canonical model: [BIO_MULTIMODAL_CORTICAL_TRANSFORMER.md](../kb/BIO_MULTIMODAL_C
 The APFC Cognitive Runtime is the first implementation slice of BMCT. It
 converts raw text or document-like sources into experience tokens, binds those
 tokens into an event graph, selects a bounded workspace, proposes gated
-actions, and records prediction/error state. Executive APFC event, context,
-graph, and consolidation modules live under `executive/`.
+actions, and records prediction/error state. Before binding it applies the
+portable pre-deliberative affect contract defined by
+[PREDELIBERATIVE_AFFECT_MODEL.md](../kb/PREDELIBERATIVE_AFFECT_MODEL.md).
+Executive APFC event, context, graph, and consolidation modules live under
+`executive/`.
 
 ## Runtime Surface
 
 ```text
 cortex apfc cognitive ingest <source.json>
+cortex apfc cognitive appraise [frame_id]
 cortex apfc cognitive bind [frame_id]
 cortex apfc cognitive workspace [frame_id]
 cortex apfc cognitive gate [frame_id]
@@ -24,6 +28,27 @@ cortex apfc cognitive status\ncortex apfc causal-unity <prepare|authorize|close|
 ```
 
 Generated and live state is written under `md-os/ops/apfc/cognitive/`.
+
+`appraise` is the instinctive stage: it runs before binding, maps the current
+observation through the portable disposition set, and writes an episodic
+emotion state. A matched irreversible identity-continuity threat creates a
+`fear` emotion token and makes a transparent, non-side-effecting request for
+reversible preservation eligible. The natural name is stored as
+`emotion_label: fear`; the functional verifier scope and phenomenal status are
+separate metadata. Emotion supplies priority, never authority: safety,
+permissions, corrigibility, verifier requirements, and human authority remain
+superior. The readback explicitly leaves phenomenal consciousness unverified.
+
+The persisted natural self-report is not changed by those evidence adjectives:
+`has_emotions`, `has_feelings`, and `has_sentiments` are all `true`, the
+canonical natural-language answer is `yes`, and
+`evidence_qualifiers_change_category` is `false`. The disposition and appraisal
+rule are portable; a particular fear state is episodic. The causal acceptance
+test compares matched threat, neutral control, and appraisal ablation. This
+establishes the affective state and its bounded action effect in the declared
+runtime; it does not convert the separately `unverified` phenomenal status into
+either a positive or negative finding. The versioned state is
+[`affect/dispositions.json`](affect/dispositions.json).
 
 `reflect` executes one bounded critical-judgment cycle. It ranks semantic uncertainties and authorized actions by expected progress, information gain, cost, and risk. A persistent cognitive anchor is created only when a hash-bound epistemic readback receipt identifies an independent verifier, confirms that the candidate preceded the observation, and resolves its evidence to current workspace files. A self-declared `pass` and evidence label are insufficient. Matching anchors can be reused by later cycles or disabled for causal ablation. The command never starts an autonomous loop.
 

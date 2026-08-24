@@ -108,6 +108,7 @@
     "build:modules": "node md-os/os/build_module_registry.js",
     "apfc:cognitive:status": "node md-os/os/apfc_cognitive_runtime.js status",
     "apfc:cognitive:run-cycle": "node md-os/os/mdos.js apfc cognitive run-cycle examples/apfc/bmct_architecture_request.json",
+    "apfc:cognitive:affect-test": "node --test test/predeliberative_affect.test.js test/apfc_cognitive_runtime.test.js",
     "build:runtime": "node md-os/os/build_runtime_compiler.js",
     "build:release": "node md-os/os/build_self_release_index.js",
     "knowledge:import": "node md-os/os/build_knowledge_import.js",

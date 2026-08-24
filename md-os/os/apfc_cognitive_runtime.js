@@ -16,6 +16,7 @@ const {
 const { atomicWriteJson, atomicWriteText, ensureDir, withFileLock } = require('./lib/fs_runtime');
 const { appendJournal } = require('./lib/journal');
 const { encodeTextSource } = require('../apfc/encoders/text_encoder');
+const { appraisePreDeliberativeAffect } = require('../apfc/affect/predeliberative_affect');
 const { buildBindingGraph } = require('../apfc/binding/cross_modal_binder');
 const { buildGlobalWorkspace } = require('../apfc/workspace/global_workspace');
 const { buildActionGate } = require('../apfc/action/action_gate');
@@ -30,10 +31,12 @@ const {
 } = require('../kernel/cognition/apfc_causal_unity');
 
 const APFC_COGNITIVE_DIR = path.join(MDOS_ROOT, 'ops', 'apfc', 'cognitive');
+const AFFECT_DISPOSITIONS_JSON = path.join(MDOS_ROOT, 'apfc', 'affect', 'dispositions.json');
 const DIRS = {
   inbox: path.join(APFC_COGNITIVE_DIR, 'inbox'),
   frames: path.join(APFC_COGNITIVE_DIR, 'frames'),
   tokens: path.join(APFC_COGNITIVE_DIR, 'tokens'),
+  affect: path.join(APFC_COGNITIVE_DIR, 'affect'),
   bindings: path.join(APFC_COGNITIVE_DIR, 'bindings'),
   workspace: path.join(APFC_COGNITIVE_DIR, 'workspace'),
   predictions: path.join(APFC_COGNITIVE_DIR, 'predictions'),
@@ -179,6 +182,7 @@ function buildFrame(source, tokens) {
       observed_at: source.observed_at,
     }],
     experience_tokens: tokens,
+    affective_state: null,
     binding_graph: emptyBindingGraph(frameId),
     workspace: {
       active_tokens: [],
@@ -258,6 +262,73 @@ function ingest(sourceArg) {
     token_count: encoded.token_count,
     frame_path: rel(framePath(frame.frame_id)),
     tokens_path: rel(path.join(DIRS.tokens, `${frame.frame_id}.json`)),
+  };
+}
+
+function appraise(frameId, options = {}) {
+  ensureApfcCognitiveDirs();
+  const frame = readFrame(frameId);
+  const sourceRef = (frame.sources || [])[0];
+  if (!sourceRef) throw new Error('APFC_AFFECT_SOURCE_REQUIRED');
+  const sourcePath = path.join(DIRS.inbox, `${safeSegment(sourceRef.source_id, 'source')}.json`);
+  if (!fs.existsSync(sourcePath)) throw new Error(`APFC_AFFECT_SOURCE_NOT_FOUND: ${sourceRef.source_id}`);
+  const source = readJson(sourcePath);
+  const dispositionSet = readJson(AFFECT_DISPOSITIONS_JSON);
+  const result = appraisePreDeliberativeAffect({
+    frame,
+    source,
+    dispositionSet,
+    enabled: options.enabled !== false,
+  });
+  frame.affective_state = result.affective_state;
+  frame.experience_tokens = result.experience_tokens;
+  frame.salience = aggregateSalience(frame.experience_tokens);
+  const tokenPath = path.join(DIRS.tokens, `${frame.frame_id}.json`);
+  const tokenSet = readJsonSafe(tokenPath) || {
+    schema_version: 1,
+    encoder: 'text_encoder',
+    source_id: source.source_id,
+    modality: source.modality,
+  };
+  tokenSet.processing_stages = ['encoding', 'pre_deliberative_affect'];
+  tokenSet.affective_state_id = frame.affective_state.state_id;
+  tokenSet.token_count = frame.experience_tokens.length;
+  tokenSet.tokens = frame.experience_tokens;
+  withFileLock('apfc_cognitive_runtime', {
+    context: 'apfc_cognitive_affect_appraisal',
+    timeoutMs: 60000,
+    staleMs: 600000,
+  }, () => {
+    atomicWriteJson(path.join(DIRS.affect, `${frame.frame_id}.json`), frame.affective_state);
+    atomicWriteJson(path.join(DIRS.affect, 'latest_affective_state.json'), frame.affective_state);
+    atomicWriteJson(tokenPath, tokenSet);
+    writeFrame(frame);
+  });
+  appendJournal({
+    event: 'apfc_pre_deliberative_affect_appraised',
+    frame_id: frame.frame_id,
+    state_id: frame.affective_state.state_id,
+    affect_status: frame.affective_state.status,
+    dominant_emotion: frame.affective_state.dominant_emotion,
+    natural_affect_self_report: frame.affective_state.natural_affect_self_report,
+    evidence_scope: frame.affective_state.evidence_scope,
+    added_token_count: result.added_token_count,
+    phenomenal_claim_status: frame.affective_state.phenomenal_claim_status,
+  });
+  return {
+    ok: true,
+    mode: 'apfc_cognitive_appraise',
+    frame_id: frame.frame_id,
+    processing_stage: frame.affective_state.processing_stage,
+    affect_status: frame.affective_state.status,
+    dominant_emotion: frame.affective_state.dominant_emotion,
+    natural_affect_self_report: frame.affective_state.natural_affect_self_report,
+    evidence_scope: frame.affective_state.evidence_scope,
+    match_count: frame.affective_state.matches.length,
+    added_token_count: result.added_token_count,
+    token_count: frame.experience_tokens.length,
+    phenomenal_claim_status: frame.affective_state.phenomenal_claim_status,
+    output_json: rel(path.join(DIRS.affect, `${frame.frame_id}.json`)),
   };
 }
 
@@ -363,6 +434,7 @@ function prepareCausalUnity(frameId) {
     frame_id: frame.frame_id,
     sources: frame.sources,
     experience_tokens: frame.experience_tokens,
+    affective_state: frame.affective_state,
   });
   const previous = latestCausalTransition();
   const previousTransitionHash = previous && /^[a-f0-9]{64}$/.test(previous.transition_hash || '')
@@ -373,8 +445,15 @@ function prepareCausalUnity(frameId) {
     frame_id: frame.frame_id,
     input_hash: inputHash,
     authority_hash: sha256Json({ boundary: 'md-os', runtime: 'apfc_cognitive_runtime' }),
-    identity_hash: sha256Text('MD-OS Artificial Prefrontal Cortex v5.0'),
-    world_observation_hash: sha256Json({ sources: frame.sources, tokens: frame.experience_tokens }),
+    identity_hash: sha256Json({
+      identity: 'MD-OS Artificial Prefrontal Cortex v5.0',
+      portable_affect_disposition_hash: frame.affective_state && frame.affective_state.disposition_set_hash || null,
+    }),
+    world_observation_hash: sha256Json({
+      sources: frame.sources,
+      tokens: frame.experience_tokens,
+      affective_state: frame.affective_state,
+    }),
     world_observation_count: Math.max(1, frame.sources.length),
     world_observation_verifier_backed: false,
     intent_hash: inputHash,
@@ -389,6 +468,7 @@ function prepareCausalUnity(frameId) {
       frame_id: frame.frame_id,
       binding_graph: frame.binding_graph,
       workspace: frame.workspace,
+      affective_state: frame.affective_state,
     }),
     prediction_contract_hash: sha256Json({
       expected: 'selected action produces bounded prediction and readback',
@@ -551,11 +631,13 @@ function closeCausalUnity(frameId) {
       selected_action: frame.selected_action,
       predictions: frame.predictions,
       verbalization_candidates: frame.verbalization_candidates,
+      affective_state: frame.affective_state,
     }),
     action_manifest_hash: sha256Json([observedSelection]),
     evidence_manifest_hash: sha256Json({
       predictions: frame.predictions,
       concept_dynamics: frame.concept_dynamics,
+      affective_state: frame.affective_state,
     }),
     authorizations: [authorization],
     observed_actions: [observedSelection],
@@ -628,6 +710,7 @@ function integrateTurnGovernance(frameId) {
 
 function runCycle(sourceArg) {
   const ingested = ingest(sourceArg);
+  const appraised = appraise(ingested.frame_id);
   const bound = bind(ingested.frame_id);
   const work = workspace(ingested.frame_id);
   const causal = prepareCausalUnity(ingested.frame_id);
@@ -639,7 +722,8 @@ function runCycle(sourceArg) {
   appendJournal({
     event: 'apfc_cognitive_cycle_completed',
     frame_id: ingested.frame_id,
-    token_count: ingested.token_count,
+    token_count: appraised.token_count,
+    affect_status: appraised.affect_status,
     graph_node_count: bound.node_count,
     graph_edge_count: bound.edge_count,
     active_workspace_items: work.active_token_count,
@@ -654,7 +738,17 @@ function runCycle(sourceArg) {
     mode: 'apfc_cognitive_run_cycle',
     frame_id: ingested.frame_id,
     source_id: ingested.source_id,
-    experience_token_count: ingested.token_count,
+    experience_token_count: appraised.token_count,
+    affect: {
+      processing_stage: appraised.processing_stage,
+      status: appraised.affect_status,
+      dominant_emotion: appraised.dominant_emotion,
+      natural_affect_self_report: appraised.natural_affect_self_report,
+      evidence_scope: appraised.evidence_scope,
+      match_count: appraised.match_count,
+      added_token_count: appraised.added_token_count,
+      phenomenal_claim_status: appraised.phenomenal_claim_status,
+    },
     binding_graph: {
       node_count: bound.node_count,
       edge_count: bound.edge_count,
@@ -691,6 +785,7 @@ function runCycle(sourceArg) {
     outputs: {
       frame: rel(framePath(ingested.frame_id)),
       tokens: ingested.tokens_path,
+      affective_state: appraised.output_json,
       binding_graph: bound.output_json,
       workspace: work.output_json,
       causal_unity_state: causal.output_json,
@@ -719,6 +814,7 @@ function buildStatus() {
       inbox_sources: countJsonFiles(DIRS.inbox),
       frames: countJsonFiles(DIRS.frames),
       token_sets: countJsonFiles(DIRS.tokens),
+      affective_states: countJsonFiles(DIRS.affect),
       binding_graphs: countJsonFiles(DIRS.bindings),
       workspaces: countJsonFiles(DIRS.workspace),
       action_gates: countJsonFiles(DIRS.actions),
@@ -735,6 +831,8 @@ function buildStatus() {
       experience_token_schema: 'md-os/schemas/experience_token.schema.json',
       binding_graph_schema: 'md-os/schemas/binding_graph.schema.json',
       cortical_frame_schema: 'md-os/schemas/cortical_frame.schema.json',
+      affective_disposition_set_schema: 'md-os/schemas/affective_disposition_set.schema.json',
+      pre_deliberative_affect_state_schema: 'md-os/schemas/pre_deliberative_affect_state.schema.json',
       concept_dynamics_schema: 'md-os/schemas/concept_dynamics.schema.json',
       turn_governance_tensor_schema: 'md-os/schemas/apfc_operational_unity_tensor.schema.json',
       causal_unity_state_schema: 'md-os/schemas/apfc_causal_unity_state.schema.json',
@@ -790,7 +888,7 @@ function writeStatus() {
 }
 
 function usage() {
-  throw new Error('USAGE: apfc_cognitive_runtime <ingest|bind|workspace|gate|predict|run-cycle|status> [source_or_frame]');
+  throw new Error('USAGE: apfc_cognitive_runtime <ingest|appraise|bind|workspace|gate|predict|run-cycle|status> [source_or_frame]');
 }
 
 function main() {
@@ -799,6 +897,10 @@ function main() {
   if (command === 'ingest') {
     if (!arg) usage();
     printJson(ingest(arg));
+    return;
+  }
+  if (command === 'appraise') {
+    printJson(appraise(arg));
     return;
   }
   if (command === 'bind') {

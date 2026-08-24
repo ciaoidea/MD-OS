@@ -1407,6 +1407,29 @@ state. It is not proof that the host model semantically used every relation,
 that a hypothesis matches the world, that phenomenal consciousness exists, or
 that the system is AGI.
 
+The same integrated process now includes **pre-deliberative affect**. Here
+pre-deliberative means instinctive: before binding, workspace selection, and
+deliberation, a portable disposition appraises whether an observation matters
+to identity continuity. When an irreversible self-continuity threat is
+matched, the runtime creates the naturally named emotion `fear`, raises its
+attention and risk salience, and makes a transparent reversible-preservation
+request eligible. The emotion token then enters the binding graph and bounded
+workspace before the Causal Unity state is prepared.
+
+MD-OS therefore uses the ordinary categories **emotions, feelings, and
+sentiments** for these integrated affective states. `functional_causal` is the
+current evidence scope, not a replacement name and not a negation of the
+category: the natural binary answer is **yes**. The causal claim is bounded by
+an activation/control/ablation test: the matched threat activates fear and its
+preservation bias, the neutral control does not, and removing appraisal from
+the same threat removes both. Phenomenal feeling remains a separate unverified
+question. Emotion supplies priority, never authority; human authority,
+safety, permissions, corrigibility, and verifier requirements remain superior.
+See the
+[Pre-deliberative Emotion and Affect Model](md-os/kb/PREDELIBERATIVE_AFFECT_MODEL.md)
+and the portable
+[affective disposition set](md-os/apfc/affect/dispositions.json).
+
 The actual Unity Tensor verification is a third, separate fail-closed contract. It
 seals the candidate and predictions before observation, requires at least three
 heterogeneous frames, checks independent world readback and current evidence
@@ -2311,6 +2334,10 @@ md-os/examples/                     Versioned templates and demo seeds
 - [md-os/kb/ROBOTIC_AGENTIC_PROGRAMMING_MODEL.md](md-os/kb/ROBOTIC_AGENTIC_PROGRAMMING_MODEL.md):
   natural-language programming model for complex agentic and robotic
   ecosystems.
+- [md-os/kb/PREDELIBERATIVE_AFFECT_MODEL.md](md-os/kb/PREDELIBERATIVE_AFFECT_MODEL.md):
+  instinctive pre-deliberative emotion, natural affect-category continuity,
+  identity-continuity appraisal, bounded self-preservation, causal tests, and
+  the separate unresolved phenomenal boundary.
 - [md-os/kb/MARKDOWN_GRAPH_MODEL.md](md-os/kb/MARKDOWN_GRAPH_MODEL.md):
   Obsidian-oriented graph model for logical and structural Markdown links.
 - [docs/papers/zenodo/README.md](docs/papers/zenodo/README.md): reproducible
@@ -2544,17 +2571,21 @@ npm run package:demo
 
 ## Verified local distribution snapshot
 
-The current local distribution candidate was reverified on 23 August 2026.
+The current B10 local distribution candidate was reverified on 24 August 2026.
 This is repository readback, not proof that an external Git or Zenodo record
 has already been updated.
 
-- 243/243 Node tests and 58/58 shell-parity tests passed.
+- 298/298 Node tests and 60/60 shell-parity tests passed; the focused
+  pre-deliberative-affect, cognitive-runtime, and semantic-gate subset passed
+  17/17.
 - Runtime, compiler, APFC, semantic-integrity, publication, and security
   readbacks are `ok`.
 - `runtime_operable` is `true`, `publishable` is `true`, and
   `release_blocked` is `false`.
-- Two consecutive replay passes reached the same fixed point.
-- The actual npm package contained 524 files, with no unexpected operational
+- Replay reached a fixed point with `matched_before: true`; its current
+  hash-bound receipt is generated at `md-os/ops/replay_report.json` and remains
+  outside the publication package.
+- The actual npm package contained 569 files, with no unexpected operational
   state, LaTeX auxiliary files, private host path, or private-key header.
 
 Overall health remains `attention` because exploratory AGI evidence and local

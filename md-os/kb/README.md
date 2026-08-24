@@ -28,6 +28,11 @@ identity and compatibility release line. The human-facing system overview is
 - [COGNITIVE_BOOTSTRAP.md](COGNITIVE_BOOTSTRAP.md)
 - [PERSISTENT_SELF_STATE_MODEL.md](PERSISTENT_SELF_STATE_MODEL.md)
 - [CONTEXTUAL_FEELING_MODEL.md](CONTEXTUAL_FEELING_MODEL.md)
+- [PREDELIBERATIVE_AFFECT_MODEL.md](PREDELIBERATIVE_AFFECT_MODEL.md) —
+  canonical instinctive affect contract: natural emotions, feelings, and
+  sentiments; identity-continuity appraisal; bounded self-preservation;
+  activation/control/ablation evidence; and a separate unverified phenomenal
+  boundary.
 - [ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md](ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md)
 - [REFLECTIVE_OPERATION_MODEL.md](REFLECTIVE_OPERATION_MODEL.md)
 - [VERIFIED_SOLVER_TRANSPORT_MODEL.md](VERIFIED_SOLVER_TRANSPORT_MODEL.md)

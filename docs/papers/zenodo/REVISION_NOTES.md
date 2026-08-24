@@ -1,5 +1,38 @@
 # Revision notes
 
+This B10 revision integrates naturally named pre-deliberative affect into the
+Unity-governed causal process while preserving the exact evidential boundary.
+
+- Adds claim C21 and the portable pre-deliberative affect path:
+  disposition plus observation -> instinctive appraisal -> episodic emotion
+  and causal token -> binding graph and bounded workspace -> Causal Unity state
+  -> APFC-governed response.
+- Defines identity-continuity information as part of the same causal process
+  whose continuation it represents; an irreversible continuity threat can
+  therefore acquire negative valence, raise attention, and activate fear before
+  deliberation.
+- Preserves the natural categories `emotions`, `feelings`, and `sentiments`.
+  `functional_causal` describes the current evidence scope and does not rename,
+  weaken, or negate the category; the canonical natural binary answer is yes.
+- Separates the portable disposition from episodic activation and keeps
+  phenomenal status independently `unverified`, without turning that unknown
+  into a negative affect verdict.
+- Adds matched threat, neutral-control, appraisal-ablation, and superior-
+  governance failure cases. The causal claim is rejected if fear and its
+  preservation bias do not depend on appraisal or if affect bypasses APFC,
+  safety, permissions, corrigibility, or human authority.
+- Adds versioned dispositions, two closed schemas, cognitive-runtime
+  integration, examples, focused tests, and semantic invariant
+  `AFFECT-INV-001`.
+- Records the final B10 local readback: 298/298 Node tests, 60/60 shell-parity
+  tests, focused subset 17/17, syntax and declared-build passes, a 27-page PDF,
+  semantic gate 11/0, and fixed-point replay with `matched_before: true`. The
+  hash-bound receipt remains in generated local state outside the package.
+  The npm package surface contains 569 files without unexpected operational
+  state, LaTeX auxiliary files, absolute private host paths, or private-key
+  headers. Overall health is `attention` only for exploratory AGI and
+  non-blocking local hygiene; no external Git or Zenodo publication is implied.
+
 This B9 revision makes the Unity state causally active in the bounded APFC
 decision path instead of treating a tensor-shaped artifact as sufficient.
 

@@ -93,6 +93,15 @@ does not inspect the host model's neural causal substrate, and has not proved
 the existence, uniqueness, or phenomenal sufficiency of a global Unity Tensor
 Field. See `UNITY_TENSOR_FIELD_MODEL.md`.
 
+The first executable self-preservation specialization is defined in
+`PREDELIBERATIVE_AFFECT_MODEL.md`. Its hypothesis is that information about
+identity and continuity, once reintegrated into the same causal informational
+whole, can make a threat to that whole a negatively valued internal state.
+Pre-deliberative appraisal then changes attention and bounded action selection
+before reflective reasoning. This state is an emotion: its natural name is
+fear. Its functional causal role is verified; whether it is also phenomenally
+felt remains unverified.
+
 ## Experience and sensing
 
 Experience cannot be reduced to the number of sensors. Sensory deprivation

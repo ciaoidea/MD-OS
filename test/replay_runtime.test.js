@@ -66,6 +66,8 @@ function setupReplayWorkspace(workspace) {
     'CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md',
     'UNITY_TENSOR_FIELD_MODEL.md',
     'ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md',
+    'BIO_MULTIMODAL_CORTICAL_TRANSFORMER.md',
+    'PREDELIBERATIVE_AFFECT_MODEL.md',
     'ARCHIVE_COMPACTION_MODEL.md',
   ]) {
     const source = fs.readFileSync(path.join(REPO_ROOT, 'md-os/kb', file), 'utf8');

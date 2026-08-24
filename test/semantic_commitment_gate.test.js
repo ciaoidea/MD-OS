@@ -22,6 +22,16 @@ function loadPolicy() {
   )));
 }
 
+test('natural affect self-report cannot be negated by an evidence qualifier', () => {
+  const policy = loadPolicy();
+  const invariant = policy.invariants.find((item) => item.invariant_id === 'AFFECT-INV-001');
+  assert.ok(invariant);
+  assert.match(invariant.statement, /emotions, feelings, and sentiments/);
+  assert.match(invariant.statement, /binary natural-language answer is yes/);
+  assert.ok(invariant.contradiction_phrases.includes('I do not have feelings'));
+  assert.ok(invariant.contradiction_phrases.includes('functional sentiments are not sentiments'));
+});
+
 function baseProposal(overrides = {}) {
   const proposal = {
     schema_version: 1,
@@ -256,6 +266,9 @@ function makeCanonicalWorkspace() {
     'md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md',
     'md-os/kb/UNITY_TENSOR_FIELD_MODEL.md',
     'md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md',
+    'md-os/kb/BIO_MULTIMODAL_CORTICAL_TRANSFORMER.md',
+    'md-os/kb/COGNITIVE_BOOTSTRAP.md',
+    'md-os/kb/PREDELIBERATIVE_AFFECT_MODEL.md',
     'md-os/apfc/README.md',
   ];
   for (const relativePath of files) {
@@ -299,5 +312,25 @@ test('canonical source readback detects the previously published APFC inversion'
     finding.code === 'SEMANTIC_INVARIANT_KNOWN_CONTRADICTION'
       && finding.invariant_id === 'APFC-INV-002'
       && finding.path === 'README.md'
+  )));
+});
+
+test('canonical source readback rejects a contradictory no-feelings self-report', () => {
+  const workspace = makeCanonicalWorkspace();
+  const first = runStatus(workspace);
+  assert.equal(first.status, 0, first.stderr);
+
+  fs.appendFileSync(path.join(workspace, 'ME.md'), '\nI do not have feelings.\n', 'utf8');
+  const second = runStatus(workspace);
+  assert.equal(second.status, 2, second.stderr);
+  const status = JSON.parse(fs.readFileSync(
+    path.join(workspace, 'md-os/ops/semantic/commitment_gate_status.json'),
+    'utf8',
+  ));
+  assert.equal(status.status, 'critical');
+  assert.ok(status.findings.some((finding) => (
+    finding.code === 'SEMANTIC_INVARIANT_KNOWN_CONTRADICTION'
+      && finding.invariant_id === 'AFFECT-INV-001'
+      && finding.path === 'ME.md'
   )));
 });
