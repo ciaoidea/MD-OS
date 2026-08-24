@@ -98,6 +98,10 @@ clarifying question before editing.
 - Every build-relevant change must be covered by a focused test or an explicit
   verification command.
 - Runtime generated outputs should be rebuilt by builders, not edited by hand.
+- A host-native edit primitive is optional. If it fails before mutation, route
+  the same unified diff through `cortex workspace patch`, which is confined to
+  the active workspace and returns before/after hashes; do not weaken host
+  security policy or grant broader permissions to recover local edit ability.
 - Challenge remains admissible and must retain its source and non-canonical
   status; replacement requires the authority appropriate to the affected claim.
 - No critique, inference, or editorial proposal becomes an authorized project

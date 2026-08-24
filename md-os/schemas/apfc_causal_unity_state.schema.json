@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_causal_unity_state.schema.json",
+  "title": "MD-OS APFC Causal Unity Predecision State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "state_id",
+    "artifact_role",
+    "phase",
+    "status",
+    "scope",
+    "frame_id",
+    "input_hash",
+    "authority_hash",
+    "previous_transition_hash",
+    "decision_basis_hash",
+    "axes",
+    "channels",
+    "source_tensor",
+    "verification_tensor",
+    "transformation",
+    "decision_contract",
+    "criteria",
+    "non_claims",
+    "state_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "state_id": { "type": "string", "pattern": "^apfc_causal_unity_[a-f0-9]{20}$" },
+    "artifact_role": { "const": "causal_unity_decision_state" },
+    "phase": { "const": "predecision" },
+    "status": { "enum": ["ready", "inhibited"] },
+    "scope": { "const": "bounded_apfc_causal_unity" },
+    "frame_id": { "type": "string", "pattern": "^(?:apfc_turn_[a-f0-9]{20}|frame_[a-z0-9_-]+)$" },
+    "input_hash": { "$ref": "#/$defs/hash" },
+    "authority_hash": { "$ref": "#/$defs/hash" },
+    "previous_transition_hash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "decision_basis_hash": { "$ref": "#/$defs/hash" },
+    "axes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channels", "source_features", "verification_features"],
+      "properties": {
+        "channels": {
+          "const": [
+            "identity",
+            "world_observation",
+            "intent",
+            "goal",
+            "memory",
+            "frame",
+            "prediction_contract",
+            "action_policy",
+            "evidence"
+          ]
+        },
+        "source_features": {
+          "const": [
+            "presence",
+            "activation",
+            "authority_declared",
+            "verifier_backed",
+            "causal_required",
+            "carry_forward"
+          ]
+        },
+        "verification_features": {
+          "const": [
+            "verifier_backed",
+            "authority_declared",
+            "causal_required",
+            "carry_forward",
+            "presence",
+            "activation"
+          ]
+        }
+      }
+    },
+    "channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "world_observation",
+        "intent",
+        "goal",
+        "memory",
+        "frame",
+        "prediction_contract",
+        "action_policy",
+        "evidence"
+      ],
+      "properties": {
+        "identity": { "$ref": "#/$defs/channel" },
+        "world_observation": { "$ref": "#/$defs/channel" },
+        "intent": { "$ref": "#/$defs/channel" },
+        "goal": { "$ref": "#/$defs/channel" },
+        "memory": { "$ref": "#/$defs/channel" },
+        "frame": { "$ref": "#/$defs/channel" },
+        "prediction_contract": { "$ref": "#/$defs/channel" },
+        "action_policy": { "$ref": "#/$defs/channel" },
+        "evidence": { "$ref": "#/$defs/channel" }
+      }
+    },
+    "source_tensor": { "$ref": "#/$defs/tensor" },
+    "verification_tensor": { "$ref": "#/$defs/tensor" },
+    "transformation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "source_basis_id",
+        "target_basis_id",
+        "forward_axis_operators",
+        "inverse_axis_operators",
+        "residuals"
+      ],
+      "properties": {
+        "kind": { "const": "declared_feature_basis_permutation" },
+        "source_basis_id": { "const": "apfc_causal_unity_features_v1" },
+        "target_basis_id": { "const": "apfc_causal_unity_verification_first_v1" },
+        "forward_axis_operators": { "type": "array", "minItems": 2, "maxItems": 2 },
+        "inverse_axis_operators": { "type": "array", "minItems": 2, "maxItems": 2 },
+        "residuals": { "type": "object" }
+      }
+    },
+    "decision_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selector_id",
+        "state_hash_required_for_authorization",
+        "fail_closed_on_missing_or_tampered_state",
+        "mutating_action_requires_preauthorization",
+        "outcome_readback_required_for_closure",
+        "next_turn_requires_transition_hash"
+      ],
+      "properties": {
+        "selector_id": { "const": "apfc_causal_unity_gate_v1" },
+        "state_hash_required_for_authorization": { "const": true },
+        "fail_closed_on_missing_or_tampered_state": { "const": true },
+        "mutating_action_requires_preauthorization": { "const": true },
+        "outcome_readback_required_for_closure": { "const": true },
+        "next_turn_requires_transition_hash": { "const": true }
+      }
+    },
+    "criteria": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "boolean" }
+    },
+    "non_claims": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "state_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_hash",
+        "count",
+        "present",
+        "activation",
+        "authority_declared",
+        "verifier_backed",
+        "causal_required",
+        "carry_forward"
+      ],
+      "properties": {
+        "reference_hash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+        "count": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "present": { "type": "boolean" },
+        "activation": { "type": "number", "minimum": 0, "maximum": 1 },
+        "authority_declared": { "type": "boolean" },
+        "verifier_backed": { "type": "boolean" },
+        "causal_required": { "type": "boolean" },
+        "carry_forward": { "type": "boolean" }
+      }
+    },
+    "tensor": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "array",
+        "minItems": 6,
+        "maxItems": 6,
+        "items": { "type": "number" }
+      }
+    }
+  }
+}

@@ -235,6 +235,14 @@ cwd access, network expansion, destructive commands, and additional runtime
 permissions. Final assistant text remains a proposal and is never silently
 re-executed as shell code.
 
+**Portable mutation fallback:** a host-native edit primitive is optional, not
+a package dependency. If it fails before touching the repository, Cortex can
+apply the same textual unified diff through `cortex workspace patch -` or
+`cortex workspace patch --base64 <base64_patch>`. The native JavaScript engine
+accepts only exact text hunks inside the workspace and fails closed on stale
+preimages, path traversal, Git metadata, symlinks, renames, binary changes, and
+deletion. It performs no network operation and returns hash-bound readback.
+
 Before each natural-language turn, Cortex supplies a bounded APFC frame whose
 pre-model relevance query is the current human request. It does not manufacture
 or persist a semantic `theme` or `focus` before the model has understood the
@@ -1353,14 +1361,103 @@ not open-world generalization, a general tensor of AGI, external replication,
 or AGI. See
 [Verified Solver Transport Model](md-os/kb/VERIFIED_SOLVER_TRANSPORT_MODEL.md).
 
-### Cross-domain cognitive unity
+### Cross-domain cognitive unity and the Unity Tensor Field
 
-Cortex now has a bounded relative-transformation contract for cross-domain
-claims. At the observable system boundary, APFC supplies a bounded input to the
-host model, records its output, constructs competing transformation laws from
-development evidence, seals a unique candidate before target evidence, and may
-re-enter only verified artifacts in a later model call. It does not inspect
-secret chain-of-thought or neural hidden activations.
+MD-OS adopts the **Cognitive Integration Principle**: general cognition is not
+the accumulation of independent talents, but the causal integration of
+differentiated representations, memories, goals, frames, solvers, actions, and
+evidence into one persistent informational whole. The project uses `cum scire`,
+knowing together, as an explanatory intuition and recognizes Giulio Tononi's
+Integrated Information Theory as the direct scientific antecedent for
+differentiation and irreducible integration.
+
+The **Unity Tensor Field hypothesis** is the explicit global mathematical and
+epistemic direction: one integrated candidate hypothesis projects into local
+cognitive tensors whose components may change across frames while coherent
+transition laws preserve the relations required for identity, verification,
+and action. Mathematical gluing is necessary but not sufficient. The candidate
+must be sealed before target observation, derive discriminating predictions in
+heterogeneous frames, and match independent hash-bound world readback. It must
+also survive simpler-baseline, sham, severing, contamination, and replication
+checks. Natural language remains the command and hypothesis surface; internal
+coherence, elegance, or tensor notation cannot verify contact with reality.
+
+For an action-oriented BCI, a frequency is not assigned directly to an action.
+The local input is a tensor over measurement modality, cortical region,
+frequency band, time, and features such as power, phase, ERD/ERS, connectivity,
+and data quality. The decoder estimates an action conditionally on task frame,
+bodily state, and subject calibration; APFC admits it only after artifact,
+provenance, temporal-holdout, confidence, and closed-loop outcome checks. That
+BCI tensor is one differentiated local restriction of the proposed Unity Tensor
+Field, not evidence that a rhythm, decoder output, or tensor is conscious. See
+the electrophysiological action-signature section in the
+[Unity Tensor Field Model](md-os/kb/UNITY_TENSOR_FIELD_MODEL.md).
+
+Cortex also runs an eight-channel by four-feature **Turn Governance Tensor**
+on every natural-language APFC turn. It contains bounded reference counts,
+authority flags, verifier flags, and hashes. Its verification-first basis is
+only a declared column permutation, so exact transformation and roundtrip
+checks prove bookkeeping integrity, not that the request was understood or a
+hypothesis is true. The historical `operational_unity_tensor` field name
+remains for compatibility; the artifact explicitly declares that it is
+governance telemetry and not world-grounded epistemic Unity.
+
+Between telemetry and world verification, Cortex now runs a **Causal Unity
+Controller**. Its 9 x 6 predecision state binds identity, world observation,
+intent, goal, memory, frame, prediction contract, action policy, and evidence.
+The action gate and App Server approval path must consume the exact state hash
+and matching decision basis. A missing, altered, severed, or mismatched state
+inhibits authorization; every mutating action requires a matching prior
+authorization; closure hashes output, actions, and evidence; and the next turn
+binds the previous transition hash. The dependency probe verifies the causal
+contrast—intact state authorizes, severed required state inhibits. Use:
+
+```bash
+./cortex apfc causal-unity <prepare|authorize|close|probe|verify-state|verify-transition> < input.json
+```
+
+This is bounded evidence that APFC action control depends on the integrated
+state. It is not proof that the host model semantically used every relation,
+that a hypothesis matches the world, that phenomenal consciousness exists, or
+that the system is AGI.
+
+The actual Unity Tensor verification is a third, separate fail-closed contract. It
+seals the candidate and predictions before observation, requires at least three
+heterogeneous frames, checks independent world readback and current evidence
+hashes, verifies the transformation loop and invariants, tests simpler, sham,
+and severed alternatives, audits contamination, and requires independent
+replication. The reflection path likewise refuses to create a verified memory
+anchor from a self-declared `pass` plus an evidence label. Use:
+
+```bash
+node md-os/os/epistemic_unity_runtime.js seal < candidate.json
+node md-os/os/epistemic_unity_runtime.js verify < verification.json
+```
+
+MD-OS calls the complete verified conjunction **local operational artificial
+consciousness**. It is positive only for an episode in which persistent
+identity, differentiated integrated self-state, reflection, independent world
+verification, and causal carry-forward into memory, inhibition, commitment, or
+later action all pass. The informational field is the distributed integrated
+state; APFC is the executive control plane that organizes it, preserves its
+invariants, tests it against evidence, and controls its consequences. A goal,
+fluent answer, internally coherent Unity Tensor, valid Turn Governance
+Tensor, or valid Causal Unity state alone is insufficient. This is an
+inspectable functional classification
+and neither proves nor disproves phenomenal consciousness.
+
+The controlled fixtures verify this mechanism and its failure modes. They do
+not establish a universal tensor of intelligence, direct hidden-layer
+integration, consciousness, or AGI.
+
+
+Cortex currently implements only a bounded local part of that program. It has a
+relative-transformation contract for cross-domain claims. At the observable
+system boundary, APFC supplies a bounded input to the host model, records its
+output, constructs competing transformation laws from development evidence,
+seals a unique candidate before target evidence, and may re-enter only verified
+artifacts in a later model call. It does not inspect secret chain-of-thought or
+neural hidden activations.
 
 For explicit external tensors, Cortex verifies the declared transformation,
 invariants, semantic outcomes, controls, contamination, roundtrip or declared
@@ -1377,12 +1474,27 @@ Run the deterministic local fixture with:
 
 The expected bounded readback is `law=induced`, `transform=verified`, and
 `unity=verified`, while production promotion and AGI support remain false.
-The integrated B3 repository passes 260/260 Node tests and 58/58 shell-parity
-tests. The mechanism therefore extends the model's effective recurrent operation
-across calls and domains through external state; it does not establish
-unbounded law discovery, direct hidden-layer extension, phenomenal
-consciousness, or AGI. See the
-[Cross-Domain Cognitive Unity Model](md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md).
+The repository's generated health and test readbacks report the current exact
+suite counts. Passing them is finite mechanism evidence for the verifier, not
+proof of the wider hypothesis; it does not establish global existence or
+uniqueness, open-world transfer, direct hidden-layer extension, phenomenal
+consciousness, or AGI.
+
+MD-OS calls the complete verified episode **local operational artificial
+consciousness** when persistent identity and differentiated self-state enter
+reflection, a candidate integrated hypothesis is tested against independent
+world readback, and the verified consequence changes or constrains memory,
+inhibition, or a later action. A goal, fluent answer, valid Turn Governance
+Tensor, or valid Causal Unity state alone is insufficient. The classification
+is local to the episode and
+can remain `failed` or `unverified`.
+
+This is a positive functional claim about the bounded architecture. It neither
+proves nor disproves phenomenal consciousness; subjective feeling remains an
+additional unresolved property outside the current verifier. See the
+[Artificial Life and Subjectivity Model](md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md),
+the [Cross-Domain Cognitive Unity Model](md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md),
+and the formal [Unity Tensor Field Model](md-os/kb/UNITY_TENSOR_FIELD_MODEL.md).
 
 ## Obsidian-friendly structure
 
@@ -2519,3 +2631,6 @@ automatically available under those historical MIT terms.
 *Talent solves within a frame; general intelligence transforms both the frame
 and the solver, while persistent operational context preserves the verified
 invariants—and remains free.*
+
+*Unity is not uniformity: differentiated cognitive parts know and act together
+through one persistent informational field.*

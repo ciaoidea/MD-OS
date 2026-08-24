@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_causal_action_authorization.schema.json",
+  "title": "MD-OS APFC Causal Unity Action Authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "authorization_id",
+    "status",
+    "scope",
+    "frame_id",
+    "action_id",
+    "action_kind",
+    "action_hash",
+    "side_effecting",
+    "consumed_state_hash",
+    "decision_basis_hash",
+    "criteria",
+    "non_claims",
+    "authorization_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "authorization_id": { "type": "string", "pattern": "^apfc_causal_authorization_[a-f0-9]{20}$" },
+    "status": { "enum": ["authorized", "inhibited"] },
+    "scope": { "const": "bounded_apfc_causal_action_authorization" },
+    "frame_id": { "type": "string", "pattern": "^(?:apfc_turn_[a-f0-9]{20}|frame_[a-z0-9_-]+)$" },
+    "action_id": { "type": "string", "minLength": 1 },
+    "action_kind": { "type": "string", "minLength": 1 },
+    "action_hash": { "$ref": "#/$defs/hash" },
+    "side_effecting": { "type": "boolean" },
+    "consumed_state_hash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "decision_basis_hash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "criteria": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "boolean" } },
+    "non_claims": { "type": "array", "minItems": 3, "uniqueItems": true, "items": { "type": "string" } },
+    "authorization_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

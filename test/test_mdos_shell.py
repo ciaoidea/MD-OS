@@ -649,6 +649,21 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn("APFC TURN FRAME", requests[0]["prompt"])
             self.assertIn("cognitive_route", requests[0]["prompt"])
             self.assertIn("reflect-intent <intent.json>", requests[0]["prompt"])
+            rendered_frame = requests[0]["prompt"].split("\n\n", 1)[0]
+            frame_payload = json.loads(rendered_frame.split("\n", 1)[1])
+            self.assertEqual(frame_payload["schema_version"], 4)
+            causal = frame_payload["causal_unity_state"]
+            probe = frame_payload["causal_dependency_probe"]
+            self.assertEqual(causal["artifact_role"], "causal_unity_decision_state")
+            self.assertEqual(causal["status"], "ready")
+            self.assertEqual(probe["status"], "verified")
+            self.assertEqual(probe["intact_authorization_status"], "authorized")
+            self.assertEqual(probe["severed_authorization_status"], "inhibited")
+            unity = frame_payload["operational_unity_tensor"]
+            self.assertEqual(unity["status"], "verified")
+            self.assertEqual(unity["phase"], "prepared")
+            self.assertEqual(unity["transformation"]["residuals"]["roundtrip"], 0)
+            self.assertEqual(unity["transformation"]["residuals"]["composition"], 0)
             self.assertEqual(len(fake.process_starts()), 1)
             self.assertIn("APFC DYNAMIC INPUT CONTEXT", requests[0]["prompt"])
             self.assertIn(
@@ -749,6 +764,54 @@ class SemanticShellParityTests(unittest.TestCase):
                 "CURRENT HUMAN STEERING INPUT\naggiungi anche i test",
                 steering_text,
             )
+
+    def test_interactive_steering_buffers_characters_until_enter(self):
+        fake_stdin = mock.Mock()
+        fake_stdin.isatty.return_value = True
+        fake_stdin.fileno.return_value = 123
+        chunks = iter((b"c", b"i", b"a", b"o", b"\n"))
+        ENGINE.STEERING_INPUT_BUFFER = ""
+        try:
+            with mock.patch.object(ENGINE.sys, "stdin", fake_stdin), mock.patch.object(
+                ENGINE.select, "select", return_value=([fake_stdin], [], [])
+            ), mock.patch.object(ENGINE.os, "read", side_effect=lambda *_: next(chunks)):
+                self.assertIsNone(ENGINE.read_interactive_steering_line())
+                self.assertIsNone(ENGINE.read_interactive_steering_line())
+                self.assertIsNone(ENGINE.read_interactive_steering_line())
+                self.assertIsNone(ENGINE.read_interactive_steering_line())
+                self.assertEqual(ENGINE.read_interactive_steering_line(), "ciao")
+        finally:
+            ENGINE.STEERING_INPUT_BUFFER = ""
+
+    @unittest.skipIf(ENGINE.termios is None, "POSIX terminal controls unavailable")
+    def test_active_turn_terminal_keeps_ordinary_keys_canonical(self):
+        master, slave = os.openpty()
+        stdin = os.fdopen(os.dup(slave), "r", encoding="utf-8", errors="replace")
+        try:
+            with mock.patch.object(ENGINE.sys, "stdin", stdin):
+                with ENGINE.interactive_turn_terminal():
+                    attributes = ENGINE.termios.tcgetattr(slave)
+                    self.assertTrue(attributes[3] & ENGINE.termios.ICANON)
+
+                    os.write(master, b"a")
+                    readable, _, _ = ENGINE.select.select([slave], [], [], 0.05)
+                    self.assertEqual(readable, [])
+
+                    os.write(master, b"\r")
+                    readable, _, _ = ENGINE.select.select([slave], [], [], 0.2)
+                    self.assertEqual(readable, [slave])
+                    self.assertEqual(os.read(slave, 4096), b"a\n")
+
+                    os.write(master, ENGINE.STEERING_INTERRUPT.encode())
+                    readable, _, _ = ENGINE.select.select([slave], [], [], 0.2)
+                    self.assertEqual(readable, [slave])
+                    self.assertEqual(
+                        os.read(slave, 4096), ENGINE.STEERING_INTERRUPT.encode()
+                    )
+        finally:
+            stdin.close()
+            os.close(master)
+            os.close(slave)
 
     def test_goal_slash_command_uses_app_server_goal_protocol(self):
         with FakeCodex() as fake:
@@ -1158,13 +1221,47 @@ class SemanticShellParityTests(unittest.TestCase):
                 observed_actions=[],
             )
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertEqual(receipt["schema_version"], 4)
+            causal_state = receipt["causal_unity_state"]
+            probe = receipt["causal_dependency_probe"]
+            transition = receipt["causal_unity_transition"]
+            self.assertEqual(causal_state["artifact_role"], "causal_unity_decision_state")
+            self.assertEqual(causal_state["status"], "ready")
+            self.assertEqual(probe["status"], "verified")
+            self.assertEqual(probe["intact_authorization_status"], "authorized")
+            self.assertEqual(probe["severed_authorization_status"], "inhibited")
+            self.assertEqual(transition["status"], "closed")
+            self.assertEqual(transition["epistemic_status"], "unverified")
+            self.assertEqual(transition["predecision_state_hash"], causal_state["state_hash"])
             self.assertNotIn("private human text", json.dumps(receipt))
             self.assertNotIn("private assistant text", json.dumps(receipt))
             self.assertEqual(receipt["assistant_output_epistemic_status"], "proposal")
             self.assertEqual(receipt["verification_contract"]["verdict"], "unknown")
+            self.assertEqual(receipt["operational_unity_tensor"]["status"], "verified")
+            self.assertEqual(receipt["operational_unity_tensor"]["phase"], "closed")
+            self.assertEqual(receipt["operational_unity_tensor"]["cognitive_outcome_status"], "unverified")
+            tensor = receipt["operational_unity_tensor"]
+            empty_manifest_hash = ENGINE.sha256_text(
+                json.dumps([], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            )
+            self.assertEqual(tensor["output_hash"], receipt["output_hash"])
+            self.assertEqual(tensor["action_manifest_hash"], empty_manifest_hash)
+            self.assertEqual(tensor["evidence_manifest_hash"], empty_manifest_hash)
             last_turn = workspace / "md-os/ops/local/apfc/last_turn.md"
             self.assertTrue(last_turn.is_file())
-            self.assertIn("output remains a proposal", last_turn.read_text())
+            last_turn_text = last_turn.read_text()
+            self.assertIn("output remains a proposal", last_turn_text)
+            self.assertIn("causal Unity transition: `closed`", last_turn_text)
+            next_frame = ENGINE.build_apfc_turn_frame(
+                "next turn",
+                context,
+                workspace,
+                "Finish safely",
+            )
+            self.assertEqual(
+                next_frame.causal_unity_state["previous_transition_hash"],
+                transition["transition_hash"],
+            )
 
     def test_apfc_verification_requires_observable_verifier_evidence(self):
         passed = ENGINE.evaluate_apfc_verification(
@@ -1185,6 +1282,11 @@ class SemanticShellParityTests(unittest.TestCase):
     def test_apfc_turn_runtime_classes_have_schemas(self):
         for name in (
             "apfc_attention.schema.json",
+            "apfc_operational_unity_tensor.schema.json",
+            "apfc_causal_unity_state.schema.json",
+            "apfc_causal_action_authorization.schema.json",
+            "apfc_causal_unity_transition.schema.json",
+            "apfc_causal_dependency_probe.schema.json",
             "apfc_turn_frame.schema.json",
             "apfc_turn_receipt.schema.json",
         ):

@@ -131,6 +131,19 @@ experiment required for closure. The result remains a hypothesis or critique,
 not verifier evidence, and the method does not activate ritualistically on
 routine turns.
 
+The ordinary APFC turn path now has a concrete tensorial control slice. It
+prepares a hash-bound rank-two tensor over eight operational channels and four
+declared features, transforms it into a verification-first basis, and checks
+the exact law, inverse roundtrip, composition identity, Frobenius norm, and
+component multiset. The prepared artifact is visible in the turn frame; the
+closed artifact binds the output, observed-action manifest, and verifier-evidence
+manifest by hash in the receipt.
+Representation integrity and cognitive success are distinct, so a valid tensor
+cannot promote an answer whose verifier verdict remains unknown. The internal
+APFC cognitive cycle uses the same kernel and persists a per-frame operational
+unity artifact.
+
+
 The cross-domain cognitive-unity extension makes the next architectural step
 explicit. APFC declares source and target frames, constructs at least two
 candidate transformation laws from development evidence, rejects ambiguity,

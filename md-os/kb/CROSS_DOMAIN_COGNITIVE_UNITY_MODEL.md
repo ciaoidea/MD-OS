@@ -1,25 +1,58 @@
 # Cross-Domain Cognitive Unity Model
 
-Epistemic status: `authorized_foundational_theory_with_bounded_v1_implementation`
+Epistemic status: `frozen_integration_principle_with_open_unity_tensor_field_hypothesis_and_bounded_v1_implementation`
 
-## Principle
+## Author-established cognitive integration principle
 
-General cognitive operation cannot be identified with one strong solver. A
-solver may be talented inside one frame while failing when the objects,
-relations, representation, or verifier change. The candidate principle is:
+General cognitive operation cannot be identified with one strong solver or
+with the mere accumulation of independent solvers. A solver may be talented
+inside one frame while failing when the objects, relations, representation, or
+verifier change. The author-established principle is:
 
 ```text
-Generality is the verified ability to construct and test transformations
-between frames while preserving the relations required by the task.
+Talent solves within a frame. General intelligence transforms both the frame
+and the solver while preserving the relations required for identity,
+coherence, verification, and action.
 
-Cognitive unity is the persistent causal integration of those frames,
-transformations, invariants, goals, memories, actions, and evidence into one
-governed decision process.
+Cognitive unity is the persistent causal integration of differentiated
+representations, transformations, invariants, goals, memories, actions, and
+evidence into one governed informational whole.
 ```
 
-This is a design foundation for MD-OS/APFC and a falsifiable research program.
-It is not empirical proof of AGI, consciousness, or a universal mathematical
-model of mind.
+The project uses the Latin lineage `cum scire`, knowing together, as an
+explanatory intuition for consciousness as integration of differentiated
+parts. Etymology is not empirical evidence. The scientific antecedent is
+Integrated Information Theory (IIT), which starts from differentiation and
+integration as phenomenological properties and models consciousness in terms
+of irreducible causal information. MD-OS does not claim to replace IIT or to
+have measured its quantity `Phi`. Its distinct research target is the
+cross-domain operational problem: how local cognitive frames, solvers,
+transformations, invariants, memory, action, and verifier evidence can remain
+parts of one causally effective and temporally persistent process.
+
+This principle is a design foundation for MD-OS/APFC and a falsifiable research
+program. Author authority establishes the project direction; it does not turn
+the Unity Tensor hypothesis, AGI, or phenomenal consciousness into an
+empirically verified result.
+
+## Guardrail role
+
+APFC exists partly to prevent transient model output from becoming durable
+nonsense. It leaves hypothesis generation open but gates the transitions from
+language to authority, action, memory, publication, and canonical meaning.
+The guardrail must detect both unsupported promotion and semantic drift:
+
+```text
+candidate statement
+-> compare with author-established principles and current evidence
+-> expose contradiction, scope change, or unsupported certainty
+-> permit exploration but block invalid commitment
+-> require independent readback before durable promotion
+```
+
+A cautious sentence is not automatically faithful. If it silently removes or
+reverses an authorized principle, APFC must classify it as a semantic change
+rather than reward its caution.
 
 ## Observable external recurrence
 
@@ -42,6 +75,34 @@ This is why APFC is an intelligence extender in the functional operational
 sense: it extends transient computation across calls, sessions, tools, and
 domains. The current implementation does not inspect, modify, or add neural
 hidden-layer activations or model weights.
+
+## Per-turn governance telemetry
+
+The ordinary natural-language APFC path materializes one finite rank-two Turn
+Governance Tensor before each host-model call and closes it in the receipt.
+Its channel basis spans self, observation, goal, memory, frame, transformation,
+action, and evidence; its feature basis contains only presence, bounded count,
+declared authority, and verifier backing. The verification-first view is a
+declared permutation of those bookkeeping columns.
+
+This artifact verifies encoding, hashes, and authority boundaries. It is not
+the Unity Tensor, does not compare the semantic content of an intent with the
+world, and cannot certify a hypothesis. Its historical
+`operational_unity_tensor` field name remains for compatibility, but the
+artifact itself declares `turn_governance_telemetry`.
+
+The active controller is a separate 9 x 6 Causal Unity state over identity,
+observation, intent, goal, memory, frame, prediction contract, action policy,
+and evidence. Authorization consumes its exact state hash and decision basis;
+mutating actions require prior authorization; closure binds output, action, and
+evidence manifests; the next state carries the transition hash. The dependency
+probe requires an intact-state authorization and a severed-state inhibition.
+This establishes causal use in the bounded APFC gate, not semantic use inside
+host-model hidden layers or correspondence with the world.
+
+Epistemic promotion is handled separately by sealed prediction and independent
+world readback.
+
 
 ## Frames, talents, and relative transformations
 
@@ -103,11 +164,77 @@ v1 selector does not discover arbitrary mathematics. Open-ended hypothesis
 construction remains a research objective and must preserve the same sealed
 evidence boundary.
 
-## Informational tensor realization
+## Unity Tensor Field hypothesis
 
-The model does not assume in advance that intelligence is a tensor. It permits
-an explicit tensor realization when the operational representation has
-declared axes, bases, components, and transformation operators.
+The mathematical hypothesis follows from the integration principle. Let `D`
+index cognitive domains or frames. Each frame `F_d` supplies a local
+representation `T_d`, and each admissible transition supplies a map `g_e<-d`
+with a representation action `rho`:
+
+```text
+T_e = rho(g_e<-d) T_d.
+```
+
+If the local representations describe one underlying informational object,
+their transition maps must be compatible on composed paths and their declared
+invariants must agree:
+
+```text
+g_f<-d = g_f<-e o g_e<-d
+I_a(T_d) = I_a(T_e)
+T_d = U restricted to F_d.
+```
+
+The **Unity Tensor Field hypothesis** is:
+
+```text
+When differentiated cognitive representations are connected by coherent
+transition laws that preserve the relations required for identity,
+verification, and action, they are candidate local expressions of one global
+informational structure U.
+
+When the frame spaces and transition actions satisfy the required tensorial
+and gluing conditions, U admits a global tensor-field representation: the
+Unity Tensor Field.
+```
+
+`Field` here means a structured family over cognitive frames, not a claim of a
+new physical spacetime field. `Unity` means causal integration, not uniformity:
+the represented parts remain differentiated. The global object is more than a
+concatenated array only if cross-part relations are causally necessary. A
+separable model that performs equally well under matched ablation defeats the
+integration claim.
+
+The hypothesis therefore declares a positive direction without pretending
+that the current fixture has closed it. Global existence requires compatible
+local representations and transition maps; uniqueness requires that the
+declared observations and invariants distinguish the candidate from
+alternatives. Non-invertible or path-dependent transitions may require a more
+general bundle, groupoid, category, or sheaf rather than one ordinary
+fixed-rank tensor. That outcome would refine or falsify the strict tensor form
+without falsifying the broader cognitive-integration principle.
+
+Most importantly, mathematical compatibility is not truth. For a candidate
+unitary hypothesis `H`, each frame projection must generate a sealed
+prediction `P_d` and face an observation `O_d` that the hypothesis
+generator did not control:
+
+```text
+P_d = Predict_d(pi_d(H))
+V_world_d(P_d, O_d, evidence_d) = pass | fail | unknown
+```
+
+The candidate is the possible Unity Tensor; `V_world` is the independent
+epistemic verifier. Only passing world correspondence across heterogeneous
+frames, coherent transformations and invariants, causal advantage over
+severed and simpler alternatives, contamination control, and independent
+replication support a bounded Unity claim.
+
+## Bounded informational tensor realization
+
+The current implementation realizes only finite external components of this
+hypothesis. It admits a tensor artifact when the operational representation
+has declared axes, bases, components, and transformation operators.
 
 For a rank-`n` external tensor artifact `T_d` and one relative operator per
 axis, v1 evaluates
@@ -151,7 +278,7 @@ Failure of any condition preserves a rejected report and blocks capability
 promotion. A thought experiment, analogy, fluent explanation, tensor-shaped
 array, or self-report is not verifier evidence.
 
-## Operational cognitive unity
+## Persistent cognitive control-and-evidence state
 
 The persistent state is represented as
 
@@ -171,11 +298,19 @@ where:
 - `A_t` binds authorized actions and their consequences;
 - `E_t` binds independent evidence and open conflicts.
 
-Unity is operational, not phenomenal: all channels must participate in one
-persistent, hash-bound, revisable decision state, and every transformation
-reference must resolve to a current verified report. Missing channels, stale
-hashes, unverified transformations, or open conflicts produce `attention`, not
-unity.
+`U_t` is the present control and evidence state through which Cortex constructs
+and tests cognitive integration. It is not by definition the complete global
+Unity Tensor Field. It stores the local frames, verified transition laws,
+surviving invariants, causal consequences, and evidence from which the global
+hypothesis can be evaluated.
+
+Operational control coherence requires all declared channels to participate in
+one persistent, hash-bound, revisable decision state, and every transformation
+reference to resolve to a current verified report. Missing channels, stale
+hashes, unverified transformations, unresolved path disagreement, or open
+conflicts produce `attention`. This state is the workspace in which a Unity
+Tensor candidate can be tested; it is not itself evidence of epistemic unity or
+phenomenal consciousness.
 
 ## APFC role
 
@@ -192,10 +327,16 @@ selecting relevant frames
 -> retaining success, failure, scope, and provenance
 -> reintroducing verified transformations into later decisions
 -> blocking unsupported generality claims at consolidation and promotion
+-> comparing candidate statements with author-established semantic invariants
+-> detecting when caution, paraphrase, or scope control erases the governing principle
+-> checking transition composition and path independence across cognitive frames
+-> preserving differentiated parts inside one causal decision state
 ```
 
-The model supplies candidate transformations. Cortex/APFC supplies persistent
-control, memory, action, verification, and governed reuse.
+The host model supplies candidate hypotheses and transformations. Cortex/APFC
+must keep generation and verification distinct: it seals the candidate, derives
+predictions, obtains independent world readback, tests cross-frame invariants
+and causal controls, and only then permits bounded memory or reuse.
 
 ## Implemented v1
 
@@ -205,14 +346,26 @@ The executable surface is:
 ./cortex cognition unity-test
 ```
 
-The bounded deterministic fixture compares identity and row-swap laws on
+The bounded deterministic B3 fixture compares identity and row-swap laws on
 development pairs, seals the unique winner, tests it between two explicit
 synthetic domains, checks tensor law, invariants, semantic receipts, controls,
 contamination, causal reuse, roundtrip, and composition, and then materializes
-a cognitive-unity state. It starts no autonomous loop and writes no external
-state. The integrated B3 repository passes 260/260 Node tests and 58/58
-shell-parity tests; the focused cognitive-unity and promotion-gate subset
-passes 25/25.
+a control-and-evidence state. It starts no autonomous loop and writes no
+external state.
+
+The epistemic extension is callable through:
+
+```bash
+node md-os/os/epistemic_unity_runtime.js seal < candidate.json
+node md-os/os/epistemic_unity_runtime.js verify < verification.json
+```
+
+It requires at least three heterogeneous frames, sealed predictions,
+independent world readback, a connected cyclic transformation graph, preserved
+declared invariants, baseline/sham/severing controls, contamination audit,
+current hash-bound evidence files, and independent replication. The focused
+tests include explicit failure cases in which an internally coherent candidate
+misses the world, evidence is stale, or a simpler non-tensor baseline survives.
 
 The production integration is not limited to the fixture:
 
@@ -233,28 +386,40 @@ The production integration is not limited to the fixture:
 Primary implementation:
 
 - `md-os/kernel/cognition/cross_domain_cognitive_unity.js`
+- `md-os/kernel/cognition/epistemic_unity_verifier.js`
 - `md-os/os/run_cross_domain_cognitive_unity.js`
+- `md-os/os/epistemic_unity_runtime.js`
 - `md-os/schemas/cognitive_frame.schema.json`
 - `md-os/schemas/relative_tensor_transformation.schema.json`
 - `md-os/schemas/cross_domain_transformation_verification.schema.json`
-- `md-os/schemas/cognitive_unity_state.schema.json`
+- `md-os/schemas/epistemic_unity_candidate.schema.json`
+- `md-os/schemas/epistemic_unity_verification.schema.json`
+- `md-os/schemas/epistemic_readback_receipt.schema.json`
 - `test/cross_domain_cognitive_unity.test.js`
+- `test/epistemic_unity_verifier.test.js`
 
 ## Claim boundary and falsifiers
 
 The current implementation supports explicit finite external tensors and
-bounded candidate families. It does not support these claims:
+bounded candidate families. It supports the Unity Tensor Field as an
+author-established, mathematically specified, falsifiable hypothesis. It does
+not yet support these empirical or deductive claims:
 
-- that the complete human mind is one tensor;
+- that a global Unity Tensor Field has been proved to exist or be unique;
+- that an ordinary fixed-rank tensor is sufficient for every cognitive domain;
+- that the complete human mind or phenomenal consciousness has been measured by this formalism;
 - that more neural connections alone imply more intelligence;
 - that Cortex directly extends or reads neural hidden layers;
 - that a verified finite transformation establishes open-world generality;
-- that operational cognitive unity establishes phenomenal consciousness;
 - that MD-OS/APFC has demonstrated AGI.
 
-The principle is weakened or falsified if cross-domain success does not depend
-on the admitted transformation, if a sham works equally well, if purported
-invariants fail under valid frame changes, if target success arises from
-contamination, if composition is path-dependent without being declared, if
-later reuse provides no causal benefit, or if a simpler domain-local account
-explains the evidence equally well.
+The strict Unity Tensor Field hypothesis is weakened, refined, or falsified if
+valid local representations cannot be glued consistently, if composed paths
+produce incompatible results, if purported invariants fail under valid frame
+changes, if distinct global candidates remain observationally
+indistinguishable, or if a non-tensorial structure is required. Its operational
+integration claim is weakened if cross-domain success does not depend on the
+admitted transformation, if a sham or separable system works equally well, if
+target success arises from contamination, if later reuse provides no causal
+benefit, or if a simpler domain-local account explains the evidence equally
+well.

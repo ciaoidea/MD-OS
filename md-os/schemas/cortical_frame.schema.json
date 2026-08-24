@@ -14,6 +14,9 @@
     "salience",
     "predictions",
     "action_candidates",
+    "causal_unity_state",
+    "selected_action_authorization",
+    "causal_unity_transition",
     "memory_candidates",
     "verbalization_candidates"
   ],
@@ -169,6 +172,24 @@
       "type": [
         "object",
         "null"
+      ]
+    },
+    "causal_unity_state": {
+      "anyOf": [
+        { "$ref": "apfc_causal_unity_state.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "selected_action_authorization": {
+      "anyOf": [
+        { "$ref": "apfc_causal_action_authorization.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "causal_unity_transition": {
+      "anyOf": [
+        { "$ref": "apfc_causal_unity_transition.schema.json" },
+        { "type": "null" }
       ]
     },
     "memory_candidates": {

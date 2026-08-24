@@ -253,6 +253,10 @@ function makeCanonicalWorkspace() {
     'md-os/kb/ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md',
     'md-os/kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md',
     'md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md',
+    'md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md',
+    'md-os/kb/UNITY_TENSOR_FIELD_MODEL.md',
+    'md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md',
+    'md-os/apfc/README.md',
   ];
   for (const relativePath of files) {
     const target = path.join(workspace, relativePath);

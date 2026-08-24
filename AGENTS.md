@@ -87,6 +87,10 @@ Hard operating rules:
   test or explicit verification.
 - Generated runtime outputs are rebuilt by canonical builders, not edited by
   hand.
+- Treat host-native editing tools as optional execution-layer capabilities.
+  If such a tool fails before touching the workspace, use
+  `cortex workspace patch` as the workspace-confined fallback; never weaken
+  host security policy or expand permissions merely to perform a local edit.
 - Do not claim completion of complex work until the required dependency edges
   have verifier evidence.
 

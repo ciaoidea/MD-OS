@@ -34,10 +34,8 @@ except ImportError:  # Windows and minimal Python builds may not provide it.
 
 try:
     import termios
-    import tty
 except ImportError:  # Windows does not expose POSIX terminal controls.
     termios = None
-    tty = None
 
 
 RUNTIME_SCHEMA = "mdos.shell.runtime/v1"
@@ -191,6 +189,9 @@ class ApfcTurnFrame:
     context: ApfcInputContext
     capabilities: tuple[str, ...]
     inhibit: tuple[str, ...]
+    operational_unity_tensor: dict[str, object]
+    causal_unity_state: dict[str, object]
+    causal_dependency_probe: dict[str, object]
 
 
 ANSI_RESET = "\033[0m"
@@ -1567,13 +1568,29 @@ class CodexAppServerClient:
     ) -> None:
         if not hasattr(self, "active_apfc_decisions"):
             self.active_apfc_decisions = []
+        frame = getattr(self, "active_apfc_frame", None)
+        authorization: dict[str, object] | None = None
+        if frame is not None:
+            try:
+                authorization = authorize_apfc_action(
+                    frame,
+                    method,
+                    params,
+                    policy_authorized=decision in {"accept", "acceptForSession"},
+                    within_authority=decision in {"accept", "acceptForSession"},
+                )
+            except RuntimeError:
+                authorization = {"status": "error", "authorization_hash": None}
+        descriptor = apfc_action_descriptor(method, params)
         self.active_apfc_decisions.append(
             {
                 "method": method,
                 "decision": decision,
                 "reason": reason,
-                "item_id": str(params.get("itemId") or ""),
+                "item_id": descriptor["action_id"],
                 "command_hash": sha256_text(str(params.get("command") or "")),
+                "action_hash": descriptor["action_hash"],
+                "causal_authorization": authorization,
             }
         )
 
@@ -2579,6 +2596,153 @@ def build_apfc_input_context(human_request: str, cwd: Path) -> ApfcInputContext:
     )
 
 
+def run_apfc_operational_unity_tensor(
+    operation: str, payload: dict[str, object]
+) -> dict[str, object]:
+    """Run the canonical tensor kernel without exposing private turn text."""
+    node = shutil.which("node")
+    script = ENGINE_ROOT.parent / "os/apfc_turn_unity_runtime.js"
+    if not node or not script.is_file():
+        raise RuntimeError("APFC_OPERATIONAL_UNITY_RUNTIME_UNAVAILABLE")
+    result = subprocess.run(
+        [node, str(script), operation],
+        input=json.dumps(payload, ensure_ascii=False, sort_keys=True),
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=5,
+    )
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    if result.returncode != 0 or not lines:
+        detail = result.stderr.strip() or (lines[-1] if lines else "no readback")
+        raise RuntimeError(f"APFC_OPERATIONAL_UNITY_RUNTIME_FAILED: {detail}")
+    artifact = json.loads(lines[-1])
+    if artifact.get("status") != "verified":
+        raise RuntimeError("APFC_OPERATIONAL_UNITY_RUNTIME_REJECTED")
+    return artifact
+
+
+def run_apfc_causal_unity(
+    operation: str, payload: dict[str, object]
+) -> dict[str, object]:
+    """Run the active causal Unity controller with hash-only turn material."""
+    node = shutil.which("node")
+    script = ENGINE_ROOT.parent / "os/apfc_causal_unity_runtime.js"
+    if not node or not script.is_file():
+        raise RuntimeError("APFC_CAUSAL_UNITY_RUNTIME_UNAVAILABLE")
+    result = subprocess.run(
+        [node, str(script), operation],
+        input=json.dumps(payload, ensure_ascii=False, sort_keys=True),
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=5,
+    )
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    if result.returncode != 0 or not lines:
+        detail = result.stderr.strip() or (lines[-1] if lines else "no readback")
+        raise RuntimeError(f"APFC_CAUSAL_UNITY_RUNTIME_FAILED: {detail}")
+    artifact = json.loads(lines[-1])
+    accepted = {
+        "prepare": {"ready"},
+        "probe": {"verified"},
+        "authorize": {"authorized", "inhibited"},
+        "close": {"closed", "incomplete", "rejected"},
+    }
+    if operation in accepted and artifact.get("status") not in accepted[operation]:
+        raise RuntimeError(f"APFC_CAUSAL_UNITY_RUNTIME_REJECTED: {operation}")
+    return artifact
+
+
+def apfc_json_hash(payload: object) -> str:
+    return sha256_text(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+
+
+def latest_apfc_causal_transition_hash(workspace: Path) -> str | None:
+    receipt_path = workspace / "md-os/ops/local/apfc/turn_receipts.ndjson"
+    if not receipt_path.is_file():
+        return None
+    try:
+        lines = receipt_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        try:
+            receipt = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        transition = receipt.get("causal_unity_transition")
+        value = transition.get("transition_hash") if isinstance(transition, dict) else None
+        if isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value):
+            return value
+    return None
+
+
+def apfc_action_descriptor(
+    method: str, params: dict[str, object]
+) -> dict[str, object]:
+    raw_command = params.get("command")
+    if isinstance(raw_command, list):
+        command = " ".join(str(part) for part in raw_command)
+    else:
+        command = str(raw_command or "")
+    item_id = str(params.get("itemId") or params.get("callId") or "")
+    action_id = item_id or "apfc_action_" + apfc_json_hash(
+        {"method": method, "command": command}
+    )[:20]
+    material = {
+        "method": method,
+        "item_id": item_id,
+        "command": command,
+        "cwd": str(params.get("cwd") or ""),
+        "grant_root": str(params.get("grantRoot") or ""),
+    }
+    return {
+        "action_id": action_id,
+        "action_kind": method,
+        "action_hash": apfc_json_hash(material),
+        "side_effecting": method in {
+            "item/commandExecution/requestApproval",
+            "item/fileChange/requestApproval",
+        },
+    }
+
+
+def authorize_apfc_action(
+    frame: ApfcTurnFrame,
+    method: str,
+    params: dict[str, object],
+    *,
+    policy_authorized: bool,
+    within_authority: bool,
+) -> dict[str, object]:
+    descriptor = apfc_action_descriptor(method, params)
+    return run_apfc_causal_unity(
+        "authorize",
+        {
+            "schema_version": 1,
+            "state": frame.causal_unity_state,
+            "frame_id": frame.frame_id,
+            **descriptor,
+            "consumed_state_hash": frame.causal_unity_state["state_hash"],
+            "policy_authorized": policy_authorized,
+            "within_authority": within_authority,
+            "external_write": False,
+        },
+    )
+
+def apfc_authority_hash(workspace: Path | str) -> str:
+    material = f"{Path(workspace).resolve()}|workspace_read|workspace_write|local_process|verification_readback|no_network"
+    return sha256_text(material)
+
+
 def build_apfc_turn_frame(
     human_request: str,
     context: ApfcInputContext,
@@ -2599,8 +2763,80 @@ def build_apfc_turn_frame(
         sort_keys=True,
         separators=(",", ":"),
     )
+    frame_id = "apfc_turn_" + sha256_text(material)[:20]
+    operational_unity_tensor = run_apfc_operational_unity_tensor(
+        "prepare",
+        {
+            "schema_version": 1,
+            "frame_id": frame_id,
+            "input_hash": input_hash,
+            "authority_hash": apfc_authority_hash(workspace),
+            "goal_present": bool(goal),
+            "selected_source_count": len(context.selected_sources),
+        },
+    )
+    decision_basis = {
+        "capabilities": [
+            "workspace_read",
+            "workspace_write",
+            "local_process",
+            "verification_readback",
+        ],
+        "inhibit": [
+            "external_write",
+            "network_without_explicit_authority",
+            "destructive_command",
+            "runtime_permission_expansion",
+            "claim_without_verifier_evidence",
+        ],
+        "selector": "apfc_app_server_approval_gate_v1",
+        "closure": "verifier_evidence",
+    }
+    causal_unity_state = run_apfc_causal_unity(
+        "prepare",
+        {
+            "schema_version": 1,
+            "frame_id": frame_id,
+            "input_hash": input_hash,
+            "authority_hash": apfc_authority_hash(workspace),
+            "identity_hash": sha256_text("MD-OS Artificial Prefrontal Cortex v5.0"),
+            "world_observation_hash": sha256_text(context.text),
+            "world_observation_count": max(1, len(context.selected_sources)),
+            "world_observation_verifier_backed": False,
+            "intent_hash": input_hash,
+            "intent_count": 1,
+            "intent_verifier_backed": True,
+            "goal_hash": sha256_text(goal) if goal else None,
+            "goal_count": 1 if goal else 0,
+            "memory_hash": apfc_json_hash(list(context.selected_sources)),
+            "memory_count": len(context.selected_sources),
+            "memory_verifier_backed": False,
+            "frame_hash": sha256_text(material),
+            "prediction_contract_hash": apfc_json_hash(
+                {
+                    "expected_result": "satisfy_current_human_request",
+                    "verifier": "independent_observable_readback",
+                    "initial_verdict": "unknown",
+                }
+            ),
+            "prediction_count": 1,
+            "action_policy_hash": apfc_json_hash(decision_basis),
+            "decision_basis_hash": apfc_json_hash(decision_basis),
+            "previous_transition_hash": latest_apfc_causal_transition_hash(workspace),
+        },
+    )
+    causal_dependency_probe = run_apfc_causal_unity(
+        "probe",
+        {
+            "schema_version": 1,
+            "state": causal_unity_state,
+            "action_hash": apfc_json_hash(
+                {"frame_id": frame_id, "action_kind": "app_server_approval"}
+            ),
+        },
+    )
     return ApfcTurnFrame(
-        frame_id="apfc_turn_" + sha256_text(material)[:20],
+        frame_id=frame_id,
         input_hash=input_hash,
         goal=goal,
         theme=context.theme,
@@ -2620,12 +2856,15 @@ def build_apfc_turn_frame(
             "runtime_permission_expansion",
             "claim_without_verifier_evidence",
         ),
+        operational_unity_tensor=operational_unity_tensor,
+        causal_unity_state=causal_unity_state,
+        causal_dependency_probe=causal_dependency_probe,
     )
 
 
 def render_apfc_turn_frame(frame: ApfcTurnFrame) -> str:
     payload = {
-        "schema_version": 2,
+        "schema_version": 4,
         "frame_id": frame.frame_id,
         "input_hash": frame.input_hash,
         "goal": frame.goal,
@@ -2648,6 +2887,9 @@ def render_apfc_turn_frame(frame: ApfcTurnFrame) -> str:
             "command": "cortex apfc cognitive reflect-intent <intent.json>",
             "activation": "problem_relevant_verified_single_cycle",
         },
+        "operational_unity_tensor": frame.operational_unity_tensor,
+        "causal_unity_state": frame.causal_unity_state,
+        "causal_dependency_probe": frame.causal_dependency_probe,
         "verification_contract": {
             "expected_result": "satisfy_current_human_request",
             "verifier": "independent_observable_readback",
@@ -2701,6 +2943,15 @@ def decide_apfc_command_approval(
         return "decline", "command text is unavailable"
     if DESTRUCTIVE_COMMAND_PATTERN.search(command):
         return "decline", "destructive command is inhibited by the APFC turn frame"
+    try:
+        authorization = authorize_apfc_action(
+            frame, "item/commandExecution/requestApproval", params,
+            policy_authorized=True, within_authority=True,
+        )
+    except RuntimeError:
+        return "decline", "causal Unity authorization is unavailable"
+    if authorization.get("status") != "authorized":
+        return "decline", "causal Unity authorization inhibited the command"
     return "accept", "bounded local command is permitted by the APFC turn frame"
 
 
@@ -2712,6 +2963,15 @@ def decide_apfc_file_approval(
     grant_root = params.get("grantRoot")
     if grant_root is not None and not _path_inside(grant_root, Path(frame.workspace)):
         return "decline", "requested file root is outside the APFC workspace"
+    try:
+        authorization = authorize_apfc_action(
+            frame, "item/fileChange/requestApproval", params,
+            policy_authorized=True, within_authority=True,
+        )
+    except RuntimeError:
+        return "decline", "causal Unity authorization is unavailable"
+    if authorization.get("status") != "authorized":
+        return "decline", "causal Unity authorization inhibited the file change"
     return "accept", "workspace file change is permitted by the APFC turn frame"
 
 
@@ -2759,23 +3019,131 @@ def write_apfc_turn_receipt(
     workspace = Path(frame.workspace)
     local_dir = workspace / "md-os/ops/local/apfc"
     local_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    verification_contract = evaluate_apfc_verification(status, observed_actions)
+    causal_authorizations: list[dict[str, object]] = []
+    authorization_by_item: dict[str, dict[str, object]] = {}
+    for decision in decisions:
+        authorization = decision.get("causal_authorization")
+        if isinstance(authorization, dict) and authorization.get("status") == "authorized":
+            causal_authorizations.append(authorization)
+            action_id = authorization.get("action_id")
+            if isinstance(action_id, str) and action_id:
+                authorization_by_item[action_id] = authorization
+    causal_observed_actions: list[dict[str, object]] = []
+    for action in observed_actions:
+        normalized = dict(action)
+        action_id = str(action.get("item_id") or "")
+        authorization = authorization_by_item.get(action_id)
+        normalized["action_id"] = action_id
+        normalized["action_kind"] = str(action.get("type") or "")
+        normalized["action_hash"] = (
+            authorization.get("action_hash")
+            if authorization is not None
+            else apfc_json_hash(
+                {
+                    "item_id": action_id,
+                    "type": action.get("type"),
+                    "command_hash": action.get("command_hash"),
+                }
+            )
+        )
+        normalized["side_effecting"] = bool(
+            authorization is not None or action.get("type") == "fileChange"
+        )
+        causal_observed_actions.append(normalized)
+    verifier_actions = [
+        action for action in causal_observed_actions
+        if action.get("verification_candidate")
+        and action.get("status") == "completed"
+        and action.get("exit_code") in {0, None}
+    ]
+    output_hash = sha256_text(output)
+    action_manifest_hash = sha256_text(
+        json.dumps(
+            causal_observed_actions,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    evidence_manifest_hash = sha256_text(
+        json.dumps(
+            verifier_actions,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    closed_unity_tensor = run_apfc_operational_unity_tensor(
+        "close",
+        {
+            "schema_version": 1,
+            "frame_id": frame.frame_id,
+            "input_hash": frame.input_hash,
+            "authority_hash": apfc_authority_hash(frame.workspace),
+            "output_hash": output_hash,
+            "action_manifest_hash": action_manifest_hash,
+            "evidence_manifest_hash": evidence_manifest_hash,
+            "prepared": frame.operational_unity_tensor,
+            "assistant_output_epistemic_status": "proposal",
+            "verifier_verdict": verification_contract["verdict"],
+            "channels": {
+                "transformation_refs": {
+                    "count": 1, "present": True,
+                    "authority_declared": True, "verifier_backed": True,
+                },
+                "action_refs": {
+                    "count": len(causal_observed_actions),
+                    "present": bool(causal_observed_actions),
+                    "authority_declared": bool(decisions),
+                    "verifier_backed": False,
+                },
+                "evidence_refs": {
+                    "count": len(verifier_actions),
+                    "present": bool(verifier_actions),
+                    "authority_declared": False,
+                    "verifier_backed": verification_contract["verdict"] == "pass",
+                },
+            },
+        },
+    )
+    causal_unity_transition = run_apfc_causal_unity(
+        "close",
+        {
+            "schema_version": 1,
+            "state": frame.causal_unity_state,
+            "frame_id": frame.frame_id,
+            "input_hash": frame.input_hash,
+            "output_hash": output_hash,
+            "action_manifest_hash": action_manifest_hash,
+            "evidence_manifest_hash": evidence_manifest_hash,
+            "authorizations": causal_authorizations,
+            "observed_actions": causal_observed_actions,
+            "verifier_verdict": verification_contract["verdict"],
+            "epistemic_verification": None,
+        },
+    )
     receipt = {
-        "schema_version": 2,
+        "schema_version": 4,
         "receipt_id": "apfc_receipt_" + sha256_text(
             frame.frame_id + status + sha256_text(output)
         )[:20],
         "frame_id": frame.frame_id,
         "input_hash": frame.input_hash,
-        "output_hash": sha256_text(output),
+        "output_hash": output_hash,
         "status": status,
         "goal_present": bool(frame.goal),
         "attention_present": bool(frame.theme or frame.focus),
         "selected_sources": list(frame.context.selected_sources),
         "approval_decisions": decisions,
-        "observed_actions": observed_actions,
+        "observed_actions": causal_observed_actions,
         "assistant_output_epistemic_status": "proposal",
         "verified_claims": [],
-        "verification_contract": evaluate_apfc_verification(status, observed_actions),
+        "verification_contract": verification_contract,
+        "operational_unity_tensor": closed_unity_tensor,
+        "causal_unity_state": frame.causal_unity_state,
+        "causal_dependency_probe": frame.causal_dependency_probe,
+        "causal_unity_transition": causal_unity_transition,
     }
     receipt_path = local_dir / "turn_receipts.ndjson"
     with receipt_path.open("a", encoding="utf-8") as stream:
@@ -2796,6 +3164,12 @@ def write_apfc_turn_receipt(
                 f"- attention present: `{str(bool(frame.theme or frame.focus)).lower()}`",
                 f"- approval decisions: `{len(decisions)}`",
                 f"- observed runtime actions: `{len(observed_actions)}`",
+                f"- turn governance tensor: `{closed_unity_tensor['status']}`",
+                f"- cognitive outcome: `{closed_unity_tensor['cognitive_outcome_status']}`",
+                f"- causal Unity state: `{frame.causal_unity_state['status']}`",
+                f"- causal dependency probe: `{frame.causal_dependency_probe['status']}`",
+                f"- causal Unity transition: `{causal_unity_transition['status']}`",
+                f"- epistemic outcome: `{causal_unity_transition['epistemic_status']}`",
                 "- assistant output remains a proposal unless independently verified.",
                 "",
             )
@@ -2811,20 +3185,26 @@ def write_apfc_turn_receipt(
 
 @contextmanager
 def interactive_turn_terminal():
-    """Make Esc observable during a turn and restore the terminal exactly."""
-    if termios is None or tty is None or not sys.stdin.isatty():
+    """Buffer steering until Enter while keeping Esc immediately observable."""
+    global STEERING_INPUT_BUFFER
+    if termios is None or not sys.stdin.isatty():
         yield
         return
     descriptor = sys.stdin.fileno()
     try:
         original = termios.tcgetattr(descriptor)
-        tty.setcbreak(descriptor)
+        configured = termios.tcgetattr(descriptor)
+        configured[3] |= termios.ICANON
+        configured[6][termios.VEOL] = STEERING_INTERRUPT.encode()
+        STEERING_INPUT_BUFFER = ""
+        termios.tcsetattr(descriptor, termios.TCSANOW, configured)
     except (OSError, termios.error):
         yield
         return
     try:
         yield
     finally:
+        STEERING_INPUT_BUFFER = ""
         termios.tcsetattr(descriptor, termios.TCSADRAIN, original)
 
 

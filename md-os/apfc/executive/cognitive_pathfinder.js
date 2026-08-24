@@ -2,6 +2,7 @@
 'use strict';
 
 const { sha256Json, shortText } = require('../../os/lib/common');
+const { verifyEpistemicReadbackReceipt } = require('../../kernel/cognition/epistemic_unity_verifier');
 
 const clamp = (value) => Math.max(0, Math.min(1, Number(value) || 0));
 const unique = (values) => [...new Set((values || []).map(shortText).filter(Boolean))].sort();
@@ -100,7 +101,7 @@ function emptyMemory() {
   return { schema_version: 1, memory_id: 'apfc_cognitive_anchor_memory', anchors: [], transitions: [] };
 }
 
-function buildCycle(requestInput, memoryInput = emptyMemory(), createdAt = null) {
+function buildCycle(requestInput, memoryInput = emptyMemory(), createdAt = null, options = {}) {
   const request = assertRequest(requestInput);
   const memory = memoryInput && memoryInput.schema_version === 1 ? memoryInput : emptyMemory();
   const anchors = relevantAnchors(memory, request);
@@ -108,7 +109,14 @@ function buildCycle(requestInput, memoryInput = emptyMemory(), createdAt = null)
   const ranked = rankActions(request, uncertainty, anchors);
   const selectedAction = ranked.find((item) => !item.inhibited) || null;
   const readbackMatches = Boolean(selectedAction && request.readback.action_id === selectedAction.action_id);
-  const verified = request.readback.verdict === 'pass' && readbackMatches && (request.readback.evidence_refs || []).length > 0;
+  const epistemicReadbackVerified = verifyEpistemicReadbackReceipt(
+    request.readback.verification_receipt,
+    options.workspace_root,
+  );
+  const verified = request.readback.verdict === 'pass'
+    && readbackMatches
+    && (request.readback.evidence_refs || []).length > 0
+    && epistemicReadbackVerified;
   const cycleKey = sha256Json({ request, memory_hash: sha256Json(memory) });
   const cycleId = `cogcycle_${cycleKey.slice(0, 20)}`;
   const stateBeforeId = `cogstate_${sha256Json({ theme_id: request.theme_id, focus: request.focus, facts: request.verified_facts || [] }).slice(0, 20)}`;
@@ -163,6 +171,7 @@ function buildCycle(requestInput, memoryInput = emptyMemory(), createdAt = null)
     selected_action: selectedAction,
     reused_anchor_ids: anchors.map((item) => item.anchor_id).sort(),
     readback: request.readback,
+    epistemic_readback_verified: epistemicReadbackVerified,
     transition,
     anchor,
     verdict: verified ? 'verified_learning' : request.readback.verdict === 'fail' ? 'falsified_path' : 'unverified',

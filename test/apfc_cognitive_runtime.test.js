@@ -44,6 +44,15 @@ test('APFC cognitive run-cycle turns text input into tokens, graph, workspace, g
   assert.ok(payload.concept_dynamics.transition_count >= payload.experience_token_count - 1);
   assert.equal(payload.concept_dynamics.loss.name, 'mean_cosine_distance');
   assert.equal(typeof payload.concept_dynamics.loss.value, 'number');
+  assert.equal(payload.turn_governance.status, 'verified');
+  assert.equal(payload.turn_governance.artifact_role, 'turn_governance_telemetry');
+  assert.equal(payload.turn_governance.cognitive_outcome_status, 'unverified');
+  assert.match(payload.turn_governance.artifact_hash, /^[a-f0-9]{64}$/);
+  assert.equal(payload.causal_unity.state_status, 'ready');
+  assert.equal(payload.causal_unity.dependency_probe_status, 'verified');
+  assert.equal(payload.causal_unity.transition_status, 'closed');
+  assert.equal(payload.causal_unity.epistemic_status, 'unverified');
+  assert.match(payload.causal_unity.transition_hash, /^[a-f0-9]{64}$/);
 
   const frame = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, payload.outputs.frame), 'utf8'));
   assert.equal(frame.frame_id, payload.frame_id);
@@ -67,7 +76,28 @@ test('APFC cognitive run-cycle turns text input into tokens, graph, workspace, g
   assert.equal(frame.binding_graph.metrics.isolated_node_count, 0);
   assert.ok(frame.action_candidates.some((item) => item.action_type === 'answer'));
   assert.ok(frame.memory_candidates.some((item) => item.canonical_id === 'concept:bmct'));
+  assert.equal(frame.causal_unity_state.artifact_role, 'causal_unity_decision_state');
+  assert.equal(frame.causal_unity_state.status, 'ready');
+  assert.equal(frame.selected_action_authorization.status, 'authorized');
+  assert.equal(frame.causal_unity_transition.status, 'closed');
+  assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.causal_unity_state)));
+  assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.causal_unity_probe)));
+  assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.causal_unity_transition)));
+  const probe = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, payload.outputs.causal_unity_probe), 'utf8'));
+  assert.equal(probe.status, 'verified');
+  assert.equal(probe.intact_authorization_status, 'authorized');
+  assert.equal(probe.severed_authorization_status, 'inhibited');
+  const transition = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, payload.outputs.causal_unity_transition), 'utf8'));
+  assert.equal(transition.predecision_state_hash, frame.causal_unity_state.state_hash);
   assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.concept_dynamics)));
+  assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.outputs.turn_governance)));
+  const governance = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, payload.outputs.turn_governance), 'utf8'));
+  assert.equal(governance.status, 'verified');
+  assert.equal(governance.artifact_role, 'turn_governance_telemetry');
+  assert.equal(governance.cognitive_outcome_status, 'unverified');
+  assert.equal(governance.criteria.tensor_law_passed, true);
+  assert.equal(governance.criteria.roundtrip_passed, true);
+  assert.equal(governance.criteria.composition_identity_passed, true);
 });
 
 test('APFC cognitive status reports live cognitive runtime counts', () => {
@@ -79,6 +109,10 @@ test('APFC cognitive status reports live cognitive runtime counts', () => {
   assert.equal(payload.status, 'ok');
   assert.ok(payload.counts.frames >= 1);
   assert.ok(payload.counts.binding_graphs >= 1);
+  assert.ok(payload.counts.turn_governance_tensors >= 1);
+  assert.ok(payload.counts.causal_unity_states >= 1);
+  assert.ok(payload.counts.causal_unity_probes >= 1);
+  assert.ok(payload.counts.causal_unity_transitions >= 1);
   assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.output_json)));
   assert.ok(fs.existsSync(path.join(REPO_ROOT, payload.output_md)));
 });

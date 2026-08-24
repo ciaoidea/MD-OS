@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/epistemic_unity_verification.schema.json",
+  "title": "MD-OS World-Grounded Epistemic Unity Verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "verification_id", "status", "scope", "candidate_id",
+    "candidate_hash", "statuses", "prediction_checks", "transformation_checks",
+    "criteria", "required_evidence_refs", "falsification_rule", "non_claims",
+    "verification_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "verification_id": { "type": "string", "pattern": "^epistemic_verification_[a-f0-9]{20}$" },
+    "status": { "enum": ["supported_bounded", "rejected_or_unverified"] },
+    "scope": { "const": "bounded_world_grounded_epistemic_unity_verification" },
+    "candidate_id": { "type": "string", "pattern": "^epistemic_unity_[a-f0-9]{20}$" },
+    "candidate_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "statuses": { "type": "object", "additionalProperties": { "enum": ["verified_bounded", "unverified"] } },
+    "prediction_checks": { "type": "array", "minItems": 3, "items": { "type": "object" } },
+    "transformation_checks": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+    "criteria": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "boolean" } },
+    "required_evidence_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "falsification_rule": { "type": "string", "minLength": 1 },
+    "non_claims": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "verification_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

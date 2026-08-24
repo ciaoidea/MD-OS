@@ -23,7 +23,7 @@ RUNTIME_COMMANDS = frozenset({
     "graphify", "hardware", "health", "hygiene", "init", "knowledge",
     "lifecycle", "live", "math", "mcp-server", "module", "paths",
     "propose-change", "replay", "role", "runtime", "screen", "self",
-    "semantic", "services", "signal", "software", "wolfram",
+    "semantic", "services", "signal", "software", "wolfram", "workspace",
 })
 
 

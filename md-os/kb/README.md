@@ -32,6 +32,10 @@ identity and compatibility release line. The human-facing system overview is
 - [REFLECTIVE_OPERATION_MODEL.md](REFLECTIVE_OPERATION_MODEL.md)
 - [VERIFIED_SOLVER_TRANSPORT_MODEL.md](VERIFIED_SOLVER_TRANSPORT_MODEL.md)
 - [CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md](CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md)
+- [UNITY_TENSOR_FIELD_MODEL.md](UNITY_TENSOR_FIELD_MODEL.md) — canonical
+  separation of per-turn governance telemetry, the causally active
+  predecision controller, and the world-grounded epistemic verifier; none of
+  the three alone proves external truth, phenomenal consciousness, or AGI.
 - [SEMANTIC_OPERATIONAL_NETWORK_MODEL.md](SEMANTIC_OPERATIONAL_NETWORK_MODEL.md)
 - [SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md](SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md)
 - [SEMANTIC_OPERATIONAL_COMPILER_MODEL.md](SEMANTIC_OPERATIONAL_COMPILER_MODEL.md)

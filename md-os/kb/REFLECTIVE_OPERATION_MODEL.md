@@ -112,10 +112,30 @@ described in [Einstein's philosophy of science](https://plato.stanford.edu/entri
 These sources support the methodological lineage, not identity with the exact
 MD-OS/APFC protocol.
 
-The verifier uses declared required facts and forbidden misconceptions. The
-reflection path succeeds only when the revised answer satisfies every required
-fact and contains no forbidden claim. A fluent revision is not evidence by
-itself.
+The verifier uses declared required facts and forbidden misconceptions, but
+content checks alone do not establish contact with reality. Whenever reflection
+claims to learn a fact, the candidate and its prediction must precede the
+observation, and the observation must be independently bound to current
+evidence:
+
+```text
+self-question or Gedankenexperiment
+-> competing hypotheses
+-> sealed candidate and discriminating prediction
+-> independent observation, calculation, formal proof, or experiment
+-> hash-bound epistemic readback receipt
+-> verified anchor or fail-closed rejection
+```
+
+The reflection path cannot create a verified cognitive anchor from
+`verdict=pass` and a verbal evidence label. The receipt must have a valid
+content hash, identify an independent verifier, confirm pre-observation
+sealing, and resolve every evidence reference to a current workspace-relative
+file with matching SHA-256. The broader Unity Tensor verifier additionally
+requires heterogeneous frame predictions, coherent transformations and
+invariants, simpler-baseline and severing controls, contamination audit, and
+independent replication. A fluent revision, internal consistency, and elegant
+tensor notation are not evidence by themselves.
 
 This first implementation is a controlled protocol fixture. Candidates and
 evidence are supplied in a task file; the runtime coordinates criticism,

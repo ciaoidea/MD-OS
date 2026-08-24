@@ -53,6 +53,8 @@ function usage() {
     `  ${cli} demo`,
     `  ${cli} signal <project_id> <summary>`,
     `  ${cli} propose-change <target_path> <summary>`,
+    `  ${cli} workspace patch <patch_file|-> [--dry-run]`,
+    `  ${cli} workspace patch --base64 <base64_patch> [--dry-run]`,
     `  ${cli} compile-programs`,
     `  ${cli} build [all|<project_id>]`,
     `  ${cli} agenda`,
@@ -116,6 +118,7 @@ function usage() {
     `  ${cli} apfc cognitive reflect-intent <intent.json>`,
     `  ${cli} apfc cognitive reflect-event <event.json>`,
     `  ${cli} apfc cognitive status`,
+    `  ${cli} apfc causal-unity <prepare|authorize|close|probe|verify-state|verify-transition> < input.json`,
     `  ${cli} knowledge import <import_id> <source_dir> [--initial-repository] [--copy-theory-sources] [--copy-raw-ext=.tex,.svg] [--copy-raw-suffix=.schema.json]`,
     `  ${cli} self release status`,
     `  ${cli} lifecycle`,
@@ -384,6 +387,13 @@ function main() {
     if (!subcommand || !rest.length) usage();
     runScript('register_change_proposal.js', [subcommand, rest.join(' ')]);
   }
+  if (command === 'workspace') {
+    if (subcommand === 'patch') {
+      if (!rest.length) usage();
+      runScript('workspace_patch_runtime.js', ['apply', ...rest]);
+    }
+    usage();
+  }
   if (command === 'compile-programs') runScript('compile_programs.js');
   if (command === 'build') {
     if (!subcommand || subcommand === 'all') {
@@ -525,6 +535,13 @@ function main() {
   }
   if (command === 'apfc') {
     if (!subcommand) runScript('apfc_runtime.js', ['status']);
+    if (subcommand === 'causal-unity') {
+      const [operation, ...causalArgs] = rest;
+      if (['prepare', 'authorize', 'close', 'probe', 'verify-state', 'verify-transition'].includes(operation)) {
+        runScript('apfc_causal_unity_runtime.js', [operation, ...causalArgs]);
+      }
+      usage();
+    }
     if (subcommand === 'cognitive') {
       const [operation = 'status', ...cognitiveArgs] = rest;
       if (['ingest', 'bind', 'workspace', 'gate', 'predict', 'run-cycle', 'cycle', 'reflect', 'reflect-intent', 'reflect-event', 'status'].includes(operation)) {

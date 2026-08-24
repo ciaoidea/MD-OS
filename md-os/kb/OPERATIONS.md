@@ -28,6 +28,7 @@ Canonical builders:
 - `node md-os/os/compile_programs.js`
 - `node md-os/os/archive_runtime_state.js`
 - `cortex replay`
+- `cortex workspace patch <patch_file|-> [--dry-run]`
 - `node md-os/os/build_project_state.js <project_id>`
 - `node md-os/os/build_global_agenda.js`
 - `node md-os/os/build_agentic_core.js`
@@ -42,6 +43,8 @@ Canonical builders:
 - `cortex agi run-once --task "<task>"`
 - `cortex cognition run-once --task-spec md-os/ops/tasks/<task_spec_id>.json`
 - `cortex cognition unity-test`
+- `node md-os/os/epistemic_unity_runtime.js seal < candidate.json`
+- `node md-os/os/epistemic_unity_runtime.js verify < verification.json`
 - `cortex benchmark software-repair generate --case <case.json> --provider <provider.json> --configuration <configuration_id>`
 - `cortex benchmark software-repair run --case <case.json> --provider <provider.json> --configuration <configuration_id>`
 - `node md-os/os/build_software_repair_benchmark_index.js`
@@ -160,6 +163,9 @@ Ordinary operating rule:
   override canonical source or generated verifier readback
 - register contested edits with `cortex propose-change <target_path> <summary>`
 - keep low-level mutation in `md-os/os/`
+- treat host-native editing primitives as optional; when one fails before
+  touching the workspace, use the native `cortex workspace patch` fallback
+  without modifying AppArmor, `/etc`, host permissions, or the network policy
 - keep live connector coverage explicit in `md-os/ops/connectors/connector_registry.json`
 - import external knowledge through
   `md-os/kb/KNOWLEDGE_IMPORT_METHOD_MODEL.md`: raw import, custody manifest,
@@ -218,6 +224,26 @@ Ordinary operating rule:
 - use `md-os/kb/SOFTWARE_REPAIR_BENCHMARK_MODEL.md` for reproducible repair
   cases, fixed experimental configurations, independent oracles, diff policy,
   holdout contamination gates, and aggregate benchmark readback
+- every natural-language App Server turn must prepare and close the bounded
+  Turn Governance Tensor; the historical `operational_unity_tensor` field
+  name is compatibility-only, its exact feature permutation proves bookkeeping
+  integrity rather than semantic or world truth, raw private text must not enter
+  it, and the artifact must declare that it is not world-grounded epistemic unity
+- require the Causal Unity Controller on every APFC action path: prepare the
+  hash-bound 9 x 6 predecision state, consume its exact hash and decision basis
+  at authorization, require matching preauthorization for every mutating
+  action, close over output/action/evidence readback, and bind the transition
+  hash into the next turn; the intact/severed dependency probe must fail closed
+  and is controller-dependence evidence only
+- for reflective learning or Unity Tensor claims, require a candidate sealed
+  before observation, discriminating predictions, an independent verifier, and
+  current hash-bound evidence; a raw `pass`, fluent explanation, valid
+  governance tensor, or self-issued evidence label cannot create a verified
+  anchor
+- for a bounded empirical Unity result, additionally require at least three
+  heterogeneous frames, connected cyclic transformations, preserved declared
+  invariants, rejected simpler baseline, sham and severing controls,
+  contamination audit, and independent replication
 - treat runs whose `empirical_claim_scope` is `runner_validation_only` as tests
   of the benchmark mechanism, never as evidence of intelligence or cumulative
   learning

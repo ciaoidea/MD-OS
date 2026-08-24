@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/epistemic_unity_candidate.schema.json",
+  "title": "MD-OS Sealed Epistemic Unity Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "candidate_id", "status", "scope", "hypothesis_id",
+    "hypothesis_statement", "premises", "competing_hypotheses",
+    "simpler_baseline_id", "frame_predictions", "declared_invariants",
+    "falsifiers", "development_evidence_refs", "sealed_before_world_readback",
+    "target_evidence_accessed", "epistemic_rule", "non_claims", "candidate_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "candidate_id": { "type": "string", "pattern": "^epistemic_unity_[a-f0-9]{20}$" },
+    "status": { "const": "sealed_candidate" },
+    "scope": { "const": "bounded_world_grounded_epistemic_unity_candidate" },
+    "hypothesis_id": { "type": "string", "minLength": 1 },
+    "hypothesis_statement": { "type": "string", "minLength": 1 },
+    "premises": { "$ref": "#/$defs/nonemptyStrings" },
+    "competing_hypotheses": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+    "simpler_baseline_id": { "type": "string", "minLength": 1 },
+    "frame_predictions": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/prediction" } },
+    "declared_invariants": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/invariant" } },
+    "falsifiers": { "$ref": "#/$defs/nonemptyStrings" },
+    "development_evidence_refs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "sealed_before_world_readback": { "const": true },
+    "target_evidence_accessed": { "const": false },
+    "epistemic_rule": { "type": "string", "minLength": 1 },
+    "non_claims": { "$ref": "#/$defs/nonemptyStrings" },
+    "candidate_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "prediction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prediction_id", "frame_id", "domain_id", "prediction", "metric_id", "threshold", "comparator"],
+      "properties": {
+        "prediction_id": { "type": "string", "minLength": 1 },
+        "frame_id": { "type": "string", "minLength": 1 },
+        "domain_id": { "type": "string", "minLength": 1 },
+        "prediction": { "type": "string", "minLength": 1 },
+        "metric_id": { "type": "string", "minLength": 1 },
+        "threshold": { "type": "number" },
+        "comparator": { "enum": ["lte", "gte", "eq"] }
+      }
+    },
+    "invariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariant_id", "declaration"],
+      "properties": {
+        "invariant_id": { "type": "string", "minLength": 1 },
+        "declaration": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

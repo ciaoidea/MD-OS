@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_causal_dependency_probe.schema.json",
+  "title": "MD-OS APFC Causal Unity Controller Dependency Probe",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "probe_id",
+    "status",
+    "scope",
+    "state_hash",
+    "action_hash",
+    "intact_authorization_status",
+    "severed_authorization_status",
+    "criteria",
+    "non_claims",
+    "probe_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "probe_id": { "type": "string", "pattern": "^apfc_causal_probe_[a-f0-9]{20}$" },
+    "status": { "enum": ["verified", "failed"] },
+    "scope": { "const": "controller_causal_dependency_only" },
+    "state_hash": { "$ref": "#/$defs/hash" },
+    "action_hash": { "$ref": "#/$defs/hash" },
+    "intact_authorization_status": { "enum": ["authorized", "inhibited"] },
+    "severed_authorization_status": { "enum": ["authorized", "inhibited"] },
+    "criteria": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "boolean" } },
+    "non_claims": { "type": "array", "minItems": 3, "uniqueItems": true, "items": { "type": "string" } },
+    "probe_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

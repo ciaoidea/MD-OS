@@ -22,7 +22,7 @@ function runOnce(requestArg) {
   const request = JSON.parse(fs.readFileSync(requestPath, 'utf8'));
   ensureDir(CYCLES);
   const memory = readJsonSafe(MEMORY, emptyMemory());
-  const cycle = buildCycle(request, memory, nowIso());
+  const cycle = buildCycle(request, memory, nowIso(), { workspace_root: WORKSPACE_ROOT });
   const cyclePath = path.join(CYCLES, `${cycle.cycle_id}.json`);
   withFileLock('apfc_cognitive_pathfinding', { context: 'apfc_cognitive_path_run_once', timeoutMs: 60000, staleMs: 600000 }, () => {
     atomicWriteJson(cyclePath, { ...cycle, next_memory: undefined });

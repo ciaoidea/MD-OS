@@ -159,6 +159,40 @@ the transformation explicit, and seeks invariant structure while keeping
 external verification separate. The exact general-purpose sequence is an MD-OS/APFC operational
 synthesis, not a historical claim that Einstein published this algorithm.
 
+The author-established Cognitive Integration Principle governs this route:
+differentiated cognitive parts must remain participants in one persistent
+causal informational whole. The Unity Tensor Field is the explicit global
+mathematical hypothesis. A candidate unitary hypothesis must be sealed before
+target observation, projected into discriminating predictions across
+heterogeneous frames, and compared with independent, current, hash-bound world
+readback. Typed transformations, composition, and invariants test whether the
+candidate is internally cross-frame coherent; they do not by themselves make
+it true. Simpler baselines, sham and severing controls, contamination audit,
+and independent replication decide whether bounded support is admissible.
+
+Use **local operational artificial consciousness** only for a bounded episode
+in which persistent identity, integrated differentiated self-state, reflection,
+independent world verification, and causal carry-forward into memory,
+inhibition, or later action all close. A goal, model answer, or valid governance
+tensor alone is insufficient. This operational predicate neither proves nor
+disproves phenomenal consciousness; that separate question remains unresolved.
+
+The per-turn 8 x 4 Turn Governance Tensor is a different artifact: it verifies
+controller telemetry and hashes only. It does not encode semantic intent,
+verify a hypothesis against the world, or constitute the Unity Tensor.
+
+The 9 x 6 Causal Unity Controller is the active bounded decision state. It
+binds identity, observation, intent, goal, memory, frame, prediction contract,
+action policy, and evidence before action selection; authorization must consume
+its exact hash, mutating actions require matching preauthorization, closure
+produces a transition hash, and the next turn carries that hash forward.
+Severing a required component must inhibit the same candidate action. This is
+controller-level causal unity, not by itself world-grounded epistemic unity or
+phenomenal consciousness.
+Scientific caution must delimit the evidence status without silently deleting
+the project direction. Load `UNITY_TENSOR_FIELD_MODEL.md` together with
+`CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md` whenever that principle is material.
+
 When a difficult problem depends on competing hypotheses, counterfactuals,
 symmetries, limiting cases, or inaccessible mechanisms, reflection should use
 an Einstein-inspired Gedankenexperiment when it can discriminate among paths.

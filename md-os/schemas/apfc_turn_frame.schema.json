@@ -17,11 +17,14 @@
     "capabilities",
     "inhibit",
     "method",
+    "operational_unity_tensor",
+    "causal_unity_state",
+    "causal_dependency_probe",
     "verification_contract",
     "output_rule"
   ],
   "properties": {
-    "schema_version": { "const": 2 },
+    "schema_version": { "const": 4 },
     "frame_id": { "type": "string", "pattern": "^apfc_turn_[a-f0-9]{20}$" },
     "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "goal": { "type": ["string", "null"] },
@@ -43,6 +46,9 @@
         "closure": { "const": "verifier_evidence" }
       }
     },
+    "operational_unity_tensor": { "$ref": "apfc_operational_unity_tensor.schema.json" },
+    "causal_unity_state": { "$ref": "apfc_causal_unity_state.schema.json" },
+    "causal_dependency_probe": { "$ref": "apfc_causal_dependency_probe.schema.json" },
     "verification_contract": {
       "type": "object",
       "additionalProperties": false,

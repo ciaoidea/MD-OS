@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_causal_unity_transition.schema.json",
+  "title": "MD-OS APFC Causal Unity Transition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "transition_id",
+    "artifact_role",
+    "status",
+    "scope",
+    "frame_id",
+    "input_hash",
+    "predecision_state_hash",
+    "previous_transition_hash",
+    "output_hash",
+    "action_manifest_hash",
+    "evidence_manifest_hash",
+    "verifier_verdict",
+    "epistemic_status",
+    "authorization_checks",
+    "observed_action_count",
+    "mutating_action_count",
+    "carry_forward_hash",
+    "criteria",
+    "non_claims",
+    "transition_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "transition_id": { "type": "string", "pattern": "^apfc_causal_transition_[a-f0-9]{20}$" },
+    "artifact_role": { "const": "causal_unity_transition" },
+    "status": { "enum": ["closed", "incomplete", "rejected"] },
+    "scope": { "const": "bounded_apfc_causal_unity" },
+    "frame_id": { "type": "string", "pattern": "^(?:apfc_turn_[a-f0-9]{20}|frame_[a-z0-9_-]+)$" },
+    "input_hash": { "$ref": "#/$defs/hash" },
+    "predecision_state_hash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "previous_transition_hash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] },
+    "output_hash": { "$ref": "#/$defs/hash" },
+    "action_manifest_hash": { "$ref": "#/$defs/hash" },
+    "evidence_manifest_hash": { "$ref": "#/$defs/hash" },
+    "verifier_verdict": { "enum": ["pass", "fail", "unknown"] },
+    "epistemic_status": { "enum": ["verified_bounded", "rejected_or_unverified", "unverified"] },
+    "authorization_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["authorization_id", "action_id", "valid"],
+        "properties": {
+          "authorization_id": { "type": ["string", "null"] },
+          "action_id": { "type": ["string", "null"] },
+          "valid": { "type": "boolean" }
+        }
+      }
+    },
+    "observed_action_count": { "type": "integer", "minimum": 0 },
+    "mutating_action_count": { "type": "integer", "minimum": 0 },
+    "carry_forward_hash": { "$ref": "#/$defs/hash" },
+    "criteria": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "boolean" } },
+    "non_claims": { "type": "array", "minItems": 5, "uniqueItems": true, "items": { "type": "string" } },
+    "transition_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

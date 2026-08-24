@@ -81,3 +81,55 @@ test('cortex paths reports the active workspace selected from cwd', () => {
   assert.equal(payload.workspace_root, workspace);
   assert.equal(payload.mdos_root, path.join(workspace, 'md-os'));
 });
+
+test('cortex workspace patch applies a native diff without a host edit primitive', () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'md-os-cli-patch-'));
+  fs.mkdirSync(path.join(workspace, 'md-os/os'), { recursive: true });
+  fs.mkdirSync(path.join(workspace, 'md-os/kb'), { recursive: true });
+  fs.writeFileSync(path.join(workspace, 'note.md'), 'before\n');
+  const patch = [
+    'diff --git a/note.md b/note.md',
+    'index 0000000..1111111 100644',
+    '--- a/note.md',
+    '+++ b/note.md',
+    '@@ -1 +1 @@',
+    '-before',
+    '+after',
+    '',
+  ].join('\n');
+  const env = {
+    ...process.env,
+    MDOS_WORKSPACE_ROOT: workspace,
+    MDOS_ROOT: path.join(workspace, 'md-os'),
+  };
+  const result = spawnSync(path.join(REPO_ROOT, 'cortex'), [
+    'workspace',
+    'patch',
+    '--base64',
+    Buffer.from(patch, 'utf8').toString('base64'),
+  ], { cwd: workspace, encoding: 'utf8', env });
+
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout.trim());
+  assert.equal(receipt.engine, 'mdos_native_unified_diff_v1');
+  assert.equal(receipt.postcondition_verified, true);
+  assert.equal(fs.readFileSync(path.join(workspace, 'note.md'), 'utf8'), 'after\n');
+});
+
+test('cortex exposes the bounded causal Unity verifier', () => {
+  const result = spawnSync(path.join(REPO_ROOT, 'cortex'), [
+    'apfc',
+    'causal-unity',
+    'verify-state',
+  ], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+    env: process.env,
+    input: '{}\n',
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  const payload = JSON.parse(result.stdout.trim());
+  assert.equal(payload.ok, false);
+  assert.equal(payload.mode, 'apfc_causal_unity_verify_state');
+});

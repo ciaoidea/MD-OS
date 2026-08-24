@@ -61,6 +61,7 @@ audit, replay, package, and move between machines.
 | `md-os/ops/action_receipts/*.json` | live transactional action receipt | evidence | case-dependent | no | no | maybe |
 | `md-os/ops/verifications/*.json` | live independent VerificationResult | evidence | case-dependent | no | no | maybe |
 | `md-os/ops/trajectories/*.json` | live learning trajectory | evidence | case-dependent | no | no | maybe |
+| `md-os/ops/apfc/cognitive/**` | local APFC cognitive frames, projections, predictions, turn-governance tensors, causal Unity states/probes/transitions, and action authorizations | evidence | no | no | no | yes |
 | `md-os/ops/skills/candidates/*.{json,md}` | live skill candidate | evidence | case-dependent | no | no | maybe |
 | `md-os/ops/skills/promoted/*.{json,md}` | live/source promoted skill | yes | case-dependent | no | no | maybe |
 | `md-os/ops/compiled/**` | generated state | no | no | yes | no | no |
@@ -160,6 +161,7 @@ audit, replay, package, and move between machines.
 | `node md-os/os/build_semantic_commitment_gate.js status` | `md-os/ops/semantic/commitment_gate_status.*` |
 | `node md-os/os/agi_loop.js eval` | `md-os/ops/agi/{loop_status,promotion_gate}.*`, `md-os/ops/skills/skill_registry.*`, `md-os/ops/evals/agi_eval_report.*`, `md-os/ops/failures/failure_index.*`, `md-os/ops/world/world_model.*`, and `md-os/ops/benchmarks/agi_benchmarks.*` |
 | `cortex cognition run-once --task-spec md-os/ops/tasks/<id>.json` (`cortex agi` compatibility alias) | live TaskSpecs, ActionReceipts, VerificationResults, episodes, trajectories, verified skill candidates, opt-in promoted skills when all gates pass, eval readback, and runtime compiler rebuild |
+| `cortex apfc cognitive run-cycle <source.json>` | local APFC tokens, binding graph, workspace, predictions, concept dynamics, turn-governance telemetry, a causally consumed predecision state and authorization, dependency probe, and closed transition under `md-os/ops/apfc/cognitive/` |\n| `cortex apfc causal-unity <prepare|authorize|close|probe|verify-state|verify-transition> < input.json` | bounded JSON readback for the causal Unity state machine; no network or publication side effect |
 | `cortex benchmark software-repair generate --case <case.json> --provider <provider.json>` | append-only CandidateProvider request, result, receipt, PlanGraphs, patch snapshots, CandidateSet, and journal readback |
 | `cortex benchmark software-repair run --case <case.json> --provider <provider.json>` | append-only provider evidence, BenchmarkRun, CandidateComparison, candidate diffs, and journal readback |
 | `node md-os/os/build_software_repair_benchmark_index.js` | `md-os/ops/benchmarks/software_repair/index.{json,md}` |

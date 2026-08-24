@@ -38,8 +38,8 @@
     },
     "readback": {
       "type": "object", "additionalProperties": false,
-      "required": ["verdict", "action_id", "evidence_refs", "learned_fact", "learned_correction", "confidence"],
-      "properties": {"verdict": {"enum": ["pass", "fail", "unknown"]}, "action_id": {"type": "string"}, "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}}, "learned_fact": {"type": "string"}, "learned_correction": {"type": "string"}, "confidence": {"$ref": "#/$defs/probability"}}
+      "required": ["verdict", "action_id", "evidence_refs", "learned_fact", "learned_correction", "confidence", "verification_receipt"],
+      "properties": {"verdict": {"enum": ["pass", "fail", "unknown"]}, "action_id": {"type": "string"}, "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}}, "learned_fact": {"type": "string"}, "learned_correction": {"type": "string"}, "confidence": {"$ref": "#/$defs/probability"}, "verification_receipt": {"anyOf": [{"$ref": "epistemic_readback_receipt.schema.json"}, {"type": "null"}]}}
     }
   }
 }

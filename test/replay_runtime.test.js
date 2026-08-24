@@ -63,11 +63,18 @@ function setupReplayWorkspace(workspace) {
     'SEMANTIC_COMMITMENT_GATE_MODEL.md',
     'CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md',
     'ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md',
+    'CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md',
+    'UNITY_TENSOR_FIELD_MODEL.md',
+    'ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md',
     'ARCHIVE_COMPACTION_MODEL.md',
   ]) {
     const source = fs.readFileSync(path.join(REPO_ROOT, 'md-os/kb', file), 'utf8');
     writeText(path.join(workspace, 'md-os/kb', file), source);
   }
+  writeText(
+    path.join(workspace, 'md-os/apfc/README.md'),
+    fs.readFileSync(path.join(REPO_ROOT, 'md-os/apfc/README.md'), 'utf8'),
+  );
   writeJson(path.join(workspace, 'md-os/ops/projects/demo_project/project.json'), {
     schema_version: 1,
     project_id: 'demo_project',

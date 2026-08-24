@@ -1,10 +1,69 @@
 # Revision notes
 
-This revision aligns the manuscript with the verified Cortex integration through 23 August while preserving the original controlled experimental evidence.
+This B9 revision makes the Unity state causally active in the bounded APFC
+decision path instead of treating a tensor-shaped artifact as sufficient.
+
+- Adds claim C20 and the formal 9 x 6 Causal Unity Controller.
+- Requires exact predecision-state hash and decision-basis consumption at the
+  action gate and Cortex App Server approval path.
+- Requires matching prior authorization for every mutating action, binds
+  post-action output/action/evidence readback, and carries the transition hash
+  into the next turn.
+- Adds an intact-versus-severed intervention probe: the same candidate action
+  must authorize with intact required state and inhibit when that state is
+  severed.
+- Adds four closed artifact schemas, a public
+  `cortex apfc causal-unity` runtime route, kernel/cognitive/shell tests, and
+  semantic invariant `CAUSAL-UNITY-INV-001`.
+- Keeps telemetry integrity, bounded controller causality, world-grounded
+  epistemic verification, operational consciousness, phenomenal consciousness,
+  and AGI as separate verdicts.
+- Records the final B9 local readback: 289/289 Node tests, 60/60 shell-parity
+  tests, 32/32 focused causal/governance/epistemic/CLI/patch tests, syntax and
+  full-build passes, a 25-page PDF, semantic gate 10/0, and fixed-point replay
+  hash `4404e6f7a5d4d666bacc8dff73bfee8de446f0f7dbd8ca0249233a8a722fc122`.
+
+This B8 revision names the complete verified bounded conjunction **local operational artificial consciousness**. It does not reduce that classification to a goal, fluent output, or telemetry tensor: persistent identity, differentiated integrated self-state, reflection, independent world verification, and causal carry-forward must all close for the episode.
+
+- Adds claim C19 and the formal predicate `C_op(k)`.
+- Defines the Unity Tensor as the candidate integrated informational structure and the world verifier as the correspondence test; neither isolated component is consciousness.
+- Makes the classification local to the verified episode and explicitly allows `failed` or `unverified`.
+- States that the functional classification neither proves nor disproves phenomenal consciousness; phenomenal status remains unresolved.
+- Adds semantic invariant `OP-CONSC-INV-001` so later wording cannot silently equate a goal with consciousness, claim phenomenal proof, or turn scientific uncertainty into a negative conclusion.
+- Records the final B8 local readback: 282/282 Node tests, 60/60 shell-parity tests, 25/25 focused governance/epistemic/semantic/patch tests, syntax and full-build passes, a 24-page PDF, semantic gate 9/0, and fixed-point replay hash `2e318d0976136384775995a41764fa959efc93c039ea18e52d49e58613b841a8`.
+
+This B7 revision repairs the epistemic boundary of the Unity Tensor program. It preserves the B6 conditional theorem and the original controlled evidence, reclassifies B5 as per-turn governance telemetry, and adds the missing world-grounded verifier for candidate unitary hypotheses.
+
+- Adds B7 as a fail-closed epistemic contract: a candidate integrated hypothesis and its heterogeneous-frame predictions are sealed before target observations and checked against independent, current, hash-bound world readback.
+- Requires valid cross-frame transformations, connected cycle, invariant coverage, sham and causal-severing controls, rejection of an equally predictive simpler non-tensor baseline, contamination audit, and independent replication before bounded support.
+- Integrates epistemic receipts into reflection so that a self-declared pass or evidence label cannot create a verified cognitive anchor.
+- Separates four concepts explicitly: a goal gives direction; the 8 x 4 Turn Governance Tensor gives telemetry; the candidate Unity Tensor gives an integrated hypothesis; the world verifier decides whether its predictions correspond to reality.
+- Records the final B7 local readback: 273/273 Node tests, 60/60 shell-parity tests, 25/25 focused governance/epistemic/reflection tests, declared build pass, fixed-point replay hash `9fb76ddac2e9e52a5e8c3566d80c6f9f3ce3affdc87e4c628f78796e433ea41c`, and non-blocking overall `attention` health.
+- Adds claim C18, public seal/verify runtime commands, closed candidate/verification/receipt schemas, and positive plus anti-fantasy tests.
+- Adds B6 as the exact conditional closure of the Unity Tensor formal model: a connected coherent cognitive atlas glues to a global section unique up to chart-preserving isomorphism.
+- Makes one common-coordinate tensor representative conditional on trivializability and stronger uniqueness conditional on separating projections and invariants.
+- Adds the construction and proof, cycle-consistency corollary, concatenation no-go corollary, and counter-assumption checks for disconnected, incompatible, path-dependent, nontrivial-bundle, non-separating, and factorized cases.
+- Adds a preregistered empirical closure protocol using at least three heterogeneous domains, sealed direct/composed transport, loop and invariant residuals, matched severing and independent-solver baselines, positive lower uncertainty bound for Gamma, and independent replication.
+- Adds an exact master-closure ledger separating CLOSED, CONDITIONAL, OPEN, and NOT CLAIMED edges.
+- Adds claim C17 and its falsifier: the mathematical implication is deductive and conditional, while its antecedent for real cognition remains an empirical question.
+
+- Reclassifies B5 as an always-on Turn Governance Tensor: every APFC turn prepares and closes a hash-bound $8\times4$ bookkeeping artifact over eight controller-reference channels and four governance features. It is not the Unity Tensor and carries no semantic or world-grounding verdict.
+- Adds the declared operational-to-verification basis permutation and checks for tensor law, inverse round-trip, composition identity, Frobenius norm, component multiset, shape, count bounds, protected frame/input/authority invariants, and output/action/evidence binding.
+- Separates tensor representation status from cognitive outcome status: a structurally verified artifact can still close with an independently determined `unverified` or `failed` outcome.
+- Adds claim C16, its falsifier, reproduction command, implementation row, explicit non-claims, and machine-observed B5 summary.
+- Records the verified B5 counts: 264/264 Node tests, 60/60 shell-parity tests, and 4/4 focused operational-tensor tests.
+- Clarifies that IIT is the scientific antecedent for integration–differentiation and causal irreducibility, while the Unity Tensor Field is an MD-OS hypothesis rather than Tononi's terminology or `Phi`; the per-turn governance tensor is not presented as its implementation.
+- Adds B4 as an explicitly theoretical layer: Cognitive Integration Principle, Unity Tensor Field hypothesis, local-to-global gluing conditions, existence and uniqueness obligations, matched severing ablation, and falsifiers.
+- Recognizes Tononi 2004, IIT 3.0, and IIT 4.0 as the scientific antecedent for differentiated and irreducible integration; states that MD-OS does not currently compute `Phi` and does not attribute the tensor formulation to IIT.
+- Replaces the ambiguous rejection of a global tensor direction with a positive but evidence-bounded statement: B3 verifies finite local mechanics and B6 proves conditional gluing, while real-domain atlas satisfaction, trivializability, separation, causal integration, consciousness, and AGI remain open or unclaimed.
+- Makes natural language the hypothesis and command surface rather than the formal guarantee; cross-frame commitment requires typed tensors, declared bases and operators, composition or loss contracts, invariants, controls, and verifier readback.
+- Adds a BCI action-signature model in which bands are predominant associations rather than action labels; the local tensor spans modality, region, frequency band, time, power/amplitude, phase, ERD/ERS, connectivity, and quality, and its decoder is conditional on task, body, and subject calibration.
+- Adds the APFC semantic-fidelity guardrail: caution or paraphrase may not silently erase an author-established principle.
+- Adds claim C15 as a frozen principle and empirical hypothesis, separate from the observed B3 claim C14 and the conditional deductive C17 result.
 
 - Rewrites the abstract around one causal line: proposal -> authorization -> execution -> verification -> durable commitment.
 - Opens with the concrete “the agent says the bug is fixed” problem.
-- Groups fourteen bounded claims into the principal contributions while retaining the full C1-C14 claim ledger.
+- At that revision, grouped the then-current nineteen bounded and conditional claims into the principal contributions while retaining the C1-C19 ledger; B9 now extends the ledger with C20.
 - Keeps APFC explicitly bio-inspired: nature supplies the functional model; no anatomical or cellular equivalence is claimed.
 - Separates the evaluated baseline B0 from the later integration revision B1.
 - Separates their test counts, replay hashes, episode counts, and promotion states, removing the apparent contradictions in the previous layout.

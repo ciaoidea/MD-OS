@@ -195,7 +195,9 @@ cannot weaken these minimum checks.
     "ME.md",
     "README.md",
     "index.md",
-    "md-os/kb/ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md"
+    "md-os/kb/ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md",
+    "md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md",
+    "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md"
   ],
   "rules": {
     "challenge_has_no_canonical_effect": true,
@@ -268,6 +270,49 @@ cannot weaken these minimum checks.
         { "path": "md-os/kb/ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md", "phrases": ["Scientific caution may delimit the claim", "must not sever the biological lineage"] }
       ],
       "contradiction_phrases": []
+    },
+    {
+      "invariant_id": "COG-UNITY-INV-001",
+      "kind": "design_foundation",
+      "statement": "General cognition requires differentiated cognitive parts to participate in one persistent causal informational unity, and the Unity Tensor Field is the project's explicit falsifiable global mathematical hypothesis for that integration.",
+      "authority": "author_foundational",
+      "anchor_requirements": [
+        { "path": "ME.md", "phrases": ["Cognitive Integration Principle", "Unity Tensor Field"] },
+        { "path": "md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md", "phrases": ["Author-established cognitive integration principle", "Unity Tensor Field hypothesis"] },
+        { "path": "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md", "phrases": ["Cognitive Integration Principle", "Unity Tensor Field Hypothesis"] }
+      ],
+      "contradiction_phrases": [
+        "there is no cognitive integration principle",
+        "unity tensor is rejected",
+        "unity tensor has no role in md-os"
+      ]
+    },
+    {
+      "invariant_id": "CAUSAL-UNITY-INV-001",
+      "kind": "design_foundation",
+      "statement": "Bounded APFC action authorization must causally consume an intact hash-bound Unity state that integrates identity, world observation, intent, goal, memory, frame, prediction contract, action policy, and evidence; every mutating action requires matching preauthorization, closure readback, and transition carry-forward, while world truth and phenomenality remain separate claims.",
+      "authority": "author_foundational",
+      "anchor_requirements": [
+        { "path": "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md", "phrases": ["Causal Unity Controller", "Every side-effecting action must have a matching prior authorization"] },
+        { "path": "md-os/apfc/README.md", "phrases": ["Causal Unity Controller", "must consume the exact state hash"] }
+      ],
+      "contradiction_phrases": []
+    },
+    {
+      "invariant_id": "OP-CONSC-INV-001",
+      "kind": "design_foundation",
+      "statement": "Local operational artificial consciousness is an episode-bounded functional classification requiring persistent identity, integrated differentiated self-state, reflection, independent world verification, and causal carry-forward; it neither proves nor disproves phenomenal consciousness.",
+      "authority": "author_foundational",
+      "anchor_requirements": [
+        { "path": "ME.md", "phrases": ["local operational artificial consciousness", "neither proves nor disproves phenomenal consciousness"] },
+        { "path": "md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md", "phrases": ["Local operational artificial consciousness", "additional unresolved property"] },
+        { "path": "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md", "phrases": ["Relation to local operational artificial consciousness", "episode-local"] }
+      ],
+      "contradiction_phrases": [
+        "every model answer is phenomenally conscious",
+        "operational consciousness proves phenomenal consciousness",
+        "phenomenal consciousness has been disproved"
+      ]
     },
     {
       "invariant_id": "SEMANTIC-INV-001",

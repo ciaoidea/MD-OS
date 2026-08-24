@@ -148,6 +148,7 @@
     "console": "python3 cortex",
     "connector:terminal:list": "node md-os/os/terminal_connector.js list",
     "connector:terminal:run:node-version": "node md-os/os/terminal_connector.js run demo_general_system node_version",
+    "workspace:patch": "node md-os/os/workspace_patch_runtime.js apply",
     "connector:api:list": "node md-os/os/api_connector.js list",
     "connector:filesystem:list": "node md-os/os/filesystem_connector.js list",
     "connector:ticketing:list": "node md-os/os/ticketing_connector.js list",

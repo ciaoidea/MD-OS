@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/epistemic_readback_receipt.schema.json",
+  "title": "MD-OS Independent Epistemic Readback Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_id", "status", "verifier_id",
+    "independent_from_candidate_generator", "candidate_sealed_before_observation",
+    "candidate_hash", "observation_hash", "evidence_refs", "evidence_manifest",
+    "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["passed", "failed"] },
+    "verifier_id": { "type": "string", "minLength": 1 },
+    "independent_from_candidate_generator": { "const": true },
+    "candidate_sealed_before_observation": { "const": true },
+    "candidate_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "observation_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evidence_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "evidence_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_ref", "storage", "relative_file", "sha256"],
+        "properties": {
+          "evidence_ref": { "type": "string", "minLength": 1 },
+          "storage": { "const": "workspace_file" },
+          "relative_file": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "receipt_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

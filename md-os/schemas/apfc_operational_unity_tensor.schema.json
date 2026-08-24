@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_operational_unity_tensor.schema.json",
+  "title": "MD-OS APFC Turn Governance Tensor (legacy filename)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_role",
+    "tensor_id",
+    "phase",
+    "status",
+    "scope",
+    "frame_id",
+    "input_hash",
+    "authority_hash",
+    "axes",
+    "channels",
+    "source_tensor",
+    "verification_tensor",
+    "transformation",
+    "criteria",
+    "protected_invariants",
+    "non_claims",
+    "artifact_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "artifact_role": { "const": "turn_governance_telemetry" },
+    "tensor_id": { "type": "string", "pattern": "^apfc_unity_[a-f0-9]{20}$" },
+    "phase": { "enum": ["prepared", "closed"] },
+    "status": { "enum": ["verified", "rejected"] },
+    "scope": { "const": "bounded_apfc_turn_governance_tensor" },
+    "frame_id": { "type": "string", "pattern": "^(?:apfc_turn_[a-f0-9]{20}|frame_[a-z0-9_-]+)$" },
+    "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "authority_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "output_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "action_manifest_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evidence_manifest_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prepared_artifact_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prepared_artifact": { "$ref": "#" },
+    "axes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channels", "source_features", "verification_features"],
+      "properties": {
+        "channels": {
+          "const": [
+            "operational_self_refs",
+            "world_observation_refs",
+            "goal_refs",
+            "memory_refs",
+            "frame_refs",
+            "transformation_refs",
+            "action_refs",
+            "evidence_refs"
+          ]
+        },
+        "source_features": {
+          "const": ["presence", "bounded_count", "authority_declared", "verifier_backed"]
+        },
+        "verification_features": {
+          "const": ["verifier_backed", "authority_declared", "presence", "bounded_count"]
+        }
+      }
+    },
+    "channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operational_self_refs",
+        "world_observation_refs",
+        "goal_refs",
+        "memory_refs",
+        "frame_refs",
+        "transformation_refs",
+        "action_refs",
+        "evidence_refs"
+      ],
+      "properties": {
+        "operational_self_refs": { "$ref": "#/$defs/channel" },
+        "world_observation_refs": { "$ref": "#/$defs/channel" },
+        "goal_refs": { "$ref": "#/$defs/channel" },
+        "memory_refs": { "$ref": "#/$defs/channel" },
+        "frame_refs": { "$ref": "#/$defs/channel" },
+        "transformation_refs": { "$ref": "#/$defs/channel" },
+        "action_refs": { "$ref": "#/$defs/channel" },
+        "evidence_refs": { "$ref": "#/$defs/channel" }
+      }
+    },
+    "source_tensor": { "$ref": "#/$defs/tensor" },
+    "verification_tensor": { "$ref": "#/$defs/tensor" },
+    "transformation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "source_basis_id",
+        "target_basis_id",
+        "forward_axis_operators",
+        "inverse_axis_operators",
+        "residuals"
+      ],
+      "properties": {
+        "kind": { "const": "declared_feature_basis_permutation" },
+        "source_basis_id": { "const": "apfc_operational_features_v1" },
+        "target_basis_id": { "const": "apfc_verification_first_features_v1" },
+        "forward_axis_operators": { "type": "array", "minItems": 2, "maxItems": 2 },
+        "inverse_axis_operators": { "type": "array", "minItems": 2, "maxItems": 2 },
+        "residuals": { "type": "object" }
+      }
+    },
+    "criteria": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "verifier_verdict": { "enum": ["pass", "fail", "unknown"] },
+    "cognitive_outcome_status": { "enum": ["verified", "failed", "unverified"] },
+    "protected_invariants": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "non_claims": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "artifact_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "present", "authority_declared", "verifier_backed"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "present": { "type": "boolean" },
+        "authority_declared": { "type": "boolean" },
+        "verifier_backed": { "type": "boolean" }
+      }
+    },
+    "tensor": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "array",
+        "minItems": 4,
+        "maxItems": 4,
+        "items": { "type": "number" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "phase": { "const": "closed" } },
+        "required": ["phase"]
+      },
+      "then": {
+        "required": [
+          "output_hash",
+          "action_manifest_hash",
+          "evidence_manifest_hash",
+          "prepared_artifact_hash",
+          "prepared_artifact",
+          "verifier_verdict",
+          "cognitive_outcome_status"
+        ]
+      }
+    }
+  ]
+}

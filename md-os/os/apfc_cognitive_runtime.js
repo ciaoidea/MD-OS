@@ -21,6 +21,13 @@ const { buildGlobalWorkspace } = require('../apfc/workspace/global_workspace');
 const { buildActionGate } = require('../apfc/action/action_gate');
 const { buildConceptDynamics } = require('../apfc/prediction/concept_dynamics_model');
 const { buildPredictions } = require('../apfc/prediction/predictive_loop');
+const { buildCognitiveFrameGovernanceTensor } = require('../kernel/cognition/apfc_cognitive_unity_stage');
+const {
+  closeCausalUnityTransition,
+  prepareCausalUnityState,
+  probeCausalUnityDependency,
+  verifyCausalUnityState,
+} = require('../kernel/cognition/apfc_causal_unity');
 
 const APFC_COGNITIVE_DIR = path.join(MDOS_ROOT, 'ops', 'apfc', 'cognitive');
 const DIRS = {
@@ -34,6 +41,10 @@ const DIRS = {
   actions: path.join(APFC_COGNITIVE_DIR, 'action_candidates'),
   episodes: path.join(APFC_COGNITIVE_DIR, 'episodes'),
   consolidation: path.join(APFC_COGNITIVE_DIR, 'consolidation'),
+  governance: path.join(APFC_COGNITIVE_DIR, 'turn_governance'),
+  causalUnity: path.join(APFC_COGNITIVE_DIR, 'causal_unity'),
+  causalProbes: path.join(APFC_COGNITIVE_DIR, 'causal_probes'),
+  causalTransitions: path.join(APFC_COGNITIVE_DIR, 'causal_transitions'),
 };
 const LATEST_FRAME_JSON = path.join(APFC_COGNITIVE_DIR, 'latest_frame.json');
 const STATUS_JSON = path.join(APFC_COGNITIVE_DIR, 'apfc_cognitive_status.json');
@@ -180,6 +191,9 @@ function buildFrame(source, tokens) {
     concept_dynamics: null,
     action_candidates: [],
     selected_action: null,
+    causal_unity_state: null,
+    selected_action_authorization: null,
+    causal_unity_transition: null,
     memory_candidates: [],
     verbalization_candidates: [],
   };
@@ -333,12 +347,114 @@ function verbalizationCandidates(frame, gate) {
   }];
 }
 
+function latestCausalTransition() {
+  return readJsonSafe(path.join(DIRS.causalTransitions, 'latest_transition.json'));
+}
+
+function prepareCausalUnity(frameId) {
+  ensureApfcCognitiveDirs();
+  const frame = readFrame(frameId);
+  frame.memory_candidates = memoryCandidates(frame);
+  const provisionalGate = buildActionGate(frame);
+  const intentTokens = frame.experience_tokens.filter((token) => (
+    String(token.canonical_id || '').startsWith('intent:')
+  ));
+  const inputHash = sha256Json({
+    frame_id: frame.frame_id,
+    sources: frame.sources,
+    experience_tokens: frame.experience_tokens,
+  });
+  const previous = latestCausalTransition();
+  const previousTransitionHash = previous && /^[a-f0-9]{64}$/.test(previous.transition_hash || '')
+    ? previous.transition_hash
+    : null;
+  const state = prepareCausalUnityState({
+    schema_version: 1,
+    frame_id: frame.frame_id,
+    input_hash: inputHash,
+    authority_hash: sha256Json({ boundary: 'md-os', runtime: 'apfc_cognitive_runtime' }),
+    identity_hash: sha256Text('MD-OS Artificial Prefrontal Cortex v5.0'),
+    world_observation_hash: sha256Json({ sources: frame.sources, tokens: frame.experience_tokens }),
+    world_observation_count: Math.max(1, frame.sources.length),
+    world_observation_verifier_backed: false,
+    intent_hash: inputHash,
+    intent_count: Math.max(1, intentTokens.length),
+    intent_verifier_backed: true,
+    goal_hash: intentTokens.length ? sha256Json(intentTokens) : null,
+    goal_count: intentTokens.length,
+    memory_hash: sha256Json(frame.memory_candidates),
+    memory_count: frame.memory_candidates.length,
+    memory_verifier_backed: false,
+    frame_hash: sha256Json({
+      frame_id: frame.frame_id,
+      binding_graph: frame.binding_graph,
+      workspace: frame.workspace,
+    }),
+    prediction_contract_hash: sha256Json({
+      expected: 'selected action produces bounded prediction and readback',
+      verifier: 'apfc_causal_unity_transition_v1',
+    }),
+    prediction_count: 1,
+    action_policy_hash: sha256Json({
+      policy: 'apfc_action_gate_v2',
+      candidates: provisionalGate.candidates.map((item) => ({
+        action_type: item.action_type,
+        capability_id: item.capability_id,
+        requires_policy: item.requires_policy,
+        requires_readback: item.requires_readback,
+      })),
+    }),
+    decision_basis_hash: sha256Json(provisionalGate.candidates),
+    previous_transition_hash: previousTransitionHash,
+  });
+  if (!verifyCausalUnityState(state)) throw new Error('APFC_CAUSAL_UNITY_STATE_REJECTED');
+  const probe = probeCausalUnityDependency({
+    schema_version: 1,
+    state,
+    action_hash: sha256Json({ frame_id: frame.frame_id, action_kind: 'cognitive_selection' }),
+  });
+  if (probe.status !== 'verified') throw new Error('APFC_CAUSAL_UNITY_DEPENDENCY_PROBE_FAILED');
+  frame.causal_unity_state = state;
+  withFileLock('apfc_cognitive_runtime', {
+    context: 'apfc_cognitive_causal_unity',
+    timeoutMs: 60000,
+    staleMs: 600000,
+  }, () => {
+    atomicWriteJson(path.join(DIRS.causalUnity, `${frame.frame_id}.json`), state);
+    atomicWriteJson(path.join(DIRS.causalUnity, 'latest_state.json'), state);
+    atomicWriteJson(path.join(DIRS.causalProbes, `${frame.frame_id}.json`), probe);
+    atomicWriteJson(path.join(DIRS.causalProbes, 'latest_probe.json'), probe);
+    writeFrame(frame);
+  });
+  appendJournal({
+    event: 'apfc_causal_unity_state_prepared',
+    frame_id: frame.frame_id,
+    state_hash: state.state_hash,
+    dependency_probe_status: probe.status,
+  });
+  return {
+    ok: true,
+    mode: 'apfc_cognitive_causal_unity',
+    frame_id: frame.frame_id,
+    state_id: state.state_id,
+    state_hash: state.state_hash,
+    status: state.status,
+    dependency_probe_status: probe.status,
+    output_json: rel(path.join(DIRS.causalUnity, `${frame.frame_id}.json`)),
+    probe_json: rel(path.join(DIRS.causalProbes, `${frame.frame_id}.json`)),
+  };
+}
+
 function gate(frameId) {
   ensureApfcCognitiveDirs();
   const frame = readFrame(frameId);
-  const actionGate = buildActionGate(frame);
+  const actionGate = buildActionGate(frame, {
+    causal_unity_state: frame.causal_unity_state,
+    require_causal_unity: true,
+  });
   frame.action_candidates = actionGate.candidates;
   frame.selected_action = actionGate.selected;
+  frame.selected_action_authorization = actionGate.causal_consumption.authorization;
   frame.memory_candidates = memoryCandidates(frame);
   frame.verbalization_candidates = verbalizationCandidates(frame, actionGate);
   withFileLock('apfc_cognitive_runtime', {
@@ -410,12 +526,115 @@ function predict(frameId) {
   };
 }
 
+function closeCausalUnity(frameId) {
+  ensureApfcCognitiveDirs();
+  const frame = readFrame(frameId);
+  const state = frame.causal_unity_state;
+  const authorization = frame.selected_action_authorization;
+  if (!verifyCausalUnityState(state) || !authorization) {
+    throw new Error('APFC_CAUSAL_UNITY_CLOSURE_STATE_REQUIRED');
+  }
+  const observedSelection = {
+    action_id: authorization.action_id,
+    action_kind: authorization.action_kind,
+    action_hash: authorization.action_hash,
+    side_effecting: false,
+    status: 'completed',
+    exit_code: 0,
+  };
+  const transition = closeCausalUnityTransition({
+    schema_version: 1,
+    state,
+    frame_id: frame.frame_id,
+    input_hash: state.input_hash,
+    output_hash: sha256Json({
+      selected_action: frame.selected_action,
+      predictions: frame.predictions,
+      verbalization_candidates: frame.verbalization_candidates,
+    }),
+    action_manifest_hash: sha256Json([observedSelection]),
+    evidence_manifest_hash: sha256Json({
+      predictions: frame.predictions,
+      concept_dynamics: frame.concept_dynamics,
+    }),
+    authorizations: [authorization],
+    observed_actions: [observedSelection],
+    verifier_verdict: 'unknown',
+    epistemic_verification: null,
+  });
+  if (transition.status !== 'closed') throw new Error('APFC_CAUSAL_UNITY_TRANSITION_REJECTED');
+  frame.causal_unity_transition = transition;
+  withFileLock('apfc_cognitive_runtime', {
+    context: 'apfc_cognitive_causal_unity_close',
+    timeoutMs: 60000,
+    staleMs: 600000,
+  }, () => {
+    atomicWriteJson(path.join(DIRS.causalTransitions, `${frame.frame_id}.json`), transition);
+    atomicWriteJson(path.join(DIRS.causalTransitions, 'latest_transition.json'), transition);
+    writeFrame(frame);
+  });
+  appendJournal({
+    event: 'apfc_causal_unity_transition_closed',
+    frame_id: frame.frame_id,
+    transition_hash: transition.transition_hash,
+    epistemic_status: transition.epistemic_status,
+  });
+  return {
+    ok: true,
+    mode: 'apfc_cognitive_causal_unity_close',
+    frame_id: frame.frame_id,
+    transition_id: transition.transition_id,
+    transition_hash: transition.transition_hash,
+    status: transition.status,
+    epistemic_status: transition.epistemic_status,
+    output_json: rel(path.join(DIRS.causalTransitions, `${frame.frame_id}.json`)),
+  };
+}
+
+function integrateTurnGovernance(frameId) {
+  ensureApfcCognitiveDirs();
+  const frame = readFrame(frameId);
+  const artifact = buildCognitiveFrameGovernanceTensor(frame);
+  if (artifact.status !== 'verified') throw new Error('APFC_COGNITIVE_TURN_GOVERNANCE_REJECTED');
+  withFileLock('apfc_cognitive_runtime', {
+    context: 'apfc_cognitive_turn_governance',
+    timeoutMs: 60000,
+    staleMs: 600000,
+  }, () => {
+    atomicWriteJson(path.join(DIRS.governance, `${frame.frame_id}.json`), artifact);
+    atomicWriteJson(path.join(DIRS.governance, 'latest_turn_governance.json'), artifact);
+  });
+  appendJournal({
+    event: 'apfc_cognitive_turn_governance_recorded',
+    frame_id: frame.frame_id,
+    tensor_id: artifact.tensor_id,
+    artifact_role: artifact.artifact_role,
+    status: artifact.status,
+    cognitive_outcome_status: artifact.cognitive_outcome_status,
+    artifact_hash: artifact.artifact_hash,
+  });
+  return {
+    ok: true,
+    mode: 'apfc_cognitive_turn_governance',
+    frame_id: frame.frame_id,
+    tensor_id: artifact.tensor_id,
+    artifact_role: artifact.artifact_role,
+    status: artifact.status,
+    cognitive_outcome_status: artifact.cognitive_outcome_status,
+    artifact_hash: artifact.artifact_hash,
+    output_json: rel(path.join(DIRS.governance, `${frame.frame_id}.json`)),
+  };
+}
+
 function runCycle(sourceArg) {
   const ingested = ingest(sourceArg);
   const bound = bind(ingested.frame_id);
   const work = workspace(ingested.frame_id);
+  const causal = prepareCausalUnity(ingested.frame_id);
   const gated = gate(ingested.frame_id);
   const predicted = predict(ingested.frame_id);
+  const closure = closeCausalUnity(ingested.frame_id);
+  const governance = integrateTurnGovernance(ingested.frame_id);
   const status = writeStatus();
   appendJournal({
     event: 'apfc_cognitive_cycle_completed',
@@ -426,6 +645,9 @@ function runCycle(sourceArg) {
     active_workspace_items: work.active_token_count,
     action_candidate_count: gated.action_candidate_count,
     prediction_count: predicted.prediction_count,
+    causal_unity_state_status: causal.status,
+    causal_unity_transition_status: closure.status,
+    turn_governance_status: governance.status,
   });
   return {
     ok: true,
@@ -449,16 +671,36 @@ function runCycle(sourceArg) {
     prediction_count: predicted.prediction_count,
     error_signal_count: predicted.error_signal_count,
     concept_dynamics: predicted.concept_dynamics,
+    causal_unity: {
+      state_id: causal.state_id,
+      state_hash: causal.state_hash,
+      state_status: causal.status,
+      dependency_probe_status: causal.dependency_probe_status,
+      transition_hash: closure.transition_hash,
+      transition_status: closure.status,
+      epistemic_status: closure.epistemic_status,
+    },
+    turn_governance: {
+      tensor_id: governance.tensor_id,
+      artifact_role: governance.artifact_role,
+      status: governance.status,
+      cognitive_outcome_status: governance.cognitive_outcome_status,
+      artifact_hash: governance.artifact_hash,
+    },
     status: status.status,
     outputs: {
       frame: rel(framePath(ingested.frame_id)),
       tokens: ingested.tokens_path,
       binding_graph: bound.output_json,
       workspace: work.output_json,
+      causal_unity_state: causal.output_json,
+      causal_unity_probe: causal.probe_json,
+      causal_unity_transition: closure.output_json,
       action_gate: gated.output_json,
       predictions: predicted.output_json,
       concept_dynamics: predicted.concept_dynamics.output_json,
       apfc_cognitive_status: rel(STATUS_JSON),
+      turn_governance: governance.output_json,
     },
   };
 }
@@ -484,12 +726,21 @@ function buildStatus() {
       dynamics: countJsonFiles(DIRS.dynamics),
       episodes: countJsonFiles(DIRS.episodes),
       consolidations: countJsonFiles(DIRS.consolidation),
+      turn_governance_tensors: countJsonFiles(DIRS.governance),
+      causal_unity_states: countJsonFiles(DIRS.causalUnity),
+      causal_unity_probes: countJsonFiles(DIRS.causalProbes),
+      causal_unity_transitions: countJsonFiles(DIRS.causalTransitions),
     },
     contracts: {
       experience_token_schema: 'md-os/schemas/experience_token.schema.json',
       binding_graph_schema: 'md-os/schemas/binding_graph.schema.json',
       cortical_frame_schema: 'md-os/schemas/cortical_frame.schema.json',
       concept_dynamics_schema: 'md-os/schemas/concept_dynamics.schema.json',
+      turn_governance_tensor_schema: 'md-os/schemas/apfc_operational_unity_tensor.schema.json',
+      causal_unity_state_schema: 'md-os/schemas/apfc_causal_unity_state.schema.json',
+      causal_action_authorization_schema: 'md-os/schemas/apfc_causal_action_authorization.schema.json',
+      causal_unity_transition_schema: 'md-os/schemas/apfc_causal_unity_transition.schema.json',
+      causal_dependency_probe_schema: 'md-os/schemas/apfc_causal_dependency_probe.schema.json',
     },
   };
 }
@@ -597,6 +848,7 @@ module.exports = {
   bind,
   gate,
   ingest,
+  integrateTurnGovernance,
   predict,
   runCycle,
   workspace,

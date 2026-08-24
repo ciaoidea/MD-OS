@@ -4,13 +4,13 @@
   "title": "MD-OS APFC Cognitive Path Cycle",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "cycle_id", "created_at", "request_id", "theme_id", "theme", "focus", "state_before_id", "state_after_id", "selected_uncertainty", "ranked_actions", "selected_action", "reused_anchor_ids", "readback", "transition", "anchor", "verdict", "graph"],
+  "required": ["schema_version", "cycle_id", "created_at", "request_id", "theme_id", "theme", "focus", "state_before_id", "state_after_id", "selected_uncertainty", "ranked_actions", "selected_action", "reused_anchor_ids", "readback", "epistemic_readback_verified", "transition", "anchor", "verdict", "graph"],
   "properties": {
     "schema_version": {"const": 1}, "cycle_id": {"type": "string", "pattern": "^cogcycle_[a-f0-9]{20}$"}, "created_at": {"type": ["string", "null"]},
     "request_id": {"type": "string"}, "theme_id": {"type": "string"}, "theme": {"type": "string"}, "focus": {"type": "string"},
     "state_before_id": {"type": "string", "pattern": "^cogstate_[a-f0-9]{20}$"}, "state_after_id": {"type": "string", "pattern": "^cogstate_[a-f0-9]{20}$"},
     "selected_uncertainty": {"type": "object"}, "ranked_actions": {"type": "array", "items": {"type": "object"}}, "selected_action": {"type": ["object", "null"]},
-    "reused_anchor_ids": {"type": "array", "items": {"type": "string"}}, "readback": {"type": "object"}, "transition": {"type": "object"}, "anchor": {"type": ["object", "null"]},
+    "reused_anchor_ids": {"type": "array", "items": {"type": "string"}}, "readback": {"type": "object"}, "epistemic_readback_verified": {"type": "boolean"}, "transition": {"type": "object"}, "anchor": {"type": ["object", "null"]},
     "verdict": {"enum": ["verified_learning", "falsified_path", "unverified"]},
     "graph": {"type": "object", "additionalProperties": false, "required": ["nodes", "edges"], "properties": {"nodes": {"type": "array", "items": {"type": "object"}}, "edges": {"type": "array", "items": {"type": "object"}}}}
   }

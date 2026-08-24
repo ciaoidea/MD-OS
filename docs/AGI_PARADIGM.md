@@ -92,7 +92,7 @@ layers; it extends their operational reach through persistent external state.
 
 The implemented fixture verifies one finite law family and fail-closed
 promotion path. It does not prove that this principle is sufficient for AGI,
-that the mind is one tensor, or that operational unity is consciousness. The
+that the mind is one tensor, or that governance telemetry is consciousness. The
 canonical formulation and falsifiers are in
 `md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md`.
 
