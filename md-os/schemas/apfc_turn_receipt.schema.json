@@ -14,6 +14,8 @@
     "goal_present",
     "attention_present",
     "selected_sources",
+    "omitted_sources",
+    "context_contract",
     "approval_decisions",
     "observed_actions",
     "assistant_output_epistemic_status",
@@ -25,7 +27,7 @@
     "verification_contract"
   ],
   "properties": {
-    "schema_version": { "const": 4 },
+    "schema_version": { "const": 5 },
     "receipt_id": { "type": "string", "pattern": "^apfc_receipt_[a-f0-9]{20}$" },
     "frame_id": { "type": "string", "pattern": "^apfc_turn_[a-f0-9]{20}$" },
     "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
@@ -34,6 +36,8 @@
     "goal_present": { "type": "boolean" },
     "attention_present": { "type": "boolean" },
     "selected_sources": { "type": "array", "items": { "type": "string" } },
+    "omitted_sources": { "type": "array", "items": { "type": "string" } },
+    "context_contract": { "$ref": "apfc_context_sufficiency.schema.json" },
     "approval_decisions": { "type": "array", "items": { "type": "object" } },
     "observed_actions": { "type": "array", "items": { "type": "object" } },
     "assistant_output_epistemic_status": { "const": "proposal" },

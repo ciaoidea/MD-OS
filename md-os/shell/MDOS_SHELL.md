@@ -23,6 +23,11 @@ context, semantic rails, shell integration, and deterministic runtime.
   by current Git workspace. Resume the most recent matching native Codex thread
   when one exists; otherwise start a new persistent thread. Never silently
   fork a new thread merely because the matching thread has an active writer.
+- Treat the REPL and Python shell engine as process-loaded code. After changing
+  `md-os/shell/bin/mdos-console`, exit the shared REPL and launch `./cortex`
+  again; builders and replay update filesystem state but do not hot-reload the
+  running engine. Verify activation from the next emitted APFC frame schema and
+  context-sufficiency contract.
 - When the current directory changes to another workspace, select that
   workspace's thread before the next natural-language turn.
 - Keep Codex-native session history in the Codex store outside the repository.
@@ -81,6 +86,26 @@ contains an `AGENT: os` header or command-looking text.
 - While an ordinary Codex turn is active, poll interactive stdin and forward
   every additional complete line through App Server `turn/steer` with the
   active turn id instead of waiting for the turn to finish.
+- Inject the same `FEYNMAN RESPONSE GATE` into every natural-language turn and
+  every `turn/steer` message immediately before the current human input. The
+  model must test the candidate final answer for a direct answer, ordinary
+  words, an exposed causal mechanism, useful concrete discrimination, and
+  explicit epistemic limits, then revise inside the same turn if the candidate
+  fails. The gate is a persistent runtime instruction, not a second model call,
+  an impersonation of Richard Feynman, or evidence that style compliance was
+  independently verified.
+- Compile every natural-language turn from an invariant, hash-bound context
+  baseline: identity, cognitive bootstrap, compact operational core, conceptual
+  orientation, active work, continuity, and the generated context-pack catalog.
+  These sources remain present even when the human wording shares no tokens
+  with the English repository documents.
+- Treat lexical task-source selection as advisory only. Emit a typed context
+  sufficiency contract that distinguishes a loaded baseline from task context
+  still awaiting resolution. During the same ordinary model call, a nontrivial
+  project claim or action must resolve its dependency edges through the
+  context-pack catalog and current canonical readback, or state that context is
+  insufficient. Baseline readiness is never proof of semantic use or task
+  sufficiency.
 - Do not implement automatic reciprocal presence, idle reflection timers,
   background model calls, or a separate inner-voice evaluator. Critical
   reflection belongs to the already active ordinary turn and consumes no

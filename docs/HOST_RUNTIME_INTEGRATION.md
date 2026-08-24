@@ -197,14 +197,16 @@ Server and preserves the normal Codex cycle: native `AGENTS.md` discovery,
 an APFC turn frame, reasoning, plans, workspace-bounded tools, and deterministic
 APFC approval decisions, followed by observation,
 correction, verification, and Codex-native thread history.
-Before each turn, Cortex builds a context capped at 2 KiB using the current
-human request as the sole pre-model relevance query. It does not infer or
-persist a semantic `theme` or `focus` before Codex has understood the request.
-The frame still carries explicit goals, capabilities, inhibitions, and the
-verification contract. An explicit goal remains available as persistent
-context, but its mere presence does not override the current human request as
-the turn target. The frame creates no background execution and does not change
-the Codex persistent goal.
+Before each turn, Cortex builds a context capped at 12 KiB. It always loads a
+hash-bound invariant baseline and the generated context-pack catalog; the
+current human request remains the turn target and the sole query for advisory
+task-source selection. It does not infer or persist a semantic `theme` or
+`focus` before Codex has understood the request. The frame carries the typed
+context-sufficiency contract, explicit goals, capabilities, inhibitions, and
+the verification contract. An explicit goal remains available as persistent
+context, but its mere presence does not override the current human request.
+The frame creates no background execution and does not change the Codex
+persistent goal.
 The shell resolves the current Git workspace and resumes the most recent available Codex thread
 for that workspace, falling back to a new thread if matching sessions are
 absent or already owned by another active writer.

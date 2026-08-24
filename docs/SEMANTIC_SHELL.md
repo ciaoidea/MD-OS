@@ -112,11 +112,13 @@ human input
 └── natural language
     └── resolve current cwd and Git workspace
         └── APFC dynamic input filter
-            ├── read bounded canonical operational views
-            ├── update or retain bounded private turn attention
-            ├── retain mandatory goal/core state
-            ├── select additional Markdown blocks by input relevance
-            └── expose selected and omitted source paths
+            ├── load the bounded invariant baseline
+            │   └── identity, bootstrap, core, orientation, active work,
+            │       continuity, and generated context-pack catalog
+            ├── hash every loaded baseline source into a typed context contract
+            ├── treat lexical matches as advisory task-routing hints
+            ├── require dependency resolution before nontrivial claims/actions
+            └── expose selected paths, omitted paths, and sufficiency status
         └── reuse the in-process workspace binding when available
             or thread/list -> latest matching native Codex thread
             or thread/start -> a new persistent Codex thread
@@ -137,6 +139,13 @@ the same APFC dynamic input filter and App Server `turn/steer`. It becomes addit
 turn; it is not held as a separate later request and does not restart the App
 Server. This steering path is enabled for a real interactive TTY, not redirected
 one-shot stdin.
+
+`baseline = ready` means that stable orientation and the routing catalog were
+loaded; it does not mean that the current task is fully understood. A
+nontrivial turn must still identify its dependency edges, inspect the required
+canonical sources and current readback, and then act or state that context is
+insufficient. Merely loading every file is neither required nor proof of
+semantic understanding.
 
 Pressing `Esc` while a turn is active sends App Server `turn/interrupt`
 immediately, without requiring Enter. At the ordinary prompt, `Esc` aborts the
@@ -160,20 +169,22 @@ the APFC turn frame, workspace sandbox, and ordinary tool-result events.
 
 The APFC input filter is contextual rather than lexical: it does not classify
 requests from a fixed phrase list and does not rewrite the human statement. For
-each ordinary input and steering message, it selects bounded Markdown blocks
-from the current operational core, active work, continuity, last verified
-summary, and health state. Mandatory and relevance-selected sources are
-declared inside the context sent to Codex. This makes the APFC causally present
-before `turn/start` and `turn/steer`; it is not claimed to be an infallible
-safety classifier or an output gate.
+each ordinary input and steering message, it loads the bounded invariant
+baseline and the generated context-pack catalog, then adds any advisory
+relevance-selected operational sources. Loaded, missing, selected, and omitted
+sources are declared inside the context sent to Codex. This makes the APFC
+causally present before `turn/start` and `turn/steer`; it is not claimed to be
+an infallible safety classifier or an output gate.
 
-The pre-model selector uses only the current human request as its relevance
-query. Cortex does not infer or persist a semantic `theme` or `focus` at this
+The pre-model selector uses only the current human request as its advisory
+relevance query; invariant baseline presence does not depend on lexical
+overlap. Cortex does not infer or persist a semantic `theme` or `focus` at this
 stage because such an unverified label can misframe unrelated later turns and
 interfere with Codex-native thread continuity. The complete dynamic context is
-capped at 2 KiB. Explicit goals, capabilities, inhibitions, selected source
-paths, and the verification contract remain inspectable in the frame. A legacy
-local `attention.json`, if present, is ignored and is not recreated.
+capped at 12 KiB. Explicit goals, capabilities, inhibitions, source paths, the
+context-sufficiency contract, and the verification contract remain inspectable
+in the frame. A legacy local `attention.json`, if present, is ignored and is
+not recreated.
 
 Explicit legacy JSON/Markdown programs and `MDOS_CODEX_BACKEND=exec` retain the
 older tagged-output protocol only as compatibility paths. They do not define
@@ -184,6 +195,14 @@ the normal interactive architecture.
 The App Server process starts lazily on the first natural-language request and
 stays alive until the REPL exits. Native-only use therefore pays no model
 startup cost.
+
+The REPL also keeps the Python shell engine loaded for its lifetime. Changes to
+`md-os/shell/bin/mdos-console` therefore require a process restart: exit the
+shared Cortex REPL and run `./cortex` again. `build:all`, graph rebuilds, and
+replay refresh generated files but do not hot-reload the running shell engine.
+After restart, the next natural-language turn must expose the current APFC frame
+schema and the context-sufficiency contract; an older frame is evidence that an
+older process is still attached.
 
 Interactive Cortex processes are first bound to one shared terminal session by
 Git workspace on POSIX systems with `tmux`. This makes local, SSH, and WebSSH

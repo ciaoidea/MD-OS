@@ -14,9 +14,11 @@
     "workspace",
     "selected_sources",
     "omitted_sources",
+    "context_contract",
     "capabilities",
     "inhibit",
     "method",
+    "cognitive_route",
     "operational_unity_tensor",
     "causal_unity_state",
     "causal_dependency_probe",
@@ -24,7 +26,7 @@
     "output_rule"
   ],
   "properties": {
-    "schema_version": { "const": 4 },
+    "schema_version": { "const": 5 },
     "frame_id": { "type": "string", "pattern": "^apfc_turn_[a-f0-9]{20}$" },
     "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "goal": { "type": ["string", "null"] },
@@ -33,6 +35,7 @@
     "workspace": { "type": "string", "minLength": 1 },
     "selected_sources": { "type": "array", "items": { "type": "string" } },
     "omitted_sources": { "type": "array", "items": { "type": "string" } },
+    "context_contract": { "$ref": "apfc_context_sufficiency.schema.json" },
     "capabilities": { "type": "array", "items": { "type": "string" } },
     "inhibit": { "type": "array", "items": { "type": "string" } },
     "method": {
@@ -44,6 +47,17 @@
         "target": { "enum": ["theme", "goal", "human_request"] },
         "next": { "const": "smallest_authorized_step" },
         "closure": { "const": "verifier_evidence" }
+      }
+    },
+    "cognitive_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent", "semantic_multilingual", "command", "activation"],
+      "properties": {
+        "intent": { "const": "critical_reflection" },
+        "semantic_multilingual": { "const": true },
+        "command": { "type": "string", "minLength": 1 },
+        "activation": { "const": "problem_relevant_verified_single_cycle" }
       }
     },
     "operational_unity_tensor": { "$ref": "apfc_operational_unity_tensor.schema.json" },

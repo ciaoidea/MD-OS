@@ -123,6 +123,12 @@ Ordinary operating rule:
   `md-os/kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md`: turn prompt intent into
   bounded scope, durable artifacts, schemas/tests, command readback, replay,
   compiler rebuild, and concise final report
+- for every natural-language turn, distinguish invariant orientation from
+  task-specific sufficiency: load and hash the identity/bootstrap/core/current
+  operating baseline plus the generated context-pack catalog; treat lexical
+  source matches as advisory only; before a nontrivial claim or action, resolve
+  the real dependency edges against canonical sources and current readback or
+  report insufficient context
 - read `md-os/ops/health_classification.md` before treating a global health
   `critical` as runtime failure; it separates runtime, compiler, AGI-loop,
   publication, security, and local-hygiene scopes without lowering severity
@@ -229,6 +235,11 @@ Ordinary operating rule:
   name is compatibility-only, its exact feature permutation proves bookkeeping
   integrity rather than semantic or world truth, raw private text must not enter
   it, and the artifact must declare that it is not world-grounded epistemic unity
+- after changing `md-os/shell/bin/mdos-console`, exit the shared Cortex REPL and
+  launch `./cortex` again; build and replay refresh generated state but cannot
+  hot-reload the already running Python engine, and the next turn must expose
+  the current frame schema plus context-sufficiency contract before the change
+  is considered active
 - require the Causal Unity Controller on every APFC action path: prepare the
   hash-bound 9 x 6 predecision state, consume its exact hash and decision basis
   at authorization, require matching preauthorization for every mutating

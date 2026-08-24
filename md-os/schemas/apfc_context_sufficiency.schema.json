@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_context_sufficiency.schema.json",
+  "title": "MD-OS APFC Turn Context Sufficiency Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_role",
+    "status",
+    "task_context_status",
+    "baseline_sources",
+    "context_packs",
+    "advisory_selected_sources",
+    "advisory_omitted_sources",
+    "resolution_policy",
+    "criteria",
+    "non_claims",
+    "contract_hash"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "artifact_role": { "const": "apfc_turn_context_sufficiency_contract" },
+    "status": { "enum": ["ready", "degraded"] },
+    "task_context_status": { "const": "pending_turn_resolution" },
+    "baseline_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "status", "source_hash"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["loaded", "missing"] },
+          "source_hash": {
+            "oneOf": [
+              { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              { "type": "null" }
+            ]
+          }
+        }
+      }
+    },
+    "context_packs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pack_id", "file", "purpose"],
+        "properties": {
+          "pack_id": { "type": "string", "minLength": 1 },
+          "file": { "type": "string", "minLength": 1 },
+          "purpose": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "advisory_selected_sources": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "advisory_omitted_sources": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "resolution_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "nontrivial_requirement", "failure_mode"],
+      "properties": {
+        "classification": { "const": "simple_or_nontrivial_in_same_turn" },
+        "nontrivial_requirement": {
+          "const": "resolve_task_dependencies_before_project_claim_or_action"
+        },
+        "failure_mode": { "const": "state_context_insufficient" }
+      }
+    },
+    "criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invariant_baseline_complete",
+        "context_pack_catalog_present",
+        "lexical_selection_advisory_only",
+        "nontrivial_dependency_resolution_required"
+      ],
+      "properties": {
+        "invariant_baseline_complete": { "type": "boolean" },
+        "context_pack_catalog_present": { "type": "boolean" },
+        "lexical_selection_advisory_only": { "const": true },
+        "nontrivial_dependency_resolution_required": { "const": true }
+      }
+    },
+    "non_claims": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "contract_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

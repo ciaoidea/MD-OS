@@ -39,6 +39,29 @@ Security policy, claim status, skill promotion rules, command contracts,
 episode format, eval criteria, and identity gates must be stored in the
 repository.
 
+## Context Sufficiency
+
+A coherent controller is not enough if it receives a fragmentary context.
+Every natural-language turn therefore starts with a bounded invariant baseline:
+identity, cognitive bootstrap, compact core, conceptual orientation, active
+work, continuity, and the generated catalog of context packs.
+
+Task-specific lexical matches are only hints. They may save reads, but they do
+not establish meaning, relevance, or completeness. The turn frame must carry a
+hash-bound context sufficiency contract with two separate states:
+
+    baseline = ready | degraded
+    task context = pending turn resolution
+
+The distinction matters. Baseline ready means that the stable orientation was
+loaded; it does not mean that every dependency of the current task is known.
+Inside the same ordinary model call, a simple answer may use the human request
+and baseline directly. Before a nontrivial project claim or action, the
+operator must identify the task's dependency edges, route through the compact
+context-pack catalog, inspect the required canonical sources and current
+readback, then act or report insufficiency. Loading every repository file is
+neither required nor equivalent to cognitive unity.
+
 For nontrivial repository navigation, Graphify is the default first-pass graph
 orientation layer. The operator should prefer:
 

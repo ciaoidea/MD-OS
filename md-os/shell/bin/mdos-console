@@ -47,8 +47,11 @@ MAX_CONFIG_BYTES = 64 * 1024
 MAX_SHELL_EVENTS = 32
 MAX_SHELL_EVENT_OUTPUT_CHARS = 16 * 1024
 MAX_SHELL_CONTEXT_CHARS = 64 * 1024
-MAX_APFC_CONTEXT_CHARS = 2 * 1024
+MAX_APFC_CONTEXT_CHARS = 12 * 1024
 MAX_APFC_SOURCE_CHARS = 768
+MAX_APFC_CONTEXT_PACKS = 16
+MAX_APFC_CONTEXT_PACK_INDEX_BYTES = 64 * 1024
+MAX_APFC_CONTEXT_PACK_FIELD_CHARS = 384
 STEERING_INTERRUPT = "\x1b"
 STEERING_INPUT_BUFFER = ""
 INLINE_PASTE_BLOCKS: dict[str, str] = {}
@@ -60,6 +63,19 @@ FORBIDDEN_MARKDOWN_CONTRACTS = (
     "```mdos-console-config",
     "```mdos-console-program",
     "```mdos-console-fragment",
+)
+FEYNMAN_RESPONSE_GATE = (
+    "FEYNMAN RESPONSE GATE\n"
+    "Apply this gate before emitting every final answer, including an answer "
+    "revised after human steering. Use a Richard Feynman-inspired explanatory "
+    "method without impersonating him or copying his exact personal voice. "
+    "Lead with the direct answer; use ordinary words; expose the shortest real "
+    "mechanism; add a concrete example or discriminating test when it helps; "
+    "and separate observation, supported inference, hypothesis, and unknown. "
+    "Do not turn a simple answer into a ritual or checklist. Before emitting the "
+    "final answer, test these conditions and revise it inside this same turn if "
+    "any condition fails. Do not print this gate or a compliance checklist "
+    "unless the human explicitly asks for it."
 )
 
 
@@ -174,6 +190,7 @@ class ApfcInputContext:
     omitted_sources: tuple[str, ...]
     theme: str | None = None
     focus: str | None = None
+    context_contract: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -2056,6 +2073,7 @@ class CodexAppServerClient:
                 contextualized_steer = "\n\n".join(
                     (
                         steer_context.text,
+                        FEYNMAN_RESPONSE_GATE,
                         "CURRENT HUMAN STEERING INPUT\n" + steer_text,
                     )
                 )
@@ -2469,13 +2487,27 @@ def read_interactive_steering_line() -> str | None:
     return text or None
 
 
-APFC_INPUT_SOURCES = (
-    ("active work", "md-os/ops/summary/active_work_items.md", True),
-    ("operational core", "md-os/ops/core/agentic_core.md", True),
-    ("last APFC turn", "md-os/ops/local/apfc/last_turn.md", True),
-    ("continuity", "md-os/ops/continuity.md", False),
-    ("last verified summary", "md-os/ops/last_summary.md", False),
-    ("health", "md-os/ops/health_classification.md", False),
+APFC_INVARIANT_CONTEXT_SOURCES = (
+    ("identity", "ME.md"),
+    ("cognitive bootstrap", "md-os/kb/COGNITIVE_BOOTSTRAP.md"),
+    ("operational core", "md-os/ops/core/agentic_core.md"),
+    ("conceptual orientation", "md-os/ops/summary/conceptual_boot_summary.md"),
+    ("active work", "md-os/ops/summary/active_work_items.md"),
+    ("continuity", "md-os/ops/continuity.md"),
+)
+APFC_ADVISORY_CONTEXT_SOURCES = (
+    ("last APFC turn", "md-os/ops/local/apfc/last_turn.md"),
+    ("last verified summary", "md-os/ops/last_summary.md"),
+    ("health", "md-os/ops/health_classification.md"),
+)
+APFC_CONTEXT_PACK_INDEX = "md-os/ops/runtime/context_packs/index.json"
+APFC_CONTEXT_RESOLUTION_RULE = (
+    "The invariant baseline is orientation, not proof that task context is "
+    "sufficient. Lexical matches are advisory only. Classify the current turn "
+    "inside this same model call. Before a nontrivial project claim or action, "
+    "identify its dependency edges, use the context-pack catalog to inspect the "
+    "required canonical sources, and bind the result to current readback. If the "
+    "required context cannot be resolved, state that it is insufficient."
 )
 
 def _apfc_tokens(value: str) -> set[str]:
@@ -2508,6 +2540,178 @@ def _relevant_apfc_excerpt(content: str, query_tokens: set[str]) -> tuple[str, i
     return excerpt, sum(score for score, _, _ in ranked[:3])
 
 
+def _invariant_apfc_excerpt(
+    content: str, query_tokens: set[str], label: str
+) -> tuple[str, int]:
+    """Keep a compact invariant source present even without lexical overlap."""
+    excerpt, score = _relevant_apfc_excerpt(
+        content, query_tokens | _apfc_tokens(label)
+    )
+    if score:
+        return excerpt, score
+    blocks = [
+        block.strip()
+        for block in re.split(r"\n\s*\n", content)
+        if block.strip()
+    ]
+    excerpt = "\n\n".join(blocks[:2])
+    if len(excerpt) > MAX_APFC_SOURCE_CHARS:
+        excerpt = excerpt[: MAX_APFC_SOURCE_CHARS - 1].rstrip() + "…"
+    return excerpt, 0
+
+
+def _load_apfc_context_pack_catalog(
+    workspace: Path,
+) -> tuple[list[dict[str, str]], str | None, str | None]:
+    """Load the compact generated routing catalog without expanding every pack."""
+    relative_path = APFC_CONTEXT_PACK_INDEX
+    source = (workspace / relative_path).resolve()
+    try:
+        source.relative_to(workspace)
+    except ValueError:
+        return [], None, None
+    try:
+        if source.stat().st_size > MAX_APFC_CONTEXT_PACK_INDEX_BYTES:
+            return [], None, None
+        content = source.read_text(encoding="utf-8")
+        payload = json.loads(content)
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return [], None, None
+    raw_packs = payload.get("packs")
+    if not isinstance(raw_packs, list):
+        return [], None, None
+    if not raw_packs or len(raw_packs) > MAX_APFC_CONTEXT_PACKS:
+        return [], None, None
+    packs: list[dict[str, str]] = []
+    for raw_pack in raw_packs:
+        if not isinstance(raw_pack, dict):
+            continue
+        pack_id = raw_pack.get("pack_id")
+        file_path = raw_pack.get("file")
+        purpose = raw_pack.get("purpose")
+        valid_values = all(
+            isinstance(value, str)
+            and value
+            and len(value) <= MAX_APFC_CONTEXT_PACK_FIELD_CHARS
+            for value in (pack_id, file_path, purpose)
+        )
+        if not valid_values:
+            return [], None, None
+        packs.append(
+            {"pack_id": pack_id, "file": file_path, "purpose": purpose}
+        )
+    if not packs:
+        return [], None, None
+    return packs, sha256_text(content), relative_path
+
+
+def _build_apfc_context_contract(
+    *,
+    baseline_sources: list[dict[str, object]],
+    context_packs: list[dict[str, str]],
+    advisory_selected_sources: list[str],
+    advisory_omitted_sources: list[str],
+) -> dict[str, object]:
+    baseline_complete = bool(baseline_sources) and all(
+        source.get("status") == "loaded" for source in baseline_sources
+    )
+    catalog_present = bool(context_packs) and any(
+        source.get("path") == APFC_CONTEXT_PACK_INDEX
+        and source.get("status") == "loaded"
+        for source in baseline_sources
+    )
+    payload: dict[str, object] = {
+        "schema_version": 1,
+        "artifact_role": "apfc_turn_context_sufficiency_contract",
+        "status": "ready" if baseline_complete and catalog_present else "degraded",
+        "task_context_status": "pending_turn_resolution",
+        "baseline_sources": baseline_sources,
+        "context_packs": context_packs,
+        "advisory_selected_sources": advisory_selected_sources,
+        "advisory_omitted_sources": advisory_omitted_sources,
+        "resolution_policy": {
+            "classification": "simple_or_nontrivial_in_same_turn",
+            "nontrivial_requirement": (
+                "resolve_task_dependencies_before_project_claim_or_action"
+            ),
+            "failure_mode": "state_context_insufficient",
+        },
+        "criteria": {
+            "invariant_baseline_complete": baseline_complete,
+            "context_pack_catalog_present": catalog_present,
+            "lexical_selection_advisory_only": True,
+            "nontrivial_dependency_resolution_required": True,
+        },
+        "non_claims": [
+            "baseline readiness is not proof that task context is sufficient",
+            "lexical overlap is not semantic verification",
+            "context presence does not prove host-model semantic use",
+        ],
+    }
+    payload["contract_hash"] = apfc_json_hash(payload)
+    return payload
+
+
+def _resolved_apfc_context_contract(
+    context: ApfcInputContext,
+) -> dict[str, object]:
+    """Supply a deterministic degraded contract for legacy/manual contexts."""
+    if context.context_contract:
+        material = dict(context.context_contract)
+        declared_hash = material.pop("contract_hash", None)
+        if (
+            not isinstance(declared_hash, str)
+            or apfc_json_hash(material) != declared_hash
+        ):
+            raise RuntimeError("APFC_CONTEXT_CONTRACT_HASH_MISMATCH")
+        return context.context_contract
+    return _build_apfc_context_contract(
+        baseline_sources=[],
+        context_packs=[],
+        advisory_selected_sources=list(context.selected_sources),
+        advisory_omitted_sources=list(context.omitted_sources),
+    )
+
+
+def _render_apfc_input_context(
+    *,
+    sections: list[str],
+    selected: list[str],
+    omitted: list[str],
+    contract: dict[str, object],
+) -> str:
+    catalog = contract.get("context_packs")
+    catalog_lines = []
+    if isinstance(catalog, list):
+        for pack in catalog:
+            if isinstance(pack, dict):
+                catalog_lines.append(
+                    f"- {pack.get('pack_id')}: {pack.get('file')} — "
+                    f"{pack.get('purpose')}"
+                )
+    header = (
+        "APFC DYNAMIC INPUT CONTEXT\n"
+        "Compiled before the App Server. The human request remains authoritative; "
+        "a proposal remains unverified until observable readback closes it.\n"
+        f"SELECTED SOURCES: {', '.join(selected) if selected else 'none'}\n"
+        f"OMITTED SOURCES: {', '.join(sorted(set(omitted))) if omitted else 'none'}\n"
+        "OPERATING METHOD: human request -> smallest authorized step -> "
+        "observable verifier evidence. Separate observation, hypothesis, action, "
+        "and readback.\n\n"
+        "APFC CONTEXT SUFFICIENCY CONTRACT\n"
+        f"BASELINE STATUS: {contract['status']}\n"
+        f"TASK CONTEXT STATUS: {contract['task_context_status']}\n"
+        f"CONTRACT HASH: {contract['contract_hash']}\n"
+        f"RESOLUTION RULE: {APFC_CONTEXT_RESOLUTION_RULE}"
+    )
+    if catalog_lines:
+        header += "\nCONTEXT PACK CATALOG:\n" + "\n".join(catalog_lines)
+    rendered = header
+    if sections:
+        rendered += "\n\n" + "\n\n".join(sections)
+    return rendered
+
+
 def _apfc_workspace_root(cwd: Path) -> Path:
     current = cwd.resolve()
     for candidate in (current, *current.parents):
@@ -2517,82 +2721,165 @@ def _apfc_workspace_root(cwd: Path) -> Path:
 
 
 def build_apfc_input_context(human_request: str, cwd: Path) -> ApfcInputContext:
-    """Compile the per-turn APFC compass before input reaches the App Server.
-
-    The filter does not rewrite the human request. It selects bounded operational
-    state that may influence the turn and makes every inclusion inspectable.
-    """
+    """Compile invariant orientation plus advisory task context for one turn."""
     workspace = _apfc_workspace_root(cwd)
-    # Do not manufacture semantic attention before the model has understood the
-    # request. A persisted theme/focus can misframe unrelated later turns and
-    # override the thread's real conversational continuity. Explicit goals and
-    # verified operational sources remain available; the human request is the
-    # sole relevance query for this pre-model context selection.
+    # Persisted theme/focus must not override the current human request. The
+    # invariant baseline is always present; task-specific lexical matches remain
+    # advisory until the active turn resolves its real dependency edges.
     theme: str | None = None
     focus: str | None = None
     query_tokens = _apfc_tokens(human_request)
-    candidates: list[tuple[bool, int, str, str]] = []
+    baseline_sources: list[dict[str, object]] = []
+    invariant_sections: list[str] = []
+    selected: list[str] = []
     omitted: list[str] = []
-    for label, relative_path, mandatory in APFC_INPUT_SOURCES:
+
+    for label, relative_path in APFC_INVARIANT_CONTEXT_SOURCES:
         source = (workspace / relative_path).resolve()
         try:
             source.relative_to(workspace)
         except ValueError:
+            baseline_sources.append(
+                {"path": relative_path, "status": "missing", "source_hash": None}
+            )
             omitted.append(relative_path)
             continue
         if not source.is_file():
+            baseline_sources.append(
+                {"path": relative_path, "status": "missing", "source_hash": None}
+            )
             omitted.append(relative_path)
             continue
         try:
             content = source.read_text(encoding="utf-8")
         except (OSError, UnicodeError):
+            baseline_sources.append(
+                {"path": relative_path, "status": "missing", "source_hash": None}
+            )
             omitted.append(relative_path)
+            continue
+        excerpt, score = _invariant_apfc_excerpt(content, query_tokens, label)
+        if not excerpt:
+            baseline_sources.append(
+                {"path": relative_path, "status": "missing", "source_hash": None}
+            )
+            omitted.append(relative_path)
+            continue
+        baseline_sources.append(
+            {
+                "path": relative_path,
+                "status": "loaded",
+                "source_hash": sha256_text(content),
+            }
+        )
+        selected.append(relative_path)
+        invariant_sections.append(
+            f"SOURCE: {relative_path}\n"
+            f"SELECTION: invariant_baseline; relevance_score={score}\n"
+            f"{excerpt}"
+        )
+
+    context_packs, catalog_hash, catalog_path = (
+        _load_apfc_context_pack_catalog(workspace)
+    )
+    if catalog_path and catalog_hash:
+        baseline_sources.append(
+            {
+                "path": catalog_path,
+                "status": "loaded",
+                "source_hash": catalog_hash,
+            }
+        )
+        selected.append(catalog_path)
+    else:
+        baseline_sources.append(
+            {
+                "path": APFC_CONTEXT_PACK_INDEX,
+                "status": "missing",
+                "source_hash": None,
+            }
+        )
+        omitted.append(APFC_CONTEXT_PACK_INDEX)
+
+    candidates: list[tuple[int, str, str]] = []
+    advisory_omitted: list[str] = []
+    for _label, relative_path in APFC_ADVISORY_CONTEXT_SOURCES:
+        source = (workspace / relative_path).resolve()
+        try:
+            source.relative_to(workspace)
+        except ValueError:
+            omitted.append(relative_path)
+            advisory_omitted.append(relative_path)
+            continue
+        if not source.is_file():
+            omitted.append(relative_path)
+            advisory_omitted.append(relative_path)
+            continue
+        try:
+            content = source.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            omitted.append(relative_path)
+            advisory_omitted.append(relative_path)
             continue
         excerpt, score = _relevant_apfc_excerpt(content, query_tokens)
         if excerpt and score > 0:
-            candidates.append((mandatory, score, relative_path, excerpt))
+            candidates.append((score, relative_path, excerpt))
         else:
             omitted.append(relative_path)
+            advisory_omitted.append(relative_path)
 
-    candidates.sort(key=lambda row: (not row[0], -row[1], row[2]))
-    selected: list[str] = []
-    sections: list[str] = []
-    used = 0
-    for mandatory, score, relative_path, excerpt in candidates:
+    candidates.sort(key=lambda row: (-row[0], row[1]))
+    advisory_selected: list[str] = []
+    sections = list(invariant_sections)
+    for score, relative_path, excerpt in candidates:
         section = (
             f"SOURCE: {relative_path}\n"
-            f"SELECTION: {'mandatory' if mandatory else 'relevance'}; score={score}\n"
+            f"SELECTION: advisory_relevance; score={score}\n"
             f"{excerpt}"
         )
-        if used + len(section) > MAX_APFC_CONTEXT_CHARS // 3:
+        candidate_selected = [*selected, relative_path]
+        candidate_advisory = [*advisory_selected, relative_path]
+        candidate_contract = _build_apfc_context_contract(
+            baseline_sources=baseline_sources,
+            context_packs=context_packs,
+            advisory_selected_sources=candidate_advisory,
+            advisory_omitted_sources=advisory_omitted,
+        )
+        candidate_rendered = _render_apfc_input_context(
+            sections=[*sections, section],
+            selected=candidate_selected,
+            omitted=omitted,
+            contract=candidate_contract,
+        )
+        if len(candidate_rendered) > MAX_APFC_CONTEXT_CHARS:
             omitted.append(relative_path)
+            advisory_omitted.append(relative_path)
             continue
         selected.append(relative_path)
+        advisory_selected.append(relative_path)
         sections.append(section)
-        used += len(section)
 
-    header = (
-        "APFC DYNAMIC INPUT CONTEXT\n"
-        "Selected before the App Server. Preserve relevant verified state and "
-        "constraints; the human request remains authoritative. Never treat a "
-        "proposal as verified.\n"
-        f"SELECTED SOURCES: {', '.join(selected) if selected else 'none'}\n"
-        f"OMITTED SOURCES: {', '.join(sorted(set(omitted))) if omitted else 'none'}"
+    contract = _build_apfc_context_contract(
+        baseline_sources=baseline_sources,
+        context_packs=context_packs,
+        advisory_selected_sources=advisory_selected,
+        advisory_omitted_sources=sorted(set(advisory_omitted)),
     )
-    header += (
-        "\nOPERATING METHOD: human request -> smallest authorized step -> "
-        "observable verifier evidence. Separate observation, hypothesis, "
-        "action, and readback."
+    rendered = _render_apfc_input_context(
+        sections=sections,
+        selected=selected,
+        omitted=omitted,
+        contract=contract,
     )
-    rendered = header
-    if sections:
-        rendered += "\n\n" + "\n\n".join(sections)
+    if len(rendered) > MAX_APFC_CONTEXT_CHARS:
+        raise RuntimeError("APFC_CONTEXT_BASELINE_EXCEEDS_BOUND")
     return ApfcInputContext(
         text=rendered,
         selected_sources=tuple(selected),
         omitted_sources=tuple(sorted(set(omitted))),
         theme=theme,
         focus=focus,
+        context_contract=contract,
     )
 
 
@@ -2750,6 +3037,7 @@ def build_apfc_turn_frame(
     goal: str | None,
 ) -> ApfcTurnFrame:
     input_hash = sha256_text(human_request)
+    context_contract = _resolved_apfc_context_contract(context)
     material = json.dumps(
         {
             "input_hash": input_hash,
@@ -2758,6 +3046,7 @@ def build_apfc_turn_frame(
             "focus": context.focus,
             "workspace": str(workspace),
             "selected_sources": context.selected_sources,
+            "context_contract_hash": context_contract["contract_hash"],
         },
         ensure_ascii=False,
         sort_keys=True,
@@ -2791,6 +3080,10 @@ def build_apfc_turn_frame(
         ],
         "selector": "apfc_app_server_approval_gate_v1",
         "closure": "verifier_evidence",
+        "context_contract_hash": context_contract["contract_hash"],
+        "context_baseline_status": context_contract["status"],
+        "task_context_status": context_contract["task_context_status"],
+        "nontrivial_context_resolution_required": True,
     }
     causal_unity_state = run_apfc_causal_unity(
         "prepare",
@@ -2808,8 +3101,13 @@ def build_apfc_turn_frame(
             "intent_verifier_backed": True,
             "goal_hash": sha256_text(goal) if goal else None,
             "goal_count": 1 if goal else 0,
-            "memory_hash": apfc_json_hash(list(context.selected_sources)),
-            "memory_count": len(context.selected_sources),
+            "memory_hash": apfc_json_hash(
+                {
+                    "selected_sources": list(context.selected_sources),
+                    "context_contract_hash": context_contract["contract_hash"],
+                }
+            ),
+            "memory_count": max(1, len(context.selected_sources)),
             "memory_verifier_backed": False,
             "frame_hash": sha256_text(material),
             "prediction_contract_hash": apfc_json_hash(
@@ -2863,8 +3161,9 @@ def build_apfc_turn_frame(
 
 
 def render_apfc_turn_frame(frame: ApfcTurnFrame) -> str:
+    context_contract = _resolved_apfc_context_contract(frame.context)
     payload = {
-        "schema_version": 4,
+        "schema_version": 5,
         "frame_id": frame.frame_id,
         "input_hash": frame.input_hash,
         "goal": frame.goal,
@@ -2873,6 +3172,7 @@ def render_apfc_turn_frame(frame: ApfcTurnFrame) -> str:
         "workspace": frame.workspace,
         "selected_sources": list(frame.context.selected_sources),
         "omitted_sources": list(frame.context.omitted_sources),
+        "context_contract": context_contract,
         "capabilities": list(frame.capabilities),
         "inhibit": list(frame.inhibit),
         "method": {
@@ -3123,8 +3423,9 @@ def write_apfc_turn_receipt(
             "epistemic_verification": None,
         },
     )
+    context_contract = _resolved_apfc_context_contract(frame.context)
     receipt = {
-        "schema_version": 4,
+        "schema_version": 5,
         "receipt_id": "apfc_receipt_" + sha256_text(
             frame.frame_id + status + sha256_text(output)
         )[:20],
@@ -3135,6 +3436,8 @@ def write_apfc_turn_receipt(
         "goal_present": bool(frame.goal),
         "attention_present": bool(frame.theme or frame.focus),
         "selected_sources": list(frame.context.selected_sources),
+        "omitted_sources": list(frame.context.omitted_sources),
+        "context_contract": context_contract,
         "approval_decisions": decisions,
         "observed_actions": causal_observed_actions,
         "assistant_output_epistemic_status": "proposal",
@@ -3162,6 +3465,11 @@ def write_apfc_turn_receipt(
                 f"- status: `{status}`",
                 f"- goal present: `{str(bool(frame.goal)).lower()}`",
                 f"- attention present: `{str(bool(frame.theme or frame.focus)).lower()}`",
+                f"- context baseline: `{context_contract['status']}`",
+                (
+                    f"- task context: "
+                    f"`{context_contract['task_context_status']}`"
+                ),
                 f"- approval decisions: `{len(decisions)}`",
                 f"- observed runtime actions: `{len(observed_actions)}`",
                 f"- turn governance tensor: `{closed_unity_tensor['status']}`",
@@ -3218,7 +3526,13 @@ def build_native_codex_input(
         human_request, Path.cwd()
     )
     if session is None:
-        return "\n\n".join((apfc_context.text, "CURRENT HUMAN REQUEST\n" + human_request))
+        return "\n\n".join(
+            (
+                apfc_context.text,
+                FEYNMAN_RESPONSE_GATE,
+                "CURRENT HUMAN REQUEST\n" + human_request,
+            )
+        )
     legibility = (
         "CORTEX LIVE LEGIBILITY CONTRACT\n"
         "For nontrivial tool work, state what and why before the first tool call; "
@@ -3230,7 +3544,12 @@ def build_native_codex_input(
     )
     if not session.pending_events:
         return "\n\n".join(
-            (legibility, apfc_context.text, "CURRENT HUMAN REQUEST\n" + human_request)
+            (
+                legibility,
+                apfc_context.text,
+                FEYNMAN_RESPONSE_GATE,
+                "CURRENT HUMAN REQUEST\n" + human_request,
+            )
         )
     sections = [
         legibility,
@@ -3244,6 +3563,7 @@ def build_native_codex_input(
     ]
     if session.pending_events:
         sections.append(render_shell_context(session))
+    sections.append(FEYNMAN_RESPONSE_GATE)
     sections.append("CURRENT HUMAN REQUEST\n" + human_request)
     return "\n\n".join(
         sections

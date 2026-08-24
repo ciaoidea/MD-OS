@@ -146,11 +146,15 @@ complete input line
 ```
 
 Before every natural-language `turn/start` or `turn/steer`, Cortex builds a
-bounded context from the operational core, active work, continuity, latest
-verified summary, and health state. Mandatory state is retained; other
-Markdown blocks are selected according to the current input. The resulting
-context names the sources it included and omitted, then preserves the original
-human request unchanged. Native shell commands remain direct and bypass this
+bounded, hash-bound context contract. Its invariant baseline contains identity,
+cognitive bootstrap, compact operational core, conceptual orientation, active
+work, continuity, and the generated context-pack catalog even when the human
+wording shares no tokens with those files. Lexical matches to recent summaries
+or health state are advisory only. For nontrivial claims or actions, the active
+turn must resolve the actual task dependencies through the catalog and current
+canonical readback, or report that its context is insufficient. The resulting
+context names included and omitted sources and preserves the original human
+request unchanged. Native shell commands remain direct and bypass this
 model-context path.
 
 This is a shell inside the shell, not a browser GUI or a restricted simulation.
@@ -164,6 +168,13 @@ process. It resolves the current Git workspace, resumes the most recent matching
 native Codex thread when one exists, or starts a new one. Moving to another
 repository selects that repository's thread; moving back restores the earlier
 binding.
+
+The Cortex REPL and its Python shell engine are long-lived processes; rebuilding
+generated state does not hot-reload their source code. After updating
+`md-os/shell/bin/mdos-console`, exit the shared Cortex REPL and run `./cortex`
+again. The first subsequent natural-language turn should emit the current APFC
+frame schema and its context-sufficiency contract. Restarting only a builder or
+replaying generated state is not enough.
 
 On POSIX systems with `tmux`, interactive invocations from a local terminal,
 SSH, and WebSSH attach to one shared Cortex session per Git workspace. They
@@ -223,16 +234,18 @@ accepts only exact text hunks inside the workspace and fails closed on stale
 preimages, path traversal, Git metadata, symlinks, renames, binary changes, and
 deletion. It performs no network operation and returns hash-bound readback.
 
-Before each natural-language turn, Cortex supplies a bounded APFC frame whose
-pre-model relevance query is the current human request. It does not manufacture
-or persist a semantic `theme` or `focus` before the model has understood the
-request. An explicit Codex goal remains available as persistent context, but
-does not automatically replace the current human request as the turn target;
-native thread continuity remains separate.
+Before each natural-language turn, Cortex supplies a bounded APFC frame. The
+current human request remains the turn target and the sole query for advisory
+task-source selection, while a hash-bound invariant baseline remains present
+independently of lexical overlap. Cortex does not manufacture or persist a
+semantic `theme` or `focus` before the model has understood the request. An
+explicit Codex goal remains available as persistent context, but does not
+automatically replace the current human request; native thread continuity
+remains separate.
 After execution, a second JSON contract compares observable readback with the
 acceptance condition and records `pass`, `fail`, or `unknown`; successful
 execution alone is never treated as proof. The dynamic context is capped at
-2 KiB and starts no loop. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
+12 KiB and starts no loop. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
 
 For frame-sensitive problems, reflection also uses an Einstein-inspired
 frame-transformation-invariant branch: expose the hidden frame, declare source

@@ -482,9 +482,25 @@ class SemanticShellParityTests(unittest.TestCase):
         self.assertIn("ask the critical question internally", prompt)
         self.assertIn("test the hidden premise or failure case", prompt)
         self.assertIn("Do not manufacture a ritual for a simple direct answer", prompt)
+        self.assertEqual(prompt.count("FEYNMAN RESPONSE GATE"), 1)
+        self.assertIn("Lead with the direct answer", prompt)
+        self.assertIn("use ordinary words", prompt)
+        self.assertIn("revise it inside this same turn", prompt)
+        self.assertIn("without impersonating him", prompt)
         self.assertIn(
             "CURRENT HUMAN REQUEST\nInspect the runtime and explain the failure.",
             prompt,
+        )
+
+    def test_one_shot_turn_receives_feynman_gate_without_session(self):
+        prompt = ENGINE.build_native_codex_input(
+            "Explain the mechanism plainly.", None
+        )
+        self.assertEqual(prompt.count("FEYNMAN RESPONSE GATE"), 1)
+        self.assertTrue(
+            prompt.endswith(
+                "CURRENT HUMAN REQUEST\nExplain the mechanism plainly."
+            )
         )
 
     def test_inline_paste_placeholder_expands_inside_surrounding_text(self):
@@ -647,11 +663,23 @@ class SemanticShellParityTests(unittest.TestCase):
                 thread_start["params"]["sandbox"], "workspace-write"
             )
             self.assertIn("APFC TURN FRAME", requests[0]["prompt"])
+            self.assertEqual(
+                requests[0]["prompt"].count("FEYNMAN RESPONSE GATE"), 1
+            )
             self.assertIn("cognitive_route", requests[0]["prompt"])
             self.assertIn("reflect-intent <intent.json>", requests[0]["prompt"])
             rendered_frame = requests[0]["prompt"].split("\n\n", 1)[0]
             frame_payload = json.loads(rendered_frame.split("\n", 1)[1])
-            self.assertEqual(frame_payload["schema_version"], 4)
+            self.assertEqual(frame_payload["schema_version"], 5)
+            context_contract = frame_payload["context_contract"]
+            self.assertEqual(context_contract["status"], "ready")
+            self.assertEqual(
+                context_contract["task_context_status"],
+                "pending_turn_resolution",
+            )
+            self.assertTrue(
+                context_contract["criteria"]["lexical_selection_advisory_only"]
+            )
             causal = frame_payload["causal_unity_state"]
             probe = frame_payload["causal_dependency_probe"]
             self.assertEqual(causal["artifact_role"], "causal_unity_decision_state")
@@ -708,6 +736,116 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn("Camera calibration remains open", context.text)
             self.assertNotIn("Unrelated accounting notes", context.text)
 
+    def test_apfc_invariant_context_survives_zero_lexical_overlap(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            baseline_files = {
+                "ME.md": "# Identity\n\nPersistent repository identity.\n",
+                "md-os/kb/COGNITIVE_BOOTSTRAP.md": (
+                    "# Bootstrap\n\nEstablish the identity frame.\n"
+                ),
+                "md-os/ops/core/agentic_core.md": (
+                    "# Core\n\nPreserve boundaries and verifier evidence.\n"
+                ),
+                "md-os/ops/summary/conceptual_boot_summary.md": (
+                    "# Orientation\n\nCurrent operating orientation is healthy.\n"
+                ),
+                "md-os/ops/summary/active_work_items.md": (
+                    "# Active work\n\nOne bounded objective remains open.\n"
+                ),
+                "md-os/ops/continuity.md": (
+                    "# Continuity\n\nResume from current verified state.\n"
+                ),
+            }
+            for relative_path, content in baseline_files.items():
+                target = workspace / relative_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content, encoding="utf-8")
+            catalog = workspace / ENGINE.APFC_CONTEXT_PACK_INDEX
+            catalog.parent.mkdir(parents=True, exist_ok=True)
+            catalog.write_text(
+                json.dumps(
+                    {
+                        "packs": [
+                            {
+                                "pack_id": "semantic_task",
+                                "file": (
+                                    "md-os/ops/runtime/context_packs/"
+                                    "semantic_task.json"
+                                ),
+                                "purpose": "Resolve semantic task dependencies.",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            context = ENGINE.build_apfc_input_context("procedi", workspace)
+            expected = {
+                relative_path
+                for _label, relative_path
+                in ENGINE.APFC_INVARIANT_CONTEXT_SOURCES
+            }
+            self.assertTrue(expected.issubset(set(context.selected_sources)))
+            self.assertIn(ENGINE.APFC_CONTEXT_PACK_INDEX, context.selected_sources)
+            self.assertEqual(context.context_contract["status"], "ready")
+            self.assertEqual(
+                context.context_contract["task_context_status"],
+                "pending_turn_resolution",
+            )
+            self.assertIn("CONTEXT PACK CATALOG", context.text)
+            self.assertIn("semantic_task", context.text)
+            self.assertLessEqual(len(context.text), ENGINE.MAX_APFC_CONTEXT_CHARS)
+
+            contract_material = dict(context.context_contract)
+            contract_hash = contract_material.pop("contract_hash")
+            self.assertEqual(ENGINE.apfc_json_hash(contract_material), contract_hash)
+            frame = ENGINE.build_apfc_turn_frame(
+                "procedi", context, workspace, None
+            )
+            rendered = json.loads(
+                ENGINE.render_apfc_turn_frame(frame).split("\n", 1)[1]
+            )
+            self.assertEqual(rendered["context_contract"], context.context_contract)
+
+            degraded = ENGINE._build_apfc_context_contract(
+                baseline_sources=[],
+                context_packs=[],
+                advisory_selected_sources=list(context.selected_sources),
+                advisory_omitted_sources=list(context.omitted_sources),
+            )
+            alternate = ENGINE.ApfcInputContext(
+                context.text,
+                context.selected_sources,
+                context.omitted_sources,
+                context_contract=degraded,
+            )
+            alternate_frame = ENGINE.build_apfc_turn_frame(
+                "procedi", alternate, workspace, None
+            )
+            self.assertNotEqual(frame.frame_id, alternate_frame.frame_id)
+            self.assertNotEqual(
+                frame.causal_unity_state["decision_basis_hash"],
+                alternate_frame.causal_unity_state["decision_basis_hash"],
+            )
+
+            tampered = dict(context.context_contract)
+            tampered["status"] = "degraded"
+            invalid = ENGINE.ApfcInputContext(
+                context.text,
+                context.selected_sources,
+                context.omitted_sources,
+                context_contract=tampered,
+            )
+            with self.assertRaisesRegex(
+                RuntimeError, "APFC_CONTEXT_CONTRACT_HASH_MISMATCH"
+            ):
+                ENGINE.build_apfc_turn_frame(
+                    "procedi", invalid, workspace, None
+                )
+
     def test_apfc_input_context_changes_with_the_human_subject(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
@@ -760,6 +898,8 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(steer["params"]["expectedTurnId"], "turn-1")
             steering_text = steer["params"]["input"][0]["text"]
             self.assertIn("APFC DYNAMIC INPUT CONTEXT", steering_text)
+            self.assertEqual(steering_text.count("FEYNMAN RESPONSE GATE"), 1)
+            self.assertIn("revise it inside this same turn", steering_text)
             self.assertIn(
                 "CURRENT HUMAN STEERING INPUT\naggiungi anche i test",
                 steering_text,
@@ -1221,7 +1361,11 @@ class SemanticShellParityTests(unittest.TestCase):
                 observed_actions=[],
             )
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-            self.assertEqual(receipt["schema_version"], 4)
+            self.assertEqual(receipt["schema_version"], 5)
+            self.assertEqual(
+                receipt["context_contract"]["task_context_status"],
+                "pending_turn_resolution",
+            )
             causal_state = receipt["causal_unity_state"]
             probe = receipt["causal_dependency_probe"]
             transition = receipt["causal_unity_transition"]
@@ -1287,6 +1431,7 @@ class SemanticShellParityTests(unittest.TestCase):
             "apfc_causal_action_authorization.schema.json",
             "apfc_causal_unity_transition.schema.json",
             "apfc_causal_dependency_probe.schema.json",
+            "apfc_context_sufficiency.schema.json",
             "apfc_turn_frame.schema.json",
             "apfc_turn_receipt.schema.json",
         ):
