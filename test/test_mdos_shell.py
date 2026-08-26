@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import socket
 import subprocess
 import sys
 import tempfile
@@ -977,6 +978,45 @@ class SemanticShellParityTests(unittest.TestCase):
             )
             self.assertEqual(goal["params"]["objective"], "Keep tests green")
             self.assertEqual(goal["params"]["status"], "active")
+
+    def test_notes_slash_command_launches_workspace_without_codex(self):
+        session = ENGINE.ShellSession()
+        with mock.patch.object(
+            ENGINE,
+            "launch_notes_workspace",
+            return_value=True,
+        ) as launch:
+            handled = ENGINE.handle_codex_slash_command("/notes", session)
+        self.assertTrue(handled)
+        launch.assert_called_once_with(session)
+        self.assertIsNone(session.app_server)
+
+    def test_notes_workspace_launcher_is_ready_and_idempotent(self):
+        with socket.socket() as probe:
+            probe.bind((ENGINE.NOTES_HOST, 0))
+            port = probe.getsockname()[1]
+        session = ENGINE.ShellSession()
+        environment = {
+            "MDOS_NOTES_PORT": str(port),
+            "MDOS_NOTES_OPEN_BROWSER": "never",
+        }
+        try:
+            with (
+                mock.patch.dict(os.environ, environment, clear=False),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                self.assertTrue(ENGINE.launch_notes_workspace(session))
+                self.assertIsNotNone(session.notes_process)
+                first_pid = session.notes_process.pid
+                self.assertTrue(
+                    ENGINE.notes_workspace_ready(ENGINE.notes_workspace_url())
+                )
+                self.assertTrue(ENGINE.launch_notes_workspace(session))
+                self.assertEqual(session.notes_process.pid, first_pid)
+        finally:
+            with contextlib.redirect_stdout(io.StringIO()):
+                ENGINE.close_notes_workspace(session, announce=False)
+        self.assertIsNone(session.notes_process)
 
     def test_escape_requests_active_turn_interrupt(self):
         with FakeCodex("Stopped.") as fake, mock.patch.dict(

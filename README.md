@@ -2144,6 +2144,32 @@ map, and the sanitized connector topology. It routes a question to the smallest
 relevant set of models, schemas, executors, tests, and readback surfaces instead
 of falling back to broad repository search.
 
+## Local web workspace
+
+The local WYSIWYG scratchpad is launched from an ordinary Cortex session.
+Start Cortex:
+
+```bash
+./cortex
+```
+
+Then enter:
+
+```text
+/notes
+```
+
+`/notes` starts or reuses the loopback workspace at
+`http://127.0.0.1:4173` and opens it in the browser when a desktop session is
+available. The Cortex prompt remains active. Use `/notes status` to inspect it
+and `/notes stop` to stop the process started by the current Cortex session.
+
+The canvas accepts formatted paste, tables and images and renders LaTeX
+formulas visually. Every keystroke synchronizes in the background without a
+Save action.
+
+More detail: [docs/WEB_WORKSPACE.md](docs/WEB_WORKSPACE.md)
+
 ## MCP server adapter
 
 MD-OS APFC can be exposed to MCP-compatible hosts as a stdio server:
@@ -2152,9 +2178,14 @@ MD-OS APFC can be exposed to MCP-compatible hosts as a stdio server:
 npm run mcp:server
 ```
 
-The server exposes read-only resources such as `mdos://ops/global-index` and
-bounded tools such as `mdos_replay`, `mdos_register_signal`,
-`mdos_terminal_run`, and `mdos_api_run`.
+The server exposes read-only resources such as `mdos://ops/global-index`,
+bounded tools such as `mdos_replay` and `mdos_register_signal`, and an MCP Apps
+resource at `ui://mdos/document-editor/v1.html`.
+
+In an MCP Apps-capable host, `mdos_document_open` displays a fullscreen WYSIWYG
+canvas for formatted text, rich paste, tables, pasted images, and visually
+rendered LaTeX formulas. Documents use revision-checked local storage under
+`md-os/ops/local/documents/` and export to HTML, TeX, or PDF.
 
 This is an adapter over the existing text-native OS. The core state model
 remains the filesystem under `md-os/`.

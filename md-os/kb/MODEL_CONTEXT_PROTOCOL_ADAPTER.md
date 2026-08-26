@@ -29,6 +29,10 @@ The adapter may:
 
 - expose readable `md-os/kb/` and `md-os/ops/` files as resources
 - expose deterministic builders as bounded tools
+- expose self-contained MCP Apps UI resources when their state transitions are
+  backed by declared tools, schemas, filesystem artifacts, and readback
+- expose a host-local visual-document canvas whose rich text, tables, images,
+  formulas, revisions, assistant edits, and exports remain inspectable
 - expose read-only hardware bootstrap and host-local hardware cleanup as
   bounded tools
 - expose read-only software bootstrap and host-local software cleanup as
@@ -46,6 +50,10 @@ The adapter must not:
 - bypass connector profiles
 - replace canonical project state
 - store hidden state outside the filesystem runtime
+- let an embedded UI bypass content validation, permission boundaries, or
+  revision-conflict checks
+- treat `md-os/ops/local/documents/**` as canonical, portable, or publishable
+  project state
 
 ## Stable Direction
 

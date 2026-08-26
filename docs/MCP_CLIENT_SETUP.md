@@ -58,6 +58,13 @@ node md-os/os/mcp_server.js --list-resources
 Expected tool names include:
 
 ```text
+mdos_document_open
+mdos_document_create
+mdos_document_read
+mdos_document_save
+mdos_document_apply
+mdos_document_render_math
+mdos_document_export
 mdos_replay
 mdos_compile_programs
 mdos_archive_runtime_state
@@ -74,6 +81,27 @@ mdos_terminal_run
 mdos_api_run
 ```
 
+## Visual Host Requirement
+
+The document tools work over ordinary MCP, but the embedded WYSIWYG canvas also
+requires an MCP Apps-capable host. Verify that the host:
+
+- lists and reads `ui://mdos/document-editor/v1.html`
+- accepts the `text/html;profile=mcp-app` resource type
+- honors a tool's `_meta.ui.resourceUri` or compatibility output template
+- provides the tool-call bridge and fullscreen display mode
+
+A host without MCP Apps support can still call the document tools and read the
+JSON document, but it will not display the embedded visual editor.
+
+The repository server currently provides stdio transport. A ChatGPT web
+connection additionally needs a network-reachable Streamable HTTP MCP endpoint
+and host-side connection approval. Until that transport and the actual host are
+tested, the verified claim is the local MCP Apps resource/tool contract—not a
+live ChatGPT installation. See the official
+[MCP Apps UI guide](https://developers.openai.com/plugins/build/chatgpt-ui) and
+[MCP server guide](https://developers.openai.com/plugins/build/mcp-server).
+
 ## Host Verification Checklist
 
 For each client such as Claude Desktop, Cursor, Continue, or another
@@ -82,6 +110,9 @@ MCP-compatible host, verify:
 - the host can start `node md-os/os/mcp_server.js`
 - `resources/list` shows `mdos://ops/global-index`
 - `resources/read` can read `mdos://ops/state`
+- `resources/list` shows `ui://mdos/document-editor/v1.html`
+- `mdos_document_open` displays the WYSIWYG canvas in an MCP Apps-capable host
+- rich paste, image paste, tables, formulas, save, assistant edits, and export work
 - `tools/list` shows the `mdos_*` tools
 - `mdos_connector_list` returns the connector registry
 - `mdos_register_signal` can create a source signal in a disposable demo
@@ -95,6 +126,7 @@ Use this before host-by-host verification:
 ```text
 MCP-compatible adapter included.
 Tested stdio JSON-RPC server.
+Tested MCP Apps resource and visual-document tool contract.
 Host-specific setup guides in progress.
 ```
 

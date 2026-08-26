@@ -13,15 +13,39 @@ const {
 } = require('./lib/common');
 const { replayRuntime } = require('./replay_runtime');
 const { callMcpTool, loadRegistry } = require('../kernel/module_runtime');
+const {
+  applyDocumentOperations,
+  createDocument,
+  documentSummary,
+  exportDocument,
+  readDocument,
+  renderMath,
+  saveDocument,
+} = require('./document_runtime');
 
 const SERVER_NAME = 'md-os-apfc';
 const SERVER_VERSION = '5.0.1';
 const DEFAULT_PROTOCOL_VERSION = '2025-11-25';
+const DOCUMENT_EDITOR_URI = 'ui://mdos/document-editor/v1.html';
 
 const OPS_DIR = path.join(MDOS_ROOT, 'ops');
 const PROJECTS_DIR = path.join(OPS_DIR, 'projects');
 
 const STATIC_RESOURCES = [
+  {
+    uri: DOCUMENT_EDITOR_URI,
+    name: 'MD-OS visual document editor',
+    file: path.join(__dirname, 'ui', 'document_editor.html'),
+    mimeType: 'text/html;profile=mcp-app',
+    description: 'Fullscreen WYSIWYG canvas for rich text, tables, images, and rendered LaTeX formulas.',
+    _meta: {
+      ui: {
+        prefersBorder: false,
+        csp: { connectDomains: [], resourceDomains: [] },
+      },
+      'openai/widgetPrefersBorder': false,
+    },
+  },
   {
     uri: 'mdos://kb/operations',
     name: 'MD-OS (Artificial Prefrontal Cortex) v5.0 operations model',
@@ -279,12 +303,16 @@ function projectResources() {
 function allResources() {
   return [...STATIC_RESOURCES, ...projectResources()]
     .filter((resource) => existsFile(resource.file))
-    .map((resource) => ({
-      uri: resource.uri,
-      name: resource.name,
-      description: resource.description,
-      mimeType: resource.mimeType,
-    }));
+    .map((resource) => {
+      const result = {
+        uri: resource.uri,
+        name: resource.name,
+        description: resource.description,
+        mimeType: resource.mimeType,
+      };
+      if (resource._meta) result._meta = resource._meta;
+      return result;
+    });
 }
 
 function resourceByUri(uri) {
@@ -295,14 +323,14 @@ function readResource(uri) {
   const resource = resourceByUri(shortText(uri));
   if (!resource) throw new Error(`UNKNOWN_RESOURCE_URI: ${shortText(uri)}`);
   if (!existsFile(resource.file)) throw new Error(`RESOURCE_FILE_MISSING: ${rel(resource.file)}`);
+  const content = {
+    uri: resource.uri,
+    mimeType: resource.mimeType,
+    text: readTextSafe(resource.file),
+  };
+  if (resource._meta) content._meta = resource._meta;
   return {
-    contents: [
-      {
-        uri: resource.uri,
-        mimeType: resource.mimeType,
-        text: readTextSafe(resource.file),
-      },
-    ],
+    contents: [content],
   };
 }
 
@@ -361,8 +389,8 @@ function rebuildProjectAndGlobals(projectId) {
   }));
 }
 
-function toolResult(payload, isError = false) {
-  return {
+function toolResult(payload, isError = false, options = {}) {
+  const result = {
     content: [
       {
         type: 'text',
@@ -371,6 +399,23 @@ function toolResult(payload, isError = false) {
     ],
     isError,
   };
+  if (options.structuredContent !== undefined) result.structuredContent = options.structuredContent;
+  if (options._meta !== undefined) result._meta = options._meta;
+  return result;
+}
+
+function documentToolResult(document, options = {}) {
+  return toolResult(
+    { ok: true, mode: options.mode || 'mcp_document', document: documentSummary(document) },
+    false,
+    {
+      structuredContent: { document },
+      _meta: options.renderUi ? {
+        ui: { resourceUri: DOCUMENT_EDITOR_URI },
+        'openai/outputTemplate': DOCUMENT_EDITOR_URI,
+      } : undefined,
+    }
+  );
 }
 
 function stringArg(args, key, required = true) {
@@ -614,7 +659,45 @@ function proposeChange(args) {
   };
 }
 
+function callDocumentTool(name, args) {
+  if (name === 'mdos_document_open') {
+    const document = readDocument(
+      args.document_id || 'notes',
+      {
+        createIfMissing: args.create_if_missing !== false,
+        title: args.title,
+      }
+    );
+    return documentToolResult(document, {
+      mode: 'mcp_document_open',
+      renderUi: true,
+    });
+  }
+  if (name === 'mdos_document_create') return documentToolResult(createDocument(args), { mode: 'mcp_document_create', renderUi: true });
+  if (name === 'mdos_document_read') return documentToolResult(readDocument(args.document_id), { mode: 'mcp_document_read' });
+  if (name === 'mdos_document_save') return documentToolResult(saveDocument(args), { mode: 'mcp_document_save' });
+  if (name === 'mdos_document_apply') return documentToolResult(applyDocumentOperations(args), { mode: 'mcp_document_apply' });
+  if (name === 'mdos_document_render_math') {
+    const rendered = renderMath(args.latex, args.display !== false);
+    return toolResult(
+      { ok: true, mode: 'mcp_document_render_math', math: rendered },
+      false,
+      { structuredContent: { math: rendered } }
+    );
+  }
+  if (name === 'mdos_document_export') {
+    const exported = exportDocument(args);
+    return toolResult(
+      { mode: 'mcp_document_export', ...exported },
+      false,
+      { structuredContent: { export: exported } }
+    );
+  }
+  throw new Error(`UNKNOWN_DOCUMENT_TOOL: ${shortText(name)}`);
+}
+
 function callTool(name, args = {}) {
+  if (name.startsWith('mdos_document_')) return callDocumentTool(name, args);
   if (name === 'mdos_replay') return toolResult(replayRuntime());
   if (name === 'mdos_compile_programs') return toolResult(compileProgramsTool());
   if (name === 'mdos_archive_runtime_state') return toolResult(archiveRuntimeTool());
@@ -654,6 +737,139 @@ function inputSchema(properties, required = []) {
   };
 }
 
+function visualDocumentBlockSchema() {
+  return {
+    oneOf: [
+      inputSchema({
+        id: { type: 'string' },
+        type: { const: 'rich' },
+        html: { type: 'string' },
+      }, ['type', 'html']),
+      inputSchema({
+        id: { type: 'string' },
+        type: { const: 'table' },
+        html: { type: 'string' },
+      }, ['type', 'html']),
+      inputSchema({
+        id: { type: 'string' },
+        type: { const: 'formula' },
+        latex: { type: 'string' },
+        display: { type: 'boolean', default: true },
+      }, ['type', 'latex']),
+      inputSchema({
+        id: { type: 'string' },
+        type: { const: 'image' },
+        data_uri: { type: 'string', description: 'Inline PNG, JPEG, GIF, or WebP data URI.' },
+        alt: { type: 'string' },
+        width_percent: { type: 'integer', minimum: 10, maximum: 100 },
+      }, ['type', 'data_uri']),
+    ],
+  };
+}
+
+function documentToolMeta(renderUi = false) {
+  if (!renderUi) return {};
+  return {
+    ui: { resourceUri: DOCUMENT_EDITOR_URI },
+    'openai/outputTemplate': DOCUMENT_EDITOR_URI,
+  };
+}
+
+function listDocumentTools() {
+  const documentIdSchema = {
+    type: 'string',
+    pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$',
+    description: 'Stable visual document id.',
+  };
+  const revisionSchema = { type: 'integer', minimum: 0 };
+  const blockSchema = visualDocumentBlockSchema();
+  const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
+  const write = { readOnlyHint: false, destructiveHint: false, openWorldHint: false };
+  return [
+    {
+      name: 'mdos_document_open',
+      title: 'Open visual document',
+      description: 'Open the fullscreen WYSIWYG editor for one visual document, creating it when requested.',
+      inputSchema: inputSchema({
+        document_id: { ...documentIdSchema, default: 'notes' },
+        create_if_missing: { type: 'boolean', default: true },
+        title: { type: 'string' },
+      }),
+      annotations: write,
+      _meta: documentToolMeta(true),
+    },
+    {
+      name: 'mdos_document_create',
+      title: 'Create visual document',
+      description: 'Create a versioned visual document and open it in the fullscreen WYSIWYG editor.',
+      inputSchema: inputSchema({
+        document_id: { ...documentIdSchema, default: 'notes' },
+        title: { type: 'string', default: 'Untitled' },
+      }),
+      annotations: write,
+      _meta: documentToolMeta(true),
+    },
+    {
+      name: 'mdos_document_read',
+      title: 'Read visual document',
+      description: 'Read the authoritative blocks and current revision without remounting the editor.',
+      inputSchema: inputSchema({ document_id: documentIdSchema }, ['document_id']),
+      annotations: readOnly,
+    },
+    {
+      name: 'mdos_document_save',
+      title: 'Save visual document',
+      description: 'Atomically save all WYSIWYG blocks when the expected revision still matches.',
+      inputSchema: inputSchema({
+        document_id: documentIdSchema,
+        title: { type: 'string' },
+        expected_revision: revisionSchema,
+        blocks: { type: 'array', items: blockSchema, maxItems: 2000 },
+      }, ['document_id', 'expected_revision', 'blocks']),
+      annotations: write,
+    },
+    {
+      name: 'mdos_document_apply',
+      title: 'Edit visual document',
+      description: 'Apply bounded block operations so the assistant can edit the same live document.',
+      inputSchema: inputSchema({
+        document_id: documentIdSchema,
+        expected_revision: revisionSchema,
+        operations: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 100,
+          items: {
+            type: 'object',
+            description: 'set_title, insert_after, replace_block, or delete_block operation.',
+          },
+        },
+      }, ['document_id', 'expected_revision', 'operations']),
+      annotations: write,
+    },
+    {
+      name: 'mdos_document_render_math',
+      title: 'Render LaTeX formula',
+      description: 'Validate one LaTeX formula and return browser-native MathML for visual editing.',
+      inputSchema: inputSchema({
+        latex: { type: 'string', maxLength: 5000 },
+        display: { type: 'boolean', default: true },
+      }, ['latex']),
+      annotations: readOnly,
+    },
+    {
+      name: 'mdos_document_export',
+      title: 'Export visual document',
+      description: 'Export the current version to HTML, TeX, or PDF inside its local document directory.',
+      inputSchema: inputSchema({
+        document_id: documentIdSchema,
+        format: { type: 'string', enum: ['html', 'tex', 'pdf'] },
+      }, ['document_id', 'format']),
+      annotations: write,
+    },
+  ];
+}
+
 function listTools() {
   const generatedTools = (() => {
     try {
@@ -669,6 +885,7 @@ function listTools() {
   })();
   return {
     tools: [
+      ...listDocumentTools(),
       {
         name: 'mdos_replay',
         description: 'Replay MD-OS (Artificial Prefrontal Cortex) v5.0 compiled state from persisted sources and journal history.',
