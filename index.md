@@ -2155,7 +2155,9 @@ The canvas accepts formatted paste, tables and images, renders LaTeX formulas
 visually, and includes one shared `Whiteboard` for handwriting with a stylus,
 touch, or mouse. Click the intended vertical position on the page before
 choosing Text, Table, Formula, Image, or Whiteboard; the object is inserted at
-that marker. Whiteboard strokes are stored as vectors. While the pen is moving,
+that marker. These actions, the formatting controls, deletion, and PDF export
+use compact graphic buttons; readable names remain available as tooltips and
+accessible labels. Whiteboard strokes are stored as vectors. While the pen is moving,
 bounded preview segments stream through the server's in-memory event channel so
 other browser and Boox sessions can see the handwriting immediately without a
 disk write per point. Completed strokes receive stable IDs and are committed in

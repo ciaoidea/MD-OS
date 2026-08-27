@@ -84,6 +84,43 @@
       outline-offset: 1px;
     }
 
+    .toolbar-graphic {
+      flex: 0 0 2rem;
+      display: inline-grid;
+      place-items: center;
+      width: 2rem;
+      min-width: 2rem;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .toolbar-icon {
+      display: block;
+      width: 1.1rem;
+      height: 1.1rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .toolbar-graphic[data-tone] {
+      color: var(--tool-color);
+      border-color: color-mix(in srgb, var(--tool-color) 28%, transparent);
+      background: color-mix(in srgb, var(--tool-color) 10%, transparent);
+    }
+    .toolbar-graphic[data-tone]:hover {
+      background: color-mix(in srgb, var(--tool-color) 18%, transparent);
+    }
+    .toolbar-graphic[data-tone="blue"] { --tool-color: #1769e0; }
+    .toolbar-graphic[data-tone="green"] { --tool-color: #137333; }
+    .toolbar-graphic[data-tone="purple"] { --tool-color: #7b1fa2; }
+    .toolbar-graphic[data-tone="amber"] { --tool-color: #a15c00; }
+    .toolbar-graphic[data-tone="teal"] { --tool-color: #00796b; }
+    .toolbar-graphic[data-tone="red"] { --tool-color: #b42318; }
+
     .action.primary { background: var(--ink); color: var(--paper); }
     .action.primary:hover { opacity: .88; }
     .divider { width: 1px; height: 1.3rem; margin: 0 .22rem; background: var(--line); }
@@ -364,21 +401,45 @@
     <header class="bar">
       <input id="title" aria-label="Shared notes title" value="Shared notes" autocomplete="off">
       <nav class="tools" aria-label="Formatting">
-        <button class="tool" type="button" data-command="bold" title="Bold"><strong>B</strong></button>
-        <button class="tool" type="button" data-command="italic" title="Italic"><em>I</em></button>
-        <button class="tool" type="button" data-command="underline" title="Underline"><u>U</u></button>
-        <button class="tool" type="button" data-block="h1" title="Heading">H1</button>
-        <button class="tool" type="button" data-command="insertUnorderedList" title="List">List</button>
+        <button class="tool toolbar-graphic" type="button" data-command="bold" title="Bold" aria-label="Bold">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 4h5a4 4 0 0 1 0 8H7m0 0h6a4 4 0 0 1 0 8H7"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" type="button" data-command="italic" title="Italic" aria-label="Italic">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4h7M7 20h7M14 4l-4 16"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" type="button" data-command="underline" title="Underline" aria-label="Underline">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v7a5 5 0 0 0 10 0V4M5 20h14"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" type="button" data-block="h1" title="Heading" aria-label="Heading">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v14M13 5v14M4 12h9M18 10v9M16.5 11.5 18 10"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" type="button" data-command="insertUnorderedList" title="List" aria-label="List">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="5" cy="17" r="1" fill="currentColor" stroke="none"/><path d="M9 7h10M9 12h10M9 17h10"/></svg>
+        </button>
         <span class="divider" aria-hidden="true"></span>
-        <button class="tool" id="add-text" type="button" title="Text">Text</button>
-        <button class="tool" id="add-table" type="button" title="Table">Table</button>
-        <button class="tool" id="add-formula" type="button" title="Formula">Formula</button>
-        <button class="tool" id="add-image" type="button" title="Image">Image</button>
-        <button class="tool" id="add-whiteboard" type="button" title="Shared handwriting Whiteboard">Whiteboard</button>
-        <button class="tool" id="delete-block" type="button" title="Delete block">Delete</button>
+        <button class="tool toolbar-graphic insert-tool" id="add-text" type="button" title="Text" aria-label="Text" data-tone="blue">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M12 5v14M8 19h8"/></svg>
+        </button>
+        <button class="tool toolbar-graphic insert-tool" id="add-table" type="button" title="Table" aria-label="Table" data-tone="green">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 10h16M10 5v14"/></svg>
+        </button>
+        <button class="tool toolbar-graphic insert-tool" id="add-formula" type="button" title="Formula" aria-label="Formula" data-tone="purple">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h10M11 5 8 19M6 12h8M15 15l5 5M20 15l-5 5"/></svg>
+        </button>
+        <button class="tool toolbar-graphic insert-tool" id="add-image" type="button" title="Image" aria-label="Image" data-tone="amber">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m4 17 5-5 4 4 2-2 5 5"/></svg>
+        </button>
+        <button class="tool toolbar-graphic insert-tool" id="add-whiteboard" type="button" title="Shared handwriting Whiteboard" aria-label="Whiteboard" data-tone="teal">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M6 15c2-6 3 3 5-2s3 4 7-3"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" id="delete-block" type="button" title="Delete block" aria-label="Delete block" data-tone="red">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>
+        </button>
       </nav>
       <div class="actions">
-        <button class="action export" id="export-pdf" type="button">PDF</button>
+        <button class="action export toolbar-graphic" id="export-pdf" type="button" title="Export PDF" aria-label="Export PDF" data-tone="red">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/></svg>
+        </button>
       </div>
       <div id="whiteboard-toolbar" class="whiteboard-toolbar" aria-label="Whiteboard controls" hidden></div>
     </header>

@@ -57,6 +57,7 @@ It supports:
 - editable tables
 - rendered LaTeX formulas through MathML
 - one shared `Whiteboard` for handwriting with a stylus, touch, or mouse
+- compact graphic controls for formatting, insertion, deletion, and PDF export, with readable tooltips and accessible labels
 - vector pen and eraser strokes, pen pressure when exposed by the browser, color, undo, and clear controls
 - in-memory streaming previews across simultaneous browser and Boox sessions while the pen is moving
 - idempotent batched commits for completed strokes, with bounded quiet retry and an optional refresh control

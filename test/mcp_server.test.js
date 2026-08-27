@@ -153,7 +153,12 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
     assert.match(editor.result.contents[0].text, /addEventListener\('paste'/);
     assert.match(editor.result.contents[0].text, /contentEditable = 'true'/);
     assert.match(editor.result.contents[0].text, /id="add-whiteboard"/);
-    assert.match(editor.result.contents[0].text, />Whiteboard<\/button>/);
+    assert.match(editor.result.contents[0].text, /id="add-text"[^>]*aria-label="Text"/);
+    assert.match(editor.result.contents[0].text, /id="add-table"[^>]*aria-label="Table"/);
+    assert.match(editor.result.contents[0].text, /id="add-formula"[^>]*aria-label="Formula"/);
+    assert.match(editor.result.contents[0].text, /id="add-image"[^>]*aria-label="Image"/);
+    assert.match(editor.result.contents[0].text, /id="add-whiteboard"[^>]*aria-label="Whiteboard"/);
+    assert.doesNotMatch(editor.result.contents[0].text, />Whiteboard<\/button>/);
     assert.match(editor.result.contents[0].text, /whiteboard_append_stroke/);
 
     const tools = await server.request('tools/list');
