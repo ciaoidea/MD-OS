@@ -168,11 +168,13 @@ catalog. Protocol-backed or deterministic adapters cover `/notes`, `/goal`, `/co
 desktop app, account dialog, or Windows-only setup remain recognized and return
 an explicit capability notice instead of pretending the operation occurred.
 
-`/notes` is a local deterministic adapter. It starts or reuses the loopback
-WYSIWYG notes workspace, opens the browser when a desktop session is available,
-and returns to the same prompt without starting a model turn. `/notes status`
-reports the endpoint and `/notes stop` stops the process owned by the current
-Cortex session.
+`/notes` is a local deterministic adapter. It starts the WYSIWYG notes
+workspace, or restarts an existing notes server and waits for the replacement
+to become ready, then opens the browser when a desktop session is available.
+It returns to the same prompt without starting a model turn. `/notes status`
+reports the endpoint without restarting it and `/notes stop` stops the process
+owned by the current Cortex session. Restart and shutdown HTTP controls are
+loopback-only.
 
 There is no Python keyword classifier for natural language and no mandatory
 `AGENT: os` / `AGENT: answer` routing header on this primary path. The final

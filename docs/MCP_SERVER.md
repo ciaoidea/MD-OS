@@ -130,8 +130,15 @@ The canvas supports:
 - editable HTML tables
 - pasted or uploaded PNG, JPEG, GIF, and WebP images
 - LaTeX formulas rendered to browser-native MathML
+- a shared vector Whiteboard with bounded text annotations
 - atomic autosave, revision-conflict detection, and assistant block edits
+- portable JSON save, open, and new-file controls; open and new save first
 - HTML, TeX, and PDF export; PDF uses XeLaTeX with shell escape disabled
+
+Cancelling the portable save prevents Open or New from replacing the current
+canvas. The compact AI icon is executed only by the local `/notes` workspace;
+inside an external MCP Apps host it reports that boundary instead of starting a
+second model turn.
 
 Each authoritative document is stored locally at:
 
@@ -141,6 +148,8 @@ md-os/ops/local/documents/<document_id>/exports/*
 ```
 
 The storage is host-local and excluded from canonical or publishable state.
+Portable `.mdos-notes.json` files are written through the browser and may
+contain private notes; they are not repository artifacts.
 Every block has a stable id. The visual client and assistant both save against
 an expected revision, so a stale writer receives a conflict instead of silently
 overwriting newer work. HTML, image data URIs, and LaTeX are validated before

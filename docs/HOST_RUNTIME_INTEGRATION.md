@@ -222,8 +222,9 @@ See [SEMANTIC_SHELL.md](SEMANTIC_SHELL.md) for the exact runtime boundary.
 ## Unified local web workspace
 
 Start an ordinary Cortex session with `./cortex`, then enter `/notes`. The
-command starts or reuses the loopback-only WYSIWYG notes canvas and returns to
-the same Cortex prompt. The browser is the shared visual document surface; the
+command starts the WYSIWYG notes canvas, or automatically restarts an existing
+notes server and waits for current code to become ready, then returns to the
+same Cortex prompt. The browser is the shared visual document surface; the
 Cortex REPL remains the conversational and command surface. Human canvas edits
 and bounded document-tool edits share the same revisioned host-local document.
 

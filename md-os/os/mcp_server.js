@@ -766,11 +766,16 @@ function visualDocumentBlockSchema() {
       inputSchema({
         id: { type: 'string' },
         type: { const: 'whiteboard' },
-        height_px: { type: 'integer', minimum: 600, maximum: 3000, default: 1000 },
+        height_px: { type: 'integer', minimum: 600, maximum: 8000, default: 1000 },
         strokes: {
           type: 'array',
           maxItems: 5000,
           items: { type: 'object', description: 'Validated shared pen or eraser stroke.' },
+        },
+        annotations: {
+          type: 'array',
+          maxItems: 500,
+          items: { type: 'object', description: 'Validated text annotation drawn on the Whiteboard.' },
         },
       }, ['type', 'strokes']),
     ],
@@ -851,7 +856,7 @@ function listDocumentTools() {
           maxItems: 100,
           items: {
             type: 'object',
-            description: 'Block edit or atomic whiteboard_append_stroke, whiteboard_undo, whiteboard_clear, or whiteboard_resize operation.',
+            description: 'Block edit or atomic whiteboard_append_stroke, whiteboard_undo, whiteboard_clear, whiteboard_resize, whiteboard_add_text, or whiteboard_remove_text operation.',
           },
         },
       }, ['document_id', 'operations']),

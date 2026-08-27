@@ -112,7 +112,8 @@ MCP-compatible host, verify:
 - `resources/read` can read `mdos://ops/state`
 - `resources/list` shows `ui://mdos/document-editor/v1.html`
 - `mdos_document_open` displays the WYSIWYG canvas in an MCP Apps-capable host
-- rich paste, image paste, tables, formulas, save, assistant edits, and export work
+- rich paste, image paste, tables, formulas, portable save/open/new, assistant
+  edits, and export work
 - `tools/list` shows the `mdos_*` tools
 - `mdos_connector_list` returns the connector registry
 - `mdos_register_signal` can create a source signal in a disposable demo

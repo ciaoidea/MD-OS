@@ -158,6 +158,10 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
     assert.match(editor.result.contents[0].text, /id="add-formula"[^>]*aria-label="Formula"/);
     assert.match(editor.result.contents[0].text, /id="add-image"[^>]*aria-label="Image"/);
     assert.match(editor.result.contents[0].text, /id="add-whiteboard"[^>]*aria-label="Whiteboard"/);
+    assert.match(editor.result.contents[0].text, /id="save-notes-file"[^>]*aria-label="Save notes file"/);
+    assert.match(editor.result.contents[0].text, /id="open-notes-file"[^>]*aria-label="Open notes file"/);
+    assert.match(editor.result.contents[0].text, /id="new-notes-file"[^>]*aria-label="New clean notes file"/);
+    assert.match(editor.result.contents[0].text, /id="ai-assist"[^>]*aria-label="Ask AI about the last edit"/);
     assert.doesNotMatch(editor.result.contents[0].text, />Whiteboard<\/button>/);
     assert.match(editor.result.contents[0].text, /whiteboard_append_stroke/);
 
@@ -183,6 +187,10 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
     const applyDescriptor = documentTools.find((item) => item.name === 'mdos_document_apply');
     assert.ok(applyDescriptor.inputSchema.properties.expected_revision);
     assert.ok(!applyDescriptor.inputSchema.required.includes('expected_revision'));
+    const saveDescriptor = documentTools.find((item) => item.name === 'mdos_document_save');
+    const whiteboardSchema = saveDescriptor.inputSchema.properties.blocks.items.oneOf
+      .find((item) => item.properties?.type?.const === 'whiteboard');
+    assert.equal(whiteboardSchema.properties.height_px.maximum, 8000);
 
     const created = await server.request('tools/call', {
       name: 'mdos_document_create',
@@ -257,12 +265,36 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
     );
     assert.equal(sharedStroke.result.structuredContent.document.blocks[3].height_px, 1600);
 
+    const whiteboardAnswer = await server.request('tools/call', {
+      name: 'mdos_document_apply',
+      arguments: {
+        document_id: 'live_notes',
+        operations: [{
+          type: 'whiteboard_add_text',
+          block_id: whiteboardId,
+          annotation: {
+            text: 'Risposta breve',
+            x: 40,
+            y: 120,
+            color: '#1769e0',
+            font_size: 34,
+          },
+        }],
+      },
+    });
+    assert.equal(whiteboardAnswer.error, undefined);
+    assert.equal(whiteboardAnswer.result.structuredContent.document.revision, 4);
+    assert.equal(
+      whiteboardAnswer.result.structuredContent.document.blocks[3].annotations[0].text,
+      'Risposta breve',
+    );
+
     const read = await server.request('tools/call', {
       name: 'mdos_document_read',
       arguments: { document_id: 'live_notes' },
     });
     assert.equal(read.error, undefined);
-    assert.equal(read.result.structuredContent.document.revision, 3);
+    assert.equal(read.result.structuredContent.document.revision, 4);
 
     const math = await server.request('tools/call', {
       name: 'mdos_document_render_math',

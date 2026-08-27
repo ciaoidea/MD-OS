@@ -21,9 +21,16 @@ const MAX_FORMULA_LENGTH = 5000;
 const MAX_WHITEBOARD_STROKES = 5000;
 const MAX_WHITEBOARD_POINTS_PER_STROKE = 5000;
 const MAX_WHITEBOARD_TOTAL_POINTS = 100000;
+const MAX_WHITEBOARD_ANNOTATIONS = 500;
+const MAX_WHITEBOARD_ANNOTATION_LENGTH = 5000;
 const DEFAULT_WHITEBOARD_HEIGHT = 1000;
 const MIN_WHITEBOARD_HEIGHT = 600;
-const MAX_WHITEBOARD_HEIGHT = 3000;
+const MAX_WHITEBOARD_HEIGHT = 8000;
+const WHITEBOARD_AI_FONT_SIZE = 48;
+const WHITEBOARD_TEXT_MIN_FONT_SIZE = 18;
+const WHITEBOARD_TEXT_RIGHT_MARGIN = 64;
+const WHITEBOARD_TEXT_MIN_LINE_WIDTH = 120;
+const WHITEBOARD_WIDTH = 1600;
 const ALLOWED_BLOCK_TYPES = new Set(['rich', 'table', 'formula', 'image', 'whiteboard']);
 const ALLOWED_TAGS = new Set([
   'a', 'b', 'blockquote', 'br', 'caption', 'code', 'col', 'colgroup', 'div',
@@ -39,6 +46,7 @@ const SAFE_STYLE_PROPERTIES = new Set([
 ]);
 const BLOCK_ID_PATTERN = /^b_[a-f0-9]{16,32}$/;
 const STROKE_ID_PATTERN = /^s_[a-f0-9]{16,32}$/;
+const ANNOTATION_ID_PATTERN = /^a_[a-f0-9]{16,32}$/;
 const WHITEBOARD_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const IMAGE_DATA_URI_PATTERN = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\s]+$/;
 const DANGEROUS_LATEX = /\\(?:catcode|csname|def|documentclass|every|expandafter|immediate|include|input|loop|newcommand|openin|openout|read|repeat|special|usepackage|write|write18)\b/i;
@@ -66,9 +74,19 @@ function newStrokeId() {
   return `s_${crypto.randomBytes(10).toString('hex')}`;
 }
 
+function newAnnotationId() {
+  return `a_${crypto.randomBytes(10).toString('hex')}`;
+}
+
 function strokeId(value) {
   const candidate = shortText(value);
   if (!STROKE_ID_PATTERN.test(candidate)) throw new Error(`INVALID_WHITEBOARD_STROKE_ID: ${candidate}`);
+  return candidate;
+}
+
+function annotationId(value) {
+  const candidate = shortText(value);
+  if (!ANNOTATION_ID_PATTERN.test(candidate)) throw new Error(`INVALID_WHITEBOARD_ANNOTATION_ID: ${candidate}`);
   return candidate;
 }
 
@@ -280,6 +298,54 @@ function normalizeWhiteboardStrokes(values) {
   });
 }
 
+function normalizeWhiteboardAnnotation(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('INVALID_WHITEBOARD_ANNOTATION');
+  }
+  const latex = value.latex === undefined || value.latex === null || String(value.latex).trim() === ''
+    ? null
+    : safeLatex(value.latex);
+  const rendered = latex ? renderMath(latex, true) : null;
+  const rawDataUri = value.data_uri === undefined || value.data_uri === null
+    ? ''
+    : String(value.data_uri).trim();
+  const dataUri = rawDataUri ? safeImageSource(rawDataUri) : null;
+  if (rawDataUri && !dataUri) throw new Error('INVALID_WHITEBOARD_IMAGE');
+  const text = String(value.text || rendered?.latex || (dataUri ? 'Clipboard image' : ''))
+    .trim()
+    .slice(0, MAX_WHITEBOARD_ANNOTATION_LENGTH);
+  if (!text) throw new Error('EMPTY_WHITEBOARD_ANNOTATION');
+  const color = String(value.color || '#1769e0').toLowerCase();
+  if (!WHITEBOARD_COLOR_PATTERN.test(color)) throw new Error(`INVALID_WHITEBOARD_COLOR: ${color}`);
+  return {
+    id: value.id ? annotationId(value.id) : newAnnotationId(),
+    text,
+    x: finiteWhiteboardNumber(value.x, 'ANNOTATION_X', 0, 1600),
+    y: finiteWhiteboardNumber(value.y, 'ANNOTATION_Y', 0, MAX_WHITEBOARD_HEIGHT),
+    color,
+    font_size: finiteWhiteboardNumber(value.font_size ?? 34, 'ANNOTATION_FONT_SIZE', 18, 72),
+    ...(rendered ? { latex: rendered.latex, mathml: rendered.mathml } : {}),
+    ...(dataUri ? {
+      data_uri: dataUri,
+      width: finiteWhiteboardNumber(value.width ?? 640, 'ANNOTATION_WIDTH', 16, 1600),
+      height: finiteWhiteboardNumber(value.height ?? 480, 'ANNOTATION_HEIGHT', 16, MAX_WHITEBOARD_HEIGHT),
+    } : {}),
+  };
+}
+
+function normalizeWhiteboardAnnotations(values) {
+  if (values === undefined) return [];
+  if (!Array.isArray(values)) throw new Error('INVALID_WHITEBOARD_ANNOTATIONS');
+  if (values.length > MAX_WHITEBOARD_ANNOTATIONS) throw new Error('TOO_MANY_WHITEBOARD_ANNOTATIONS');
+  const usedIds = new Set();
+  return values.map((value) => {
+    const annotation = normalizeWhiteboardAnnotation(value);
+    if (usedIds.has(annotation.id)) throw new Error(`DUPLICATE_WHITEBOARD_ANNOTATION_ID: ${annotation.id}`);
+    usedIds.add(annotation.id);
+    return annotation;
+  });
+}
+
 function normalizeBlock(value, usedIds = new Set()) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('INVALID_DOCUMENT_BLOCK');
@@ -309,6 +375,7 @@ function normalizeBlock(value, usedIds = new Set()) {
         ? Math.min(MAX_WHITEBOARD_HEIGHT, Math.max(MIN_WHITEBOARD_HEIGHT, height))
         : DEFAULT_WHITEBOARD_HEIGHT,
       strokes: normalizeWhiteboardStrokes(value.strokes),
+      annotations: normalizeWhiteboardAnnotations(value.annotations),
     };
   }
   const dataUri = safeImageSource(value.data_uri);
@@ -485,7 +552,29 @@ function applyDocumentOperations(args = {}) {
       const index = blocks.findIndex((item) => item.id === targetId);
       if (index < 0) throw new Error(`DOCUMENT_BLOCK_NOT_FOUND: ${targetId}`);
       if (blocks[index].type !== 'whiteboard') throw new Error(`DOCUMENT_BLOCK_NOT_WHITEBOARD: ${targetId}`);
-      blocks[index] = normalizeOperationBlock({ ...blocks[index], strokes: [] });
+      blocks[index] = normalizeOperationBlock({ ...blocks[index], strokes: [], annotations: [] });
+      continue;
+    }
+    if (type === 'whiteboard_add_text') {
+      const targetId = blockId(operation.block_id);
+      const index = blocks.findIndex((item) => item.id === targetId);
+      if (index < 0) throw new Error(`DOCUMENT_BLOCK_NOT_FOUND: ${targetId}`);
+      if (blocks[index].type !== 'whiteboard') throw new Error(`DOCUMENT_BLOCK_NOT_WHITEBOARD: ${targetId}`);
+      const annotation = normalizeWhiteboardAnnotation(operation.annotation);
+      const annotations = normalizeWhiteboardAnnotations(blocks[index].annotations);
+      if (!annotations.some((item) => item.id === annotation.id)) annotations.push(annotation);
+      blocks[index] = normalizeOperationBlock({ ...blocks[index], annotations });
+      continue;
+    }
+    if (type === 'whiteboard_remove_text') {
+      const targetId = blockId(operation.block_id);
+      const index = blocks.findIndex((item) => item.id === targetId);
+      if (index < 0) throw new Error(`DOCUMENT_BLOCK_NOT_FOUND: ${targetId}`);
+      if (blocks[index].type !== 'whiteboard') throw new Error(`DOCUMENT_BLOCK_NOT_WHITEBOARD: ${targetId}`);
+      const targetAnnotationId = annotationId(operation.annotation_id);
+      const annotations = normalizeWhiteboardAnnotations(blocks[index].annotations)
+        .filter((annotation) => annotation.id !== targetAnnotationId);
+      blocks[index] = normalizeOperationBlock({ ...blocks[index], annotations });
       continue;
     }
     if (type === 'whiteboard_resize') {
@@ -518,6 +607,81 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;');
 }
 
+function whiteboardAnnotationHorizontalLayout(annotation) {
+  const fontSize = Math.min(72, Math.max(
+    WHITEBOARD_TEXT_MIN_FONT_SIZE,
+    Number(annotation.font_size) || WHITEBOARD_AI_FONT_SIZE
+  ));
+  const requestedX = Math.max(0, Number(annotation.x) || 0);
+  const x = Math.min(
+    requestedX,
+    Math.max(0, WHITEBOARD_WIDTH - WHITEBOARD_TEXT_RIGHT_MARGIN - WHITEBOARD_TEXT_MIN_LINE_WIDTH)
+  );
+  return {
+    fontSize,
+    x,
+    maxWidth: Math.max(1, WHITEBOARD_WIDTH - x - WHITEBOARD_TEXT_RIGHT_MARGIN),
+  };
+}
+
+function estimatedWhiteboardTextWidth(value, fontSize) {
+  let units = 0;
+  for (const character of Array.from(String(value))) {
+    if (/\s/u.test(character)) units += 0.34;
+    else if (/[ilI1.,'`:;|!]/u.test(character)) units += 0.36;
+    else if (/[MW@%&#]/u.test(character)) units += 0.96;
+    else if (character.codePointAt(0) > 0x2e7f) units += 1;
+    else units += 0.68;
+  }
+  return units * fontSize;
+}
+
+function wrapWhiteboardExportLine(sourceLine, maxWidth, fontSize) {
+  const words = String(sourceLine).trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (estimatedWhiteboardTextWidth(candidate, fontSize) <= maxWidth) {
+      line = candidate;
+      continue;
+    }
+    if (line) {
+      lines.push(line);
+      line = '';
+    }
+    if (estimatedWhiteboardTextWidth(word, fontSize) <= maxWidth) {
+      line = word;
+      continue;
+    }
+    let chunk = '';
+    for (const character of Array.from(word)) {
+      const nextChunk = `${chunk}${character}`;
+      if (chunk && estimatedWhiteboardTextWidth(nextChunk, fontSize) > maxWidth) {
+        lines.push(chunk);
+        chunk = character;
+      } else {
+        chunk = nextChunk;
+      }
+    }
+    line = chunk;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function whiteboardExportTextLayout(annotation) {
+  const horizontal = whiteboardAnnotationHorizontalLayout(annotation);
+  const lines = [];
+  for (const sourceLine of String(annotation.text || '').trim().replace(/\r\n?/g, '\n').split('\n')) {
+    const wrapped = wrapWhiteboardExportLine(sourceLine, horizontal.maxWidth, horizontal.fontSize);
+    if (wrapped.length) lines.push(...wrapped);
+    else if (lines.length) lines.push('');
+  }
+  return { ...horizontal, lines };
+}
+
 function whiteboardSvg(block) {
   const height = Number.isInteger(block.height_px) ? block.height_px : DEFAULT_WHITEBOARD_HEIGHT;
   const parts = [
@@ -536,6 +700,27 @@ function whiteboardSvg(block) {
       const point = stroke.points[index];
       parts.push(`<line x1="${previous.x}" y1="${previous.y}" x2="${point.x}" y2="${point.y}" stroke="${color}" stroke-width="${point.width}" stroke-linecap="round"/>`);
     }
+  }
+  for (const annotation of block.annotations || []) {
+    if (annotation.data_uri) {
+      parts.push(`<image x="${annotation.x}" y="${annotation.y}" width="${annotation.width}" height="${annotation.height}" href="${escapeAttribute(annotation.data_uri)}" preserveAspectRatio="xMidYMid meet"/>`);
+      continue;
+    }
+    if (annotation.latex && annotation.mathml) {
+      const { fontSize, x, maxWidth } = whiteboardAnnotationHorizontalLayout(annotation);
+      const rowCount = Math.max(1, (String(annotation.mathml).match(/<mtr(?:\s|>)/g) || []).length);
+      const annotationHeight = Math.max(160, Math.ceil(fontSize * (rowCount * 1.9 + 0.6)));
+      parts.push(`<foreignObject x="${x}" y="${annotation.y}" width="${maxWidth}" height="${annotationHeight}">`);
+      parts.push(`<div xmlns="http://www.w3.org/1999/xhtml" style="display:block;width:100%;overflow:visible;color:${escapeAttribute(annotation.color)};font-size:${fontSize}px;line-height:1;white-space:nowrap">${annotation.mathml}</div>`);
+      parts.push('</foreignObject>');
+      continue;
+    }
+    const { fontSize, x, lines } = whiteboardExportTextLayout(annotation);
+    parts.push(`<text x="${x}" y="${annotation.y}" fill="${escapeAttribute(annotation.color)}" font-family="Segoe Script, Apple Chancery, URW Chancery L, Lucida Calligraphy, cursive" font-size="${fontSize}" font-weight="700" paint-order="stroke" stroke="#ffffff" stroke-width="4" stroke-linejoin="round">`);
+    lines.forEach((line, index) => {
+      parts.push(`<tspan x="${x}" dy="${index === 0 ? 0 : fontSize * 1.25}">${escapeHtml(line.trim())}</tspan>`);
+    });
+    parts.push('</text>');
   }
   parts.push('</svg>');
   return parts.join('');
@@ -570,8 +755,7 @@ function documentHtml(document, whiteboardAssets = new Map()) {
   const body = document.blocks.map((block) => {
     if (block.type === 'rich' || block.type === 'table') return block.html;
     if (block.type === 'formula') {
-      const delimiter = block.display ? ['\\[', '\\]'] : ['\\(', '\\)'];
-      return `<div class="formula">${delimiter[0]}${escapeHtml(block.latex)}${delimiter[1]}</div>`;
+      return `<div class="formula">${block.mathml}</div>`;
     }
     if (block.type === 'whiteboard') {
       const asset = whiteboardAssets.get(block.id);
@@ -587,7 +771,7 @@ function documentHtml(document, whiteboardAssets = new Map()) {
 <head>
 <meta charset="utf-8">
 <title>${escapeHtml(document.title)}</title>
-<style>body{font-family:system-ui,sans-serif;max-width:52rem;margin:3rem auto;line-height:1.55}img{height:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #888;padding:.35rem}.formula{text-align:center;margin:1rem 0}</style>
+<style>body{font-family:system-ui,sans-serif;max-width:52rem;margin:3rem auto;line-height:1.55}img{height:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #888;padding:.35rem}.formula{text-align:center;margin:1rem 0}.formula math{font-size:1.2em}</style>
 </head>
 <body>
 <h1>${escapeHtml(document.title)}</h1>
@@ -612,14 +796,54 @@ function runPandoc(args, input) {
   return result;
 }
 
-function exportDocument(args = {}) {
-  const document = readDocument(args.document_id, { createIfMissing: false });
-  const format = shortText(args.format).toLowerCase();
-  if (!['html', 'tex', 'pdf'].includes(format)) throw new Error(`UNSUPPORTED_DOCUMENT_EXPORT: ${format}`);
-  const exportsDirectory = path.join(documentDirectory(document.document_id), 'exports');
-  fs.mkdirSync(exportsDirectory, { recursive: true });
+function runBrowserPdf(html, output) {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'mdos-document-browser-export-'));
+  const source = path.join(temporary, 'document.html');
+  fs.writeFileSync(source, html, 'utf8');
+  const candidates = [
+    process.env.MDOS_CHROME_BIN,
+    'google-chrome',
+    'chromium',
+    'chromium-browser',
+  ].filter(Boolean);
+  try {
+    for (const executable of [...new Set(candidates)]) {
+      fs.rmSync(output, { force: true });
+      const result = spawnSync(executable, [
+        '--headless=new',
+        '--no-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-background-networking',
+        '--disable-component-update',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-sync',
+        '--metrics-recording-only',
+        '--mute-audio',
+        '--no-first-run',
+        '--allow-file-access-from-files',
+        '--no-pdf-header-footer',
+        `--print-to-pdf=${output}`,
+        `file://${source}`,
+      ], {
+        cwd: WORKSPACE_ROOT,
+        encoding: 'utf8',
+        timeout: 60_000,
+      });
+      if (result.status === 0 && fs.existsSync(output) && fs.statSync(output).size > 1000) {
+        return true;
+      }
+    }
+    return false;
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+}
+
+function writeDocumentExport(document, format, exportsDirectory) {
   const whiteboardAssets = new Map();
-  if (format !== 'html') {
+  if (format === 'tex') {
     for (const block of document.blocks) {
       if (block.type === 'whiteboard') {
         whiteboardAssets.set(block.id, whiteboardPdfAsset(block, document, exportsDirectory));
@@ -628,9 +852,11 @@ function exportDocument(args = {}) {
   }
   const html = documentHtml(document, whiteboardAssets);
   const output = path.join(exportsDirectory, `${document.document_id}.${format}`);
+  let engine = 'direct';
   if (format === 'html') {
     fs.writeFileSync(output, html, 'utf8');
   } else if (format === 'tex') {
+    engine = 'pandoc_latex';
     runPandoc([
       '--from=html+tex_math_single_backslash',
       '--to=latex',
@@ -638,28 +864,81 @@ function exportDocument(args = {}) {
       '--output', output,
     ], html);
   } else {
-    const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'mdos-document-export-'));
-    const source = path.join(temporary, 'document.html');
-    fs.writeFileSync(source, html, 'utf8');
-    try {
-      runPandoc([
-        '--from=html+tex_math_single_backslash',
-        '--pdf-engine=xelatex',
-        '--pdf-engine-opt=-no-shell-escape',
-        '--output', output,
-        source,
-      ]);
-    } finally {
-      fs.rmSync(temporary, { recursive: true, force: true });
+    engine = 'browser_pdf';
+    if (!runBrowserPdf(html, output)) {
+      engine = 'pandoc_xelatex';
+      for (const block of document.blocks) {
+        if (block.type === 'whiteboard') {
+          whiteboardAssets.set(block.id, whiteboardPdfAsset(block, document, exportsDirectory));
+        }
+      }
+      const fallbackHtml = documentHtml(document, whiteboardAssets);
+      const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'mdos-document-export-'));
+      const source = path.join(temporary, 'document.html');
+      fs.writeFileSync(source, fallbackHtml, 'utf8');
+      try {
+        runPandoc([
+          '--from=html+tex_math_single_backslash',
+          '--pdf-engine=xelatex',
+          '--pdf-engine-opt=-no-shell-escape',
+          '--output', output,
+          source,
+        ]);
+      } finally {
+        fs.rmSync(temporary, { recursive: true, force: true });
+      }
     }
   }
+  return {
+    engine,
+    output,
+    bytes: fs.statSync(output).size,
+  };
+}
+
+function exportDocument(args = {}) {
+  const document = readDocument(args.document_id, { createIfMissing: false });
+  const format = shortText(args.format).toLowerCase();
+  if (!['html', 'tex', 'pdf'].includes(format)) throw new Error(`UNSUPPORTED_DOCUMENT_EXPORT: ${format}`);
+  const exportsDirectory = path.join(documentDirectory(document.document_id), 'exports');
+  fs.mkdirSync(exportsDirectory, { recursive: true });
+  const exported = writeDocumentExport(document, format, exportsDirectory);
   return {
     ok: true,
     document_id: document.document_id,
     revision: document.revision,
     format,
-    path: relative(output),
-    bytes: fs.statSync(output).size,
+    engine: exported.engine,
+    path: relative(exported.output),
+    bytes: exported.bytes,
+  };
+}
+
+function exportTemporaryPdf(args = {}) {
+  const document = readDocument(args.document_id, { createIfMissing: false });
+  const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'mdos-document-pdf-'));
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    fs.rmSync(temporaryDirectory, { recursive: true, force: true });
+  };
+  try {
+    const exported = writeDocumentExport(document, 'pdf', temporaryDirectory);
+    return {
+      ok: true,
+      document_id: document.document_id,
+      revision: document.revision,
+      format: 'pdf',
+      engine: exported.engine,
+      path: exported.output,
+      bytes: exported.bytes,
+      temporary: true,
+      cleanup,
+    };
+  } catch (error) {
+    cleanup();
+    throw error;
   };
 }
 
@@ -682,6 +961,7 @@ module.exports = {
   documentHtml,
   documentSummary,
   exportDocument,
+  exportTemporaryPdf,
   newBlockId,
   normalizeBlocks,
   readDocument,

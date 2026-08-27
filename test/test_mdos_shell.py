@@ -1020,7 +1020,7 @@ class SemanticShellParityTests(unittest.TestCase):
         launch.assert_called_once_with(session)
         self.assertIsNone(session.app_server)
 
-    def test_notes_workspace_launcher_is_ready_and_idempotent(self):
+    def test_notes_workspace_launcher_restarts_an_existing_managed_server(self):
         with socket.socket() as probe:
             probe.bind((ENGINE.NOTES_HOST, 0))
             port = probe.getsockname()[1]
@@ -1047,7 +1047,9 @@ class SemanticShellParityTests(unittest.TestCase):
                     ENGINE.notes_workspace_ready(ENGINE.notes_workspace_url())
                 )
                 self.assertTrue(ENGINE.launch_notes_workspace(session))
-                self.assertEqual(session.notes_process.pid, first_pid)
+                self.assertIsNotNone(session.notes_process)
+                self.assertNotEqual(session.notes_process.pid, first_pid)
+                self.assertIn("CORTEX NOTES: restarted", output.getvalue())
                 self.assertIn(
                     "CORTEX NOTES BOOX: http://192.0.2.20:",
                     output.getvalue(),
@@ -1056,6 +1058,53 @@ class SemanticShellParityTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 ENGINE.close_notes_workspace(session, announce=False)
         self.assertIsNone(session.notes_process)
+
+    def test_notes_workspace_launcher_restarts_a_server_from_a_previous_session(self):
+        with socket.socket() as probe:
+            probe.bind((ENGINE.NOTES_HOST, 0))
+            port = probe.getsockname()[1]
+        owner = ENGINE.ShellSession()
+        caller = ENGINE.ShellSession()
+        environment = {
+            "MDOS_NOTES_LAN": "0",
+            "MDOS_NOTES_PORT": str(port),
+            "MDOS_NOTES_OPEN_BROWSER": "never",
+        }
+        url = ""
+        first_pid = None
+        try:
+            with (
+                mock.patch.dict(os.environ, environment, clear=False),
+                contextlib.redirect_stdout(io.StringIO()) as output,
+            ):
+                self.assertTrue(ENGINE.launch_notes_workspace(owner))
+                self.assertIsNotNone(owner.notes_process)
+                first_pid = owner.notes_process.pid
+                url = ENGINE.notes_workspace_url()
+
+                self.assertTrue(ENGINE.launch_notes_workspace(caller))
+                status = ENGINE.notes_workspace_status(url)
+                self.assertIsNotNone(status)
+                self.assertNotEqual(status.get("pid"), first_pid)
+                self.assertIsNone(caller.notes_process)
+                self.assertIn("CORTEX NOTES: restarted", output.getvalue())
+        finally:
+            if url and ENGINE.notes_workspace_ready(url):
+                ENGINE.request_notes_workspace_control(url, "shutdown")
+                deadline = ENGINE.time.monotonic() + ENGINE.NOTES_STARTUP_TIMEOUT_SECONDS
+                while (
+                    ENGINE.time.monotonic() < deadline
+                    and ENGINE.notes_workspace_ready(url)
+                ):
+                    ENGINE.time.sleep(0.05)
+            process = owner.notes_process
+            if process is not None:
+                if process.poll() is None:
+                    process.terminate()
+                    process.wait(timeout=1)
+                for stream in (process.stdout, process.stderr):
+                    if stream is not None:
+                        stream.close()
 
     def test_notes_lan_binding_can_be_disabled_and_urls_are_bounded(self):
         with mock.patch.dict(

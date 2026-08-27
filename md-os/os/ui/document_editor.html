@@ -20,8 +20,25 @@
     }
 
     * { box-sizing: border-box; }
-    html, body { min-height: 100%; margin: 0; }
-    body { background: var(--bg); color: var(--ink); }
+    html {
+      min-height: 100%;
+      margin: 0;
+      overflow-x: hidden;
+      overflow-y: scroll;
+      scrollbar-color: #6b7280 #d7d8da;
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+    }
+    body { min-height: 100%; margin: 0; overflow-x: hidden; background: var(--bg); color: var(--ink); }
+    html::-webkit-scrollbar { width: 18px; }
+    html::-webkit-scrollbar-track { background: #d7d8da; }
+    html::-webkit-scrollbar-thumb {
+      min-height: 48px;
+      border: 3px solid #d7d8da;
+      border-radius: 999px;
+      background: #6b7280;
+    }
+    html::-webkit-scrollbar-thumb:hover { background: #4b5563; }
     button, input, select { font: inherit; }
     button { color: inherit; }
 
@@ -88,9 +105,11 @@
       flex: 0 0 2rem;
       display: inline-grid;
       place-items: center;
+      position: relative;
       width: 2rem;
       min-width: 2rem;
       padding: 0;
+      overflow: visible;
       line-height: 1;
     }
 
@@ -128,8 +147,8 @@
     @keyframes remote-pulse { 0% { background: rgb(31 157 85 / .16); } 100% { background: transparent; } }
 
     .workspace {
-      overflow: auto;
-      padding: 2.25rem max(1rem, calc((100vw - 58rem) / 2)) 5rem;
+      overflow: visible;
+      padding: 2.25rem max(3rem, calc((100vw - 58rem) / 2)) 5rem max(1rem, calc((100vw - 58rem) / 2));
     }
 
     .paper {
@@ -197,6 +216,7 @@
     .image figcaption { min-height: 1.4rem; color: var(--muted); font-size: .88rem; outline: 0; }
 
     .whiteboard {
+      position: relative;
       overflow: hidden;
       border: 1px solid var(--line);
       border-radius: .55rem;
@@ -235,6 +255,7 @@
       flex: 0 1 1.75rem;
       display: inline-grid;
       place-items: center;
+      position: relative;
       width: 1.75rem;
       max-width: 1.75rem;
       height: 1.75rem;
@@ -246,6 +267,7 @@
       background: #fff;
       color: #202124;
       cursor: pointer;
+      overflow: visible;
       line-height: 1;
     }
 
@@ -275,14 +297,61 @@
     .whiteboard-control[data-color].active .whiteboard-color-dot {
       box-shadow: 0 0 0 2px #fff, 0 0 0 3px #1769e0;
     }
+
+    .whiteboard-toolbar-row #ai-assist {
+      flex: 0 0 1.75rem;
+      width: 1.75rem;
+      height: 1.75rem;
+      margin-left: auto;
+    }
     .whiteboard-canvas {
       display: block;
       width: 100%;
       height: auto;
       background: #fff;
       cursor: crosshair;
-      touch-action: none;
-      overscroll-behavior: contain;
+      touch-action: pan-y pinch-zoom;
+      overscroll-behavior-y: auto;
+    }
+    .whiteboard-canvas[data-tool="select"] { cursor: cell; }
+    .whiteboard-canvas[data-tool="move"] { cursor: move; }
+
+    .whiteboard-selection {
+      fill: rgba(23, 105, 224, .08);
+      stroke: #1769e0;
+      stroke-width: 3;
+      stroke-dasharray: 14 9;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+
+    .whiteboard-annotation-layer {
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      left: 0;
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .whiteboard-latex {
+      display: block;
+      align-items: flex-start;
+      width: 100%;
+      overflow: visible;
+      color: #1769e0;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .whiteboard-latex math {
+      display: block;
+      margin: 0;
+      font-size: 1em;
+      white-space: nowrap;
     }
 
     .whiteboard-resize-handle {
@@ -319,7 +388,7 @@
 
     .status {
       position: fixed;
-      right: 1rem;
+      right: 3rem;
       bottom: 1rem;
       z-index: 15;
       min-height: 1.8rem;
@@ -371,15 +440,162 @@
     .formula-preview { min-height: 5rem; display: grid; place-items: center; padding: .8rem; overflow: auto; }
     .modal-actions { display: flex; justify-content: flex-end; gap: .4rem; }
 
-    #image-input { display: none; }
+    .page-scrollbar {
+      position: fixed;
+      z-index: 45;
+      top: clamp(7rem, 18vh, 11rem);
+      right: .22rem;
+      bottom: .65rem;
+      display: grid;
+      grid-template-rows: 2.35rem minmax(4rem, 1fr) 2.35rem;
+      width: 2.35rem;
+      min-height: 9rem;
+      overflow: hidden;
+      border: 1px solid #7b8087;
+      border-radius: .55rem;
+      background: #e8e9eb;
+      box-shadow: 0 1px 5px rgb(0 0 0 / .24);
+      color: #202124;
+      user-select: none;
+    }
+
+    .page-scroll-button {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-width: 0;
+      height: 2.35rem;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: #f8f8f7;
+      color: #202124;
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .page-scroll-button:first-child { border-bottom: 1px solid #9ca0a6; }
+    .page-scroll-button:last-child { border-top: 1px solid #9ca0a6; }
+    .page-scroll-button:active { background: #d7e6ff; }
+    .page-scroll-button:focus-visible { position: relative; z-index: 2; outline: 2px solid #1769e0; outline-offset: -2px; }
+    .page-scroll-button:disabled { opacity: .45; cursor: default; }
+
+    .page-scroll-track {
+      position: relative;
+      min-height: 0;
+      background: #c8cbd0;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .page-scroll-thumb {
+      position: absolute;
+      top: 0;
+      left: .27rem;
+      width: calc(100% - .54rem);
+      min-height: 2.75rem;
+      border: 1px solid #565c64;
+      border-radius: 999px;
+      background: #747b85;
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / .28);
+      cursor: grab;
+      touch-action: none;
+      will-change: transform;
+    }
+    .page-scroll-thumb:active { cursor: grabbing; background: #4f5660; }
+    .page-scrollbar[data-scrollable="false"] .page-scroll-track { opacity: .48; }
+
+    #image-input, #notes-file-input { display: none; }
+
+    .toolbar-graphic.ai-working {
+      animation: ai-pulse 0.8s ease-in-out infinite alternate;
+    }
+
+    .ai-kitt-strip {
+      position: relative;
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(5, .34rem);
+      align-items: center;
+      gap: .16rem;
+      height: 1.15rem;
+      margin-left: .35rem;
+      padding: .2rem .32rem;
+      overflow: hidden;
+      border: 1px solid #30363f;
+      border-radius: .45rem;
+      background: #101318;
+      box-shadow: inset 0 0 .35rem rgb(0 0 0 / .72), 0 1px 2px rgb(0 0 0 / .2);
+    }
+
+    .ai-kitt-led {
+      width: .34rem;
+      height: .34rem;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 .18rem #22c55e, 0 0 .38rem rgb(34 197 94 / .58);
+      opacity: .92;
+    }
+
+    .ai-kitt-strip::after {
+      content: "";
+      position: absolute;
+      top: .12rem;
+      bottom: .12rem;
+      left: .28rem;
+      width: .88rem;
+      border-radius: 999px;
+      background: radial-gradient(ellipse at center, #ffffff 0 8%, #22c55e 28%, rgb(34 197 94 / .7) 48%, transparent 74%);
+      filter: drop-shadow(0 0 .34rem #22c55e);
+      pointer-events: none;
+      animation: ai-kitt-scan 1.05s ease-in-out infinite alternate;
+    }
+
+    .ai-kitt-strip[data-state="working"] .ai-kitt-led {
+      background: #ff2b1c;
+      box-shadow: 0 0 .12rem #ff2b1c;
+      opacity: .3;
+    }
+
+    .ai-kitt-strip[data-state="working"]::after {
+      background: radial-gradient(ellipse at center, #ffffff 0 8%, #ff2b1c 28%, rgb(255 43 28 / .7) 48%, transparent 74%);
+      filter: drop-shadow(0 0 .34rem #ff2b1c);
+    }
+
+    .ai-kitt-strip[data-state="failed"] .ai-kitt-led {
+      background: #ff2b1c;
+      box-shadow: 0 0 .2rem #ff2b1c, 0 0 .45rem rgb(255 43 28 / .68);
+      opacity: 1;
+    }
+
+    @keyframes ai-kitt-scan {
+      from { left: .28rem; }
+      to { left: calc(100% - 1.16rem); }
+    }
+
+    @keyframes ai-pulse {
+      from { transform: scale(0.96); opacity: 0.72; }
+      to { transform: scale(1.04); opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .toolbar-graphic.ai-working,
+      .ai-kitt-strip::after { animation: none; }
+      .ai-kitt-strip::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
 
     @media (max-width: 760px) {
       .bar { grid-template-columns: 1fr auto; }
       .tools { grid-column: 1 / -1; grid-row: 2; overflow: visible; flex-wrap: wrap; justify-content: flex-start; }
       .whiteboard-toolbar { grid-column: 1 / -1; grid-row: 3; }
-      .workspace { padding: .6rem 0 4rem; }
+      .workspace { padding: .6rem 2.8rem 4rem 0; }
       .paper { min-height: calc(100vh - 7rem); padding: 2rem 1.25rem; box-shadow: none; }
       .action.export { display: none; }
+      .page-scrollbar { top: clamp(8.2rem, 23vh, 12rem); }
     }
 
     @media (prefers-color-scheme: dark) {
@@ -398,9 +614,22 @@
 </head>
 <body>
   <div class="shell">
-    <header class="bar">
+    <header class="bar" data-ai-state="idle">
       <input id="title" aria-label="Shared notes title" value="Shared notes" autocomplete="off">
-      <nav class="tools" aria-label="Formatting">
+      <nav class="tools" aria-label="Document controls">
+        <button class="tool toolbar-graphic" id="save-notes-file" type="button" title="Save notes file" aria-label="Save notes file" data-tone="green">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5V3Zm3 0v6h8V3M8 21v-8h8v8"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" id="open-notes-file" type="button" title="Open notes file" aria-label="Open notes file" data-tone="amber">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 2h9v11H3V6Zm0 5h18M6 3h5l2 2"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" id="new-notes-file" type="button" title="New clean notes file" aria-label="New clean notes file" data-tone="blue">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6V3Zm8 0v5h5M9 14h6M12 11v6"/></svg>
+        </button>
+        <button class="tool toolbar-graphic" id="ai-assist" type="button" title="Ask AI about the last edit" aria-label="Ask AI about the last edit" data-tone="purple">
+          <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Zm6 10 .8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8L18 13ZM6 14l1.1 3L10 18l-2.9 1L6 22l-1.1-3L2 18l2.9-1L6 14Z"/></svg>
+        </button>
+        <span class="divider" aria-hidden="true"></span>
         <button class="tool toolbar-graphic" type="button" data-command="bold" title="Bold" aria-label="Bold">
           <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 4h5a4 4 0 0 1 0 8H7m0 0h6a4 4 0 0 1 0 8H7"/></svg>
         </button>
@@ -450,7 +679,15 @@
   </div>
 
   <input id="image-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple>
+  <input id="notes-file-input" type="file" accept="application/json,.json,.mdos-notes.json">
   <div id="status" class="status" role="status" aria-live="polite"></div>
+  <aside id="page-scrollbar" class="page-scrollbar" aria-label="Page scrolling" data-scrollable="false">
+    <button id="page-scroll-up" class="page-scroll-button" type="button" aria-label="Scroll page up" title="Scroll page up">&#9650;</button>
+    <div id="page-scroll-track" class="page-scroll-track" role="scrollbar" aria-label="Document position" aria-controls="paper" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
+      <div id="page-scroll-thumb" class="page-scroll-thumb" aria-hidden="true"></div>
+    </div>
+    <button id="page-scroll-down" class="page-scroll-button" type="button" aria-label="Scroll page down" title="Scroll page down">&#9660;</button>
+  </aside>
 
   <div id="formula-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="formula-title">
     <div class="modal">
@@ -482,7 +719,7 @@
     const WHITEBOARD_WIDTH = 1600;
     const WHITEBOARD_HEIGHT = 1000;
     const WHITEBOARD_HEIGHT_MIN = 600;
-    const WHITEBOARD_HEIGHT_MAX = 3000;
+    const WHITEBOARD_HEIGHT_MAX = 8000;
     const WHITEBOARD_HEIGHT_STEP = 200;
     const WHITEBOARD_HEIGHT_DRAG_STEP = 50;
     const WHITEBOARD_MAX_POINTS_PER_STROKE = 5000;
@@ -491,6 +728,17 @@
     const WHITEBOARD_COMMIT_INTERVAL_MS = 250;
     const WHITEBOARD_COMMIT_BATCH_MAX = 20;
     const WHITEBOARD_RETRY_MAX_MS = 60 * 1000;
+    const WHITEBOARD_AI_RECENT_STROKES = 64;
+    const WHITEBOARD_AI_PADDING = 36;
+    const WHITEBOARD_AI_FONT_SIZE = 48;
+    const WHITEBOARD_TEXT_MIN_FONT_SIZE = 18;
+    const WHITEBOARD_TEXT_RIGHT_MARGIN = 64;
+    const WHITEBOARD_TEXT_MIN_LINE_WIDTH = 120;
+    const WHITEBOARD_AI_VERTICAL_GAP = 96;
+    const WHITEBOARD_AI_START_RESERVE = 200;
+    const WHITEBOARD_AI_LINE_STREAM_MS = 180;
+    const WHITEBOARD_AI_FONT_FAMILY = '"Segoe Script", "Apple Chancery", "URW Chancery L", "Lucida Calligraphy", cursive';
+    const NOTES_FILE_MAX_BYTES = 20 * 1024 * 1024;
     const AUTOSAVE_INTERVAL_MS = 800;
     const POLL_FALLBACK_INTERVAL_MS = 5000;
     const SAVE_RETRY_BASE_MS = 1000;
@@ -514,20 +762,132 @@
     let deferredRemoteDocument = null;
     let connectionWarningShown = false;
     let liveEventsConnected = false;
+    let liveServerInstanceId = null;
     let whiteboardStreamSending = false;
+    let lastEditedBlockId = null;
+    let notesFileHandle = null;
+    let aiBusy = false;
+    let aiRequestContext = null;
     const dirtyBlockIds = new Set();
     const deletedBlockIds = new Set();
     const whiteboardStreamQueue = [];
     const whiteboardClientId = newClientId();
 
     const paper = document.getElementById('paper');
+    const toolbarBar = document.querySelector('.bar');
     const titleInput = document.getElementById('title');
     const whiteboardToolbar = document.getElementById('whiteboard-toolbar');
     const statusEl = document.getElementById('status');
     const imageInput = document.getElementById('image-input');
+    const notesFileInput = document.getElementById('notes-file-input');
+    const aiButton = document.getElementById('ai-assist');
+    const aiButtonHomeAnchor = aiButton.nextElementSibling;
     const formulaModal = document.getElementById('formula-modal');
     const formulaSource = document.getElementById('formula-source');
     const formulaPreview = document.getElementById('formula-preview');
+    const pageScrollbar = document.getElementById('page-scrollbar');
+    const pageScrollUp = document.getElementById('page-scroll-up');
+    const pageScrollDown = document.getElementById('page-scroll-down');
+    const pageScrollTrack = document.getElementById('page-scroll-track');
+    const pageScrollThumb = document.getElementById('page-scroll-thumb');
+    let pageScrollDrag = null;
+
+    function pageScrollRoot() {
+      return document.scrollingElement || document.documentElement;
+    }
+
+    function pageScrollMetrics() {
+      const root = pageScrollRoot();
+      const maximum = Math.max(0, root.scrollHeight - root.clientHeight);
+      const trackHeight = Math.max(0, pageScrollTrack.clientHeight);
+      const thumbHeight = maximum > 0
+        ? Math.max(44, Math.min(trackHeight, trackHeight * root.clientHeight / root.scrollHeight))
+        : trackHeight;
+      return {
+        root,
+        maximum,
+        trackHeight,
+        thumbHeight,
+        travel: Math.max(0, trackHeight - thumbHeight)
+      };
+    }
+
+    function updatePageScrollbar() {
+      const metrics = pageScrollMetrics();
+      const position = metrics.maximum > 0
+        ? Math.min(1, Math.max(0, metrics.root.scrollTop / metrics.maximum))
+        : 0;
+      pageScrollbar.dataset.scrollable = String(metrics.maximum > 0);
+      pageScrollThumb.style.height = `${metrics.thumbHeight}px`;
+      pageScrollThumb.style.transform = `translateY(${position * metrics.travel}px)`;
+      pageScrollTrack.setAttribute('aria-valuemax', String(Math.round(metrics.maximum)));
+      pageScrollTrack.setAttribute('aria-valuenow', String(Math.round(metrics.root.scrollTop)));
+      pageScrollUp.disabled = metrics.root.scrollTop <= 0;
+      pageScrollDown.disabled = metrics.root.scrollTop >= metrics.maximum - 1;
+    }
+
+    function movePageScrollTo(value) {
+      const metrics = pageScrollMetrics();
+      metrics.root.scrollTop = Math.min(metrics.maximum, Math.max(0, value));
+      updatePageScrollbar();
+    }
+
+    function movePageScrollBy(direction) {
+      const distance = Math.max(240, Math.round(window.innerHeight * .78));
+      movePageScrollTo(pageScrollRoot().scrollTop + distance * direction);
+    }
+
+    pageScrollUp.addEventListener('click', () => movePageScrollBy(-1));
+    pageScrollDown.addEventListener('click', () => movePageScrollBy(1));
+    pageScrollTrack.addEventListener('click', (event) => {
+      if (event.target === pageScrollThumb) return;
+      const metrics = pageScrollMetrics();
+      if (!metrics.maximum || !metrics.travel) return;
+      const bounds = pageScrollTrack.getBoundingClientRect();
+      const target = (event.clientY - bounds.top - metrics.thumbHeight / 2) / metrics.travel;
+      movePageScrollTo(target * metrics.maximum);
+    });
+    pageScrollTrack.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowUp') movePageScrollBy(-.2);
+      else if (event.key === 'ArrowDown') movePageScrollBy(.2);
+      else if (event.key === 'PageUp') movePageScrollBy(-1);
+      else if (event.key === 'PageDown') movePageScrollBy(1);
+      else if (event.key === 'Home') movePageScrollTo(0);
+      else if (event.key === 'End') movePageScrollTo(pageScrollMetrics().maximum);
+      else return;
+      event.preventDefault();
+    });
+    pageScrollThumb.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      pageScrollDrag = {
+        pointerId: event.pointerId,
+        startY: event.clientY,
+        startScrollTop: pageScrollRoot().scrollTop
+      };
+      try { pageScrollThumb.setPointerCapture(event.pointerId); } catch (_) { /* Window listeners are the fallback. */ }
+    });
+    window.addEventListener('pointermove', (event) => {
+      if (!pageScrollDrag || event.pointerId !== pageScrollDrag.pointerId) return;
+      event.preventDefault();
+      const metrics = pageScrollMetrics();
+      if (!metrics.travel) return;
+      movePageScrollTo(pageScrollDrag.startScrollTop
+        + (event.clientY - pageScrollDrag.startY) * metrics.maximum / metrics.travel);
+    }, { passive: false });
+    const finishPageScrollDrag = (event) => {
+      if (!pageScrollDrag || event.pointerId !== pageScrollDrag.pointerId) return;
+      pageScrollDrag = null;
+      try {
+        if (pageScrollThumb.hasPointerCapture?.(event.pointerId)) pageScrollThumb.releasePointerCapture(event.pointerId);
+      } catch (_) { /* The host may already have released it. */ }
+    };
+    window.addEventListener('pointerup', finishPageScrollDrag);
+    window.addEventListener('pointercancel', finishPageScrollDrag);
+    window.addEventListener('scroll', updatePageScrollbar, { passive: true });
+    window.addEventListener('resize', updatePageScrollbar, { passive: true });
+    if (typeof ResizeObserver === 'function') new ResizeObserver(updatePageScrollbar).observe(paper);
 
     function newBlockId() {
       const bytes = new Uint8Array(10);
@@ -541,6 +901,12 @@
       return `s_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
     }
 
+    function newAnnotationId() {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      return `a_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+    }
+
     function newClientId() {
       const bytes = new Uint8Array(10);
       crypto.getRandomValues(bytes);
@@ -552,6 +918,12 @@
         ...stroke,
         points: stroke.points.map((point) => ({ ...point }))
       })) : [];
+    }
+
+    function cloneAnnotations(annotations) {
+      return Array.isArray(annotations)
+        ? annotations.map((annotation) => ({ ...annotation }))
+        : [];
     }
 
     function showStatus(message, error = false, persistent = false) {
@@ -766,12 +1138,16 @@
       const rows = whiteboard?.whiteboardToolbarRows;
       if (!Array.isArray(rows) || !rows.length) {
         whiteboardToolbar.replaceChildren();
+        if (aiButtonHomeAnchor?.parentElement) aiButtonHomeAnchor.before(aiButton);
         whiteboardToolbar.hidden = true;
         return;
       }
       if (rows.some((row) => row.parentElement !== whiteboardToolbar)) {
         whiteboardToolbar.replaceChildren(...rows);
       }
+      const strip = whiteboardToolbar.querySelector('.ai-kitt-strip');
+      if (strip) strip.before(aiButton);
+      updateAiKittStrip(strip, toolbarBar.dataset.aiState);
       whiteboardToolbar.hidden = false;
     }
 
@@ -840,6 +1216,10 @@
     const WHITEBOARD_ICON_PATHS = Object.freeze({
       pen: 'M4 20l1.5-5.5L15 5l4 4-9.5 9.5L4 20Zm9-13 4 4M4 20l5.5-1.5',
       eraser: 'M4 15 14 5l6 6-8 8H8l-4-4Zm6-6 6 6M12 19h8',
+      select: 'M4 4h6M4 4v6M20 4h-6M20 4v6M4 20h6M4 20v-6M20 20h-6M20 20v-6',
+      move: 'M12 2l3 3h-2v5h5V8l3 3-3 3v-2h-5v5h2l-3 3-3-3h2v-5H6v2l-3-3 3-3v2h5V5H9l3-3Z',
+      cut: 'M9 8 20 19M9 16 20 5M4 6a3 3 0 1 0 6 0 3 3 0 0 0-6 0Zm0 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z',
+      paste: 'M9 5h10v16H9zM5 3h10v2M5 3v14h4M8 3a2 2 0 0 1 4 0',
       undo: 'M9 7 4 12l5 5M5 12h8a7 7 0 0 1 7 7',
       clear: 'M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6',
       refresh: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
@@ -883,6 +1263,32 @@
       return button;
     }
 
+    function updateAiKittStrip(strip, value) {
+      if (!strip) return;
+      const state = ['idle', 'working', 'done', 'failed'].includes(value) ? value : 'idle';
+      const label = state === 'working'
+        ? 'AI busy'
+        : state === 'failed' ? 'AI failed' : 'AI available';
+      strip.dataset.state = state;
+      strip.setAttribute('aria-label', label);
+      strip.title = label;
+    }
+
+    function createAiKittStrip() {
+      const strip = document.createElement('span');
+      strip.className = 'ai-kitt-strip';
+      strip.setAttribute('role', 'status');
+      strip.setAttribute('aria-live', 'polite');
+      for (let index = 0; index < 5; index += 1) {
+        const led = document.createElement('span');
+        led.className = 'ai-kitt-led';
+        led.setAttribute('aria-hidden', 'true');
+        strip.appendChild(led);
+      }
+      updateAiKittStrip(strip, toolbarBar.dataset.aiState);
+      return strip;
+    }
+
     function createWhiteboardElement(block) {
       const element = document.createElement('section');
       element.className = 'block whiteboard';
@@ -905,6 +1311,13 @@
       element.dataset.heightPx = String(initialHeight);
       canvas.tabIndex = 0;
       canvas.setAttribute('aria-label', 'Write here with pen, touch, or mouse');
+      const annotationLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      annotationLayer.classList.add('whiteboard-annotation-layer');
+      annotationLayer.setAttribute('width', String(WHITEBOARD_WIDTH));
+      annotationLayer.setAttribute('height', String(initialHeight));
+      annotationLayer.setAttribute('viewBox', `0 0 ${WHITEBOARD_WIDTH} ${initialHeight}`);
+      annotationLayer.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+      annotationLayer.setAttribute('aria-label', 'Rendered Whiteboard answers');
       const resizeHandle = document.createElement('div');
       resizeHandle.className = 'whiteboard-resize-handle';
       resizeHandle.tabIndex = 0;
@@ -920,19 +1333,37 @@
       context.fillRect(0, 0, canvas.width, canvas.height);
 
       const initialStrokes = cloneStrokes(block.strokes);
+      const initialAnnotations = cloneAnnotations(block.annotations);
       const state = {
+        annotations: initialAnnotations,
+        annotationReveal: null,
+        clipboard: null,
         color: '#202124',
+        committedAnnotations: cloneAnnotations(initialAnnotations),
         committedHeightPx: initialHeight,
         committedStrokes: cloneStrokes(initialStrokes),
         commitTimer: null,
         drawing: false,
         activeStroke: null,
+        lastPointerPoint: null,
+        moveOrigin: null,
+        moving: false,
         pendingOperations: [],
         pointerId: null,
+        pasteOffset: 0,
         previewTimer: null,
         ready: true,
         retryFailures: 0,
         retryTimer: null,
+        recentStrokeAt: 0,
+        recentStrokeIds: initialStrokes.slice(-WHITEBOARD_AI_RECENT_STROKES).map((stroke) => stroke.id),
+        revealTimer: null,
+        revealToken: 0,
+        selectedAnnotationIds: [],
+        selectedStrokeIds: [],
+        selecting: false,
+        selectionAnchor: null,
+        selectionRect: null,
         strokeTool: 'pen',
         streamSentPointIndex: 0,
         streamSequence: 0,
@@ -945,19 +1376,30 @@
 
       let penButton;
       let eraserButton;
+      let selectButton;
+      let moveButton;
+      let cutButton;
+      let pasteButton;
       let updateButton;
       let colorButtons = [];
       function setTool(tool) {
+        if (!['select', 'move'].includes(tool)) clearWhiteboardSelection(false);
         state.tool = tool;
+        canvas.dataset.tool = tool;
         penButton.classList.toggle('active', tool === 'pen');
         eraserButton.classList.toggle('active', tool === 'eraser');
+        selectButton?.classList.toggle('active', tool === 'select');
+        moveButton?.classList.toggle('active', tool === 'move');
         penButton.setAttribute('aria-pressed', String(tool === 'pen'));
         eraserButton.setAttribute('aria-pressed', String(tool === 'eraser'));
+        selectButton?.setAttribute('aria-pressed', String(tool === 'select'));
+        moveButton?.setAttribute('aria-pressed', String(tool === 'move'));
         for (const button of colorButtons) {
           const active = tool === 'pen' && button.dataset.color === state.color;
           button.classList.toggle('active', active);
           button.setAttribute('aria-pressed', String(active));
         }
+        renderWhiteboard();
       }
 
       function strokeColor(stroke) {
@@ -990,12 +1432,661 @@
         }
       }
 
+      function latexAnnotationRowCount(annotation) {
+        const rows = String(annotation.mathml || '').match(/<mtr(?:\s|>)/g);
+        return Math.max(1, rows?.length || 0);
+      }
+
+      function whiteboardAnnotationFontSize(annotation) {
+        return Math.min(72, Math.max(
+          WHITEBOARD_TEXT_MIN_FONT_SIZE,
+          Number(annotation.font_size) || WHITEBOARD_AI_FONT_SIZE
+        ));
+      }
+
+      function wrapWhiteboardLine(sourceLine, maxWidth) {
+        const words = String(sourceLine).trim().split(/\s+/).filter(Boolean);
+        if (!words.length) return [];
+        const lines = [];
+        let line = '';
+        for (const word of words) {
+          const candidate = line ? `${line} ${word}` : word;
+          if (context.measureText(candidate).width <= maxWidth) {
+            line = candidate;
+            continue;
+          }
+          if (line) {
+            lines.push(line);
+            line = '';
+          }
+          if (context.measureText(word).width <= maxWidth) {
+            line = word;
+            continue;
+          }
+          let chunk = '';
+          for (const character of Array.from(word)) {
+            const nextChunk = `${chunk}${character}`;
+            if (chunk && context.measureText(nextChunk).width > maxWidth) {
+              lines.push(chunk);
+              chunk = character;
+            } else {
+              chunk = nextChunk;
+            }
+          }
+          line = chunk;
+        }
+        if (line) lines.push(line);
+        return lines;
+      }
+
+      function annotationLayout(annotation) {
+        if (annotation.data_uri) {
+          return {
+            fontSize: 0,
+            font: '',
+            lines: [],
+            x: Number(annotation.x) || 0,
+            y: Number(annotation.y) || 0,
+            width: Math.max(16, Number(annotation.width) || 640),
+            height: Math.max(16, Number(annotation.height) || 480)
+          };
+        }
+        const fontSize = whiteboardAnnotationFontSize(annotation);
+        const isLatex = Boolean(annotation.latex && annotation.mathml);
+        const font = isLatex
+          ? `600 ${fontSize}px "STIX Two Math", "Cambria Math", serif`
+          : `700 ${fontSize}px ${WHITEBOARD_AI_FONT_FAMILY}`;
+        const requestedX = Math.max(0, Number(annotation.x) || 0);
+        const x = Math.min(
+          requestedX,
+          Math.max(0, canvas.width - WHITEBOARD_TEXT_RIGHT_MARGIN - WHITEBOARD_TEXT_MIN_LINE_WIDTH)
+        );
+        const maxWidth = Math.max(1, canvas.width - x - WHITEBOARD_TEXT_RIGHT_MARGIN);
+        const text = String(annotation.text || '').trim();
+        if (!text) return null;
+        const lines = [];
+        context.save();
+        context.font = font;
+        if (isLatex) {
+          const width = Math.max(1, Math.min(maxWidth, context.measureText(text).width));
+          const rowCount = latexAnnotationRowCount(annotation);
+          context.restore();
+          return {
+            fontSize,
+            font,
+            lines: [text],
+            rowCount,
+            x,
+            y: Number(annotation.y) || 0,
+            width,
+            height: fontSize * (rowCount * 1.9 + 0.6)
+          };
+        }
+        const sourceLines = text.replace(/\r\n?/g, '\n').split('\n');
+        for (const sourceLine of sourceLines) {
+          const wrappedLines = wrapWhiteboardLine(sourceLine, maxWidth);
+          if (!wrappedLines.length) {
+            if (lines.length) lines.push('');
+            continue;
+          }
+          lines.push(...wrappedLines);
+        }
+        const width = Math.min(
+          maxWidth,
+          Math.max(...lines.map((value) => context.measureText(value).width), 1)
+        );
+        context.restore();
+        return {
+          fontSize,
+          font,
+          lines,
+          x,
+          y: Number(annotation.y) || 0,
+          width,
+          height: fontSize + Math.max(0, lines.length - 1) * fontSize * 1.25
+        };
+      }
+
+      element.whiteboardAnnotationLayout = annotationLayout;
+
+      function whiteboardOccupiedBottom() {
+        let bottom = 0;
+        for (const stroke of state.strokes) {
+          if (stroke.tool === 'eraser') continue;
+          for (const point of stroke.points || []) {
+            const width = Math.max(1, Number(point.width) || 1);
+            bottom = Math.max(bottom, (Number(point.y) || 0) + width / 2);
+          }
+        }
+        for (const annotation of state.annotations) {
+          const layout = annotationLayout(annotation);
+          if (layout) bottom = Math.max(bottom, layout.y + layout.height);
+        }
+        return bottom;
+      }
+
+      element.whiteboardOccupiedBottom = whiteboardOccupiedBottom;
+
+      function whiteboardResponseY(questionStrokeIds, questionBounds, reserveHeight) {
+        const ignored = new Set(questionStrokeIds || []);
+        const occupiedRows = [];
+        for (const stroke of state.strokes) {
+          if (ignored.has(stroke.id) || stroke.tool === 'eraser' || !stroke.points?.length) continue;
+          let top = canvas.height;
+          let bottom = 0;
+          for (const point of stroke.points) {
+            const radius = Math.max(1, Number(point.width) || 1) / 2;
+            top = Math.min(top, point.y - radius);
+            bottom = Math.max(bottom, point.y + radius);
+          }
+          occupiedRows.push({ top, bottom });
+        }
+        for (const annotation of state.annotations) {
+          const layout = annotationLayout(annotation);
+          if (layout) occupiedRows.push({ top: layout.y, bottom: layout.y + layout.height });
+        }
+        occupiedRows.sort((first, second) => first.top - second.top);
+        let candidate = Math.max(20, Math.ceil(
+          Number(questionBounds?.maxY || 0) + WHITEBOARD_AI_VERTICAL_GAP
+        ));
+        const reserve = Math.max(1, Number(reserveHeight) || WHITEBOARD_AI_START_RESERVE);
+        for (const row of occupiedRows) {
+          if (row.bottom < candidate) continue;
+          if (row.top > candidate + reserve) break;
+          candidate = Math.ceil(row.bottom + WHITEBOARD_AI_VERTICAL_GAP);
+        }
+        return candidate;
+      }
+
+      element.whiteboardResponseY = whiteboardResponseY;
+
+      function drawAnnotation(annotation, visibleLines = null) {
+        const layout = annotationLayout(annotation);
+        if (!layout) return;
+        context.save();
+        context.globalCompositeOperation = 'source-over';
+        context.fillStyle = annotation.color || '#1769e0';
+        context.font = layout.font;
+        context.textBaseline = 'top';
+        context.lineJoin = 'round';
+        context.strokeStyle = 'rgba(255, 255, 255, 0.96)';
+        context.lineWidth = Math.max(3, layout.fontSize * 0.11);
+        const lines = Number.isInteger(visibleLines)
+          ? layout.lines.slice(0, Math.max(0, visibleLines))
+          : layout.lines;
+        lines.forEach((value, index) => {
+          const y = layout.y + index * layout.fontSize * 1.25;
+          context.strokeText(value, layout.x, y);
+          context.fillText(value, layout.x, y);
+        });
+        context.restore();
+      }
+
+      function renderLatexAnnotation(annotation, visibleLines = null) {
+        const layout = annotationLayout(annotation);
+        if (!layout) return;
+        const { fontSize, x, y } = layout;
+        const rowCount = latexAnnotationRowCount(annotation);
+        const estimatedHeight = Math.max(160, Math.ceil(fontSize * (rowCount * 1.9 + 0.6)));
+        const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+        foreignObject.dataset.annotationId = annotation.id;
+        foreignObject.dataset.rowCount = String(rowCount);
+        foreignObject.setAttribute('x', String(x));
+        foreignObject.setAttribute('y', String(y));
+        foreignObject.setAttribute('width', String(Math.max(1, canvas.width - x - WHITEBOARD_TEXT_RIGHT_MARGIN)));
+        foreignObject.setAttribute('height', String(estimatedHeight));
+        const host = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        host.classList.add('whiteboard-latex');
+        host.style.color = annotation.color || '#1769e0';
+        host.style.fontSize = `${fontSize}px`;
+        host.setAttribute('aria-label', annotation.text || annotation.latex);
+        host.innerHTML = annotation.mathml;
+        const rows = Array.from(host.querySelectorAll('mtr'));
+        if (Number.isInteger(visibleLines)) {
+          if (rows.length) {
+            rows.forEach((row, index) => {
+              row.style.visibility = index < visibleLines ? 'visible' : 'hidden';
+            });
+          } else if (visibleLines < 1) {
+            host.style.visibility = 'hidden';
+          }
+        }
+        foreignObject.appendChild(host);
+        annotationLayer.appendChild(foreignObject);
+        const measuredHeight = Math.ceil(host.scrollHeight + fontSize * 0.5);
+        if (measuredHeight > estimatedHeight) {
+          foreignObject.setAttribute('height', String(measuredHeight));
+        }
+      }
+
+      function renderImageAnnotation(annotation) {
+        const layout = annotationLayout(annotation);
+        if (!layout) return;
+        const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+        image.dataset.annotationId = annotation.id;
+        image.setAttribute('x', String(layout.x));
+        image.setAttribute('y', String(layout.y));
+        image.setAttribute('width', String(layout.width));
+        image.setAttribute('height', String(layout.height));
+        image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        image.setAttribute('href', annotation.data_uri);
+        image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', annotation.data_uri);
+        annotationLayer.appendChild(image);
+      }
+
+      function segmentIntersectsRect(start, end, rect) {
+        const deltaX = end.x - start.x;
+        const deltaY = end.y - start.y;
+        let minimum = 0;
+        let maximum = 1;
+        const edges = [
+          [-deltaX, start.x - rect.left],
+          [deltaX, rect.right - start.x],
+          [-deltaY, start.y - rect.top],
+          [deltaY, rect.bottom - start.y]
+        ];
+        for (const [direction, distance] of edges) {
+          if (direction === 0) {
+            if (distance < 0) return false;
+            continue;
+          }
+          const ratio = distance / direction;
+          if (direction < 0) {
+            if (ratio > maximum) return false;
+            minimum = Math.max(minimum, ratio);
+          } else {
+            if (ratio < minimum) return false;
+            maximum = Math.min(maximum, ratio);
+          }
+        }
+        return true;
+      }
+
+      function eraserHitsAnnotation(stroke, annotation) {
+        if (stroke?.tool !== 'eraser' || !stroke.points?.length) return false;
+        const layout = annotationLayout(annotation);
+        if (!layout) return false;
+        for (let index = 0; index < stroke.points.length; index += 1) {
+          const start = stroke.points[Math.max(0, index - 1)];
+          const end = stroke.points[index];
+          const padding = Math.max(4, Number(start.width || 0) / 2, Number(end.width || 0) / 2);
+          if (segmentIntersectsRect(start, end, {
+            left: layout.x - padding,
+            top: layout.y - padding,
+            right: layout.x + layout.width + padding,
+            bottom: layout.y + layout.height + padding
+          })) return true;
+        }
+        return false;
+      }
+
+      function normalizedSelectionRect(start, end) {
+        const left = Math.max(0, Math.min(start.x, end.x));
+        const top = Math.max(0, Math.min(start.y, end.y));
+        const right = Math.min(canvas.width, Math.max(start.x, end.x));
+        const bottom = Math.min(canvas.height, Math.max(start.y, end.y));
+        return { left, top, right, bottom, width: right - left, height: bottom - top };
+      }
+
+      function rectanglesIntersect(first, second) {
+        return first.left <= second.right && first.right >= second.left
+          && first.top <= second.bottom && first.bottom >= second.top;
+      }
+
+      function strokeIntersectsSelection(stroke, rect) {
+        const points = stroke?.points || [];
+        for (let index = 0; index < points.length; index += 1) {
+          const point = points[index];
+          const radius = Math.max(1, Number(point.width) || 1) / 2;
+          if (rectanglesIntersect(rect, {
+            left: point.x - radius,
+            top: point.y - radius,
+            right: point.x + radius,
+            bottom: point.y + radius
+          })) return true;
+          if (index > 0) {
+            const previous = points[index - 1];
+            const padding = Math.max(radius, Math.max(1, Number(previous.width) || 1) / 2);
+            if (segmentIntersectsRect(previous, point, {
+              left: rect.left - padding,
+              top: rect.top - padding,
+              right: rect.right + padding,
+              bottom: rect.bottom + padding
+            })) return true;
+          }
+        }
+        return false;
+      }
+
+      function annotationIntersectsSelection(annotation, rect) {
+        const layout = annotationLayout(annotation);
+        return Boolean(layout && rectanglesIntersect(rect, {
+          left: layout.x,
+          top: layout.y,
+          right: layout.x + layout.width,
+          bottom: layout.y + layout.height
+        }));
+      }
+
+      function selectionCount() {
+        return state.selectedStrokeIds.length + state.selectedAnnotationIds.length;
+      }
+
+      function refreshSelectionButtons() {
+        const selected = selectionCount();
+        if (moveButton) {
+          moveButton.disabled = selected === 0;
+          moveButton.title = selected ? `Move ${selected} selected Whiteboard items` : 'Select ink or AI text first';
+        }
+        if (cutButton) {
+          cutButton.disabled = selected === 0;
+          cutButton.title = selected ? `Cut ${selected} selected Whiteboard items` : 'Select ink or AI text first';
+        }
+        if (pasteButton) {
+          const stored = (state.clipboard?.strokes?.length || 0) + (state.clipboard?.annotations?.length || 0);
+          pasteButton.disabled = stored === 0;
+          pasteButton.title = stored ? `Paste ${stored} Whiteboard items` : 'Nothing to paste';
+        }
+      }
+
+      function clearWhiteboardSelection(render = true) {
+        state.selecting = false;
+        state.selectionAnchor = null;
+        state.selectionRect = null;
+        state.selectedStrokeIds = [];
+        state.selectedAnnotationIds = [];
+        refreshSelectionButtons();
+        if (render) renderWhiteboard();
+      }
+
+      function updateWhiteboardSelection(rect) {
+        state.selectionRect = rect;
+        state.selectedStrokeIds = state.strokes
+          .filter((stroke) => strokeIntersectsSelection(stroke, rect))
+          .map((stroke) => stroke.id);
+        state.selectedAnnotationIds = state.annotations
+          .filter((annotation) => annotationIntersectsSelection(annotation, rect))
+          .map((annotation) => annotation.id);
+        refreshSelectionButtons();
+      }
+
+      function renderWhiteboardSelection() {
+        const rect = state.selectionRect;
+        if (!rect || !['select', 'move'].includes(state.tool)) return;
+        const outline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        outline.classList.add('whiteboard-selection');
+        outline.dataset.selectedCount = String(selectionCount());
+        outline.setAttribute('x', String(rect.left));
+        outline.setAttribute('y', String(rect.top));
+        outline.setAttribute('width', String(Math.max(1, rect.width)));
+        outline.setAttribute('height', String(Math.max(1, rect.height)));
+        annotationLayer.appendChild(outline);
+      }
+
+      function cutWhiteboardSelection() {
+        const strokeIds = new Set(state.selectedStrokeIds);
+        const annotationIds = new Set(state.selectedAnnotationIds);
+        if (!strokeIds.size && !annotationIds.size) return;
+        state.clipboard = {
+          rect: { ...state.selectionRect },
+          strokes: cloneStrokes(state.strokes.filter((stroke) => strokeIds.has(stroke.id))),
+          annotations: cloneAnnotations(state.annotations.filter((annotation) => annotationIds.has(annotation.id)))
+        };
+        state.pasteOffset = 0;
+        state.strokes = state.strokes.filter((stroke) => !strokeIds.has(stroke.id));
+        state.annotations = state.annotations.filter((annotation) => !annotationIds.has(annotation.id));
+        state.recentStrokeIds = state.recentStrokeIds.filter((strokeId) => !strokeIds.has(strokeId));
+        if (annotationIds.has(state.annotationReveal?.id)) {
+          clearTimeout(state.revealTimer);
+          state.annotationReveal = null;
+        }
+        const cutCount = strokeIds.size + annotationIds.size;
+        clearWhiteboardSelection(false);
+        renderWhiteboard();
+        for (const strokeId of strokeIds) {
+          queueWhiteboardOperation({
+            type: 'whiteboard_undo',
+            block_id: element.dataset.blockId,
+            stroke_id: strokeId
+          });
+        }
+        for (const annotationId of annotationIds) {
+          queueWhiteboardOperation({
+            type: 'whiteboard_remove_text',
+            block_id: element.dataset.blockId,
+            annotation_id: annotationId
+          });
+        }
+        lastEditedBlockId = element.dataset.blockId;
+        showStatus(`Whiteboard · cut ${cutCount} item${cutCount === 1 ? '' : 's'}`);
+      }
+
+      function pasteWhiteboardSelection() {
+        const clipboard = state.clipboard;
+        const stored = (clipboard?.strokes?.length || 0) + (clipboard?.annotations?.length || 0);
+        if (!stored || !clipboard.rect) return;
+        const offset = 48 * (state.pasteOffset + 1);
+        const deltaX = Math.max(0, Math.min(offset, canvas.width - clipboard.rect.right - 12));
+        const desiredBottom = clipboard.rect.bottom + offset + 12;
+        element.ensureWhiteboardHeight?.(desiredBottom);
+        const deltaY = Math.max(0, Math.min(offset, state.heightPx - clipboard.rect.bottom - 12));
+        const strokes = clipboard.strokes.map((stroke) => ({
+          ...stroke,
+          id: newStrokeId(),
+          points: stroke.points.map((point) => ({
+            ...point,
+            x: point.x + deltaX,
+            y: point.y + deltaY
+          }))
+        }));
+        const annotations = clipboard.annotations.map((annotation) => ({
+          ...annotation,
+          id: newAnnotationId(),
+          x: Number(annotation.x || 0) + deltaX,
+          y: Number(annotation.y || 0) + deltaY
+        }));
+        state.strokes.push(...strokes);
+        state.annotations.push(...annotations);
+        state.pasteOffset += 1;
+        state.selectionRect = {
+          left: clipboard.rect.left + deltaX,
+          top: clipboard.rect.top + deltaY,
+          right: clipboard.rect.right + deltaX,
+          bottom: clipboard.rect.bottom + deltaY,
+          width: clipboard.rect.width,
+          height: clipboard.rect.height
+        };
+        state.selectedStrokeIds = strokes.map((stroke) => stroke.id);
+        state.selectedAnnotationIds = annotations.map((annotation) => annotation.id);
+        const recentIds = strokes.filter((stroke) => stroke.tool !== 'eraser').map((stroke) => stroke.id);
+        state.recentStrokeIds = [...state.recentStrokeIds, ...recentIds]
+          .slice(-WHITEBOARD_AI_RECENT_STROKES);
+        state.recentStrokeAt = Date.now();
+        setTool('select');
+        refreshSelectionButtons();
+        renderWhiteboard();
+        for (const stroke of strokes) {
+          queueWhiteboardOperation({
+            type: 'whiteboard_append_stroke',
+            block_id: element.dataset.blockId,
+            stroke
+          });
+        }
+        for (const annotation of annotations) {
+          queueWhiteboardOperation({
+            type: 'whiteboard_add_text',
+            block_id: element.dataset.blockId,
+            annotation
+          });
+        }
+        lastEditedBlockId = element.dataset.blockId;
+        showStatus(`Whiteboard · pasted ${stored} item${stored === 1 ? '' : 's'}`);
+      }
+
+      function pointInsideSelection(point) {
+        const rect = state.selectionRect;
+        return Boolean(rect && point.x >= rect.left && point.x <= rect.right
+          && point.y >= rect.top && point.y <= rect.bottom);
+      }
+
+      function beginWhiteboardMove(point) {
+        if (!pointInsideSelection(point) || !selectionCount()) return false;
+        const strokeIds = new Set(state.selectedStrokeIds);
+        const annotationIds = new Set(state.selectedAnnotationIds);
+        state.moveOrigin = {
+          point: { ...point },
+          rect: { ...state.selectionRect },
+          strokes: cloneStrokes(state.strokes.filter((stroke) => strokeIds.has(stroke.id))),
+          annotations: cloneAnnotations(state.annotations.filter((annotation) => annotationIds.has(annotation.id)))
+        };
+        state.moving = true;
+        return true;
+      }
+
+      function moveWhiteboardSelection(point) {
+        const origin = state.moveOrigin;
+        if (!origin) return;
+        const deltaX = Math.max(
+          -origin.rect.left,
+          Math.min(point.x - origin.point.x, canvas.width - origin.rect.right)
+        );
+        const deltaY = Math.max(
+          -origin.rect.top,
+          Math.min(point.y - origin.point.y, state.heightPx - origin.rect.bottom)
+        );
+        const strokes = new Map(origin.strokes.map((stroke) => [stroke.id, {
+          ...stroke,
+          points: stroke.points.map((strokePoint) => ({
+            ...strokePoint,
+            x: strokePoint.x + deltaX,
+            y: strokePoint.y + deltaY
+          }))
+        }]));
+        const annotations = new Map(origin.annotations.map((annotation) => [annotation.id, {
+          ...annotation,
+          x: Number(annotation.x || 0) + deltaX,
+          y: Number(annotation.y || 0) + deltaY
+        }]));
+        state.strokes = state.strokes.map((stroke) => strokes.get(stroke.id) || stroke);
+        state.annotations = state.annotations.map((annotation) => annotations.get(annotation.id) || annotation);
+        state.selectionRect = {
+          left: origin.rect.left + deltaX,
+          top: origin.rect.top + deltaY,
+          right: origin.rect.right + deltaX,
+          bottom: origin.rect.bottom + deltaY,
+          width: origin.rect.width,
+          height: origin.rect.height
+        };
+        renderWhiteboard();
+      }
+
+      function finishWhiteboardMove() {
+        const origin = state.moveOrigin;
+        if (!origin) return;
+        const strokeIds = new Set(state.selectedStrokeIds);
+        const annotationIds = new Set(state.selectedAnnotationIds);
+        const movedStrokes = cloneStrokes(state.strokes.filter((stroke) => strokeIds.has(stroke.id)));
+        const movedAnnotations = cloneAnnotations(
+          state.annotations.filter((annotation) => annotationIds.has(annotation.id))
+        );
+        const changed = state.selectionRect.left !== origin.rect.left
+          || state.selectionRect.top !== origin.rect.top;
+        state.moveOrigin = null;
+        state.moving = false;
+        if (!changed) return;
+        for (const stroke of movedStrokes) {
+          queueWhiteboardOperation({
+            type: 'whiteboard_undo',
+            block_id: element.dataset.blockId,
+            stroke_id: stroke.id
+          });
+          queueWhiteboardOperation({
+            type: 'whiteboard_append_stroke',
+            block_id: element.dataset.blockId,
+            stroke
+          });
+        }
+        for (const annotation of movedAnnotations) {
+          queueWhiteboardOperation({
+            type: 'whiteboard_remove_text',
+            block_id: element.dataset.blockId,
+            annotation_id: annotation.id
+          });
+          queueWhiteboardOperation({
+            type: 'whiteboard_add_text',
+            block_id: element.dataset.blockId,
+            annotation
+          });
+        }
+        lastEditedBlockId = element.dataset.blockId;
+        showStatus(`Whiteboard · moved ${selectionCount()} item${selectionCount() === 1 ? '' : 's'}`);
+      }
+
       function renderWhiteboard() {
         context.globalCompositeOperation = 'source-over';
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
+        annotationLayer.replaceChildren();
         for (const stroke of state.strokes) drawStroke(stroke);
+        for (const annotation of state.annotations) {
+          const visibleLines = state.annotationReveal?.id === annotation.id
+            ? state.annotationReveal.visibleLines
+            : null;
+          if (annotation.data_uri) renderImageAnnotation(annotation);
+          else if (annotation.latex && annotation.mathml) renderLatexAnnotation(annotation, visibleLines);
+          else drawAnnotation(annotation, visibleLines);
+        }
+        renderWhiteboardSelection();
       }
+
+      element.streamWhiteboardAnnotation = (annotationId, onProgress = () => {}) => {
+        const annotation = state.annotations.find((candidate) => candidate.id === annotationId);
+        if (!annotation) return Promise.resolve(false);
+        clearTimeout(state.revealTimer);
+        const token = ++state.revealToken;
+        const layout = annotationLayout(annotation);
+        const totalLines = annotation.latex && annotation.mathml
+          ? latexAnnotationRowCount(annotation)
+          : Math.max(1, layout?.lines.length || 1);
+        const requiredHeight = Math.ceil((Number(annotation.y) || 0) + (layout?.height || 0) + 48);
+        if (requiredHeight > state.heightPx) {
+          const expandedHeight = normalizedWhiteboardHeight(requiredHeight);
+          if (applyWhiteboardHeight(expandedHeight)) queueWhiteboardHeight(expandedHeight);
+        }
+        state.annotationReveal = { id: annotationId, visibleLines: 1, totalLines };
+        renderWhiteboard();
+        onProgress({ visibleLines: 1, totalLines, done: totalLines === 1 });
+        if (totalLines === 1) {
+          state.annotationReveal = null;
+          return Promise.resolve(true);
+        }
+        return new Promise((resolve) => {
+          const advance = () => {
+            const reveal = state.annotationReveal;
+            const stillPresent = state.annotations.some((candidate) => candidate.id === annotationId);
+            if (token !== state.revealToken || !reveal || !stillPresent) {
+              resolve(false);
+              return;
+            }
+            reveal.visibleLines += 1;
+            const done = reveal.visibleLines >= reveal.totalLines;
+            renderWhiteboard();
+            onProgress({
+              visibleLines: reveal.visibleLines,
+              totalLines: reveal.totalLines,
+              done
+            });
+            if (done) {
+              state.annotationReveal = null;
+              state.revealTimer = null;
+              resolve(true);
+              return;
+            }
+            state.revealTimer = setTimeout(advance, WHITEBOARD_AI_LINE_STREAM_MS);
+          };
+          state.revealTimer = setTimeout(advance, WHITEBOARD_AI_LINE_STREAM_MS);
+        });
+      };
 
       element.applyWhiteboardStream = (streamEvent) => {
         if (!streamEvent || streamEvent.client_id === whiteboardClientId) return;
@@ -1005,14 +2096,77 @@
         drawStroke(stroke);
       };
 
+      function loadWhiteboardImageSize(dataUri) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+          image.onerror = () => reject(new Error('Clipboard image could not be decoded'));
+          image.src = dataUri;
+        });
+      }
+
+      element.pasteWhiteboardImage = async (file) => {
+        if (!file || !/^image\/(png|jpeg|gif|webp)$/i.test(file.type)) return false;
+        if (file.size > 5 * 1024 * 1024) throw new Error('Clipboard image is too large');
+        const dataUri = await fileAsDataUri(file);
+        const natural = await loadWhiteboardImageSize(dataUri);
+        const scale = Math.min(1, 900 / natural.width, 700 / natural.height);
+        const width = Math.max(16, Math.round(natural.width * scale));
+        const height = Math.max(16, Math.round(natural.height * scale));
+        const fallbackY = Math.max(32, Math.ceil(whiteboardOccupiedBottom() + 48));
+        const anchor = state.lastPointerPoint || { x: 32, y: fallbackY };
+        const x = Math.max(0, Math.min(anchor.x, canvas.width - width));
+        let y = Math.max(0, anchor.y);
+        if (!element.ensureWhiteboardHeight(y + height + 24)) {
+          y = Math.max(0, state.heightPx - height - 24);
+        }
+        const annotation = {
+          id: newAnnotationId(),
+          text: file.name || 'Clipboard image',
+          data_uri: dataUri,
+          x,
+          y,
+          width,
+          height,
+          color: '#1769e0',
+          font_size: WHITEBOARD_AI_FONT_SIZE
+        };
+        state.annotations.push(annotation);
+        state.selectionRect = {
+          left: x,
+          top: y,
+          right: x + width,
+          bottom: y + height,
+          width,
+          height
+        };
+        state.selectedStrokeIds = [];
+        state.selectedAnnotationIds = [annotation.id];
+        setTool('select');
+        refreshSelectionButtons();
+        renderWhiteboard();
+        queueWhiteboardOperation({
+          type: 'whiteboard_add_text',
+          block_id: element.dataset.blockId,
+          annotation
+        });
+        lastEditedBlockId = element.dataset.blockId;
+        showStatus('Whiteboard · clipboard image pasted');
+        return true;
+      };
+
       function rememberRemote(documentValue) {
         if (!documentValue) return;
         const remoteBlock = documentValue.blocks?.find((candidate) => (
           candidate.id === element.dataset.blockId && candidate.type === 'whiteboard'
         ));
         if (remoteBlock) {
+          state.committedAnnotations = cloneAnnotations(remoteBlock.annotations);
           state.committedHeightPx = remoteBlock.height_px || WHITEBOARD_HEIGHT;
           state.committedStrokes = cloneStrokes(remoteBlock.strokes);
+        }
+        if (!currentDocument || documentValue.revision >= currentDocument.revision) {
+          currentDocument = documentValue;
         }
         if (!deferredRemoteDocument || documentValue.revision > deferredRemoteDocument.revision) {
           deferredRemoteDocument = documentValue;
@@ -1089,6 +2243,7 @@
       }
 
       function queueWhiteboardOperation(operation) {
+        if (!aiBusy && toolbarBar.dataset.aiState === 'done') setAiIndicatorState('idle');
         state.pendingOperations.push(operation);
         refreshUpdateButton();
         scheduleWhiteboardCommit();
@@ -1135,6 +2290,8 @@
         element.dataset.heightPx = String(height);
         resizeHandle.setAttribute('aria-valuenow', String(height));
         canvas.height = height;
+        annotationLayer.setAttribute('height', String(height));
+        annotationLayer.setAttribute('viewBox', `0 0 ${WHITEBOARD_WIDTH} ${height}`);
         renderWhiteboard();
         return true;
       }
@@ -1147,17 +2304,42 @@
         });
       }
 
+      element.ensureWhiteboardHeight = (requiredHeight) => {
+        const required = Math.ceil(Number(requiredHeight));
+        if (!Number.isFinite(required) || required > WHITEBOARD_HEIGHT_MAX) return false;
+        const height = Math.min(
+          WHITEBOARD_HEIGHT_MAX,
+          Math.max(
+            WHITEBOARD_HEIGHT_MIN,
+            Math.ceil(required / WHITEBOARD_HEIGHT_STEP) * WHITEBOARD_HEIGHT_STEP
+          )
+        );
+        if (height < required) return false;
+        if (applyWhiteboardHeight(height)) queueWhiteboardHeight(height);
+        return state.heightPx >= required;
+      };
+
       function resizeWhiteboard(nextHeight) {
         if (state.drawing) return;
         const height = normalizedWhiteboardHeight(nextHeight);
-        if (applyWhiteboardHeight(height)) queueWhiteboardHeight(height);
+        if (applyWhiteboardHeight(height)) {
+          queueWhiteboardHeight(height);
+        } else if (Number(nextHeight) > state.heightPx && state.heightPx >= WHITEBOARD_HEIGHT_MAX) {
+          showStatus(`Whiteboard · maximum safe height ${WHITEBOARD_HEIGHT_MAX}px`);
+        }
       }
 
       penButton = createWhiteboardControl(
         'Pen', 'Draw by hand', createWhiteboardIcon('pen'), () => setTool('pen')
       );
       eraserButton = createWhiteboardControl(
-        'Eraser', 'Erase strokes', createWhiteboardIcon('eraser'), () => setTool('eraser')
+        'Eraser', 'Erase strokes and AI text', createWhiteboardIcon('eraser'), () => setTool('eraser')
+      );
+      selectButton = createWhiteboardControl(
+        'Select', 'Drag a rectangle around ink or AI text', createWhiteboardIcon('select'), () => setTool('select')
+      );
+      moveButton = createWhiteboardControl(
+        'Move selection', 'Select ink or AI text first', createWhiteboardIcon('move'), () => setTool('move')
       );
       const blackButton = createWhiteboardControl('Black ink', 'Black ink', createWhiteboardColorDot('#202124'), () => {
         state.color = '#202124';
@@ -1178,6 +2360,7 @@
       const undoButton = createWhiteboardControl('Undo', 'Undo the last stroke', createWhiteboardIcon('undo'), () => {
         const stroke = state.strokes.pop();
         if (!stroke) return;
+        clearWhiteboardSelection(false);
         renderWhiteboard();
         queueWhiteboardOperation({
           type: 'whiteboard_undo',
@@ -1185,8 +2368,17 @@
           stroke_id: stroke.id
         });
       });
+      cutButton = createWhiteboardControl('Cut selection', 'Select ink or AI text first', createWhiteboardIcon('cut'), () => {
+        cutWhiteboardSelection();
+      });
+      pasteButton = createWhiteboardControl('Paste selection', 'Nothing to paste', createWhiteboardIcon('paste'), () => {
+        pasteWhiteboardSelection();
+      });
       const clearButton = createWhiteboardControl('Clear', 'Clear the shared Whiteboard', createWhiteboardIcon('clear'), () => {
         state.strokes = [];
+        state.annotations = [];
+        state.recentStrokeIds = [];
+        clearWhiteboardSelection(false);
         renderWhiteboard();
         queueWhiteboardOperation({
           type: 'whiteboard_clear',
@@ -1205,12 +2397,16 @@
       const fitButton = createWhiteboardControl('Reset height', 'Restore the default Whiteboard height', createWhiteboardIcon('resetHeight'), () => {
         resizeWhiteboard(WHITEBOARD_HEIGHT);
       });
+      const aiKittStrip = createAiKittStrip();
       whiteboardControls.append(
-        penButton, eraserButton, blackButton, blueButton, redButton,
-        undoButton, clearButton, shorterButton, tallerButton, fitButton, updateButton
+        penButton, eraserButton, selectButton, moveButton, blackButton, blueButton, redButton,
+        undoButton, cutButton, pasteButton, clearButton,
+        shorterButton, tallerButton, fitButton, updateButton,
+        aiKittStrip
       );
       element.whiteboardToolbarRows = [whiteboardControls];
       setTool('pen');
+      refreshSelectionButtons();
       refreshUpdateButton();
 
       let resizeDrag = null;
@@ -1318,11 +2514,39 @@
       canvas.addEventListener('pointerdown', (event) => {
         if (!state.ready || state.drawing) return;
         if (event.pointerType === 'mouse' && event.button !== 0) return;
+        if (event.pointerType === 'touch') {
+          selectBlock(element);
+          return;
+        }
         event.preventDefault();
         selectBlock(element);
+        state.lastPointerPoint = pointerPoint(event);
+        canvas.focus({ preventScroll: true });
+        const hardwareEraser = event.button === 5 || (event.buttons & 32);
+        if (state.tool === 'move' && !hardwareEraser) {
+          if (!beginWhiteboardMove(state.lastPointerPoint)) {
+            showStatus('Whiteboard · drag inside the selected area');
+            return;
+          }
+          state.drawing = true;
+          state.pointerId = event.pointerId;
+          canvas.setPointerCapture(event.pointerId);
+          renderWhiteboard();
+          return;
+        }
+        if (state.tool === 'select' && !hardwareEraser) {
+          state.drawing = true;
+          state.selecting = true;
+          state.pointerId = event.pointerId;
+          state.selectionAnchor = state.lastPointerPoint;
+          updateWhiteboardSelection(normalizedSelectionRect(state.selectionAnchor, state.selectionAnchor));
+          canvas.setPointerCapture(event.pointerId);
+          renderWhiteboard();
+          return;
+        }
         state.drawing = true;
         state.pointerId = event.pointerId;
-        state.strokeTool = event.button === 5 || (event.buttons & 32) ? 'eraser' : state.tool;
+        state.strokeTool = hardwareEraser ? 'eraser' : state.tool;
         const point = strokePoint(event);
         state.activeStroke = {
           id: newStrokeId(),
@@ -1340,6 +2564,15 @@
       canvas.addEventListener('pointermove', (event) => {
         if (!state.drawing || event.pointerId !== state.pointerId) return;
         event.preventDefault();
+        if (state.moving) {
+          moveWhiteboardSelection(pointerPoint(event));
+          return;
+        }
+        if (state.selecting) {
+          updateWhiteboardSelection(normalizedSelectionRect(state.selectionAnchor, pointerPoint(event)));
+          renderWhiteboard();
+          return;
+        }
         const samples = typeof event.getCoalescedEvents === 'function'
           ? event.getCoalescedEvents()
           : [event];
@@ -1350,6 +2583,29 @@
       function finishStroke(event) {
         if (!state.drawing || event.pointerId !== state.pointerId) return;
         event.preventDefault();
+        if (state.moving) {
+          moveWhiteboardSelection(pointerPoint(event));
+          state.drawing = false;
+          state.pointerId = null;
+          if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+          finishWhiteboardMove();
+          renderWhiteboard();
+          return;
+        }
+        if (state.selecting) {
+          updateWhiteboardSelection(normalizedSelectionRect(state.selectionAnchor, pointerPoint(event)));
+          state.drawing = false;
+          state.selecting = false;
+          state.pointerId = null;
+          state.selectionAnchor = null;
+          if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+          renderWhiteboard();
+          const selected = selectionCount();
+          showStatus(selected
+            ? `Whiteboard · selected ${selected} item${selected === 1 ? '' : 's'}`
+            : 'Whiteboard · no items in selection');
+          return;
+        }
         const stroke = state.activeStroke;
         clearTimeout(state.previewTimer);
         state.previewTimer = null;
@@ -1358,19 +2614,52 @@
         state.activeStroke = null;
         if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
         if (stroke?.points.length) {
+          const erasedAnnotationIds = stroke.tool === 'eraser'
+            ? state.annotations
+              .filter((annotation) => eraserHitsAnnotation(stroke, annotation))
+              .map((annotation) => annotation.id)
+            : [];
           state.strokes.push(stroke);
+          if (erasedAnnotationIds.length) {
+            const erased = new Set(erasedAnnotationIds);
+            state.annotations = state.annotations.filter((annotation) => !erased.has(annotation.id));
+            renderWhiteboard();
+          }
+          if (Date.now() - state.recentStrokeAt > 2500) state.recentStrokeIds = [];
+          state.recentStrokeIds.push(stroke.id);
+          state.recentStrokeIds = state.recentStrokeIds.slice(-WHITEBOARD_AI_RECENT_STROKES);
+          state.recentStrokeAt = Date.now();
+          lastEditedBlockId = element.dataset.blockId;
           publishActiveStroke(stroke, true);
           queueWhiteboardOperation({
             type: 'whiteboard_append_stroke',
             block_id: element.dataset.blockId,
             stroke
           });
+          for (const annotationId of erasedAnnotationIds) {
+            queueWhiteboardOperation({
+              type: 'whiteboard_remove_text',
+              block_id: element.dataset.blockId,
+              annotation_id: annotationId
+            });
+          }
         }
       }
 
       canvas.addEventListener('pointerup', finishStroke);
       canvas.addEventListener('pointercancel', finishStroke);
-      element.append(canvas, resizeHandle);
+      element.flushWhiteboard = async () => {
+        await flushWhiteboardOperations(true);
+        const deadline = Date.now() + 5000;
+        while (state.syncing && Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        if (state.pendingOperations.length && !state.syncing) await flushWhiteboardOperations(true);
+        if (state.syncing || state.pendingOperations.length) {
+          throw new Error('Whiteboard changes are still pending');
+        }
+      };
+      element.append(canvas, annotationLayer, resizeHandle);
 
       renderWhiteboard();
       return element;
@@ -1395,6 +2684,7 @@
       if (!documentValue) return;
       const previousSelection = preserveSelection ? selectedBlockId : null;
       const previousInsertion = preserveSelection ? insertionAfterBlockId : null;
+      if (!preserveSelection) lastEditedBlockId = null;
       currentDocument = documentValue;
       titleInput.value = documentValue.title || 'Untitled';
       whiteboardToolbar.replaceChildren();
@@ -1417,9 +2707,10 @@
         : null;
       selectBlock(selected || paper.firstElementChild);
       setInsertionPoint(insertion || paper.lastElementChild);
+      requestAnimationFrame(updatePageScrollbar);
     }
 
-    function snapshotBlocks() {
+    function snapshotBlocks(liveWhiteboards = false) {
       const blocks = [];
       for (const element of paper.children) {
         const id = element.dataset.blockId || newBlockId();
@@ -1442,11 +2733,19 @@
             width_percent: Number.parseInt(element.dataset.widthPercent || '100', 10)
           });
         } else if (type === 'whiteboard') {
+          const whiteboardState = element.whiteboardState;
           blocks.push({
             id,
             type,
-            height_px: element.whiteboardState?.committedHeightPx || WHITEBOARD_HEIGHT,
-            strokes: element.whiteboardState?.committedStrokes || []
+            height_px: liveWhiteboards
+              ? whiteboardState?.heightPx || WHITEBOARD_HEIGHT
+              : whiteboardState?.committedHeightPx || WHITEBOARD_HEIGHT,
+            strokes: liveWhiteboards
+              ? cloneStrokes(whiteboardState?.strokes)
+              : cloneStrokes(whiteboardState?.committedStrokes),
+            annotations: liveWhiteboards
+              ? cloneAnnotations(whiteboardState?.annotations)
+              : cloneAnnotations(whiteboardState?.committedAnnotations)
           });
         } else {
           blocks.push({ id, type: type === 'table' ? 'table' : 'rich', html: sanitizeRichHtml(element.innerHTML) });
@@ -1534,10 +2833,14 @@
     function markDirty(event = null) {
       dirty = true;
       editGeneration += 1;
+      if (!aiBusy && toolbarBar.dataset.aiState === 'done') setAiIndicatorState('idle');
       const target = event?.target || null;
       if (target === titleInput) titleDirty = true;
       const block = target?.closest?.('.block') || selectedBlock();
-      if (block?.dataset.blockId) dirtyBlockIds.add(block.dataset.blockId);
+      if (block?.dataset.blockId) {
+        dirtyBlockIds.add(block.dataset.blockId);
+        lastEditedBlockId = block.dataset.blockId;
+      }
       showStatus('Live · syncing…', false, true);
       updateModelContext();
       scheduleSave();
@@ -1608,8 +2911,359 @@
       return currentDocument;
     }
 
+    async function flushAllWhiteboards() {
+      for (const element of paper.querySelectorAll('[data-block-type="whiteboard"]')) {
+        if (typeof element.flushWhiteboard === 'function') await element.flushWhiteboard();
+      }
+    }
+
+    function safeNotesFilename() {
+      const stem = String(titleInput.value || 'notes')
+        .normalize('NFKD')
+        .replace(/[^A-Za-z0-9._-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 80) || 'notes';
+      return `${stem}.mdos-notes.json`;
+    }
+
+    function portableDocumentSnapshot() {
+      return {
+        schema_version: 1,
+        document_id: currentDocument?.document_id || 'notes',
+        title: String(titleInput.value || 'Untitled').slice(0, 240),
+        revision: Number.isInteger(currentDocument?.revision) ? currentDocument.revision : 0,
+        updated_at: new Date().toISOString(),
+        blocks: snapshotBlocks(true)
+      };
+    }
+
+    function downloadNotesBlob(blob) {
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = safeNotesFilename();
+      link.hidden = true;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function saveNotesFile() {
+      let handle = notesFileHandle;
+      if (!handle && typeof window.showSaveFilePicker === 'function') {
+        try {
+          handle = await window.showSaveFilePicker({
+            suggestedName: safeNotesFilename(),
+            types: [{
+              description: 'MD-OS notes',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+        } catch (error) {
+          if (error?.name === 'AbortError') {
+            showStatus('Save cancelled');
+            return false;
+          }
+          throw error;
+        }
+      }
+
+      let syncWarning = '';
+      try {
+        await flushAllWhiteboards();
+        if (dirty) await saveDocument();
+      } catch (error) {
+        syncWarning = String(error?.message || error);
+      }
+
+      const json = JSON.stringify(portableDocumentSnapshot(), null, 2) + '\n';
+      const blob = new Blob([json], { type: 'application/json' });
+      if (blob.size > NOTES_FILE_MAX_BYTES) throw new Error('Notes file is too large');
+      if (handle) {
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        notesFileHandle = handle;
+      } else {
+        downloadNotesBlob(blob);
+      }
+      showStatus(syncWarning ? 'File saved · live sync pending' : 'Notes file saved', Boolean(syncWarning));
+      return true;
+    }
+
+    function validatePortableDocument(value) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid notes file');
+      if (value.schema_version !== 1) throw new Error('Unsupported notes file version');
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(String(value.document_id || ''))) {
+        throw new Error('Invalid notes document id');
+      }
+      if (typeof value.title !== 'string' || value.title.length > 240) throw new Error('Invalid notes title');
+      if (!Number.isInteger(value.revision) || value.revision < 0) throw new Error('Invalid notes revision');
+      if (typeof value.updated_at !== 'string' || !Number.isFinite(Date.parse(value.updated_at))) {
+        throw new Error('Invalid notes update time');
+      }
+      if (!Array.isArray(value.blocks) || !value.blocks.length || value.blocks.length > 2000) {
+        throw new Error('Invalid notes blocks');
+      }
+      return value;
+    }
+
+    async function openNotesFile(file) {
+      if (!file) return;
+      if (file.size <= 0 || file.size > NOTES_FILE_MAX_BYTES) throw new Error('Notes file size is invalid');
+      const imported = validatePortableDocument(JSON.parse(await file.text()));
+      const savedCurrent = await saveNotesFile();
+      if (!savedCurrent) return;
+      await flushAllWhiteboards();
+      const result = await callTool('mdos_document_save', {
+        document_id: currentDocument.document_id,
+        expected_revision: currentDocument.revision,
+        title: imported.title,
+        blocks: imported.blocks
+      });
+      const error = toolError(result);
+      if (error) throw new Error(error);
+      const opened = resultDocument(result);
+      if (!opened) throw new Error('Open returned no document');
+      notesFileHandle = null;
+      renderDocument(opened);
+      showStatus(`Opened ${file.name || 'notes file'}`);
+    }
+
+    async function newNotesFile() {
+      const savedCurrent = await saveNotesFile();
+      if (!savedCurrent) return;
+      await flushAllWhiteboards();
+      const result = await callTool('mdos_document_save', {
+        document_id: currentDocument.document_id,
+        expected_revision: currentDocument.revision,
+        title: 'Untitled notes',
+        blocks: [{ id: newBlockId(), type: 'rich', html: '<p><br></p>' }]
+      });
+      const error = toolError(result);
+      if (error) throw new Error(error);
+      const created = resultDocument(result);
+      if (!created) throw new Error('New file returned no document');
+      notesFileHandle = null;
+      renderDocument(created);
+      showStatus('New clean notes file');
+    }
+
+    function blockTargetText(element) {
+      if (!element) return '';
+      const type = element.dataset.blockType || 'rich';
+      if (type === 'formula') return String(element.dataset.latex || '').slice(0, 6000);
+      if (type === 'image') return String(element.querySelector('figcaption')?.textContent || '').slice(0, 6000);
+      if (type === 'whiteboard') return '';
+      return String(element.innerText || element.textContent || '').trim().slice(0, 6000);
+    }
+
+    function canvasBlob(canvas, type = 'image/jpeg', quality = 0.84) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Could not capture recent handwriting'));
+        }, type, quality);
+      });
+    }
+
+    async function whiteboardAiPayload(element) {
+      const state = element?.whiteboardState;
+      const source = element?.querySelector('canvas');
+      if (!state || !source) throw new Error('Whiteboard is not available');
+      const recentIds = new Set(state.recentStrokeIds || []);
+      let strokes = state.strokes.filter((stroke) => recentIds.has(stroke.id));
+      if (!strokes.length) strokes = state.strokes.slice(-WHITEBOARD_AI_RECENT_STROKES);
+      const points = strokes.flatMap((stroke) => stroke.points || []);
+      if (!points.length) throw new Error('Write something on the Whiteboard first');
+      const bounds = points.reduce((result, point) => {
+        const width = Math.max(1, Number(point.width) || 1);
+        const radius = width / 2;
+        return {
+          minX: Math.min(result.minX, point.x - radius),
+          minY: Math.min(result.minY, point.y - radius),
+          maxX: Math.max(result.maxX, point.x + radius),
+          maxY: Math.max(result.maxY, point.y + radius)
+        };
+      }, { minX: source.width, minY: source.height, maxX: 0, maxY: 0 });
+      const minX = Math.max(0, bounds.minX - WHITEBOARD_AI_PADDING);
+      const minY = Math.max(0, bounds.minY - WHITEBOARD_AI_PADDING);
+      const maxX = Math.min(source.width, bounds.maxX + WHITEBOARD_AI_PADDING);
+      const maxY = Math.min(source.height, bounds.maxY + WHITEBOARD_AI_PADDING);
+      const cropWidth = Math.max(1, maxX - minX);
+      const cropHeight = Math.max(1, maxY - minY);
+      const scale = Math.min(1, 1200 / cropWidth, 1000 / cropHeight);
+      const crop = document.createElement('canvas');
+      crop.width = Math.max(1, Math.round(cropWidth * scale));
+      crop.height = Math.max(1, Math.round(cropHeight * scale));
+      const cropContext = crop.getContext('2d', { alpha: false });
+      cropContext.fillStyle = '#ffffff';
+      cropContext.fillRect(0, 0, crop.width, crop.height);
+      cropContext.drawImage(source, minX, minY, cropWidth, cropHeight, 0, 0, crop.width, crop.height);
+      const imageUrl = await fileAsDataUri(await canvasBlob(crop));
+      const questionStrokeIds = strokes.map((stroke) => stroke.id);
+      const responseY = typeof element.whiteboardResponseY === 'function'
+        ? element.whiteboardResponseY(questionStrokeIds, bounds, WHITEBOARD_AI_START_RESERVE)
+        : Math.max(20, Math.ceil(bounds.maxY + WHITEBOARD_AI_VERTICAL_GAP));
+      const previousHeight = state.heightPx;
+      const hasSafeSpace = typeof element.ensureWhiteboardHeight === 'function'
+        && element.ensureWhiteboardHeight(responseY + WHITEBOARD_AI_START_RESERVE);
+      if (!hasSafeSpace) {
+        throw new Error('La Lavagna non ha spazio libero sufficiente sotto il contenuto');
+      }
+      if (state.heightPx !== previousHeight && typeof element.flushWhiteboard === 'function') {
+        await element.flushWhiteboard();
+      }
+      return {
+        image_url: imageUrl,
+        response_position: {
+          x: Math.min(1500, Math.max(20, minX)),
+          y: responseY
+        }
+      };
+    }
+
+    function setAiIndicatorState(value) {
+      const state = ['idle', 'working', 'done', 'failed'].includes(value) ? value : 'idle';
+      toolbarBar.dataset.aiState = state;
+      for (const strip of whiteboardToolbar.querySelectorAll('.ai-kitt-strip')) {
+        updateAiKittStrip(strip, state);
+      }
+    }
+
+    function setAiBusy(value) {
+      aiBusy = Boolean(value);
+      aiButton.disabled = aiBusy;
+      aiButton.classList.toggle('ai-working', aiBusy);
+      aiButton.setAttribute('aria-label', aiBusy ? 'AI is working' : 'Ask AI about the last edit');
+      aiButton.title = aiBusy ? 'AI is working' : 'Ask AI about the last edit';
+      if (aiBusy) setAiIndicatorState('working');
+    }
+
+    function whiteboardAiRevealBusy() {
+      return Array.from(paper.querySelectorAll('[data-block-type="whiteboard"]'))
+        .some((element) => Boolean(element.whiteboardState?.annotationReveal));
+    }
+
+    function revealAiResult(documentValue) {
+      if (!aiRequestContext || !documentValue) return false;
+      const blocks = Array.isArray(documentValue.blocks) ? documentValue.blocks : [];
+      const added = blocks.filter((block) => !aiRequestContext.blockIds.has(block.id));
+      const targetIndex = blocks.findIndex((block) => block.id === aiRequestContext.targetBlockId);
+      const resultBlock = added.find((block) => blocks.indexOf(block) > targetIndex)
+        || added[0]
+        || blocks.find((block) => block.id === aiRequestContext.targetBlockId);
+      if (!resultBlock) return false;
+      const element = paper.querySelector(`[data-block-id="${CSS.escape(resultBlock.id)}"]`);
+      if (!element) return false;
+      const inserted = added.some((block) => block.id === resultBlock.id);
+      const newAnnotation = resultBlock.type === 'whiteboard'
+        ? (resultBlock.annotations || []).find((annotation) => !aiRequestContext.annotationIds.has(annotation.id))
+        : null;
+      selectBlock(element);
+      setInsertionPoint(element);
+      element.classList.add('remote-change');
+      setTimeout(() => element.classList.remove('remote-change'), 1200);
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      aiRequestContext = null;
+      if (newAnnotation && typeof element.streamWhiteboardAnnotation === 'function') {
+        setAiIndicatorState('working');
+        void element.streamWhiteboardAnnotation(newAnnotation.id, ({ visibleLines, totalLines, done }) => {
+          if (done) {
+            setAiIndicatorState('done');
+            showStatus('AI · answer shown');
+          } else {
+            setAiIndicatorState('working');
+            showStatus(`AI · writing line ${visibleLines}/${totalLines}…`, false, true);
+          }
+        });
+      } else {
+        setAiIndicatorState('done');
+        showStatus(inserted ? 'AI · answer added' : 'AI · correction shown');
+      }
+      return true;
+    }
+
+    async function syncAndRevealAiResult() {
+      if (!aiRequestContext || !currentDocument) return;
+      try {
+        const result = await callTool('mdos_document_read', { document_id: currentDocument.document_id });
+        const latest = resultDocument(result);
+        if (latest && latest.revision > currentDocument.revision) mergeRemoteDocument(latest);
+        if (!revealAiResult(latest || currentDocument)) {
+          setAiIndicatorState('failed');
+          showStatus('AI · response saved; refresh to show it', true, true);
+        }
+      } catch (error) {
+        setAiIndicatorState('failed');
+        showStatus('AI · response saved; refresh to show it', true, true);
+      }
+    }
+
+    async function requestAiAssist() {
+      if (aiBusy) return;
+      if (window.parent !== window) {
+        showStatus('AI button is available in the local /notes workspace', true, true);
+        return;
+      }
+      const selected = selectedBlock();
+      const lastEdited = lastEditedBlockId
+        ? paper.querySelector(`[data-block-id="${CSS.escape(lastEditedBlockId)}"]`)
+        : null;
+      const target = selected || lastEdited || paper.lastElementChild;
+      if (!target || !currentDocument) throw new Error('There is no note to send to AI');
+      await flushAllWhiteboards();
+      if (dirty) await saveDocument();
+      const targetType = target.dataset.blockType || 'rich';
+      const whiteboardPayload = targetType === 'whiteboard'
+        ? await whiteboardAiPayload(target)
+        : {
+            image_url: targetType === 'image'
+              && /^data:image\/(png|jpeg|webp);base64,/i.test(target.dataset.dataUri || '')
+              ? target.dataset.dataUri
+              : '',
+            response_position: { x: 40, y: 80 }
+          };
+      aiRequestContext = {
+        targetBlockId: target.dataset.blockId,
+        targetType,
+        blockIds: new Set(snapshotBlocks().map((block) => block.id)),
+        annotationIds: new Set(
+          targetType === 'whiteboard'
+            ? (target.whiteboardState?.annotations || []).map((annotation) => annotation.id)
+            : []
+        )
+      };
+      setAiBusy(true);
+      showStatus('AI · preparing full PDF context…', false, true);
+      try {
+        const response = await fetch('/api/ai-assist', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            document_id: currentDocument.document_id,
+            revision: currentDocument.revision,
+            block_id: target.dataset.blockId,
+            target_type: targetType,
+            target_text: blockTargetText(target),
+            ...whiteboardPayload
+          })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'AI request failed');
+      } catch (error) {
+        setAiBusy(false);
+        setAiIndicatorState('failed');
+        aiRequestContext = null;
+        throw error;
+      }
+    }
+
     async function pollDocument() {
-      if (!currentDocument || dirty || saving || document.hidden || liveEventsConnected) return;
+      // SSE is the low-latency path, while this readback remains active as the
+      // recovery path for a connected client that missed or rejected an event.
+      if (!currentDocument || dirty || saving || document.hidden) return;
       try {
         const result = await callTool('mdos_document_read', { document_id: currentDocument.document_id });
         const latest = resultDocument(result);
@@ -1778,20 +3432,35 @@
     }
 
     async function exportPdf() {
-      if (dirty) await saveDocument();
-      if (dirty || !currentDocument) return;
-      showStatus('Exporting', false, true);
+      const preview = window.open('about:blank', '_blank');
+      if (preview) {
+        try {
+          preview.document.title = 'Creating PDF';
+          preview.document.body.textContent = 'Creating PDF…';
+        } catch (_) { /* the browser still owns the reserved tab */ }
+      }
       try {
-        const result = await callTool('mdos_document_export', {
-          document_id: currentDocument.document_id,
-          format: 'pdf'
+        if (dirty) await saveDocument();
+        if (dirty || !currentDocument) {
+          preview?.close();
+          return;
+        }
+        showStatus('Exporting', false, true);
+        const response = await fetch('/api/pdf-export', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            document_id: currentDocument.document_id,
+            revision: currentDocument.revision,
+          }),
         });
-        const value = unwrapToolResult(result);
-        const error = toolError(value);
-        if (error) throw new Error(error);
-        const output = value.structuredContent?.export || value.export;
-        showStatus(output?.path ? `PDF: ${output.path}` : 'PDF ready', false, true);
+        const output = await response.json();
+        if (!response.ok || !output.open_url) throw new Error(output.error || 'PDF export failed');
+        if (preview && !preview.closed) preview.location.replace(output.open_url);
+        else window.location.assign(output.open_url);
+        showStatus('PDF opened', false, true);
       } catch (error) {
+        preview?.close();
         showStatus(String(error.message || error), true, true);
       }
     }
@@ -1831,7 +3500,13 @@
         .filter(Boolean);
       if (imageFiles.length) {
         event.preventDefault();
-        await insertImageFiles(imageFiles);
+        const whiteboard = event.target.closest?.('[data-block-type="whiteboard"]')
+          || (selectedBlock()?.dataset.blockType === 'whiteboard' ? selectedBlock() : null);
+        if (whiteboard?.pasteWhiteboardImage) {
+          for (const file of imageFiles) await whiteboard.pasteWhiteboardImage(file);
+        } else {
+          await insertImageFiles(imageFiles);
+        }
         return;
       }
       const html = event.clipboardData?.getData('text/html');
@@ -1843,6 +3518,23 @@
     });
 
     titleInput.addEventListener('input', markDirty);
+    const runUiAction = (action) => {
+      Promise.resolve().then(action).catch((error) => {
+        showStatus(String(error?.message || error), true, true);
+      });
+    };
+    document.getElementById('save-notes-file').addEventListener('click', () => {
+      runUiAction(saveNotesFile);
+    });
+    document.getElementById('open-notes-file').addEventListener('click', () => {
+      notesFileInput.click();
+    });
+    document.getElementById('new-notes-file').addEventListener('click', () => {
+      runUiAction(newNotesFile);
+    });
+    aiButton.addEventListener('click', () => {
+      runUiAction(requestAiAssist);
+    });
     document.querySelectorAll('[data-command]').forEach((button) => {
       button.addEventListener('mousedown', (event) => event.preventDefault());
       button.addEventListener('click', () => format(button.dataset.command));
@@ -1869,6 +3561,11 @@
       await insertImageFiles(Array.from(imageInput.files || []));
       imageInput.value = '';
     });
+    notesFileInput.addEventListener('change', () => {
+      const file = notesFileInput.files?.[0] || null;
+      notesFileInput.value = '';
+      if (file) runUiAction(() => openNotesFile(file));
+    });
     document.getElementById('export-pdf').addEventListener('click', exportPdf);
     document.getElementById('formula-cancel').addEventListener('click', closeFormula);
     document.getElementById('formula-apply').addEventListener('click', applyFormula);
@@ -1884,7 +3581,7 @@
     document.addEventListener('keydown', (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
         event.preventDefault();
-        saveDocument();
+        runUiAction(saveNotesFile);
       }
     });
 
@@ -1947,10 +3644,22 @@
       events.onmessage = (message) => {
         try {
           const event = JSON.parse(message.data);
-          if (event.type === 'document_updated') {
+          if (event.type === 'status') {
+            const nextInstanceId = String(event.instance_id || '');
+            if (
+              liveServerInstanceId
+              && nextInstanceId
+              && nextInstanceId !== liveServerInstanceId
+            ) {
+              window.location.reload();
+              return;
+            }
+            if (nextInstanceId) liveServerInstanceId = nextInstanceId;
+          } else if (event.type === 'document_updated') {
             const documentValue = resultDocument(event.result);
             if (documentValue && (!currentDocument || (documentValue.document_id === currentDocument.document_id && documentValue.revision > currentDocument.revision))) {
               mergeRemoteDocument(documentValue);
+              if (aiRequestContext) revealAiResult(documentValue);
             }
           } else if (event.type === 'whiteboard_stream') {
             const streamEvent = event.event;
@@ -1962,7 +3671,29 @@
             whiteboard?.applyWhiteboardStream?.(streamEvent);
           } else if (event.type === 'document_flush') {
             void saveDocument().catch(() => {});
+          } else if (event.type === 'ai_status') {
+            const working = event.status === 'working';
+            setAiBusy(working);
+            if (working) showStatus('AI · working…', false, true);
+            else if (event.status === 'failed') {
+              aiRequestContext = null;
+              setAiIndicatorState('failed');
+              showStatus('AI request failed', true, true);
+            } else if (aiRequestContext) {
+              showStatus('AI · loading answer…', false, true);
+              void syncAndRevealAiResult();
+            } else if (whiteboardAiRevealBusy()) {
+              setAiIndicatorState('working');
+            } else {
+              setAiIndicatorState('done');
+              showStatus('AI · answer shown');
+            }
+          } else if (event.type === 'ai_progress') {
+            if (aiBusy) showStatus('AI · composing…', false, true);
           } else if (event.type === 'error') {
+            const wasAiBusy = aiBusy;
+            setAiBusy(false);
+            if (wasAiBusy) setAiIndicatorState('failed');
             showStatus(event.message || event.error || 'Live connection error', true);
           }
         } catch (_) { /* Polling remains the recovery path. */ }
@@ -1987,6 +3718,7 @@
         }
       }
       showStatus('Live');
+      updatePageScrollbar();
       connectLiveEvents();
       setInterval(pollDocument, POLL_FALLBACK_INTERVAL_MS);
     }

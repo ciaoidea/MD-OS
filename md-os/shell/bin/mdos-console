@@ -4659,7 +4659,7 @@ def report_notes_ready(
             print("CORTEX NOTES: LAN listener ready, but no private IPv4 address was detected")
 
 
-def notes_workspace_ready(url: str, timeout: float = 0.3) -> bool:
+def notes_workspace_status(url: str, timeout: float = 0.3) -> dict[str, object] | None:
     request = urllib.request.Request(
         url + "api/status",
         headers={"Accept": "application/json"},
@@ -4668,8 +4668,46 @@ def notes_workspace_ready(url: str, timeout: float = 0.3) -> bool:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (OSError, ValueError, urllib.error.URLError):
+        return None
+    if response.status != 200 or not isinstance(payload, dict):
+        return None
+    return payload
+
+
+def notes_workspace_ready(url: str, timeout: float = 0.3) -> bool:
+    payload = notes_workspace_status(url, timeout)
+    return payload is not None and payload.get("ready") is True
+
+
+def request_notes_workspace_control(url: str, action: str) -> bool:
+    if action not in {"restart", "shutdown"}:
+        raise ValueError("invalid notes workspace control action")
+    request = urllib.request.Request(
+        url + "api/" + action,
+        data=b"{}",
+        headers={"Accept": "application/json", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=1.0) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (OSError, ValueError, urllib.error.URLError):
         return False
-    return response.status == 200 and payload.get("ready") is True
+    return response.status == 202 and payload.get("ok") is True
+
+
+def wait_for_notes_restart(url: str, previous_pid: int) -> bool:
+    deadline = time.monotonic() + NOTES_STARTUP_TIMEOUT_SECONDS
+    while time.monotonic() < deadline:
+        payload = notes_workspace_status(url)
+        if (
+            payload is not None
+            and payload.get("ready") is True
+            and payload.get("pid") != previous_pid
+        ):
+            return True
+        time.sleep(0.05)
+    return False
 
 
 def notes_browser_enabled() -> bool:
@@ -4728,11 +4766,29 @@ def launch_notes_workspace(session: ShellSession) -> bool:
         print(f"cortex: /notes: {error}", file=sys.stderr)
         return False
 
-    if notes_workspace_ready(url):
-        session.notes_url = url
-        opened = open_notes_browser(url)
-        report_notes_ready(session, "already ready", opened=opened)
-        return True
+    restarting = False
+    status = notes_workspace_status(url)
+    if status is not None and status.get("ready") is True:
+        existing = session.notes_process
+        if existing is not None and existing.poll() is None:
+            close_notes_workspace(session, announce=False)
+            restarting = True
+        else:
+            previous_pid = status.get("pid")
+            if (
+                not isinstance(previous_pid, int)
+                or not request_notes_workspace_control(url, "restart")
+                or not wait_for_notes_restart(url, previous_pid)
+            ):
+                print(
+                    "cortex: /notes: the existing server could not restart automatically",
+                    file=sys.stderr,
+                )
+                return False
+            session.notes_url = url
+            opened = open_notes_browser(url)
+            report_notes_ready(session, "restarted", opened=opened)
+            return True
 
     existing = session.notes_process
     if existing is not None and existing.poll() is None:
@@ -4781,7 +4837,11 @@ def launch_notes_workspace(session: ShellSession) -> bool:
     while time.monotonic() < deadline:
         if notes_workspace_ready(url):
             opened = open_notes_browser(url)
-            report_notes_ready(session, "ready", opened=opened)
+            report_notes_ready(
+                session,
+                "restarted" if restarting else "ready",
+                opened=opened,
+            )
             return True
         if process.poll() is not None:
             break
