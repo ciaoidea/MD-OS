@@ -763,6 +763,16 @@ function visualDocumentBlockSchema() {
         alt: { type: 'string' },
         width_percent: { type: 'integer', minimum: 10, maximum: 100 },
       }, ['type', 'data_uri']),
+      inputSchema({
+        id: { type: 'string' },
+        type: { const: 'whiteboard' },
+        height_px: { type: 'integer', minimum: 600, maximum: 3000, default: 1000 },
+        strokes: {
+          type: 'array',
+          maxItems: 5000,
+          items: { type: 'object', description: 'Validated shared pen or eraser stroke.' },
+        },
+      }, ['type', 'strokes']),
     ],
   };
 }
@@ -831,7 +841,7 @@ function listDocumentTools() {
     {
       name: 'mdos_document_apply',
       title: 'Edit visual document',
-      description: 'Apply bounded block operations so the assistant can edit the same live document.',
+      description: 'Apply bounded block or atomic shared-Whiteboard operations to the same live document.',
       inputSchema: inputSchema({
         document_id: documentIdSchema,
         expected_revision: revisionSchema,
@@ -841,10 +851,10 @@ function listDocumentTools() {
           maxItems: 100,
           items: {
             type: 'object',
-            description: 'set_title, insert_after, replace_block, or delete_block operation.',
+            description: 'Block edit or atomic whiteboard_append_stroke, whiteboard_undo, whiteboard_clear, or whiteboard_resize operation.',
           },
         },
-      }, ['document_id', 'expected_revision', 'operations']),
+      }, ['document_id', 'operations']),
       annotations: write,
     },
     {

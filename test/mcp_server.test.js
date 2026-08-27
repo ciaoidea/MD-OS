@@ -152,6 +152,9 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
     assert.match(editor.result.contents[0].text, /requestDisplayMode/);
     assert.match(editor.result.contents[0].text, /addEventListener\('paste'/);
     assert.match(editor.result.contents[0].text, /contentEditable = 'true'/);
+    assert.match(editor.result.contents[0].text, /id="add-whiteboard"/);
+    assert.match(editor.result.contents[0].text, />Whiteboard<\/button>/);
+    assert.match(editor.result.contents[0].text, /whiteboard_append_stroke/);
 
     const tools = await server.request('tools/list');
     const documentTools = tools.result.tools.filter(
@@ -172,6 +175,9 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
     const openDescriptor = documentTools.find((item) => item.name === 'mdos_document_open');
     assert.equal(openDescriptor._meta.ui.resourceUri, 'ui://mdos/document-editor/v1.html');
     assert.equal(openDescriptor.annotations.openWorldHint, false);
+    const applyDescriptor = documentTools.find((item) => item.name === 'mdos_document_apply');
+    assert.ok(applyDescriptor.inputSchema.properties.expected_revision);
+    assert.ok(!applyDescriptor.inputSchema.required.includes('expected_revision'));
 
     const created = await server.request('tools/call', {
       name: 'mdos_document_create',
@@ -197,6 +203,7 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
             type: 'table',
             html: '<table><tbody><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></tbody></table>',
           },
+          { type: 'whiteboard', strokes: [] },
         ],
       },
     });
@@ -216,12 +223,41 @@ test('MCP Apps visual editor opens and updates one authoritative live document',
     assert.equal(applied.result.structuredContent.document.revision, 2);
     assert.equal(applied.result.structuredContent.document.title, 'Edited with the assistant');
 
+    const whiteboardId = saved.result.structuredContent.document.blocks[3].id;
+    const sharedStroke = await server.request('tools/call', {
+      name: 'mdos_document_apply',
+      arguments: {
+        document_id: 'live_notes',
+        operations: [{
+          type: 'whiteboard_append_stroke',
+          block_id: whiteboardId,
+          stroke: {
+            id: 's_dddddddddddddddd',
+            tool: 'pen',
+            color: '#202124',
+            points: [{ x: 10, y: 20, width: 5 }],
+          },
+        }, {
+          type: 'whiteboard_resize',
+          block_id: whiteboardId,
+          height_px: 1600,
+        }],
+      },
+    });
+    assert.equal(sharedStroke.error, undefined);
+    assert.equal(sharedStroke.result.structuredContent.document.revision, 3);
+    assert.equal(
+      sharedStroke.result.structuredContent.document.blocks[3].strokes[0].id,
+      's_dddddddddddddddd',
+    );
+    assert.equal(sharedStroke.result.structuredContent.document.blocks[3].height_px, 1600);
+
     const read = await server.request('tools/call', {
       name: 'mdos_document_read',
       arguments: { document_id: 'live_notes' },
     });
     assert.equal(read.error, undefined);
-    assert.equal(read.result.structuredContent.document.revision, 2);
+    assert.equal(read.result.structuredContent.document.revision, 3);
 
     const math = await server.request('tools/call', {
       name: 'mdos_document_render_math',

@@ -36,8 +36,8 @@
       top: 0;
       z-index: 20;
       display: grid;
-      grid-template-columns: minmax(10rem, 1fr) auto auto;
-      align-items: center;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
       gap: .65rem;
       padding: .55rem .75rem;
       background: color-mix(in srgb, var(--paper) 92%, transparent);
@@ -46,6 +46,8 @@
     }
 
     #title {
+      grid-column: 1;
+      grid-row: 1;
       min-width: 0;
       border: 0;
       outline: 0;
@@ -56,9 +58,15 @@
       padding: .35rem .25rem;
     }
 
-    .tools, .actions { display: flex; align-items: center; gap: .2rem; }
-    .tools { flex-wrap: wrap; justify-content: center; }
-    .actions { justify-content: flex-end; }
+    .tools, .actions { display: flex; align-items: center; gap: .2rem; min-width: 0; }
+    .tools {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      overflow: visible;
+    }
+    .actions { grid-column: 2; grid-row: 1; justify-content: flex-end; }
 
     .tool, .action {
       min-width: 2rem;
@@ -103,6 +111,25 @@
       min-height: 1.45em;
       margin: 0 0 .55rem;
     }
+    .block.insertion-anchor::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -.34rem;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--accent);
+      pointer-events: none;
+    }
+    .paper.insertion-at-start::before {
+      content: "";
+      display: block;
+      height: 2px;
+      margin: 0 0 .55rem;
+      border-radius: 2px;
+      background: var(--accent);
+    }
 
     .block p:first-child, .block h1:first-child, .block h2:first-child, .block h3:first-child { margin-top: 0; }
     .block p:last-child, .block ul:last-child, .block ol:last-child { margin-bottom: 0; }
@@ -131,6 +158,127 @@
     .image { text-align: center; }
     .image img { display: block; max-width: 100%; height: auto; margin: .5rem auto; }
     .image figcaption { min-height: 1.4rem; color: var(--muted); font-size: .88rem; outline: 0; }
+
+    .whiteboard {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: .55rem;
+      background: #fff;
+    }
+
+    .whiteboard-toolbar {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      display: grid;
+      gap: .22rem;
+      padding: .25rem;
+      min-width: 0;
+      overflow: visible;
+      border: 1px solid #d2d4d7;
+      border-radius: .45rem;
+      background: #f6f6f4;
+      color: #202124;
+      user-select: none;
+    }
+
+    .whiteboard-toolbar[hidden] { display: none; }
+
+    .whiteboard-toolbar-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      gap: .15rem;
+      width: 100%;
+      min-width: 0;
+      overflow: visible;
+    }
+
+    .whiteboard-control {
+      flex: 0 1 1.75rem;
+      display: inline-grid;
+      place-items: center;
+      width: 1.75rem;
+      max-width: 1.75rem;
+      height: 1.75rem;
+      min-width: 0;
+      min-height: 1.75rem;
+      padding: 0;
+      border: 1px solid #c8cace;
+      border-radius: .38rem;
+      background: #fff;
+      color: #202124;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .whiteboard-control.active { border-color: #1769e0; background: #dceaff; }
+    .whiteboard-control:disabled { cursor: default; opacity: .45; }
+    .whiteboard-control:focus-visible { outline: 2px solid #1769e0; outline-offset: 1px; }
+    .whiteboard-icon {
+      display: block;
+      width: 1rem;
+      height: 1rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .whiteboard-color-dot {
+      display: block;
+      width: .72rem;
+      height: .72rem;
+      border-radius: 50%;
+      background: var(--whiteboard-swatch);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--whiteboard-swatch) 70%, #fff);
+      pointer-events: none;
+    }
+    .whiteboard-control[data-color].active .whiteboard-color-dot {
+      box-shadow: 0 0 0 2px #fff, 0 0 0 3px #1769e0;
+    }
+    .whiteboard-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fff;
+      cursor: crosshair;
+      touch-action: none;
+      overscroll-behavior: contain;
+    }
+
+    .whiteboard-resize-handle {
+      display: grid;
+      place-items: center;
+      min-height: 1.65rem;
+      border-top: 1px solid #d2d4d7;
+      background: #f6f6f4;
+      color: #5f6368;
+      cursor: ns-resize;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .whiteboard-resize-handle::before {
+      width: 3.5rem;
+      height: .28rem;
+      border-radius: 999px;
+      background: #9aa0a6;
+      content: '';
+    }
+
+    .whiteboard-resize-handle:hover,
+    .whiteboard-resize-handle:focus-visible,
+    .whiteboard-resize-handle.active {
+      background: #e8f0fe;
+      color: #1769e0;
+      outline: 0;
+    }
+
+    .whiteboard-resize-handle:hover::before,
+    .whiteboard-resize-handle:focus-visible::before,
+    .whiteboard-resize-handle.active::before { background: #1769e0; }
 
     .status {
       position: fixed;
@@ -190,7 +338,8 @@
 
     @media (max-width: 760px) {
       .bar { grid-template-columns: 1fr auto; }
-      .tools { grid-column: 1 / -1; grid-row: 2; order: 3; overflow-x: auto; flex-wrap: nowrap; justify-content: flex-start; }
+      .tools { grid-column: 1 / -1; grid-row: 2; overflow: visible; flex-wrap: wrap; justify-content: flex-start; }
+      .whiteboard-toolbar { grid-column: 1 / -1; grid-row: 3; }
       .workspace { padding: .6rem 0 4rem; }
       .paper { min-height: calc(100vh - 7rem); padding: 2rem 1.25rem; box-shadow: none; }
       .action.export { display: none; }
@@ -213,7 +362,7 @@
 <body>
   <div class="shell">
     <header class="bar">
-      <input id="title" aria-label="Titolo degli appunti condivisi" value="Appunti condivisi" autocomplete="off">
+      <input id="title" aria-label="Shared notes title" value="Shared notes" autocomplete="off">
       <nav class="tools" aria-label="Formatting">
         <button class="tool" type="button" data-command="bold" title="Bold"><strong>B</strong></button>
         <button class="tool" type="button" data-command="italic" title="Italic"><em>I</em></button>
@@ -225,11 +374,13 @@
         <button class="tool" id="add-table" type="button" title="Table">Table</button>
         <button class="tool" id="add-formula" type="button" title="Formula">Formula</button>
         <button class="tool" id="add-image" type="button" title="Image">Image</button>
+        <button class="tool" id="add-whiteboard" type="button" title="Shared handwriting Whiteboard">Whiteboard</button>
         <button class="tool" id="delete-block" type="button" title="Delete block">Delete</button>
       </nav>
       <div class="actions">
         <button class="action export" id="export-pdf" type="button">PDF</button>
       </div>
+      <div id="whiteboard-toolbar" class="whiteboard-toolbar" aria-label="Whiteboard controls" hidden></div>
     </header>
 
     <main class="workspace">
@@ -267,13 +418,27 @@
       'text-decoration', 'text-indent', 'vertical-align', 'white-space'
     ]);
     const IMAGE_PATTERN = /^data:image\/(png|jpeg|gif|webp);base64,/i;
+    const WHITEBOARD_WIDTH = 1600;
+    const WHITEBOARD_HEIGHT = 1000;
+    const WHITEBOARD_HEIGHT_MIN = 600;
+    const WHITEBOARD_HEIGHT_MAX = 3000;
+    const WHITEBOARD_HEIGHT_STEP = 200;
+    const WHITEBOARD_HEIGHT_DRAG_STEP = 50;
+    const WHITEBOARD_MAX_POINTS_PER_STROKE = 5000;
+    const WHITEBOARD_STREAM_INTERVAL_MS = 80;
+    const WHITEBOARD_STREAM_QUEUE_MAX = 8;
+    const WHITEBOARD_COMMIT_INTERVAL_MS = 250;
+    const WHITEBOARD_COMMIT_BATCH_MAX = 20;
+    const WHITEBOARD_RETRY_MAX_MS = 60 * 1000;
     const AUTOSAVE_INTERVAL_MS = 800;
+    const POLL_FALLBACK_INTERVAL_MS = 5000;
     const SAVE_RETRY_BASE_MS = 1000;
     const SAVE_RETRY_MAX_MS = 30 * 1000;
     const pendingBridgeCalls = new Map();
     let bridgeRequestId = 1;
     let currentDocument = null;
     let selectedBlockId = null;
+    let insertionAfterBlockId = null;
     let savedRange = null;
     let dirty = false;
     let saving = false;
@@ -285,11 +450,18 @@
     let savePromise = null;
     let saveFailureCount = 0;
     let titleDirty = false;
+    let deferredRemoteDocument = null;
+    let connectionWarningShown = false;
+    let liveEventsConnected = false;
+    let whiteboardStreamSending = false;
     const dirtyBlockIds = new Set();
     const deletedBlockIds = new Set();
+    const whiteboardStreamQueue = [];
+    const whiteboardClientId = newClientId();
 
     const paper = document.getElementById('paper');
     const titleInput = document.getElementById('title');
+    const whiteboardToolbar = document.getElementById('whiteboard-toolbar');
     const statusEl = document.getElementById('status');
     const imageInput = document.getElementById('image-input');
     const formulaModal = document.getElementById('formula-modal');
@@ -300,6 +472,25 @@
       const bytes = new Uint8Array(10);
       crypto.getRandomValues(bytes);
       return `b_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+    }
+
+    function newStrokeId() {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      return `s_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+    }
+
+    function newClientId() {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      return `c_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+    }
+
+    function cloneStrokes(strokes) {
+      return Array.isArray(strokes) ? strokes.map((stroke) => ({
+        ...stroke,
+        points: stroke.points.map((point) => ({ ...point }))
+      })) : [];
     }
 
     function showStatus(message, error = false, persistent = false) {
@@ -391,6 +582,35 @@
       return result;
     }
 
+    function publishWhiteboardStream(event) {
+      if (window.parent !== window) return;
+      if (whiteboardStreamQueue.length >= WHITEBOARD_STREAM_QUEUE_MAX) {
+        whiteboardStreamQueue.shift();
+      }
+      whiteboardStreamQueue.push(event);
+      if (whiteboardStreamSending) return;
+      whiteboardStreamSending = true;
+      void (async () => {
+        try {
+          while (whiteboardStreamQueue.length) {
+            const next = whiteboardStreamQueue.shift();
+            try {
+              await fetch('/api/whiteboard-stream', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(next)
+              });
+            } catch (_) {
+              // Preview traffic is best effort. The durable stroke commit is retried separately.
+            }
+          }
+        } finally {
+          whiteboardStreamSending = false;
+          if (whiteboardStreamQueue.length) publishWhiteboardStream(whiteboardStreamQueue.shift());
+        }
+      })();
+    }
+
     function unwrapToolResult(result) {
       if (!result) return {};
       if (result.result && (result.result.structuredContent || result.result.content)) return result.result;
@@ -419,6 +639,9 @@
     function liveModelSnapshot() {
       const sourceBlocks = snapshotBlocks();
       const blocks = sourceBlocks.slice(0, 30).map((block) => {
+        if (block.type === 'whiteboard') {
+          return { id: block.id, type: block.type, content: 'handwriting' };
+        }
         if (block.type === 'image') {
           return { id: block.id, type: block.type, alt: block.alt, width_percent: block.width_percent };
         }
@@ -464,12 +687,50 @@
       for (const block of paper.querySelectorAll('.block.selected')) block.classList.remove('selected');
       if (!element) {
         selectedBlockId = null;
+        refreshWhiteboardToolbar();
         updateModelContext();
         return;
       }
       element.classList.add('selected');
       selectedBlockId = element.dataset.blockId;
+      refreshWhiteboardToolbar(element);
       updateModelContext();
+    }
+
+    function refreshWhiteboardToolbar(preferredElement = null) {
+      const preferred = preferredElement?.dataset.blockType === 'whiteboard'
+        ? preferredElement
+        : null;
+      const whiteboard = preferred || paper.querySelector('[data-block-type="whiteboard"]');
+      const rows = whiteboard?.whiteboardToolbarRows;
+      if (!Array.isArray(rows) || !rows.length) {
+        whiteboardToolbar.replaceChildren();
+        whiteboardToolbar.hidden = true;
+        return;
+      }
+      if (rows.some((row) => row.parentElement !== whiteboardToolbar)) {
+        whiteboardToolbar.replaceChildren(...rows);
+      }
+      whiteboardToolbar.hidden = false;
+    }
+
+    function setInsertionPoint(element) {
+      for (const block of paper.querySelectorAll('.block.insertion-anchor')) {
+        block.classList.remove('insertion-anchor');
+      }
+      insertionAfterBlockId = element?.dataset.blockId || null;
+      paper.classList.toggle('insertion-at-start', !element);
+      if (element) element.classList.add('insertion-anchor');
+    }
+
+    function insertionAnchorAt(clientY) {
+      let previous = null;
+      for (const block of paper.children) {
+        const bounds = block.getBoundingClientRect();
+        if (clientY < bounds.top + bounds.height / 2) return previous;
+        previous = block;
+      }
+      return previous;
     }
 
     function createRichElement(block) {
@@ -515,12 +776,553 @@
       return figure;
     }
 
+    const WHITEBOARD_ICON_PATHS = Object.freeze({
+      pen: 'M4 20l1.5-5.5L15 5l4 4-9.5 9.5L4 20Zm9-13 4 4M4 20l5.5-1.5',
+      eraser: 'M4 15 14 5l6 6-8 8H8l-4-4Zm6-6 6 6M12 19h8',
+      undo: 'M9 7 4 12l5 5M5 12h8a7 7 0 0 1 7 7',
+      clear: 'M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6',
+      refresh: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
+      contractVertical: 'M12 3v7M9 7l3 3 3-3M12 21v-7M9 17l3-3 3 3',
+      expandVertical: 'M12 10V3M9 6l3-3 3 3M12 14v7M9 18l3 3 3-3',
+      resetHeight: 'M5 4h14M5 20h14M12 7v10M9 10l3-3 3 3M9 14l3 3 3-3'
+    });
+
+    function createWhiteboardIcon(name) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.classList.add('whiteboard-icon');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('focusable', 'false');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', WHITEBOARD_ICON_PATHS[name]);
+      svg.appendChild(path);
+      return svg;
+    }
+
+    function createWhiteboardColorDot(color) {
+      const dot = document.createElement('span');
+      dot.className = 'whiteboard-color-dot';
+      dot.style.setProperty('--whiteboard-swatch', color);
+      dot.setAttribute('aria-hidden', 'true');
+      return dot;
+    }
+
+    function createWhiteboardControl(label, title, visual, action) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'whiteboard-control';
+      button.setAttribute('aria-label', label);
+      button.title = title;
+      button.appendChild(visual);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        action(button);
+      });
+      return button;
+    }
+
+    function createWhiteboardElement(block) {
+      const element = document.createElement('section');
+      element.className = 'block whiteboard';
+      element.dataset.blockId = block.id;
+      element.dataset.blockType = 'whiteboard';
+      element.setAttribute('aria-label', 'Shared handwriting Whiteboard');
+
+      const whiteboardControls = document.createElement('div');
+      whiteboardControls.className = 'whiteboard-toolbar-row';
+      whiteboardControls.setAttribute('role', 'group');
+      whiteboardControls.setAttribute('aria-label', 'Whiteboard controls');
+      const canvas = document.createElement('canvas');
+      canvas.className = 'whiteboard-canvas';
+      canvas.width = WHITEBOARD_WIDTH;
+      const initialHeight = Math.min(
+        WHITEBOARD_HEIGHT_MAX,
+        Math.max(WHITEBOARD_HEIGHT_MIN, Number.parseInt(block.height_px, 10) || WHITEBOARD_HEIGHT)
+      );
+      canvas.height = initialHeight;
+      element.dataset.heightPx = String(initialHeight);
+      canvas.tabIndex = 0;
+      canvas.setAttribute('aria-label', 'Write here with pen, touch, or mouse');
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'whiteboard-resize-handle';
+      resizeHandle.tabIndex = 0;
+      resizeHandle.setAttribute('role', 'separator');
+      resizeHandle.setAttribute('aria-label', 'Resize Whiteboard height');
+      resizeHandle.setAttribute('aria-orientation', 'horizontal');
+      resizeHandle.setAttribute('aria-valuemin', String(WHITEBOARD_HEIGHT_MIN));
+      resizeHandle.setAttribute('aria-valuemax', String(WHITEBOARD_HEIGHT_MAX));
+      resizeHandle.setAttribute('aria-valuenow', String(initialHeight));
+      resizeHandle.title = 'Drag vertically to resize Whiteboard height';
+      const context = canvas.getContext('2d', { alpha: false });
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      const initialStrokes = cloneStrokes(block.strokes);
+      const state = {
+        color: '#202124',
+        committedHeightPx: initialHeight,
+        committedStrokes: cloneStrokes(initialStrokes),
+        commitTimer: null,
+        drawing: false,
+        activeStroke: null,
+        pendingOperations: [],
+        pointerId: null,
+        previewTimer: null,
+        ready: true,
+        retryFailures: 0,
+        retryTimer: null,
+        strokeTool: 'pen',
+        streamSentPointIndex: 0,
+        streamSequence: 0,
+        heightPx: initialHeight,
+        strokes: initialStrokes,
+        syncing: false,
+        tool: 'pen'
+      };
+      element.whiteboardState = state;
+
+      let penButton;
+      let eraserButton;
+      let updateButton;
+      let colorButtons = [];
+      function setTool(tool) {
+        state.tool = tool;
+        penButton.classList.toggle('active', tool === 'pen');
+        eraserButton.classList.toggle('active', tool === 'eraser');
+        penButton.setAttribute('aria-pressed', String(tool === 'pen'));
+        eraserButton.setAttribute('aria-pressed', String(tool === 'eraser'));
+        for (const button of colorButtons) {
+          const active = tool === 'pen' && button.dataset.color === state.color;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
+        }
+      }
+
+      function strokeColor(stroke) {
+        return stroke.tool === 'eraser' ? '#ffffff' : stroke.color;
+      }
+
+      function drawDot(stroke, point) {
+        context.globalCompositeOperation = 'source-over';
+        context.fillStyle = strokeColor(stroke);
+        context.beginPath();
+        context.arc(point.x, point.y, point.width / 2, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      function drawStroke(stroke) {
+        if (!stroke.points.length) return;
+        drawDot(stroke, stroke.points[0]);
+        context.globalCompositeOperation = 'source-over';
+        context.strokeStyle = strokeColor(stroke);
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+        for (let index = 1; index < stroke.points.length; index += 1) {
+          const previous = stroke.points[index - 1];
+          const point = stroke.points[index];
+          context.lineWidth = point.width;
+          context.beginPath();
+          context.moveTo(previous.x, previous.y);
+          context.lineTo(point.x, point.y);
+          context.stroke();
+        }
+      }
+
+      function renderWhiteboard() {
+        context.globalCompositeOperation = 'source-over';
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        for (const stroke of state.strokes) drawStroke(stroke);
+      }
+
+      element.applyWhiteboardStream = (streamEvent) => {
+        if (!streamEvent || streamEvent.client_id === whiteboardClientId) return;
+        if (streamEvent.block_id !== element.dataset.blockId) return;
+        const stroke = streamEvent.stroke;
+        if (!stroke || !Array.isArray(stroke.points) || !stroke.points.length) return;
+        drawStroke(stroke);
+      };
+
+      function rememberRemote(documentValue) {
+        if (!documentValue) return;
+        const remoteBlock = documentValue.blocks?.find((candidate) => (
+          candidate.id === element.dataset.blockId && candidate.type === 'whiteboard'
+        ));
+        if (remoteBlock) {
+          state.committedHeightPx = remoteBlock.height_px || WHITEBOARD_HEIGHT;
+          state.committedStrokes = cloneStrokes(remoteBlock.strokes);
+        }
+        if (!deferredRemoteDocument || documentValue.revision > deferredRemoteDocument.revision) {
+          deferredRemoteDocument = documentValue;
+        }
+      }
+
+      function refreshUpdateButton() {
+        if (!updateButton) return;
+        updateButton.disabled = state.syncing || !state.pendingOperations.length;
+        let label = 'Update Whiteboard';
+        if (state.syncing) label = 'Updating Whiteboard';
+        else if (state.retryFailures && state.pendingOperations.length) {
+          label = `Retry ${state.pendingOperations.length} pending Whiteboard changes`;
+        } else if (state.pendingOperations.length) {
+          label = `Update ${state.pendingOperations.length} pending Whiteboard changes`;
+        } else label = 'Whiteboard is up to date';
+        updateButton.setAttribute('aria-label', label);
+        updateButton.title = label;
+      }
+
+      function nextWhiteboardRetryDelay() {
+        const exponent = Math.min(Math.max(state.retryFailures - 1, 0), 6);
+        return Math.min(SAVE_RETRY_BASE_MS * (2 ** exponent), WHITEBOARD_RETRY_MAX_MS);
+      }
+
+      function scheduleWhiteboardCommit(delayMs = WHITEBOARD_COMMIT_INTERVAL_MS) {
+        clearTimeout(state.commitTimer);
+        state.commitTimer = setTimeout(() => {
+          state.commitTimer = null;
+          void flushWhiteboardOperations(false);
+        }, delayMs);
+      }
+
+      async function flushWhiteboardOperations(manual = false) {
+        clearTimeout(state.commitTimer);
+        state.commitTimer = null;
+        clearTimeout(state.retryTimer);
+        state.retryTimer = null;
+        if (state.syncing || !state.pendingOperations.length || !currentDocument) return;
+        const batch = state.pendingOperations.slice(0, WHITEBOARD_COMMIT_BATCH_MAX);
+        state.syncing = true;
+        refreshUpdateButton();
+        let succeeded = false;
+        try {
+          const result = await callTool('mdos_document_apply', {
+            document_id: currentDocument.document_id,
+            operations: batch
+          });
+          const error = toolError(result);
+          if (error) throw new Error(error);
+          const saved = resultDocument(result);
+          if (!saved) throw new Error('Whiteboard sync returned no document');
+          state.pendingOperations.splice(0, batch.length);
+          state.retryFailures = 0;
+          rememberRemote(saved);
+          succeeded = true;
+          if (manual) showStatus('Whiteboard updated');
+        } catch (error) {
+          state.retryFailures += 1;
+          state.retryTimer = setTimeout(
+            () => void flushWhiteboardOperations(false),
+            nextWhiteboardRetryDelay()
+          );
+          if (manual) showStatus('Whiteboard update pending', true);
+        } finally {
+          state.syncing = false;
+          refreshUpdateButton();
+        }
+        if (succeeded && state.pendingOperations.length) {
+          scheduleWhiteboardCommit();
+        } else if (succeeded && !state.drawing) {
+          applyDeferredRemoteDocument();
+        }
+      }
+
+      function queueWhiteboardOperation(operation) {
+        state.pendingOperations.push(operation);
+        refreshUpdateButton();
+        scheduleWhiteboardCommit();
+      }
+
+      function publishActiveStroke(stroke, final = false) {
+        if (!stroke?.points.length) return;
+        const hasNewPoints = stroke.points.length > state.streamSentPointIndex;
+        if (!hasNewPoints && !final) return;
+        const start = hasNewPoints
+          ? Math.max(0, state.streamSentPointIndex - (state.streamSentPointIndex ? 1 : 0))
+          : Math.max(0, stroke.points.length - 1);
+        const points = stroke.points.slice(start, start + 256).map((point) => ({ ...point }));
+        if (hasNewPoints) state.streamSentPointIndex = start + points.length;
+        state.streamSequence += 1;
+        publishWhiteboardStream({
+          document_id: currentDocument?.document_id || 'notes',
+          block_id: element.dataset.blockId,
+          client_id: whiteboardClientId,
+          sequence: state.streamSequence,
+          final,
+          stroke: { ...stroke, points }
+        });
+      }
+
+      function scheduleStrokePreview() {
+        if (state.previewTimer) return;
+        state.previewTimer = setTimeout(() => {
+          state.previewTimer = null;
+          publishActiveStroke(state.activeStroke, false);
+        }, WHITEBOARD_STREAM_INTERVAL_MS);
+      }
+
+      function normalizedWhiteboardHeight(nextHeight, step = WHITEBOARD_HEIGHT_STEP) {
+        return Math.min(
+          WHITEBOARD_HEIGHT_MAX,
+          Math.max(WHITEBOARD_HEIGHT_MIN, Math.round(nextHeight / step) * step)
+        );
+      }
+
+      function applyWhiteboardHeight(height) {
+        if (height === state.heightPx) return false;
+        state.heightPx = height;
+        element.dataset.heightPx = String(height);
+        resizeHandle.setAttribute('aria-valuenow', String(height));
+        canvas.height = height;
+        renderWhiteboard();
+        return true;
+      }
+
+      function queueWhiteboardHeight(height) {
+        queueWhiteboardOperation({
+          type: 'whiteboard_resize',
+          block_id: element.dataset.blockId,
+          height_px: height
+        });
+      }
+
+      function resizeWhiteboard(nextHeight) {
+        if (state.drawing) return;
+        const height = normalizedWhiteboardHeight(nextHeight);
+        if (applyWhiteboardHeight(height)) queueWhiteboardHeight(height);
+      }
+
+      penButton = createWhiteboardControl(
+        'Pen', 'Draw by hand', createWhiteboardIcon('pen'), () => setTool('pen')
+      );
+      eraserButton = createWhiteboardControl(
+        'Eraser', 'Erase strokes', createWhiteboardIcon('eraser'), () => setTool('eraser')
+      );
+      const blackButton = createWhiteboardControl('Black ink', 'Black ink', createWhiteboardColorDot('#202124'), () => {
+        state.color = '#202124';
+        setTool('pen');
+      });
+      blackButton.dataset.color = '#202124';
+      const blueButton = createWhiteboardControl('Blue ink', 'Blue ink', createWhiteboardColorDot('#1769e0'), () => {
+        state.color = '#1769e0';
+        setTool('pen');
+      });
+      blueButton.dataset.color = '#1769e0';
+      const redButton = createWhiteboardControl('Red ink', 'Red ink', createWhiteboardColorDot('#b42318'), () => {
+        state.color = '#b42318';
+        setTool('pen');
+      });
+      redButton.dataset.color = '#b42318';
+      colorButtons = [blackButton, blueButton, redButton];
+      const undoButton = createWhiteboardControl('Undo', 'Undo the last stroke', createWhiteboardIcon('undo'), () => {
+        const stroke = state.strokes.pop();
+        if (!stroke) return;
+        renderWhiteboard();
+        queueWhiteboardOperation({
+          type: 'whiteboard_undo',
+          block_id: element.dataset.blockId,
+          stroke_id: stroke.id
+        });
+      });
+      const clearButton = createWhiteboardControl('Clear', 'Clear the shared Whiteboard', createWhiteboardIcon('clear'), () => {
+        state.strokes = [];
+        renderWhiteboard();
+        queueWhiteboardOperation({
+          type: 'whiteboard_clear',
+          block_id: element.dataset.blockId
+        });
+      });
+      updateButton = createWhiteboardControl('Update Whiteboard', 'Send pending changes now', createWhiteboardIcon('refresh'), () => {
+        void flushWhiteboardOperations(true);
+      });
+      const shorterButton = createWhiteboardControl('Reduce height', 'Reduce Whiteboard height', createWhiteboardIcon('contractVertical'), () => {
+        resizeWhiteboard(state.heightPx - WHITEBOARD_HEIGHT_STEP);
+      });
+      const tallerButton = createWhiteboardControl('Increase height', 'Increase Whiteboard height', createWhiteboardIcon('expandVertical'), () => {
+        resizeWhiteboard(state.heightPx + WHITEBOARD_HEIGHT_STEP);
+      });
+      const fitButton = createWhiteboardControl('Reset height', 'Restore the default Whiteboard height', createWhiteboardIcon('resetHeight'), () => {
+        resizeWhiteboard(WHITEBOARD_HEIGHT);
+      });
+      whiteboardControls.append(
+        penButton, eraserButton, blackButton, blueButton, redButton,
+        undoButton, clearButton, shorterButton, tallerButton, fitButton, updateButton
+      );
+      element.whiteboardToolbarRows = [whiteboardControls];
+      setTool('pen');
+      refreshUpdateButton();
+
+      let resizeDrag = null;
+      resizeHandle.addEventListener('pointerdown', (event) => {
+        if (!state.ready || state.drawing || resizeDrag) return;
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        selectBlock(element);
+        const bounds = canvas.getBoundingClientRect();
+        resizeDrag = {
+          pointerId: event.pointerId,
+          startHeight: state.heightPx,
+          startY: event.clientY,
+          logicalPixelsPerCssPixel: canvas.width / Math.max(bounds.width, 1)
+        };
+        resizeHandle.classList.add('active');
+        try {
+          resizeHandle.setPointerCapture?.(event.pointerId);
+        } catch {
+          // Older Android/Boox WebViews may reject pointer capture; window listeners keep the drag active.
+        }
+        window.addEventListener('pointermove', moveWhiteboardResize, { passive: false });
+        window.addEventListener('pointerup', finishWhiteboardResize);
+        window.addEventListener('pointercancel', finishWhiteboardResize);
+      });
+
+      function moveWhiteboardResize(event) {
+        if (!resizeDrag || event.pointerId !== resizeDrag.pointerId) return;
+        event.preventDefault();
+        const delta = (event.clientY - resizeDrag.startY) * resizeDrag.logicalPixelsPerCssPixel;
+        const height = normalizedWhiteboardHeight(
+          resizeDrag.startHeight + delta,
+          WHITEBOARD_HEIGHT_DRAG_STEP
+        );
+        applyWhiteboardHeight(height);
+      }
+
+      function finishWhiteboardResize(event) {
+        if (!resizeDrag || event.pointerId !== resizeDrag.pointerId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const startHeight = resizeDrag.startHeight;
+        resizeDrag = null;
+        resizeHandle.classList.remove('active');
+        window.removeEventListener('pointermove', moveWhiteboardResize);
+        window.removeEventListener('pointerup', finishWhiteboardResize);
+        window.removeEventListener('pointercancel', finishWhiteboardResize);
+        try {
+          if (resizeHandle.hasPointerCapture?.(event.pointerId)) {
+            resizeHandle.releasePointerCapture(event.pointerId);
+          }
+        } catch {
+          // The pointer may already have been released by the host WebView.
+        }
+        if (state.heightPx !== startHeight) queueWhiteboardHeight(state.heightPx);
+      }
+
+      resizeHandle.addEventListener('keydown', (event) => {
+        let height = null;
+        if (event.key === 'ArrowUp') height = state.heightPx - WHITEBOARD_HEIGHT_STEP;
+        else if (event.key === 'ArrowDown') height = state.heightPx + WHITEBOARD_HEIGHT_STEP;
+        else if (event.key === 'Home') height = WHITEBOARD_HEIGHT_MIN;
+        else if (event.key === 'End') height = WHITEBOARD_HEIGHT_MAX;
+        if (height === null) return;
+        event.preventDefault();
+        event.stopPropagation();
+        resizeWhiteboard(height);
+      });
+
+      function pointerPoint(event) {
+        const bounds = canvas.getBoundingClientRect();
+        return {
+          x: (event.clientX - bounds.left) * canvas.width / bounds.width,
+          y: (event.clientY - bounds.top) * canvas.height / bounds.height
+        };
+      }
+
+      function brushWidth(event) {
+        const base = state.strokeTool === 'eraser' ? 42 : 5;
+        if (event.pointerType !== 'pen' || !(event.pressure > 0)) return base;
+        return base * (0.55 + event.pressure * 1.1);
+      }
+
+      function strokePoint(event) {
+        return { ...pointerPoint(event), width: brushWidth(event) };
+      }
+
+      function drawSegment(event) {
+        if (!state.activeStroke || state.activeStroke.points.length >= WHITEBOARD_MAX_POINTS_PER_STROKE) return;
+        const point = strokePoint(event);
+        const previous = state.activeStroke.points[state.activeStroke.points.length - 1];
+        context.globalCompositeOperation = 'source-over';
+        context.strokeStyle = state.strokeTool === 'eraser' ? '#ffffff' : state.color;
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+        context.lineWidth = point.width;
+        context.beginPath();
+        context.moveTo(previous.x, previous.y);
+        context.lineTo(point.x, point.y);
+        context.stroke();
+        state.activeStroke.points.push(point);
+      }
+
+      canvas.addEventListener('pointerdown', (event) => {
+        if (!state.ready || state.drawing) return;
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        selectBlock(element);
+        state.drawing = true;
+        state.pointerId = event.pointerId;
+        state.strokeTool = event.button === 5 || (event.buttons & 32) ? 'eraser' : state.tool;
+        const point = strokePoint(event);
+        state.activeStroke = {
+          id: newStrokeId(),
+          tool: state.strokeTool,
+          color: state.strokeTool === 'eraser' ? '#ffffff' : state.color,
+          points: [point]
+        };
+        state.streamSentPointIndex = 0;
+        state.streamSequence = 0;
+        canvas.setPointerCapture(event.pointerId);
+        drawDot(state.activeStroke, point);
+        scheduleStrokePreview();
+      });
+
+      canvas.addEventListener('pointermove', (event) => {
+        if (!state.drawing || event.pointerId !== state.pointerId) return;
+        event.preventDefault();
+        const samples = typeof event.getCoalescedEvents === 'function'
+          ? event.getCoalescedEvents()
+          : [event];
+        for (const sample of samples.length ? samples : [event]) drawSegment(sample);
+        scheduleStrokePreview();
+      });
+
+      function finishStroke(event) {
+        if (!state.drawing || event.pointerId !== state.pointerId) return;
+        event.preventDefault();
+        const stroke = state.activeStroke;
+        clearTimeout(state.previewTimer);
+        state.previewTimer = null;
+        state.drawing = false;
+        state.pointerId = null;
+        state.activeStroke = null;
+        if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+        if (stroke?.points.length) {
+          state.strokes.push(stroke);
+          publishActiveStroke(stroke, true);
+          queueWhiteboardOperation({
+            type: 'whiteboard_append_stroke',
+            block_id: element.dataset.blockId,
+            stroke
+          });
+        }
+      }
+
+      canvas.addEventListener('pointerup', finishStroke);
+      canvas.addEventListener('pointercancel', finishStroke);
+      element.append(canvas, resizeHandle);
+
+      renderWhiteboard();
+      return element;
+    }
+
     function createBlockElement(block, remote = false) {
       const element = block.type === 'formula'
         ? createFormulaElement(block)
         : block.type === 'image'
           ? createImageElement(block)
-          : createRichElement(block);
+          : block.type === 'whiteboard'
+            ? createWhiteboardElement(block)
+            : createRichElement(block);
       if (remote) {
         element.classList.add('remote-change');
         setTimeout(() => element.classList.remove('remote-change'), 1200);
@@ -531,8 +1333,11 @@
     function renderDocument(documentValue, preserveSelection = false) {
       if (!documentValue) return;
       const previousSelection = preserveSelection ? selectedBlockId : null;
+      const previousInsertion = preserveSelection ? insertionAfterBlockId : null;
       currentDocument = documentValue;
       titleInput.value = documentValue.title || 'Untitled';
+      whiteboardToolbar.replaceChildren();
+      whiteboardToolbar.hidden = true;
       paper.replaceChildren();
       for (const block of documentValue.blocks || []) {
         const element = createBlockElement(block);
@@ -546,7 +1351,11 @@
       dirtyBlockIds.clear();
       deletedBlockIds.clear();
       const selected = previousSelection ? paper.querySelector(`[data-block-id="${CSS.escape(previousSelection)}"]`) : null;
+      const insertion = previousInsertion
+        ? paper.querySelector(`[data-block-id="${CSS.escape(previousInsertion)}"]`)
+        : null;
       selectBlock(selected || paper.firstElementChild);
+      setInsertionPoint(insertion || paper.lastElementChild);
     }
 
     function snapshotBlocks() {
@@ -571,6 +1380,13 @@
             alt: element.querySelector('figcaption')?.textContent || '',
             width_percent: Number.parseInt(element.dataset.widthPercent || '100', 10)
           });
+        } else if (type === 'whiteboard') {
+          blocks.push({
+            id,
+            type,
+            height_px: element.whiteboardState?.committedHeightPx || WHITEBOARD_HEIGHT,
+            strokes: element.whiteboardState?.committedStrokes || []
+          });
         } else {
           blocks.push({ id, type: type === 'table' ? 'table' : 'rich', html: sanitizeRichHtml(element.innerHTML) });
         }
@@ -580,9 +1396,15 @@
 
     function mergeRemoteDocument(remote) {
       if (!remote) return;
+      if (whiteboardBusy()) {
+        if (!deferredRemoteDocument || remote.revision > deferredRemoteDocument.revision) {
+          deferredRemoteDocument = remote;
+        }
+        return;
+      }
       if (!dirty) {
         renderDocument(remote, true);
-        showStatus('Live · aggiornato');
+        showStatus('Live · updated');
         return;
       }
       const existing = new Map(Array.from(paper.children, (element) => [element.dataset.blockId, element]));
@@ -613,10 +1435,25 @@
         dirtyBlockIds.add(fallback.dataset.blockId);
       }
       currentDocument = remote;
-      if (!titleDirty) titleInput.value = remote.title || 'Appunti condivisi';
+      if (!titleDirty) titleInput.value = remote.title || 'Shared notes';
+      refreshWhiteboardToolbar(selectedBlock());
       updateModelContext();
-      showStatus('Live · sincronizzazione…', false, true);
+      showStatus('Live · syncing…', false, true);
       scheduleSave();
+    }
+
+    function whiteboardBusy() {
+      return Array.from(paper.querySelectorAll('.whiteboard')).some((element) => {
+        const state = element.whiteboardState;
+        return state && (state.drawing || state.syncing || state.pendingOperations.length);
+      });
+    }
+
+    function applyDeferredRemoteDocument() {
+      if (!deferredRemoteDocument || whiteboardBusy()) return;
+      const remote = deferredRemoteDocument;
+      deferredRemoteDocument = null;
+      if (!currentDocument || remote.revision > currentDocument.revision) mergeRemoteDocument(remote);
     }
 
     function nextSaveRetryDelay() {
@@ -640,7 +1477,7 @@
       if (target === titleInput) titleDirty = true;
       const block = target?.closest?.('.block') || selectedBlock();
       if (block?.dataset.blockId) dirtyBlockIds.add(block.dataset.blockId);
-      showStatus('Live · sincronizzazione…', false, true);
+      showStatus('Live · syncing…', false, true);
       updateModelContext();
       scheduleSave();
     }
@@ -662,7 +1499,7 @@
         blocks: snapshotBlocks()
       };
       saving = true;
-      showStatus('Live · sincronizzazione…', false, true);
+      if (saveFailureCount === 0) showStatus('Live · syncing…', false, true);
       savePromise = (async () => {
         const result = await callTool('mdos_document_save', payload);
         const error = toolError(result);
@@ -700,7 +1537,7 @@
         saveFailureCount += 1;
         const retryDelay = nextSaveRetryDelay();
         if (dirty) scheduleSave(retryDelay);
-        showStatus(`Sincronizzazione non disponibile · nuovo tentativo tra ${Math.ceil(retryDelay / 1000)}s`, true, true);
+        if (saveFailureCount === 1) showStatus('Offline · changes pending', true);
         throw failure;
       }
       saveFailureCount = 0;
@@ -711,7 +1548,7 @@
     }
 
     async function pollDocument() {
-      if (!currentDocument || dirty || saving || document.hidden) return;
+      if (!currentDocument || dirty || saving || document.hidden || liveEventsConnected) return;
       try {
         const result = await callTool('mdos_document_read', { document_id: currentDocument.document_id });
         const latest = resultDocument(result);
@@ -750,10 +1587,13 @@
     }
 
     function insertAfterSelected(element) {
-      const selected = selectedBlock();
-      if (selected) selected.after(element);
-      else paper.appendChild(element);
+      const insertion = insertionAfterBlockId
+        ? paper.querySelector(`[data-block-id="${CSS.escape(insertionAfterBlockId)}"]`)
+        : null;
+      if (insertion) insertion.after(element);
+      else paper.prepend(element);
       selectBlock(element);
+      setInsertionPoint(element);
       if (element.isContentEditable) element.focus();
       markDirty();
     }
@@ -768,6 +1608,31 @@
         id: newBlockId(),
         type: 'table',
         html: `<table><tbody>${rows}</tbody></table>`
+      }));
+    }
+
+    function addWhiteboard() {
+      const existing = paper.querySelector('[data-block-type="whiteboard"]');
+      if (existing) {
+        const insertion = insertionAfterBlockId
+          ? paper.querySelector(`[data-block-id="${CSS.escape(insertionAfterBlockId)}"]`)
+          : null;
+        if (insertion !== existing) {
+          if (insertion) insertion.after(existing);
+          else paper.prepend(existing);
+          markDirty({ target: existing });
+        }
+        selectBlock(existing);
+        setInsertionPoint(existing);
+        existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showStatus('Shared Whiteboard');
+        return;
+      }
+      insertAfterSelected(createWhiteboardElement({
+        id: newBlockId(),
+        type: 'whiteboard',
+        height_px: WHITEBOARD_HEIGHT,
+        strokes: []
       }));
     }
 
@@ -872,11 +1737,24 @@
 
     paper.addEventListener('click', (event) => {
       const block = event.target.closest('.block');
-      if (block && paper.contains(block)) selectBlock(block);
+      if (block && paper.contains(block)) {
+        selectBlock(block);
+        setInsertionPoint(insertionAnchorAt(event.clientY));
+        return;
+      }
+      if (event.target === paper) {
+        const insertion = insertionAnchorAt(event.clientY);
+        selectBlock(insertion);
+        setInsertionPoint(insertion);
+        showStatus('Insert here');
+      }
     });
     paper.addEventListener('focusin', (event) => {
       const block = event.target.closest('.block');
-      if (block) selectBlock(block);
+      if (block) {
+        selectBlock(block);
+        setInsertionPoint(block);
+      }
     });
     paper.addEventListener('input', markDirty);
     paper.addEventListener('keyup', rememberSelection);
@@ -914,6 +1792,7 @@
     document.getElementById('add-table').addEventListener('click', addTable);
     document.getElementById('add-formula').addEventListener('click', () => openFormula());
     document.getElementById('add-image').addEventListener('click', () => imageInput.click());
+    document.getElementById('add-whiteboard').addEventListener('click', addWhiteboard);
     document.getElementById('delete-block').addEventListener('click', () => {
       const block = selectedBlock();
       if (!block) return;
@@ -922,6 +1801,7 @@
       block.remove();
       if (!paper.children.length) paper.appendChild(createRichElement({ id: newBlockId(), type: 'rich', html: '<p><br></p>' }));
       selectBlock(next || paper.firstElementChild);
+      setInsertionPoint(next || paper.lastElementChild);
       markDirty();
     });
     imageInput.addEventListener('change', async () => {
@@ -991,10 +1871,17 @@
       if (window.parent !== window || typeof EventSource !== 'function') return;
       const events = new EventSource('/api/events');
       events.onopen = () => {
+        liveEventsConnected = false;
+        void pollDocument().finally(() => { liveEventsConnected = true; });
+        connectionWarningShown = false;
         if (dirty && !saving) scheduleSave(0);
       };
       events.onerror = () => {
-        if (dirty) showStatus('Connessione assente · modifiche in attesa', true, true);
+        liveEventsConnected = false;
+        if (dirty && !connectionWarningShown) {
+          connectionWarningShown = true;
+          showStatus('Offline · changes pending', true);
+        }
       };
       events.onmessage = (message) => {
         try {
@@ -1004,6 +1891,14 @@
             if (documentValue && (!currentDocument || (documentValue.document_id === currentDocument.document_id && documentValue.revision > currentDocument.revision))) {
               mergeRemoteDocument(documentValue);
             }
+          } else if (event.type === 'whiteboard_stream') {
+            const streamEvent = event.event;
+            if (streamEvent?.client_id === whiteboardClientId) return;
+            if (streamEvent?.document_id !== currentDocument?.document_id) return;
+            const whiteboard = paper.querySelector(
+              `[data-block-type="whiteboard"][data-block-id="${CSS.escape(streamEvent.block_id)}"]`
+            );
+            whiteboard?.applyWhiteboardStream?.(streamEvent);
           } else if (event.type === 'document_flush') {
             void saveDocument().catch(() => {});
           } else if (event.type === 'error') {
@@ -1032,7 +1927,7 @@
       }
       showStatus('Live');
       connectLiveEvents();
-      setInterval(pollDocument, 1000);
+      setInterval(pollDocument, POLL_FALLBACK_INTERVAL_MS);
     }
 
     boot();

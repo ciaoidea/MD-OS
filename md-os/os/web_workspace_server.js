@@ -14,6 +14,49 @@ const { callTool, listTools } = require('./mcp_server');
 const UI_DIR = path.join(__dirname, 'ui');
 const DOCUMENT_PREFIX = 'mdos_document_';
 const MAX_BODY_BYTES = 24 * 1024 * 1024;
+const WHITEBOARD_STREAM_MAX_BODY_BYTES = 128 * 1024;
+const WHITEBOARD_STREAM_MAX_POINTS = 256;
+
+function normalizeWhiteboardStreamEvent(value) {
+  const event = value && typeof value === 'object' ? value : {};
+  const identifier = (name, pattern) => {
+    const candidate = String(event[name] || '');
+    if (!pattern.test(candidate)) throw new Error('Invalid Whiteboard stream ' + name);
+    return candidate;
+  };
+  const number = (value, minimum, maximum) => {
+    if (!Number.isFinite(value)) throw new Error('Invalid Whiteboard stream point');
+    return Math.min(Math.max(value, minimum), maximum);
+  };
+  const points = Array.isArray(event.stroke?.points)
+    ? event.stroke.points.slice(0, WHITEBOARD_STREAM_MAX_POINTS).map((point) => ({
+      x: number(point?.x, 0, 1600),
+      y: number(point?.y, 0, 3000),
+      width: number(point?.width, 0.5, 64),
+    }))
+    : [];
+  if (!points.length) throw new Error('Whiteboard stream segment is empty');
+  const tool = event.stroke?.tool === 'eraser' ? 'eraser' : 'pen';
+  const color = tool === 'eraser' ? '#ffffff' : String(event.stroke?.color || '').toLowerCase();
+  if (!/^#[0-9a-f]{6}$/.test(color)) throw new Error('Invalid Whiteboard stream color');
+  const strokeId = String(event.stroke?.id || '');
+  if (!/^s_[a-f0-9]{16,32}$/.test(strokeId)) {
+    throw new Error('Invalid Whiteboard stream stroke id');
+  }
+  return {
+    document_id: identifier('document_id', /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/),
+    block_id: identifier('block_id', /^b_[a-f0-9]{16,32}$/),
+    client_id: identifier('client_id', /^c_[a-f0-9]{16,32}$/),
+    sequence: Number.isSafeInteger(event.sequence) && event.sequence >= 0 ? event.sequence : 0,
+    final: event.final === true,
+    stroke: {
+      id: strokeId,
+      tool,
+      color,
+      points,
+    },
+  };
+}
 
 function documentToolSpecs() {
   return listTools().tools
@@ -318,13 +361,13 @@ function sendFile(response, name) {
   }
 }
 
-function readBody(request) {
+function readBody(request, maxBytes = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let bytes = 0;
     request.on('data', (chunk) => {
       bytes += chunk.length;
-      if (bytes > MAX_BODY_BYTES) {
+      if (bytes > maxBytes) {
         reject(new Error('Request body is too large'));
         request.destroy();
       } else {
@@ -353,9 +396,12 @@ function createWebWorkspace(options = {}) {
   let ready = false;
   let startupError = null;
 
-  function broadcast(value) {
+  function broadcast(value, options = {}) {
     const line = 'data: ' + JSON.stringify(value) + '\n\n';
-    for (const client of clients) client.write(line);
+    for (const client of clients) {
+      if (options.ephemeral && client.writableLength > WHITEBOARD_STREAM_MAX_BODY_BYTES) continue;
+      client.write(line);
+    }
   }
 
   agent.on('document-updated', ({ result, document }) => broadcast({
@@ -401,6 +447,12 @@ function createWebWorkspace(options = {}) {
       } else if (request.method === 'POST' && url.pathname === '/api/document-flush') {
         broadcast({ type: 'document_flush' });
         sendJson(response, 202, { ok: true });
+      } else if (request.method === 'POST' && url.pathname === '/api/whiteboard-stream') {
+        const event = normalizeWhiteboardStreamEvent(
+          await readBody(request, WHITEBOARD_STREAM_MAX_BODY_BYTES)
+        );
+        broadcast({ type: 'whiteboard_stream', event }, { ephemeral: true });
+        sendJson(response, 202, { ok: true, sequence: event.sequence });
       } else if (request.method === 'POST' && url.pathname === '/api/document-tool') {
         const body = await readBody(request);
         const name = String(body.name || '');
@@ -491,5 +543,6 @@ module.exports = {
   CodexAppServerClient,
   createWebWorkspace,
   documentToolSpecs,
+  normalizeWhiteboardStreamEvent,
   parseArguments,
 };

@@ -18,7 +18,13 @@ const DOCUMENTS_DIR = path.join(MDOS_ROOT, 'ops', 'local', 'documents');
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024;
 const MAX_BLOCKS = 2000;
 const MAX_FORMULA_LENGTH = 5000;
-const ALLOWED_BLOCK_TYPES = new Set(['rich', 'table', 'formula', 'image']);
+const MAX_WHITEBOARD_STROKES = 5000;
+const MAX_WHITEBOARD_POINTS_PER_STROKE = 5000;
+const MAX_WHITEBOARD_TOTAL_POINTS = 100000;
+const DEFAULT_WHITEBOARD_HEIGHT = 1000;
+const MIN_WHITEBOARD_HEIGHT = 600;
+const MAX_WHITEBOARD_HEIGHT = 3000;
+const ALLOWED_BLOCK_TYPES = new Set(['rich', 'table', 'formula', 'image', 'whiteboard']);
 const ALLOWED_TAGS = new Set([
   'a', 'b', 'blockquote', 'br', 'caption', 'code', 'col', 'colgroup', 'div',
   'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'li', 'ol',
@@ -32,6 +38,8 @@ const SAFE_STYLE_PROPERTIES = new Set([
   'text-decoration', 'text-indent', 'vertical-align', 'white-space',
 ]);
 const BLOCK_ID_PATTERN = /^b_[a-f0-9]{16,32}$/;
+const STROKE_ID_PATTERN = /^s_[a-f0-9]{16,32}$/;
+const WHITEBOARD_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const IMAGE_DATA_URI_PATTERN = /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\s]+$/;
 const DANGEROUS_LATEX = /\\(?:catcode|csname|def|documentclass|every|expandafter|immediate|include|input|loop|newcommand|openin|openout|read|repeat|special|usepackage|write|write18)\b/i;
 const MATH_CACHE = new Map();
@@ -52,6 +60,16 @@ function blockId(value) {
 
 function newBlockId() {
   return `b_${crypto.randomBytes(10).toString('hex')}`;
+}
+
+function newStrokeId() {
+  return `s_${crypto.randomBytes(10).toString('hex')}`;
+}
+
+function strokeId(value) {
+  const candidate = shortText(value);
+  if (!STROKE_ID_PATTERN.test(candidate)) throw new Error(`INVALID_WHITEBOARD_STROKE_ID: ${candidate}`);
+  return candidate;
 }
 
 function documentDirectory(id) {
@@ -215,6 +233,53 @@ function renderMath(latexValue, display = true) {
   return { ...rendered };
 }
 
+function finiteWhiteboardNumber(value, label, minimum, maximum) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) throw new Error(`INVALID_WHITEBOARD_${label}`);
+  return Math.round(Math.min(maximum, Math.max(minimum, number)) * 1000) / 1000;
+}
+
+function normalizeWhiteboardStroke(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('INVALID_WHITEBOARD_STROKE');
+  }
+  const tool = shortText(value.tool);
+  if (!['pen', 'eraser'].includes(tool)) throw new Error(`INVALID_WHITEBOARD_TOOL: ${tool}`);
+  const color = tool === 'eraser' ? '#ffffff' : String(value.color || '').toLowerCase();
+  if (!WHITEBOARD_COLOR_PATTERN.test(color)) throw new Error(`INVALID_WHITEBOARD_COLOR: ${color}`);
+  if (!Array.isArray(value.points) || !value.points.length) throw new Error('EMPTY_WHITEBOARD_STROKE');
+  if (value.points.length > MAX_WHITEBOARD_POINTS_PER_STROKE) throw new Error('WHITEBOARD_STROKE_TOO_LARGE');
+  return {
+    id: value.id ? strokeId(value.id) : newStrokeId(),
+    tool,
+    color,
+    points: value.points.map((point) => {
+      if (!point || typeof point !== 'object' || Array.isArray(point)) throw new Error('INVALID_WHITEBOARD_POINT');
+      return {
+        x: finiteWhiteboardNumber(point.x, 'POINT_X', 0, 1600),
+        y: finiteWhiteboardNumber(point.y, 'POINT_Y', 0, MAX_WHITEBOARD_HEIGHT),
+        width: finiteWhiteboardNumber(point.width, 'POINT_WIDTH', 0.5, 100),
+      };
+    }),
+  };
+}
+
+function normalizeWhiteboardStrokes(values) {
+  if (values === undefined) return [];
+  if (!Array.isArray(values)) throw new Error('INVALID_WHITEBOARD_STROKES');
+  if (values.length > MAX_WHITEBOARD_STROKES) throw new Error('TOO_MANY_WHITEBOARD_STROKES');
+  const usedIds = new Set();
+  let totalPoints = 0;
+  return values.map((value) => {
+    const stroke = normalizeWhiteboardStroke(value);
+    if (usedIds.has(stroke.id)) throw new Error(`DUPLICATE_WHITEBOARD_STROKE_ID: ${stroke.id}`);
+    usedIds.add(stroke.id);
+    totalPoints += stroke.points.length;
+    if (totalPoints > MAX_WHITEBOARD_TOTAL_POINTS) throw new Error('WHITEBOARD_POINTS_LIMIT_EXCEEDED');
+    return stroke;
+  });
+}
+
 function normalizeBlock(value, usedIds = new Set()) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('INVALID_DOCUMENT_BLOCK');
@@ -234,6 +299,17 @@ function normalizeBlock(value, usedIds = new Set()) {
   if (type === 'formula') {
     const rendered = renderMath(value.latex, value.display !== false);
     return { id, type, ...rendered };
+  }
+  if (type === 'whiteboard') {
+    const height = Number.parseInt(value.height_px, 10);
+    return {
+      id,
+      type,
+      height_px: Number.isInteger(height)
+        ? Math.min(MAX_WHITEBOARD_HEIGHT, Math.max(MIN_WHITEBOARD_HEIGHT, height))
+        : DEFAULT_WHITEBOARD_HEIGHT,
+      strokes: normalizeWhiteboardStrokes(value.strokes),
+    };
   }
   const dataUri = safeImageSource(value.data_uri);
   if (!dataUri) throw new Error('INVALID_DOCUMENT_IMAGE');
@@ -382,6 +458,47 @@ function applyDocumentOperations(args = {}) {
       blocks.splice(index, 1);
       continue;
     }
+    if (type === 'whiteboard_append_stroke') {
+      const targetId = blockId(operation.block_id);
+      const index = blocks.findIndex((item) => item.id === targetId);
+      if (index < 0) throw new Error(`DOCUMENT_BLOCK_NOT_FOUND: ${targetId}`);
+      if (blocks[index].type !== 'whiteboard') throw new Error(`DOCUMENT_BLOCK_NOT_WHITEBOARD: ${targetId}`);
+      const stroke = normalizeWhiteboardStroke(operation.stroke);
+      const strokes = normalizeWhiteboardStrokes(blocks[index].strokes);
+      if (!strokes.some((item) => item.id === stroke.id)) strokes.push(stroke);
+      blocks[index] = normalizeOperationBlock({ ...blocks[index], strokes });
+      continue;
+    }
+    if (type === 'whiteboard_undo') {
+      const targetId = blockId(operation.block_id);
+      const index = blocks.findIndex((item) => item.id === targetId);
+      if (index < 0) throw new Error(`DOCUMENT_BLOCK_NOT_FOUND: ${targetId}`);
+      if (blocks[index].type !== 'whiteboard') throw new Error(`DOCUMENT_BLOCK_NOT_WHITEBOARD: ${targetId}`);
+      const targetStrokeId = strokeId(operation.stroke_id);
+      const strokes = normalizeWhiteboardStrokes(blocks[index].strokes)
+        .filter((stroke) => stroke.id !== targetStrokeId);
+      blocks[index] = normalizeOperationBlock({ ...blocks[index], strokes });
+      continue;
+    }
+    if (type === 'whiteboard_clear') {
+      const targetId = blockId(operation.block_id);
+      const index = blocks.findIndex((item) => item.id === targetId);
+      if (index < 0) throw new Error(`DOCUMENT_BLOCK_NOT_FOUND: ${targetId}`);
+      if (blocks[index].type !== 'whiteboard') throw new Error(`DOCUMENT_BLOCK_NOT_WHITEBOARD: ${targetId}`);
+      blocks[index] = normalizeOperationBlock({ ...blocks[index], strokes: [] });
+      continue;
+    }
+    if (type === 'whiteboard_resize') {
+      const targetId = blockId(operation.block_id);
+      const index = blocks.findIndex((item) => item.id === targetId);
+      if (index < 0) throw new Error(`DOCUMENT_BLOCK_NOT_FOUND: ${targetId}`);
+      if (blocks[index].type !== 'whiteboard') throw new Error(`DOCUMENT_BLOCK_NOT_WHITEBOARD: ${targetId}`);
+      blocks[index] = normalizeOperationBlock({
+        ...blocks[index],
+        height_px: operation.height_px,
+      });
+      continue;
+    }
     throw new Error(`UNKNOWN_DOCUMENT_OPERATION: ${type}`);
   }
 
@@ -401,12 +518,67 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;');
 }
 
-function documentHtml(document) {
+function whiteboardSvg(block) {
+  const height = Number.isInteger(block.height_px) ? block.height_px : DEFAULT_WHITEBOARD_HEIGHT;
+  const parts = [
+    `<svg class="whiteboard" xmlns="http://www.w3.org/2000/svg" width="1600" height="${height}" viewBox="0 0 1600 ${height}" style="max-width:100%;height:auto;background:#fff">`,
+    `<rect width="1600" height="${height}" fill="#ffffff"/>`,
+  ];
+  for (const stroke of block.strokes || []) {
+    const color = stroke.tool === 'eraser' ? '#ffffff' : stroke.color;
+    if (stroke.points.length === 1) {
+      const point = stroke.points[0];
+      parts.push(`<circle cx="${point.x}" cy="${point.y}" r="${point.width / 2}" fill="${color}"/>`);
+      continue;
+    }
+    for (let index = 1; index < stroke.points.length; index += 1) {
+      const previous = stroke.points[index - 1];
+      const point = stroke.points[index];
+      parts.push(`<line x1="${previous.x}" y1="${previous.y}" x2="${point.x}" y2="${point.y}" stroke="${color}" stroke-width="${point.width}" stroke-linecap="round"/>`);
+    }
+  }
+  parts.push('</svg>');
+  return parts.join('');
+}
+
+function whiteboardPdfAsset(block, document, exportsDirectory) {
+  const base = `${document.document_id}-${block.id}-whiteboard`;
+  const svgPath = path.join(exportsDirectory, `${base}.svg`);
+  const pdfPath = path.join(exportsDirectory, `${base}.pdf`);
+  fs.writeFileSync(svgPath, whiteboardSvg(block), 'utf8');
+  const converted = spawnSync('inkscape', [
+    svgPath,
+    '--export-type=pdf',
+    `--export-filename=${pdfPath}`,
+  ], {
+    cwd: WORKSPACE_ROOT,
+    encoding: 'utf8',
+    timeout: 60_000,
+  });
+  if (converted.status !== 0 || !fs.existsSync(pdfPath)) {
+    const error = new Error('DOCUMENT_WHITEBOARD_VECTOR_EXPORT_FAILED');
+    error.details = {
+      command: ['inkscape', svgPath, '--export-type=pdf', `--export-filename=${pdfPath}`],
+      stderr: String(converted.stderr || '').trim(),
+    };
+    throw error;
+  }
+  return pdfPath;
+}
+
+function documentHtml(document, whiteboardAssets = new Map()) {
   const body = document.blocks.map((block) => {
     if (block.type === 'rich' || block.type === 'table') return block.html;
     if (block.type === 'formula') {
       const delimiter = block.display ? ['\\[', '\\]'] : ['\\(', '\\)'];
       return `<div class="formula">${delimiter[0]}${escapeHtml(block.latex)}${delimiter[1]}</div>`;
+    }
+    if (block.type === 'whiteboard') {
+      const asset = whiteboardAssets.get(block.id);
+      if (asset) {
+        return `<figure><img class="whiteboard" src="${escapeAttribute(asset)}" alt="Shared Whiteboard" style="max-width:100%;height:auto"></figure>`;
+      }
+      return `<figure>${whiteboardSvg(block)}</figure>`;
     }
     return `<figure><img src="${escapeAttribute(block.data_uri)}" alt="${escapeAttribute(block.alt)}" style="max-width:${block.width_percent}%"><figcaption>${escapeHtml(block.alt)}</figcaption></figure>`;
   }).join('\n');
@@ -446,7 +618,15 @@ function exportDocument(args = {}) {
   if (!['html', 'tex', 'pdf'].includes(format)) throw new Error(`UNSUPPORTED_DOCUMENT_EXPORT: ${format}`);
   const exportsDirectory = path.join(documentDirectory(document.document_id), 'exports');
   fs.mkdirSync(exportsDirectory, { recursive: true });
-  const html = documentHtml(document);
+  const whiteboardAssets = new Map();
+  if (format !== 'html') {
+    for (const block of document.blocks) {
+      if (block.type === 'whiteboard') {
+        whiteboardAssets.set(block.id, whiteboardPdfAsset(block, document, exportsDirectory));
+      }
+    }
+  }
+  const html = documentHtml(document, whiteboardAssets);
   const output = path.join(exportsDirectory, `${document.document_id}.${format}`);
   if (format === 'html') {
     fs.writeFileSync(output, html, 'utf8');

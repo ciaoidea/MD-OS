@@ -12,6 +12,7 @@ import ctypes
 import ctypes.util
 import getpass
 import hashlib
+import ipaddress
 import json
 import os
 import platform
@@ -20,6 +21,7 @@ import re
 import select
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -56,6 +58,7 @@ MAX_APFC_CONTEXT_PACKS = 16
 MAX_APFC_CONTEXT_PACK_INDEX_BYTES = 64 * 1024
 MAX_APFC_CONTEXT_PACK_FIELD_CHARS = 384
 NOTES_HOST = "127.0.0.1"
+NOTES_LAN_BIND_HOST = "0.0.0.0"
 NOTES_DEFAULT_PORT = 4173
 NOTES_STARTUP_TIMEOUT_SECONDS = 5.0
 NOTES_SERVER_SCRIPT = ENGINE_ROOT.parent / "os" / "web_workspace_server.js"
@@ -2103,7 +2106,13 @@ class CodexAppServerClient:
                 )
                 if render_tool_events and trace_level != "quiet":
                     print(
-                        codex_styled("CORTEX: message added to active turn", ANSI_CYAN, sys.stderr),
+                        codex_styled(
+                            "\nCORTEX INPUT: "
+                            + terminal_input_preview(steer_text)
+                            + " · added to active turn",
+                            ANSI_CYAN,
+                            sys.stderr,
+                        ),
                         file=sys.stderr,
                     )
             message = self._receive(
@@ -3502,7 +3511,7 @@ def write_apfc_turn_receipt(
 
 @contextmanager
 def interactive_turn_terminal():
-    """Buffer steering until Enter while keeping Esc immediately observable."""
+    """Buffer steering without echo so streamed output cannot overwrite input."""
     global STEERING_INPUT_BUFFER
     if termios is None or not sys.stdin.isatty():
         yield
@@ -3512,6 +3521,9 @@ def interactive_turn_terminal():
         original = termios.tcgetattr(descriptor)
         configured = termios.tcgetattr(descriptor)
         configured[3] |= termios.ICANON
+        configured[3] &= ~termios.ECHO
+        if hasattr(termios, "ECHONL"):
+            configured[3] &= ~termios.ECHONL
         configured[6][termios.VEOL] = STEERING_INTERRUPT.encode()
         STEERING_INPUT_BUFFER = ""
         termios.tcsetattr(descriptor, termios.TCSANOW, configured)
@@ -4287,11 +4299,14 @@ def reset_inline_paste_state() -> None:
     INLINE_PASTE_COUNTER = 0
 
 
-def register_inline_paste(text: str) -> str:
+def register_inline_paste(text: str, *, columns: int | None = None) -> str:
+    normalized = normalize_pasted_text(text)
+    if paste_fits_single_terminal_line(normalized, columns=columns):
+        return normalized
     global INLINE_PASTE_COUNTER
     INLINE_PASTE_COUNTER += 1
     label = f"[PASTED BLOCK {INLINE_PASTE_COUNTER}]"
-    INLINE_PASTE_BLOCKS[label] = normalize_pasted_text(text)
+    INLINE_PASTE_BLOCKS[label] = normalized
     return label
 
 
@@ -4356,6 +4371,29 @@ def configure_inline_bracketed_paste() -> bool:
 def normalize_pasted_text(text: str) -> str:
     """Preserve pasted content while normalizing terminal newline encoding."""
     return text.replace("\r\n", "\n").replace("\r", "\n").strip("\n")
+
+
+def paste_fits_single_terminal_line(
+    text: str,
+    *,
+    columns: int | None = None,
+) -> bool:
+    """Return whether a paste can remain readable inline at the Cortex prompt."""
+    normalized = normalize_pasted_text(text)
+    if "\n" in normalized:
+        return False
+    if columns is None:
+        columns = shutil.get_terminal_size(fallback=(80, 24)).columns
+    available = max(1, columns - len("cortex$ "))
+    return len(normalized.expandtabs(4)) <= available
+
+
+def terminal_input_preview(text: str, *, columns: int | None = None) -> str:
+    """Show short submitted input literally and compact long input safely."""
+    normalized = normalize_pasted_text(text)
+    if not paste_fits_single_terminal_line(normalized, columns=columns):
+        return "[paste]"
+    return re.sub(r"[\x00-\x1f\x7f-\x9f]", "�", normalized)
 
 
 def compact_multiline_echo(
@@ -4544,6 +4582,83 @@ def notes_workspace_url() -> str:
     return f"http://{NOTES_HOST}:{notes_workspace_port()}/"
 
 
+def notes_lan_enabled() -> bool:
+    value = os.environ.get("MDOS_NOTES_LAN", "1").strip().casefold()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError("MDOS_NOTES_LAN must be true or false")
+
+
+def notes_bind_host() -> str:
+    return NOTES_LAN_BIND_HOST if notes_lan_enabled() else NOTES_HOST
+
+
+def notes_lan_ipv4_addresses() -> tuple[str, ...]:
+    candidates: list[str] = []
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(("192.0.2.1", 9))
+            candidates.append(str(probe.getsockname()[0]))
+    except OSError:
+        pass
+    try:
+        candidates.extend(
+            str(item[4][0])
+            for item in socket.getaddrinfo(
+                socket.gethostname(),
+                None,
+                socket.AF_INET,
+                socket.SOCK_STREAM,
+            )
+        )
+    except OSError:
+        pass
+
+    addresses: list[str] = []
+    for candidate in candidates:
+        try:
+            address = ipaddress.ip_address(candidate)
+        except ValueError:
+            continue
+        if (
+            isinstance(address, ipaddress.IPv4Address)
+            and address.is_private
+            and not address.is_loopback
+            and not address.is_link_local
+            and not address.is_unspecified
+            and candidate not in addresses
+        ):
+            addresses.append(candidate)
+    return tuple(addresses)
+
+
+def notes_lan_urls() -> tuple[str, ...]:
+    port = notes_workspace_port()
+    return tuple(
+        f"http://{address}:{port}/"
+        for address in notes_lan_ipv4_addresses()
+    )
+
+
+def report_notes_ready(
+    session: ShellSession,
+    state: str,
+    *,
+    opened: bool = False,
+) -> None:
+    url = session.notes_url or notes_workspace_url()
+    suffix = " and opened in the browser" if opened else ""
+    print(f"CORTEX NOTES: {state} at {url}{suffix}")
+    if notes_lan_enabled():
+        lan_urls = notes_lan_urls()
+        for lan_url in lan_urls:
+            print(f"CORTEX NOTES BOOX: {lan_url}")
+        if not lan_urls:
+            print("CORTEX NOTES: LAN listener ready, but no private IPv4 address was detected")
+
+
 def notes_workspace_ready(url: str, timeout: float = 0.3) -> bool:
     request = urllib.request.Request(
         url + "api/status",
@@ -4608,6 +4723,7 @@ def close_notes_workspace(session: ShellSession, *, announce: bool = True) -> bo
 def launch_notes_workspace(session: ShellSession) -> bool:
     try:
         url = notes_workspace_url()
+        bind_host = notes_bind_host()
     except ValueError as error:
         print(f"cortex: /notes: {error}", file=sys.stderr)
         return False
@@ -4615,8 +4731,7 @@ def launch_notes_workspace(session: ShellSession) -> bool:
     if notes_workspace_ready(url):
         session.notes_url = url
         opened = open_notes_browser(url)
-        suffix = " and opened in the browser" if opened else ""
-        print(f"CORTEX NOTES: already ready at {url}{suffix}")
+        report_notes_ready(session, "already ready", opened=opened)
         return True
 
     existing = session.notes_process
@@ -4647,7 +4762,7 @@ def launch_notes_workspace(session: ShellSession) -> bool:
                 node,
                 str(NOTES_SERVER_SCRIPT),
                 "--host",
-                NOTES_HOST,
+                bind_host,
                 "--port",
                 str(notes_workspace_port()),
             ],
@@ -4666,8 +4781,7 @@ def launch_notes_workspace(session: ShellSession) -> bool:
     while time.monotonic() < deadline:
         if notes_workspace_ready(url):
             opened = open_notes_browser(url)
-            suffix = " and opened in the browser" if opened else ""
-            print(f"CORTEX NOTES: ready at {url}{suffix}")
+            report_notes_ready(session, "ready", opened=opened)
             return True
         if process.poll() is not None:
             break
@@ -4744,7 +4858,8 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
             try:
                 url = notes_workspace_url()
                 state = "ready" if notes_workspace_ready(url) else "stopped"
-                print(f"CORTEX NOTES: {state} at {url}")
+                session.notes_url = url
+                report_notes_ready(session, state)
             except ValueError as error:
                 print(f"cortex: /notes: {error}", file=sys.stderr)
         elif action == "stop":

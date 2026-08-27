@@ -171,7 +171,8 @@ Ordinary operating rule:
 - keep low-level mutation in `md-os/os/`
 - treat host-native editing primitives as optional; when one fails before
   touching the workspace, use the native `cortex workspace patch` fallback
-  without modifying AppArmor, `/etc`, host permissions, or the network policy
+  without modifying AppArmor, `/etc`, host permissions, or the network policy;
+  the fallback accepts either Git unified diff or a `*** Begin Patch` envelope
 - keep live connector coverage explicit in `md-os/ops/connectors/connector_registry.json`
 - import external knowledge through
   `md-os/kb/KNOWLEDGE_IMPORT_METHOD_MODEL.md`: raw import, custody manifest,

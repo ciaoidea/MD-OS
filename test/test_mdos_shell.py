@@ -513,9 +513,35 @@ class SemanticShellParityTests(unittest.TestCase):
         )
         self.assertEqual(ENGINE.INLINE_PASTE_BLOCKS, {})
 
+    def test_short_single_line_paste_remains_visible_in_full(self):
+        pasted = ENGINE.register_inline_paste("testo breve", columns=80)
+        self.assertEqual(pasted, "testo breve")
+        self.assertEqual(ENGINE.INLINE_PASTE_BLOCKS, {})
+        self.assertEqual(ENGINE.INLINE_PASTE_COUNTER, 0)
+
     def test_inline_paste_labels_are_numbered(self):
-        self.assertEqual(ENGINE.register_inline_paste("uno"), "[PASTED BLOCK 1]")
-        self.assertEqual(ENGINE.register_inline_paste("due"), "[PASTED BLOCK 2]")
+        self.assertEqual(
+            ENGINE.register_inline_paste("uno\nprima riga"),
+            "[PASTED BLOCK 1]",
+        )
+        self.assertEqual(
+            ENGINE.register_inline_paste("due\nseconda riga"),
+            "[PASTED BLOCK 2]",
+        )
+
+    def test_long_or_multiline_input_preview_uses_paste_label(self):
+        self.assertEqual(
+            ENGINE.terminal_input_preview("breve", columns=80),
+            "breve",
+        )
+        self.assertEqual(
+            ENGINE.terminal_input_preview("x" * 73, columns=80),
+            "[paste]",
+        )
+        self.assertEqual(
+            ENGINE.terminal_input_preview("prima\nseconda", columns=80),
+            "[paste]",
+        )
 
     def test_multiline_block_preserves_every_pasted_line(self):
         lines = iter(["prima riga", "seconda riga", "terza riga", ".end"])
@@ -933,6 +959,9 @@ class SemanticShellParityTests(unittest.TestCase):
                 with ENGINE.interactive_turn_terminal():
                     attributes = ENGINE.termios.tcgetattr(slave)
                     self.assertTrue(attributes[3] & ENGINE.termios.ICANON)
+                    self.assertFalse(attributes[3] & ENGINE.termios.ECHO)
+                    if hasattr(ENGINE.termios, "ECHONL"):
+                        self.assertFalse(attributes[3] & ENGINE.termios.ECHONL)
 
                     os.write(master, b"a")
                     readable, _, _ = ENGINE.select.select([slave], [], [], 0.05)
@@ -997,13 +1026,19 @@ class SemanticShellParityTests(unittest.TestCase):
             port = probe.getsockname()[1]
         session = ENGINE.ShellSession()
         environment = {
+            "MDOS_NOTES_LAN": "1",
             "MDOS_NOTES_PORT": str(port),
             "MDOS_NOTES_OPEN_BROWSER": "never",
         }
         try:
             with (
                 mock.patch.dict(os.environ, environment, clear=False),
-                contextlib.redirect_stdout(io.StringIO()),
+                mock.patch.object(
+                    ENGINE,
+                    "notes_lan_ipv4_addresses",
+                    return_value=("192.0.2.20",),
+                ),
+                contextlib.redirect_stdout(io.StringIO()) as output,
             ):
                 self.assertTrue(ENGINE.launch_notes_workspace(session))
                 self.assertIsNotNone(session.notes_process)
@@ -1013,10 +1048,39 @@ class SemanticShellParityTests(unittest.TestCase):
                 )
                 self.assertTrue(ENGINE.launch_notes_workspace(session))
                 self.assertEqual(session.notes_process.pid, first_pid)
+                self.assertIn(
+                    "CORTEX NOTES BOOX: http://192.0.2.20:",
+                    output.getvalue(),
+                )
         finally:
             with contextlib.redirect_stdout(io.StringIO()):
                 ENGINE.close_notes_workspace(session, announce=False)
         self.assertIsNone(session.notes_process)
+
+    def test_notes_lan_binding_can_be_disabled_and_urls_are_bounded(self):
+        with mock.patch.dict(
+            os.environ,
+            {"MDOS_NOTES_LAN": "0", "MDOS_NOTES_PORT": "4173"},
+            clear=False,
+        ):
+            self.assertEqual(ENGINE.notes_bind_host(), ENGINE.NOTES_HOST)
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"MDOS_NOTES_LAN": "1", "MDOS_NOTES_PORT": "4173"},
+                clear=False,
+            ),
+            mock.patch.object(
+                ENGINE,
+                "notes_lan_ipv4_addresses",
+                return_value=("192.0.2.20",),
+            ),
+        ):
+            self.assertEqual(ENGINE.notes_bind_host(), ENGINE.NOTES_LAN_BIND_HOST)
+            self.assertEqual(
+                ENGINE.notes_lan_urls(),
+                ("http://192.0.2.20:4173/",),
+            )
 
     def test_escape_requests_active_turn_interrupt(self):
         with FakeCodex("Stopped.") as fake, mock.patch.dict(

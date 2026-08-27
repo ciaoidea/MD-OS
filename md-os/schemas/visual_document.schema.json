@@ -80,12 +80,54 @@
         "width_percent": { "type": "integer", "minimum": 10, "maximum": 100 }
       }
     },
+    "whiteboard_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "height_px", "strokes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/block_id" },
+        "type": { "const": "whiteboard" },
+        "height_px": { "type": "integer", "minimum": 600, "maximum": 3000 },
+        "strokes": {
+          "type": "array",
+          "maxItems": 5000,
+          "items": { "$ref": "#/$defs/whiteboard_stroke" }
+        }
+      }
+    },
+    "whiteboard_stroke": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "tool", "color", "points"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^s_[a-f0-9]{16,32}$" },
+        "tool": { "enum": ["pen", "eraser"] },
+        "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "points": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5000,
+          "items": { "$ref": "#/$defs/whiteboard_point" }
+        }
+      }
+    },
+    "whiteboard_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1600 },
+        "y": { "type": "number", "minimum": 0, "maximum": 3000 },
+        "width": { "type": "number", "minimum": 0.5, "maximum": 100 }
+      }
+    },
     "block": {
       "oneOf": [
         { "$ref": "#/$defs/rich_block" },
         { "$ref": "#/$defs/table_block" },
         { "$ref": "#/$defs/formula_block" },
-        { "$ref": "#/$defs/image_block" }
+        { "$ref": "#/$defs/image_block" },
+        { "$ref": "#/$defs/whiteboard_block" }
       ]
     }
   }

@@ -168,6 +168,165 @@ function parseUnifiedDiff(patchText) {
   }
   return files;
 }
+function isApplyPatchBoundary(line) {
+  return line === '*** End Patch'
+    || line === '*** End of File'
+    || /^\*\*\* (?:Update|Add|Delete) File: /.test(line);
+}
+
+function locateApplyPatchHunk(sourceLines, expected, cursor, relativePath) {
+  if (!expected.length) {
+    if (!sourceLines.length && cursor === 0) return 0;
+    fail('WORKSPACE_PATCH_HUNK_NEEDS_CONTEXT', relativePath);
+  }
+  const matches = [];
+  const lastStart = sourceLines.length - expected.length;
+  for (let start = cursor; start <= lastStart; start += 1) {
+    if (expected.every((line, offset) => sourceLines[start + offset] === line)) {
+      matches.push(start);
+    }
+  }
+  if (!matches.length) fail('WORKSPACE_PATCH_PREIMAGE_MISMATCH', relativePath);
+  if (matches.length > 1) fail('WORKSPACE_PATCH_HUNK_AMBIGUOUS', relativePath);
+  return matches[0];
+}
+
+function parseApplyPatch(patchText, workspaceRoot) {
+  const text = String(patchText || '');
+  if (!text.trim()) fail('WORKSPACE_PATCH_EMPTY');
+  if (Buffer.byteLength(text, 'utf8') > MAX_PATCH_BYTES) fail('WORKSPACE_PATCH_TOO_LARGE');
+  if (text.includes('\0')) fail('WORKSPACE_PATCH_BINARY_FORBIDDEN');
+
+  const lines = text.split('\n');
+  if (lines[0] !== '*** Begin Patch') fail('WORKSPACE_PATCH_FORMAT_INVALID');
+  const root = path.resolve(workspaceRoot);
+  const files = [];
+  let index = 1;
+  let totalHunks = 0;
+  let ended = false;
+
+  while (index < lines.length) {
+    if (lines[index] === '*** End Patch') {
+      ended = true;
+      index += 1;
+      break;
+    }
+    const section = /^\*\*\* (Update|Add|Delete) File: (.+)$/.exec(lines[index]);
+    if (!section) fail('WORKSPACE_PATCH_SECTION_INVALID', lines[index]);
+    const operation = section[1];
+    const relativePath = normalizePatchPath(section[2]);
+    if (operation === 'Delete') {
+      fail('WORKSPACE_PATCH_DELETE_REQUIRES_EXPLICIT_MODE', relativePath);
+    }
+    index += 1;
+
+    if (operation === 'Add') {
+      const body = [];
+      while (index < lines.length && !isApplyPatchBoundary(lines[index])) {
+        const line = lines[index];
+        if (!line.startsWith('+')) fail('WORKSPACE_PATCH_HUNK_LINE_INVALID', line);
+        body.push({ kind: '+', content: line.slice(1) });
+        index += 1;
+      }
+      if (!body.length) fail('WORKSPACE_PATCH_FILE_HAS_NO_HUNKS', relativePath);
+      files.push({
+        path: relativePath,
+        is_create: true,
+        new_file_mode: 0o644,
+        hunks: [{
+          old_start: 0,
+          old_count: 0,
+          new_start: 1,
+          new_count: body.length,
+          body,
+        }],
+      });
+      totalHunks += 1;
+    } else {
+      let targetPath;
+      try {
+        targetPath = assertInsideRoot(
+          path.resolve(root, relativePath),
+          root,
+          'WORKSPACE_PATCH_PATH_OUTSIDE_WORKSPACE',
+        );
+      } catch (_) {
+        fail('WORKSPACE_PATCH_PATH_OUTSIDE_WORKSPACE', relativePath);
+      }
+      assertNoSymlinkPath(root, relativePath);
+      if (!fs.existsSync(targetPath)) {
+        fail('WORKSPACE_PATCH_UPDATE_TARGET_MISSING', relativePath);
+      }
+      const sourceLines = splitExistingText(fs.readFileSync(targetPath, 'utf8'), relativePath);
+      const hunks = [];
+      let cursor = 0;
+      let delta = 0;
+
+      while (index < lines.length && !isApplyPatchBoundary(lines[index])) {
+        if (!/^@@(?: .*)?$/.test(lines[index])) {
+          fail('WORKSPACE_PATCH_HUNK_HEADER_INVALID', lines[index]);
+        }
+        index += 1;
+        const body = [];
+        while (index < lines.length && !isApplyPatchBoundary(lines[index])
+          && !lines[index].startsWith('@@')) {
+          const line = lines[index];
+          const kind = line[0];
+          if (![' ', '+', '-'].includes(kind)) {
+            fail('WORKSPACE_PATCH_HUNK_LINE_INVALID', line);
+          }
+          body.push({ kind, content: line.slice(1) });
+          index += 1;
+        }
+        if (!body.length) fail('WORKSPACE_PATCH_FILE_HAS_NO_HUNKS', relativePath);
+        const expected = body.filter((line) => line.kind !== '+').map((line) => line.content);
+        const oldStartIndex = locateApplyPatchHunk(sourceLines, expected, cursor, relativePath);
+        const oldCount = expected.length;
+        const newCount = body.filter((line) => line.kind !== '-').length;
+        hunks.push({
+          old_start: oldCount === 0 ? 0 : oldStartIndex + 1,
+          old_count: oldCount,
+          new_start: oldCount === 0 ? 1 : oldStartIndex + 1 + delta,
+          new_count: newCount,
+          body,
+        });
+        cursor = oldStartIndex + oldCount;
+        delta += newCount - oldCount;
+        totalHunks += 1;
+        if (totalHunks > MAX_HUNKS) fail('WORKSPACE_PATCH_TOO_MANY_HUNKS');
+      }
+      if (lines[index] === '*** End of File') index += 1;
+      if (!hunks.length) fail('WORKSPACE_PATCH_FILE_HAS_NO_HUNKS', relativePath);
+      files.push({
+        path: relativePath,
+        is_create: false,
+        new_file_mode: null,
+        hunks,
+      });
+    }
+
+    if (files.length > MAX_FILES) fail('WORKSPACE_PATCH_TOO_MANY_FILES');
+  }
+
+  if (!ended) fail('WORKSPACE_PATCH_END_MARKER_MISSING');
+  if (lines.slice(index).some((line) => line !== '')) {
+    fail('WORKSPACE_PATCH_TRAILING_CONTENT');
+  }
+  if (!files.length) fail('WORKSPACE_PATCH_HAS_NO_FILES');
+  if (new Set(files.map((file) => file.path)).size !== files.length) {
+    fail('WORKSPACE_PATCH_DUPLICATE_FILE');
+  }
+  return files;
+}
+
+function parseWorkspacePatch(patchText, workspaceRoot) {
+  const text = String(patchText || '');
+  if (text.startsWith('*** Begin Patch\n')) {
+    return parseApplyPatch(text, workspaceRoot);
+  }
+  return parseUnifiedDiff(text);
+}
+
 
 function splitExistingText(text, relativePath) {
   if (text.length > 0 && !text.endsWith('\n')) {
@@ -207,7 +366,7 @@ function applyHunks(originalText, filePatch) {
 
 function buildMutationPlan({ workspaceRoot, patchText }) {
   const root = path.resolve(workspaceRoot);
-  const parsed = parseUnifiedDiff(patchText);
+  const parsed = parseWorkspacePatch(patchText, root);
   return parsed.map((filePatch) => {
     let targetPath;
     try {
@@ -342,5 +501,7 @@ module.exports = {
   applyWorkspacePatch,
   buildMutationPlan,
   normalizePatchPath,
+  parseApplyPatch,
   parseUnifiedDiff,
+  parseWorkspacePatch,
 };

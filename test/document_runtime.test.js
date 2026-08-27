@@ -27,8 +27,11 @@ test('visual document schema and WYSIWYG widget have inspectable source contract
       '#/$defs/table_block',
       '#/$defs/formula_block',
       '#/$defs/image_block',
+      '#/$defs/whiteboard_block',
     ])
   );
+  assert.deepEqual(schema.$defs.whiteboard_block.required, ['id', 'type', 'height_px', 'strokes']);
+  assert.equal(schema.$defs.whiteboard_block.properties.data_uri, undefined);
 
   const html = fs.readFileSync(
     path.join(REPO_ROOT, 'md-os/os/ui/document_editor.html'),
@@ -43,10 +46,55 @@ test('visual document schema and WYSIWYG widget have inspectable source contract
   assert.match(html, /mdos_document_save/);
   assert.match(html, /mdos_document_render_math/);
   assert.match(html, /mdos_document_export/);
+  assert.match(html, /id="add-whiteboard"/);
+  assert.match(html, />Whiteboard<\/button>/);
+  assert.match(html, /whiteboard_append_stroke/);
+  assert.match(html, /\/api\/whiteboard-stream/);
+  assert.match(html, /const WHITEBOARD_STREAM_INTERVAL_MS = 80;/);
+  assert.match(html, /const WHITEBOARD_COMMIT_INTERVAL_MS = 250;/);
+  assert.match(html, /const POLL_FALLBACK_INTERVAL_MS = 5000;/);
+  assert.match(html, /operations: batch/);
+  assert.match(html, /committedStrokes/);
+  assert.match(html, /function createWhiteboardIcon\(name\)/);
+  assert.match(html, /function createWhiteboardColorDot\(color\)/);
+  assert.match(html, /button\.setAttribute\('aria-label', label\)/);
+  assert.match(html, /createWhiteboardIcon\('pen'\)/);
+  assert.match(html, /createWhiteboardIcon\('eraser'\)/);
+  assert.match(html, /createWhiteboardColorDot\('#b42318'\)/);
+  assert.match(html, /createWhiteboardIcon\('refresh'\)/);
+  assert.match(html, /createWhiteboardIcon\('contractVertical'\)/);
+  assert.match(html, /createWhiteboardIcon\('expandVertical'\)/);
+  assert.match(html, /createWhiteboardIcon\('resetHeight'\)/);
+  assert.match(html, /max-width: 1\.75rem;/);
+  assert.match(html, /height: 1\.75rem;/);
+  assert.match(html, /const WHITEBOARD_HEIGHT_DRAG_STEP = 50;/);
+  assert.match(html, /id="whiteboard-toolbar"/);
+  assert.match(html, /whiteboard-toolbar-row/);
+  assert.match(html, /\.whiteboard-toolbar-row \{[^}]*display: flex;[^}]*flex-wrap: nowrap;[^}]*justify-content: flex-start;/s);
+  assert.match(html, /flex: 0 1 1\.75rem;/);
+  assert.match(html, /whiteboardControls\.append\(/);
+  assert.match(html, /element\.whiteboardToolbarRows = \[whiteboardControls\]/);
+  assert.match(html, /whiteboardToolbar\.replaceChildren\(\.\.\.rows\)/);
+  assert.match(html, /element\.append\(canvas, resizeHandle\)/);
+  assert.doesNotMatch(html, /element\.append\(toolbar, canvas, resizeHandle\)/);
+  assert.doesNotMatch(html, /\.tools \{[^}]*flex-wrap: nowrap/s);
+  assert.match(html, /whiteboard-resize-handle/);
+  assert.match(html, /window\.addEventListener\('pointermove', moveWhiteboardResize/);
+  assert.match(html, /window\.removeEventListener\('pointermove', moveWhiteboardResize\)/);
+  assert.match(html, /resizeHandle\.setPointerCapture\?\.\(event\.pointerId\)/);
+  assert.match(html, /if \(state\.heightPx !== startHeight\) queueWhiteboardHeight\(state\.heightPx\)/);
+  assert.match(html, /whiteboard_resize/);
+  assert.doesNotMatch(html, /Whiteboard not synced · retrying/);
+  assert.doesNotMatch(html, /Sync unavailable · retrying in/);
+  assert.match(html, /function insertionAnchorAt\(clientY\)/);
+  assert.doesNotMatch(html, /toDataURL\(['"]image\/png/);
+  assert.match(html, /addEventListener\('pointerdown'/);
+  assert.match(html, /getCoalescedEvents/);
   assert.match(html, /const AUTOSAVE_INTERVAL_MS = 800;/);
   assert.match(html, /function nextSaveRetryDelay\(\)/);
   assert.match(html, /scheduleSave\(retryDelay\)/);
   assert.match(html, /events\.onopen = \(\) =>/);
+  assert.match(html, /document\.hidden \|\| liveEventsConnected/);
 
   const baseMatch = html.match(/const SAVE_RETRY_BASE_MS = ([^;]+);/);
   const maxMatch = html.match(/const SAVE_RETRY_MAX_MS = ([^;]+);/);
@@ -82,6 +130,7 @@ test('visual document runtime sanitizes, versions, applies, and exports rich blo
     const tableId = runtime.newBlockId();
     const formulaId = runtime.newBlockId();
     const imageId = runtime.newBlockId();
+    const whiteboardId = runtime.newBlockId();
     const saved = runtime.saveDocument({
       document_id: created.document_id,
       expected_revision: created.revision,
@@ -99,15 +148,18 @@ test('visual document runtime sanitizes, versions, applies, and exports rich blo
         },
         { id: formulaId, type: 'formula', latex: 'E = mc^2', display: true },
         { id: imageId, type: 'image', data_uri: pixel, alt: 'one pixel', width_percent: 40 },
+        { id: whiteboardId, type: 'whiteboard', strokes: [] },
       ],
     });
 
     assert.equal(saved.revision, 1);
-    assert.deepEqual(saved.blocks.map((block) => block.type), ['rich', 'table', 'formula', 'image']);
+    assert.deepEqual(saved.blocks.map((block) => block.type), ['rich', 'table', 'formula', 'image', 'whiteboard']);
     assert.match(saved.blocks[0].html, /<strong>bold<\/strong>/);
     assert.doesNotMatch(saved.blocks[0].html, /onclick|<script|position:|javascript:/i);
     assert.match(saved.blocks[2].mathml, /<math\b/);
     assert.equal(saved.blocks[3].width_percent, 40);
+    assert.equal(saved.blocks[4].height_px, 1000);
+    assert.deepEqual(saved.blocks[4].strokes, []);
 
     assert.throws(
       () => runtime.saveDocument({
@@ -144,12 +196,98 @@ test('visual document runtime sanitizes, versions, applies, and exports rich blo
     assert.ok(applied.blocks.some((block) => block.id === insertedId));
     assert.ok(!applied.blocks.some((block) => block.id === imageId));
 
+    const strokeA = {
+      id: 's_aaaaaaaaaaaaaaaa',
+      tool: 'pen',
+      color: '#202124',
+      points: [
+        { x: 10, y: 20, width: 5 },
+        { x: 30, y: 40, width: 6 },
+      ],
+    };
+    const strokeB = {
+      id: 's_bbbbbbbbbbbbbbbb',
+      tool: 'pen',
+      color: '#1769e0',
+      points: [
+        { x: 80, y: 90, width: 4 },
+        { x: 120, y: 130, width: 5 },
+      ],
+    };
+    const sharedA = runtime.applyDocumentOperations({
+      document_id: created.document_id,
+      operations: [{
+        type: 'whiteboard_append_stroke',
+        block_id: whiteboardId,
+        stroke: strokeA,
+      }],
+    });
+    const sharedB = runtime.applyDocumentOperations({
+      document_id: created.document_id,
+      operations: [{
+        type: 'whiteboard_append_stroke',
+        block_id: whiteboardId,
+        stroke: strokeB,
+      }],
+    });
+    assert.equal(sharedA.revision, 3);
+    assert.equal(sharedB.revision, 4);
+    assert.deepEqual(
+      sharedB.blocks.find((block) => block.id === whiteboardId).strokes.map((stroke) => stroke.id),
+      [strokeA.id, strokeB.id],
+    );
+
+    const resized = runtime.applyDocumentOperations({
+      document_id: created.document_id,
+      operations: [{
+        type: 'whiteboard_resize',
+        block_id: whiteboardId,
+        height_px: 1800,
+      }],
+    });
+    assert.equal(resized.blocks.find((block) => block.id === whiteboardId).height_px, 1800);
+
     const htmlExport = runtime.exportDocument({ document_id: created.document_id, format: 'html' });
     const texExport = runtime.exportDocument({ document_id: created.document_id, format: 'tex' });
     assert.ok(htmlExport.bytes > 100);
     assert.ok(texExport.bytes > 100);
     assert.ok(fs.existsSync(path.join(workspace, htmlExport.path)));
     assert.ok(fs.existsSync(path.join(workspace, texExport.path)));
+    const exportedHtml = fs.readFileSync(path.join(workspace, htmlExport.path), 'utf8');
+    assert.match(exportedHtml, /class="whiteboard"/);
+    assert.match(exportedHtml, /height="1800"/);
+    assert.match(exportedHtml, /stroke="#1769e0"/);
+
+    const undone = runtime.applyDocumentOperations({
+      document_id: created.document_id,
+      operations: [{
+        type: 'whiteboard_undo',
+        block_id: whiteboardId,
+        stroke_id: strokeA.id,
+      }],
+    });
+    assert.deepEqual(
+      undone.blocks.find((block) => block.id === whiteboardId).strokes.map((stroke) => stroke.id),
+      [strokeB.id],
+    );
+    const cleared = runtime.applyDocumentOperations({
+      document_id: created.document_id,
+      operations: [{ type: 'whiteboard_clear', block_id: whiteboardId }],
+    });
+    assert.deepEqual(cleared.blocks.find((block) => block.id === whiteboardId).strokes, []);
+
+    assert.throws(
+      () => runtime.normalizeBlocks([{
+        type: 'whiteboard',
+        strokes: [{
+          id: 's_cccccccccccccccc',
+          tool: 'spray',
+          color: '#202124',
+          points: [{ x: 1, y: 2, width: 3 }],
+        }],
+      }]),
+      /INVALID_WHITEBOARD_TOOL/,
+    );
 
     if (HAS_XELATEX) {
       const pdfExport = runtime.exportDocument({ document_id: created.document_id, format: 'pdf' });

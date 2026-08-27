@@ -46,6 +46,59 @@ test('native workspace patch applies an exact hunk and verifies readback hashes'
   assert.equal(receipt.files[0].after_sha256, sha256Text('after\n'));
 });
 
+test('native workspace patch accepts Apply Patch envelopes for updates and creates', () => {
+  const root = workspace();
+  fs.writeFileSync(path.join(root, 'note.md'), 'before\n');
+  const patch = [
+    '*** Begin Patch',
+    '*** Update File: note.md',
+    '@@',
+    '-before',
+    '+after',
+    '*** Add File: added.md',
+    '+created',
+    '*** End Patch',
+    '',
+  ].join('\n');
+  const receipt = applyWorkspacePatch({
+    workspaceRoot: root,
+    patchText: patch,
+    lock: false,
+  });
+  assert.equal(receipt.file_count, 2);
+  assert.equal(fs.readFileSync(path.join(root, 'note.md'), 'utf8'), 'after\n');
+  assert.equal(fs.readFileSync(path.join(root, 'added.md'), 'utf8'), 'created\n');
+});
+
+test('Apply Patch envelopes fail closed on deletion and ambiguous preimages', () => {
+  const root = workspace();
+  fs.writeFileSync(path.join(root, 'note.md'), 'same\nsame\n');
+  assert.throws(() => applyWorkspacePatch({
+    workspaceRoot: root,
+    patchText: [
+      '*** Begin Patch',
+      '*** Delete File: note.md',
+      '*** End Patch',
+      '',
+    ].join('\n'),
+    lock: false,
+  }), { code: 'WORKSPACE_PATCH_DELETE_REQUIRES_EXPLICIT_MODE' });
+  assert.throws(() => applyWorkspacePatch({
+    workspaceRoot: root,
+    patchText: [
+      '*** Begin Patch',
+      '*** Update File: note.md',
+      '@@',
+      '-same',
+      '+changed',
+      '*** End Patch',
+      '',
+    ].join('\n'),
+    lock: false,
+  }), { code: 'WORKSPACE_PATCH_HUNK_AMBIGUOUS' });
+  assert.equal(fs.readFileSync(path.join(root, 'note.md'), 'utf8'), 'same\nsame\n');
+});
+
 test('dry-run validates the patch without changing the workspace', () => {
   const root = workspace();
   fs.writeFileSync(path.join(root, 'note.md'), 'before\n');

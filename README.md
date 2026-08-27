@@ -136,17 +136,21 @@ explain what is consuming the most disk space
 inspect this repository, fix the failing test, verify it, and report the result
 ```
 
-Paste long multiline text directly anywhere in the editable line. Cortex
-immediately inserts `[PASTED BLOCK n]` at that position, so you can keep typing
-before or after it without displaying the pasted document. When you press
-Enter, Cortex sends the surrounding text plus the complete original block; the
-visual label is not included. No `/paste`, `.end`, or Ctrl-D is needed on
-terminals that support bracketed paste; `/paste` remains a compatibility
-fallback.
+Paste text directly anywhere in the editable line. A single-line paste that
+fits the current terminal row remains visible in full. A multiline or longer
+paste is stored in volatile memory and shown as `[PASTED BLOCK n]`, so you can
+keep typing before or after it without displaying the complete document. When
+you press Enter, Cortex sends the surrounding text plus the complete original
+content; the visual label is not included. No `/paste`, `.end`, or Ctrl-D is
+needed on terminals that support bracketed paste; `/paste` remains a
+compatibility fallback.
 
 You can add direction while Codex is still working: type the follow-up and press
 Enter. Cortex forwards it immediately to the active App Server turn through
-`turn/steer`, matching Codex's intermediate-message behavior.
+`turn/steer`, matching Codex's intermediate-message behavior. While output is
+streaming, terminal echo is disabled so partially typed input cannot mix with
+the output. After Enter, Cortex confirms the complete short input or `[paste]`
+for a long input on its own line.
 
 Codex slash commands are recognized directly. Use `/help` for the full catalog;
 core commands including `/goal`, `/compact`, `/rename`, `/fork`, `/new`,
@@ -2159,14 +2163,34 @@ Then enter:
 /notes
 ```
 
-`/notes` starts or reuses the loopback workspace at
+`/notes` starts or reuses the local workspace at
 `http://127.0.0.1:4173` and opens it in the browser when a desktop session is
-available. The Cortex prompt remains active. Use `/notes status` to inspect it
-and `/notes stop` to stop the process started by the current Cortex session.
+available. It also prints a plain `CORTEX NOTES BOOX` link for devices on the
+same trusted Wi-Fi. LAN access is intentionally unauthenticated, so anyone who
+can reach the port can use the editor. The Cortex prompt remains active. Use
+`/notes status` to print the links again and `/notes stop` to stop the process. Set
+`MDOS_NOTES_LAN=0` before starting Cortex to keep the listener loopback-only.
 
-The canvas accepts formatted paste, tables and images and renders LaTeX
-formulas visually. Every keystroke synchronizes in the background without a
-Save action.
+The canvas accepts formatted paste, tables and images, renders LaTeX formulas
+visually, and includes one shared `Whiteboard` for handwriting with a stylus,
+touch, or mouse. Click the intended vertical position on the page before
+choosing Text, Table, Formula, Image, or Whiteboard; the object is inserted at
+that marker. Whiteboard strokes are stored as vectors. While the pen is moving,
+bounded preview segments stream through the server's in-memory event channel so
+other browser and Boox sessions can see the handwriting immediately without a
+disk write per point. Completed strokes receive stable IDs and are committed in
+small idempotent batches; quiet exponential retry handles temporary disconnects,
+and `Update` can force an immediate retry. Concurrent sessions therefore merge
+their strokes instead of overwriting one another. Every edit synchronizes in the
+background without requiring a Save action. When a Whiteboard is selected, its
+controls appear above the document rather than inside the drawing area. Eleven
+compact icon buttons stay together in one left-aligned row: pen, eraser, black,
+blue, and red ink, undo, clear, vertical contraction, vertical expansion,
+default height, and refresh. The height controls change the real vertical
+drawing area from 600 to 3000 logical pixels; the lower resize handle also
+supports direct pen, touch, or mouse dragging. A drag previews locally and
+commits its final height once. The selected height is shared and restored with
+the document.
 
 More detail: [docs/WEB_WORKSPACE.md](docs/WEB_WORKSPACE.md)
 

@@ -1,4 +1,9 @@
 node_modules/
+
+# Host-local interactive-session files.
+.RData
+.Rhistory
+md-os/os/ui/assets/einstein-field-equation-explainer.png
 .cache/
 graphify-out/
 coverage/

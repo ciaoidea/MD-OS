@@ -68,14 +68,21 @@ No quotes, apostrophes, prompt prefix, or special chat command are required.
 Use `exit` or Ctrl-D to leave. The compatibility inputs `quit`, `/exit`, and
 `/quit` also remain accepted even though the minimal startup text omits them.
 
-Cortex enables terminal bracketed-paste mode. When a paste occurs inside the
-editable line, Cortex immediately stores its complete text in volatile memory
-and inserts `[PASTED BLOCK 1]` at the cursor. The operator may continue typing
-before or after that placeholder. On submission, Cortex replaces the
-placeholder with the original multiline text before sending the request to
-Codex; the label itself is never sent. No special command, `.end`, or Ctrl-D is
-required. `/paste` remains only as a compatibility fallback for terminals that
-remove bracketed-paste events.
+Cortex enables terminal bracketed-paste mode. A single-line paste that fits the
+current terminal row remains visible literally. For multiline or longer text,
+Cortex stores the complete content in volatile memory and inserts
+`[PASTED BLOCK 1]` at the cursor. The operator may continue typing before or
+after that placeholder. On submission, Cortex replaces the placeholder with
+the original text before sending the request to Codex; the label itself is
+never sent. No special command, `.end`, or Ctrl-D is required. `/paste` remains
+only as a compatibility fallback for terminals that remove bracketed-paste
+events.
+
+During an active Codex turn, Cortex keeps input canonical but disables terminal
+echo. This prevents partially typed steering text from being interleaved with
+streaming assistant or tool output. Pressing Enter prints a separate
+confirmation containing the complete short input or `[paste]` for a long input,
+then forwards the unchanged text through `turn/steer`.
 
 One-shot natural-language input also uses the native Codex loop:
 
