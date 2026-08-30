@@ -114,8 +114,6 @@ audit, replay, package, and move between machines.
 | `md-os/ops/archive/**` | generated archive view | no | no | yes | no | no |
 | `md-os/ops/summary/**` | generated summary view | no | no | yes | no | no |
 | `md-os/ops/warm_start/**` | live volatile working-context capsule | evidence | case-dependent | no | no | maybe |
-| `md-os/ops/local/documents/*/document.json` | host-local live visual document | yes, within the local editor | no | no | no | yes |
-| `md-os/ops/local/documents/*/exports/**` | host-local generated document export | no | no | yes | no | yes |
 | `md-os/ops/local/**` | host-local cache | no | no | no | no | yes |
 | `md-os/ops/services/**` | host-local service state | no | no | no | no | yes |
 | `.graphifyignore` | source graph traversal policy | yes | yes | no | yes | no |
@@ -180,7 +178,6 @@ audit, replay, package, and move between machines.
 | `cortex replay` | replay report and rebuilt generated state |
 | `cortex hardware bootstrap` | `md-os/ops/local/hardware/**` |
 | `cortex software bootstrap` | `md-os/ops/local/software/**` |
-| MCP `mdos_document_{create,save,apply,export}` tools | `md-os/ops/local/documents/**` |
 | `cortex wolfram bootstrap` | Wolfram connector profile, calculation registry entries, availability snapshot, connector registry update, and smoke-test artifact |
 | `cortex wolfram run <project_id> <calculation_id>` | `md-os/ops/artifacts/wolfram/**`, `md-os/ops/sources/connectors/*__wolfram__*.json`, and journal events |
 

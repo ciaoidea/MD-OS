@@ -2128,71 +2128,6 @@ map, and the sanitized connector topology. It routes a question to the smallest
 relevant set of models, schemas, executors, tests, and readback surfaces instead
 of falling back to broad repository search.
 
-## Local web workspace
-
-The local WYSIWYG scratchpad is launched from an ordinary Cortex session.
-Start Cortex:
-
-```bash
-./cortex
-```
-
-Then enter:
-
-```text
-/notes
-```
-
-`/notes` starts the local workspace at `http://127.0.0.1:4173`; when a notes
-server is already running, the command restarts that server and waits for the
-new process to become ready before opening the browser. This guarantees that
-the current code is loaded. It also prints a plain `CORTEX NOTES BOOX` link for devices on the
-same trusted Wi-Fi. LAN access is intentionally unauthenticated, so anyone who
-can reach the port can use the editor. The Cortex prompt remains active. Use
-`/notes status` to inspect the endpoint without restarting it and `/notes stop`
-to stop the process. Set
-`MDOS_NOTES_LAN=0` before starting Cortex to keep the listener loopback-only.
-
-The canvas accepts formatted paste, tables and images, renders LaTeX formulas
-visually, and includes one shared `Whiteboard` for handwriting with a stylus,
-touch, or mouse. Click the intended vertical position on the page before
-choosing Text, Table, Formula, Image, or Whiteboard; the object is inserted at
-that marker. These actions, the formatting controls, deletion, and PDF export
-use compact graphic buttons; readable names remain available as tooltips and
-accessible labels. Floppy, open-file, new-file, and AI icons sit at the left of
-the same wrapping toolbar. The floppy writes a portable `.mdos-notes.json`
-file. Open and New first save the current canvas; cancelling that save leaves
-the current notes untouched.
-
-Whiteboard strokes are stored as vectors. While the pen is moving, bounded
-preview segments stream through the server's in-memory event channel so other
-browser and Boox sessions can see the handwriting immediately without a disk
-write per point. Completed strokes receive stable IDs and are committed in
-small idempotent batches; quiet exponential retry handles temporary disconnects,
-and `Update` can force an immediate retry. Concurrent sessions therefore merge
-their strokes instead of overwriting one another. Every edit synchronizes in the
-background; the floppy is an additional portable file export rather than the
-live synchronization mechanism. When a Whiteboard is selected, its controls
-appear above the document rather than inside the drawing area. Eleven compact
-icon buttons stay together in one left-aligned row: pen, eraser, black, blue,
-and red ink, undo, clear, vertical contraction, vertical expansion, default
-height, and refresh. The height controls change the real vertical drawing area
-from 600 to 3000 logical pixels; the lower resize handle also supports direct
-pen, touch, or mouse dragging. A drag previews locally and commits its final
-height once. The selected height is shared and restored with the document.
-
-The AI icon runs only when pressed. It sends the selected/latest written block
-or a temporary crop of recent handwriting to the configured Codex model, then
-applies one brief document edit. Text corrections replace the target; other
-answers appear immediately below it. Whiteboard answers are short blue
-calligraphic vector annotations, while the temporary crop is never stored in
-the notes file. The AI turn is repository-read-only, has no tool network access,
-and exposes only document read/apply tools. Because LAN access is
-unauthenticated, use trusted Wi-Fi or `MDOS_NOTES_LAN=0`; any reachable client
-can otherwise press AI and modify the shared notes.
-
-More detail: [docs/WEB_WORKSPACE.md](docs/WEB_WORKSPACE.md)
-
 ## MCP server adapter
 
 MD-OS APFC can be exposed to MCP-compatible hosts as a stdio server:
@@ -2201,14 +2136,9 @@ MD-OS APFC can be exposed to MCP-compatible hosts as a stdio server:
 npm run mcp:server
 ```
 
-The server exposes read-only resources such as `mdos://ops/global-index`,
-bounded tools such as `mdos_replay` and `mdos_register_signal`, and an MCP Apps
-resource at `ui://mdos/document-editor/v1.html`.
-
-In an MCP Apps-capable host, `mdos_document_open` displays a fullscreen WYSIWYG
-canvas for formatted text, rich paste, tables, pasted images, and visually
-rendered LaTeX formulas. Documents use revision-checked local storage under
-`md-os/ops/local/documents/` and export to HTML, TeX, or PDF.
+The server exposes read-only MD-OS resources and bounded deterministic tools
+over stdio. It does not bundle a browser-based document editor or a local
+document-storage API.
 
 This is an adapter over the existing text-native OS. The core state model
 remains the filesystem under `md-os/`.

@@ -12,7 +12,6 @@ import ctypes
 import ctypes.util
 import getpass
 import hashlib
-import ipaddress
 import json
 import os
 import platform
@@ -21,16 +20,12 @@ import re
 import select
 import shlex
 import shutil
-import socket
 import subprocess
 import sys
 import tempfile
 import threading
 import time
 from typing import NoReturn
-import urllib.error
-import urllib.request
-import webbrowser
 
 try:
     import readline
@@ -57,11 +52,6 @@ MAX_APFC_SOURCE_CHARS = 768
 MAX_APFC_CONTEXT_PACKS = 16
 MAX_APFC_CONTEXT_PACK_INDEX_BYTES = 64 * 1024
 MAX_APFC_CONTEXT_PACK_FIELD_CHARS = 384
-NOTES_HOST = "127.0.0.1"
-NOTES_LAN_BIND_HOST = "0.0.0.0"
-NOTES_DEFAULT_PORT = 4173
-NOTES_STARTUP_TIMEOUT_SECONDS = 5.0
-NOTES_SERVER_SCRIPT = ENGINE_ROOT.parent / "os" / "web_workspace_server.js"
 STEERING_INTERRUPT = "\x1b"
 STEERING_INPUT_BUFFER = ""
 INLINE_PASTE_BLOCKS: dict[str, str] = {}
@@ -163,8 +153,6 @@ class ShellSession:
     codex_turns: int = 0
     last_codex_turn_duration_ms: int | None = None
     app_server: "CodexAppServerClient | None" = None
-    notes_process: "subprocess.Popen[str] | None" = None
-    notes_url: str | None = None
     event_sequence: int = 0
     pasted_block_count: int = 0
     pending_events: list[ShellEvent] = field(default_factory=list)
@@ -4564,310 +4552,13 @@ def handle_repl_builtin(
     return True
 
 
-def notes_workspace_port() -> int:
-    raw = os.environ.get(
-        "MDOS_NOTES_PORT",
-        os.environ.get("MDOS_WEB_PORT", str(NOTES_DEFAULT_PORT)),
-    ).strip()
-    try:
-        port = int(raw)
-    except ValueError as error:
-        raise ValueError("MDOS_NOTES_PORT must be an integer") from error
-    if port < 1 or port > 65535:
-        raise ValueError("MDOS_NOTES_PORT must be between 1 and 65535")
-    return port
-
-
-def notes_workspace_url() -> str:
-    return f"http://{NOTES_HOST}:{notes_workspace_port()}/"
-
-
-def notes_lan_enabled() -> bool:
-    value = os.environ.get("MDOS_NOTES_LAN", "1").strip().casefold()
-    if value in {"1", "true", "yes", "on"}:
-        return True
-    if value in {"0", "false", "no", "off"}:
-        return False
-    raise ValueError("MDOS_NOTES_LAN must be true or false")
-
-
-def notes_bind_host() -> str:
-    return NOTES_LAN_BIND_HOST if notes_lan_enabled() else NOTES_HOST
-
-
-def notes_lan_ipv4_addresses() -> tuple[str, ...]:
-    candidates: list[str] = []
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
-            probe.connect(("192.0.2.1", 9))
-            candidates.append(str(probe.getsockname()[0]))
-    except OSError:
-        pass
-    try:
-        candidates.extend(
-            str(item[4][0])
-            for item in socket.getaddrinfo(
-                socket.gethostname(),
-                None,
-                socket.AF_INET,
-                socket.SOCK_STREAM,
-            )
-        )
-    except OSError:
-        pass
-
-    addresses: list[str] = []
-    for candidate in candidates:
-        try:
-            address = ipaddress.ip_address(candidate)
-        except ValueError:
-            continue
-        if (
-            isinstance(address, ipaddress.IPv4Address)
-            and address.is_private
-            and not address.is_loopback
-            and not address.is_link_local
-            and not address.is_unspecified
-            and candidate not in addresses
-        ):
-            addresses.append(candidate)
-    return tuple(addresses)
-
-
-def notes_lan_urls() -> tuple[str, ...]:
-    port = notes_workspace_port()
-    return tuple(
-        f"http://{address}:{port}/"
-        for address in notes_lan_ipv4_addresses()
-    )
-
-
-def report_notes_ready(
-    session: ShellSession,
-    state: str,
-    *,
-    opened: bool = False,
-) -> None:
-    url = session.notes_url or notes_workspace_url()
-    suffix = " and opened in the browser" if opened else ""
-    print(f"CORTEX NOTES: {state} at {url}{suffix}")
-    if notes_lan_enabled():
-        lan_urls = notes_lan_urls()
-        for lan_url in lan_urls:
-            print(f"CORTEX NOTES BOOX: {lan_url}")
-        if not lan_urls:
-            print("CORTEX NOTES: LAN listener ready, but no private IPv4 address was detected")
-
-
-def notes_workspace_status(url: str, timeout: float = 0.3) -> dict[str, object] | None:
-    request = urllib.request.Request(
-        url + "api/status",
-        headers={"Accept": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except (OSError, ValueError, urllib.error.URLError):
-        return None
-    if response.status != 200 or not isinstance(payload, dict):
-        return None
-    return payload
-
-
-def notes_workspace_ready(url: str, timeout: float = 0.3) -> bool:
-    payload = notes_workspace_status(url, timeout)
-    return payload is not None and payload.get("ready") is True
-
-
-def request_notes_workspace_control(url: str, action: str) -> bool:
-    if action not in {"restart", "shutdown"}:
-        raise ValueError("invalid notes workspace control action")
-    request = urllib.request.Request(
-        url + "api/" + action,
-        data=b"{}",
-        headers={"Accept": "application/json", "Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=1.0) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except (OSError, ValueError, urllib.error.URLError):
-        return False
-    return response.status == 202 and payload.get("ok") is True
-
-
-def wait_for_notes_restart(url: str, previous_pid: int) -> bool:
-    deadline = time.monotonic() + NOTES_STARTUP_TIMEOUT_SECONDS
-    while time.monotonic() < deadline:
-        payload = notes_workspace_status(url)
-        if (
-            payload is not None
-            and payload.get("ready") is True
-            and payload.get("pid") != previous_pid
-        ):
-            return True
-        time.sleep(0.05)
-    return False
-
-
-def notes_browser_enabled() -> bool:
-    preference = os.environ.get("MDOS_NOTES_OPEN_BROWSER", "auto").strip().casefold()
-    if preference in {"0", "false", "no", "never", "off"}:
-        return False
-    if preference in {"1", "true", "yes", "always", "on"}:
-        return True
-    if preference != "auto":
-        raise ValueError(
-            "MDOS_NOTES_OPEN_BROWSER must be auto, always, or never"
-        )
-    return (
-        os.name == "nt"
-        or sys.platform == "darwin"
-        or bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-    )
-
-
-def open_notes_browser(url: str) -> bool:
-    try:
-        if not notes_browser_enabled():
-            return False
-        return bool(webbrowser.open(url, new=2))
-    except (OSError, ValueError, webbrowser.Error):
-        return False
-
-
-def close_notes_workspace(session: ShellSession, *, announce: bool = True) -> bool:
-    process = session.notes_process
-    session.notes_process = None
-    session.notes_url = None
-    if process is None or process.poll() is not None:
-        if announce:
-            print("CORTEX NOTES: no Cortex-managed notes process is running")
-        return False
-    process.terminate()
-    try:
-        process.wait(timeout=3)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait(timeout=1)
-    for stream in (process.stdout, process.stderr):
-        if stream is not None:
-            stream.close()
-    if announce:
-        print("CORTEX NOTES: stopped")
-    return True
-
-
-def launch_notes_workspace(session: ShellSession) -> bool:
-    try:
-        url = notes_workspace_url()
-        bind_host = notes_bind_host()
-    except ValueError as error:
-        print(f"cortex: /notes: {error}", file=sys.stderr)
-        return False
-
-    restarting = False
-    status = notes_workspace_status(url)
-    if status is not None and status.get("ready") is True:
-        existing = session.notes_process
-        if existing is not None and existing.poll() is None:
-            close_notes_workspace(session, announce=False)
-            restarting = True
-        else:
-            previous_pid = status.get("pid")
-            if (
-                not isinstance(previous_pid, int)
-                or not request_notes_workspace_control(url, "restart")
-                or not wait_for_notes_restart(url, previous_pid)
-            ):
-                print(
-                    "cortex: /notes: the existing server could not restart automatically",
-                    file=sys.stderr,
-                )
-                return False
-            session.notes_url = url
-            opened = open_notes_browser(url)
-            report_notes_ready(session, "restarted", opened=opened)
-            return True
-
-    existing = session.notes_process
-    if existing is not None and existing.poll() is None:
-        print(
-            f"cortex: /notes: process is running but {url} is not ready",
-            file=sys.stderr,
-        )
-        return False
-    session.notes_process = None
-    session.notes_url = None
-
-    node = shutil.which("node")
-    if node is None:
-        print("cortex: /notes: Node.js was not found in PATH", file=sys.stderr)
-        return False
-    if not NOTES_SERVER_SCRIPT.is_file():
-        print(
-            f"cortex: /notes: server not found: {NOTES_SERVER_SCRIPT}",
-            file=sys.stderr,
-        )
-        return False
-
-    repository_root = ENGINE_ROOT.parent.parent
-    try:
-        process = subprocess.Popen(
-            [
-                node,
-                str(NOTES_SERVER_SCRIPT),
-                "--host",
-                bind_host,
-                "--port",
-                str(notes_workspace_port()),
-            ],
-            cwd=repository_root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-    except OSError as error:
-        print(f"cortex: /notes: unable to start: {error}", file=sys.stderr)
-        return False
-
-    session.notes_process = process
-    session.notes_url = url
-    deadline = time.monotonic() + NOTES_STARTUP_TIMEOUT_SECONDS
-    while time.monotonic() < deadline:
-        if notes_workspace_ready(url):
-            opened = open_notes_browser(url)
-            report_notes_ready(
-                session,
-                "restarted" if restarting else "ready",
-                opened=opened,
-            )
-            return True
-        if process.poll() is not None:
-            break
-        time.sleep(0.05)
-
-    if process.poll() is None:
-        process.terminate()
-    try:
-        stdout, stderr = process.communicate(timeout=1)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        stdout, stderr = process.communicate(timeout=1)
-    session.notes_process = None
-    session.notes_url = None
-    detail = (stderr or stdout or "startup timed out").strip()
-    print(f"cortex: /notes: {detail}", file=sys.stderr)
-    return False
-
-
 CODEX_SLASH_COMMANDS = (
     "agent", "subagents", "apps", "plugins", "hooks", "clear", "rename",
     "archive", "delete", "compact", "copy", "diff", "exit", "quit",
     "experimental", "approve", "memories", "skills", "import", "feedback",
     "init", "logout", "mcp", "mention", "model", "fast", "plan", "goal",
     "personality", "ps", "stop", "fork", "app", "side", "btw", "raw",
-    "resume", "new", "review", "status", "usage", "debug-config", "notes",
+    "resume", "new", "review", "status", "usage", "debug-config",
     "statusline", "title", "theme", "pets", "pet", "keymap", "vim",
     "permissions", "ide", "setup-default-sandbox", "sandbox-add-read-dir",
 )
@@ -4896,7 +4587,7 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
     if command in {"help", "commands"} or not command:
         print("Codex slash commands:")
         print("  " + "  ".join(f"/{item}" for item in CODEX_SLASH_COMMANDS))
-        print("Core Cortex adapters: /notes /goal /compact /rename /fork /new /clear /status /diff /model /review /paste")
+        print("Core Cortex adapters: /goal /compact /rename /fork /new /clear /status /diff /model /review /paste")
         return True
     if command not in CODEX_SLASH_COMMANDS:
         print(f"cortex: unknown Codex slash command /{command}", file=sys.stderr)
@@ -4909,23 +4600,6 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
         if argument:
             os.environ["MDOS_MODEL"] = argument
         print(f"model={effective_model(load_runtime())}")
-        return True
-    if command == "notes":
-        action = argument.casefold()
-        if action in {"", "open"}:
-            launch_notes_workspace(session)
-        elif action == "status":
-            try:
-                url = notes_workspace_url()
-                state = "ready" if notes_workspace_ready(url) else "stopped"
-                session.notes_url = url
-                report_notes_ready(session, state)
-            except ValueError as error:
-                print(f"cortex: /notes: {error}", file=sys.stderr)
-        elif action == "stop":
-            close_notes_workspace(session)
-        else:
-            print("cortex: usage: /notes [open|status|stop]", file=sys.stderr)
         return True
     if command in {"new", "clear"}:
         if command == "clear":
@@ -5054,7 +4728,6 @@ def semantic_shell() -> int:
             if status not in {0, 2}:
                 print(f"MD-OS request exited with status {status}.", file=sys.stderr)
     finally:
-        close_notes_workspace(session, announce=False)
         if session.app_server is not None:
             session.app_server.close()
 

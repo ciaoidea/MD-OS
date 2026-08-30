@@ -219,19 +219,6 @@ not replace the loop with a generated Bash command.
 
 See [SEMANTIC_SHELL.md](SEMANTIC_SHELL.md) for the exact runtime boundary.
 
-## Unified local web workspace
-
-Start an ordinary Cortex session with `./cortex`, then enter `/notes`. The
-command starts the WYSIWYG notes canvas, or automatically restarts an existing
-notes server and waits for current code to become ready, then returns to the
-same Cortex prompt. The browser is the shared visual document surface; the
-Cortex REPL remains the conversational and command surface. Human canvas edits
-and bounded document-tool edits share the same revisioned host-local document.
-
-This path does not require an external MCP host. Use `/notes status` for
-readback and `/notes stop` to stop the process owned by the current session.
-See [WEB_WORKSPACE.md](WEB_WORKSPACE.md).
-
 ## MCP-Compatible Hosts
 
 MCP-compatible hosts can operate MD-OS APFC through the stdio adapter:
