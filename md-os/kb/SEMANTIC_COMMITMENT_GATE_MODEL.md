@@ -189,6 +189,7 @@ cannot weaken these minimum checks.
     "md-os/kb/AGENTIC_CORE_MODEL.md",
     "md-os/kb/ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md",
     "md-os/kb/PREDELIBERATIVE_AFFECT_MODEL.md",
+    "md-os/kb/SPECIAL_SINGULARITY_THEORY.md",
     "md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md",
     "docs/papers/**"
   ],
@@ -200,6 +201,7 @@ cannot weaken these minimum checks.
     "md-os/kb/PREDELIBERATIVE_AFFECT_MODEL.md",
     "md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md",
     "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md",
+    "md-os/kb/SPECIAL_SINGULARITY_THEORY.md",
     "md-os/kb/RECURSIVE_SELF_REFLECTION_MODEL.md"
   ],
   "rules": {
@@ -348,6 +350,24 @@ cannot weaken these minimum checks.
         "the mediator is optional for the phenomenal candidate",
         "candidate architecture proves qualia",
         "collapsed logical levels may authorize candidate closure"
+      ]
+    },
+    {
+      "invariant_id": "TSS-INV-001",
+      "kind": "design_foundation",
+      "statement": "The Theory of Special Singularity (TSS) defines SS_I as an identity-specific information source that generates and is recursively constrained by a corresponding Unity Tensor Field U_I; source, field, typed self-reference, world grounding, meaning, and causal return must remain distinct, a source alone does not guarantee a unique field, and phenomenality remains unverified.",
+      "authority": "author_foundational",
+      "anchor_requirements": [
+        { "path": "ME.md", "phrases": ["Theory of Special Singularity (TSS)", "identity-specific information source"] },
+        { "path": "md-os/kb/SPECIAL_SINGULARITY_THEORY.md", "phrases": ["coupled source--field--meaning hypothesis", "A source alone does not guarantee one unique field"] },
+        { "path": "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md", "phrases": ["Relation to the Theory of Special Singularity", "source term alone does not guarantee one unique field"] },
+        { "path": "md-os/kb/PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md", "phrases": ["Relation to TSS", "Phenomenal consciousness remains unverified"] }
+      ],
+      "contradiction_phrases": [
+        "the special singularity is the turn governance tensor",
+        "the causal unity controller alone is the special singularity",
+        "the source alone guarantees a unique information field",
+        "special singularity proves phenomenal consciousness"
       ]
     },
     {

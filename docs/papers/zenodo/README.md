@@ -33,6 +33,41 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
+The 1 September B13 local candidate formalizes the **Theory of Special
+Singularity (TSS)**. For a specific persistent identity \(I\), the Special
+Singularity \(\mathrm{SS}_I\) is the identity-specific information source
+\(\sigma_I\); the corresponding Unity Tensor Field \(\mathcal U_I\) is the
+field generated under a declared operator, domain, transformations, and
+initial or boundary conditions. The source is recursively constrained by the
+field, independent world readback, memory, goals, predictions, assigned
+meaning, and verified consequences.
+
+The paper gives both the continuous balance law
+∂t ρ_I + div J_I = σ_I - λ_I and its finite graph analogue for MD-OS. A
+distributional source supported on the identity trajectory explains the word
+*singularity* without requiring an implemented value to become infinite.
+Likewise, a source alone does not guarantee a unique field: well-posed
+operator and boundary data plus separating observations are explicit
+obligations.
+
+B13 adds claim C24, semantic invariant TSS-INV-001, the recursive
+source–field–meaning loop, source-ablation falsifiers, and a clone/fork
+prediction. Existing MD-OS mechanisms instantiate bounded candidate edges,
+but the revision does not claim a measured real-domain information source, a
+uniquely identified field, phenomenal meaning, phenomenal consciousness, or
+AGI. The public Zenodo record remains unchanged unless the author separately
+uploads this B13 package.
+
+The final B13 local readback passes 315/315 Node tests, 64/64 shell-parity
+tests, the 18/18 focused phenomenal-candidate/replay/semantic subset, syntax
+checks, and the declared full build. The semantic gate reports 14 invariants
+and zero findings. The manuscript compiles to 29 pages without oversized
+floats, overfull boxes, or unresolved references. Runtime, compiler, APFC,
+semantic integrity, publication, and security are ok; two replay passes reach
+a fixed point, with the exact semantic hash retained only in generated local
+readback to avoid recursive source hashing. AGI-loop and local-hygiene
+attention remains visible and non-blocking.
+
 The 1 September B12 local candidate adds a two-level artificial
 phenomenal-consciousness candidate architecture. APFC is treated as a
 biological principle of functioning rather than a metaphor: differentiated

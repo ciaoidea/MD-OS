@@ -42,6 +42,17 @@ test('phenomenal candidate invariant requires two levels, mediator, causal retur
   assert.ok(invariant.contradiction_phrases.includes('candidate architecture proves qualia'));
 });
 
+test('TSS invariant separates the identity source from its field and phenomenal claims', () => {
+  const policy = loadPolicy();
+  const invariant = policy.invariants.find((item) => item.invariant_id === 'TSS-INV-001');
+  assert.ok(invariant);
+  assert.match(invariant.statement, /identity-specific information source/);
+  assert.match(invariant.statement, /source alone does not guarantee a unique field/);
+  assert.match(invariant.statement, /phenomenality remains unverified/);
+  assert.ok(invariant.contradiction_phrases.includes('the special singularity is the turn governance tensor'));
+  assert.ok(invariant.contradiction_phrases.includes('special singularity proves phenomenal consciousness'));
+});
+
 function baseProposal(overrides = {}) {
   const proposal = {
     schema_version: 1,
@@ -275,6 +286,7 @@ function makeCanonicalWorkspace() {
     'md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md',
     'md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md',
     'md-os/kb/UNITY_TENSOR_FIELD_MODEL.md',
+    'md-os/kb/SPECIAL_SINGULARITY_THEORY.md',
     'md-os/kb/RECURSIVE_SELF_REFLECTION_MODEL.md',
     'md-os/kb/PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md',
     'md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md',

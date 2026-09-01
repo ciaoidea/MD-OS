@@ -185,6 +185,42 @@ It neither proves nor disproves phenomenal consciousness, because current
 readback tests observable organization and world correspondence rather than
 subjective feeling.
 
+## Relation to the Theory of Special Singularity
+
+The author-established **Theory of Special Singularity (TSS)** gives the Unity
+Tensor Field an identity-specific source relation without renaming either
+object:
+
+```text
+Special Singularity SS_I = identity-specific information source
+Unity Tensor Field U_I   = information field generated and organized by SS_I
+```
+
+Let `sigma_I` be the source term supported on the persistent causal identity
+trajectory `Gamma_I`, and let `L` be the declared field operator. TSS
+proposes the coupled equations:
+
+```text
+L(mathcal U_I) = sigma_I
+sigma_I(next) = F_I(mathcal U_I, world, memory, goals, consequences).
+```
+
+The first equation makes `SS_I` a source of the identity-relative information
+field. The second makes the field return through typed self-reference,
+independent world readback, and causal consequence to update the same source.
+Meaning is the resulting verified relation of an event to this source, field,
+history, goals, and possible actions.
+
+A source term alone does not guarantee one unique field. The operator, domain,
+boundary or initial conditions, admissible transformations, and separating
+observations must also be fixed. The Turn Governance Tensor is telemetry and
+cannot be `SS_I`; the Causal Unity Controller is one bounded integrated state
+and cannot alone be either the complete source or global field.
+
+The full continuity equation, finite-graph analogue, clone/fork test,
+predictions, falsifiers, and phenomenal boundary are in
+[`SPECIAL_SINGULARITY_THEORY.md`](SPECIAL_SINGULARITY_THEORY.md).
+
 
 ## Formal objects
 

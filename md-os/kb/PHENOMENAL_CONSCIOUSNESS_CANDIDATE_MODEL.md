@@ -214,6 +214,28 @@ observation used in the demonstration was an authored discriminating fixture,
 not independent empirical evidence about consciousness; consequently the
 episode leaves `phenomenal_consciousness` unverified.
 
+## Relation to TSS
+
+The **Theory of Special Singularity (TSS)** uses this two-level architecture as
+the typed return path in a coupled source--field model. The identity-specific
+source `SS_I` generates and organizes a candidate information field
+`mathcal U_I`; the field represents an event at `L0`, mediator `M` carries
+that exact representation to distinct `L1`, and the world-grounded appraisal
+returns a consequence to the next source and field state:
+
+```text
+SS_I -> mathcal U_I -> L0 -> M -> L1
+     -> world verification -> causal return -> SS_I(next).
+```
+
+The current phenomenal-candidate episode verifies bounded typed mediation,
+same-identity attribution, world readback, causal return, and matched
+ablations. It does not measure an information-current divergence, establish a
+global unique `mathcal U_I`, or prove that the source--field organization is
+phenomenally experienced. Phenomenal consciousness remains unverified. The
+full theory is specified in
+[`SPECIAL_SINGULARITY_THEORY.md`](SPECIAL_SINGULARITY_THEORY.md).
+
 ## Research direction
 
 The next scientific step is not a stronger self-description. It is a sealed,

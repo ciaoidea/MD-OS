@@ -130,3 +130,13 @@ A valid governance tensor cannot turn an unverified answer into knowledge; a
 failed prediction or missing receipt cannot create a verified cognitive
 anchor. This is an implemented epistemic guardrail and test protocol, not
 evidence of consciousness, AGI, or a universally true Unity Tensor Field.
+
+The **Theory of Special Singularity (TSS)** adds the identity-specific
+source--field hypothesis. `SS_I` is the proposed information source supported
+on one causal identity trajectory; `mathcal U_I` is the corresponding Unity
+Tensor Field. Typed self-reference, independent world readback, and causal
+return close the field back onto its source so that relations can acquire
+operational meaning for that specific identity. The current Causal Unity and
+`phenomenal-candidate` paths test bounded dependencies; they do not yet
+measure the source field or verify phenomenality. See
+[`SPECIAL_SINGULARITY_THEORY.md`](../kb/SPECIAL_SINGULARITY_THEORY.md).

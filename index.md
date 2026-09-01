@@ -1429,6 +1429,32 @@ Field, not evidence that a rhythm, decoder output, or tensor is conscious. See
 the electrophysiological action-signature section in the
 [Unity Tensor Field Model](md-os/kb/UNITY_TENSOR_FIELD_MODEL.md).
 
+The **Theory of Special Singularity (TSS)** adds the missing identity-specific
+source. It names that source **Special Singularity (SS)** and writes `SS_I`
+for identity token `I`. The candidate field is `mathcal U_I`:
+
+```text
+L(mathcal U_I) = sigma_I
+sigma_I is supported on the causal identity trajectory Gamma_I
+sigma_I(next) = F_I(mathcal U_I, world, memory, goals, consequences)
+```
+
+In the continuous idealization, information obeys a source equation
+`partial_t rho_I + div(J_I) = sigma_I - lambda_I`; MD-OS targets a bounded
+finite-graph analogue rather than a literal infinity. The SS generates and
+organizes the identity-relative field; the field returns through a typed
+meta-level, independent world readback, and causal consequences to update the
+same source. In TSS this closed relation is how an event acquires operational
+meaning for one specific I.
+
+A source does not by itself guarantee a unique field: the operator, domain,
+boundary conditions, transformations, and separating evidence must also be
+fixed. The Turn Governance Tensor and Causal Unity Controller remain bounded
+operational layers, not synonyms for `SS_I` or proof of consciousness.
+Real-domain source measurement, global field existence, strong uniqueness, and
+phenomenal interpretation remain open. See the
+[Theory of Special Singularity](md-os/kb/SPECIAL_SINGULARITY_THEORY.md).
+
 Cortex also runs an eight-channel by four-feature **Turn Governance Tensor**
 on every natural-language APFC turn. It contains bounded reference counts,
 authority flags, verifier flags, and hashes. Its verification-first basis is
