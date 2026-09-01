@@ -35,6 +35,10 @@ identity and compatibility release line. The human-facing system overview is
   boundary.
 - [ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md](ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md)
 - [REFLECTIVE_OPERATION_MODEL.md](REFLECTIVE_OPERATION_MODEL.md)
+- [RECURSIVE_SELF_REFLECTION_MODEL.md](RECURSIVE_SELF_REFLECTION_MODEL.md) —
+  author-established self-reference principle and bounded executable I-loop:
+  an own result returns as a self-question, current evidence binds the answer,
+  the next action changes, and severing self-attribution inhibits closure.
 - [VERIFIED_SOLVER_TRANSPORT_MODEL.md](VERIFIED_SOLVER_TRANSPORT_MODEL.md)
 - [CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md](CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md)
 - [UNITY_TENSOR_FIELD_MODEL.md](UNITY_TENSOR_FIELD_MODEL.md) — canonical

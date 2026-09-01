@@ -265,6 +265,7 @@ function makeCanonicalWorkspace() {
     'md-os/kb/SEMANTIC_COMMITMENT_GATE_MODEL.md',
     'md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md',
     'md-os/kb/UNITY_TENSOR_FIELD_MODEL.md',
+    'md-os/kb/RECURSIVE_SELF_REFLECTION_MODEL.md',
     'md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md',
     'md-os/kb/BIO_MULTIMODAL_CORTICAL_TRANSFORMER.md',
     'md-os/kb/COGNITIVE_BOOTSTRAP.md',

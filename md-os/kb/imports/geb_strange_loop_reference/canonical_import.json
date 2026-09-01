@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "import_id": "geb_strange_loop_reference",
+  "updated_at": "2026-09-01T17:39:27Z",
+  "source_kind": "repository",
+  "source_location": "md-os/ops/sources/geb_strange_loop_reference",
+  "identity_patch_status": "not_applicable",
+  "imported_identity_name": "",
+  "assimilation_plan": {
+    "schema_version": 1,
+    "mode": "structured_import",
+    "enabled": false,
+    "source_must_be_mdos_release_for_identity_application": true,
+    "direct_bootstrap_write": false,
+    "canonical_tree_write": true,
+    "path_preserving_source_write": false,
+    "operational_application_layer": {
+      "included": false,
+      "candidate_count": 0,
+      "source_roots": [
+        "md-os/ops/programs/",
+        "md-os/ops/projects/",
+        "md-os/ops/connectors/",
+        "md-os/ops/policies/",
+        "md-os/ops/calculations/",
+        "md-os/ops/roles/",
+        "md-os/ops/sources/",
+        "md-os/ops/evals/",
+        "md-os/ops/actions/",
+        "md-os/ops/processes/",
+        "md-os/ops/releases/self/proposals/"
+      ],
+      "excluded_roots": [
+        "md-os/ops/agenda/",
+        "md-os/ops/archive/",
+        "md-os/ops/artifacts/",
+        "md-os/ops/compiled/",
+        "md-os/ops/core/",
+        "md-os/ops/imports/",
+        "md-os/ops/local/",
+        "md-os/ops/locks/",
+        "md-os/ops/services/",
+        "md-os/ops/summary/"
+      ],
+      "rule": "Import source-like MD-OS operating application state, not generated readback, host-local cache, locks, services, or artifacts."
+    },
+    "candidate_count": 0,
+    "candidates": [],
+    "applied_by_default": false,
+    "skipped_reason": "standard_import_keeps_primary_bootstrap_unchanged"
+  },
+  "ops_audit_dir": "md-os/ops/imports/knowledge/geb_strange_loop_reference"
+}

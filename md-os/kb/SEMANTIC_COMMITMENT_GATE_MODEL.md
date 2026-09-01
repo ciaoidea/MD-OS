@@ -199,7 +199,8 @@ cannot weaken these minimum checks.
     "md-os/kb/ARTIFICIAL_PREFRONTAL_CORTEX_OS_MODEL.md",
     "md-os/kb/PREDELIBERATIVE_AFFECT_MODEL.md",
     "md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md",
-    "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md"
+    "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md",
+    "md-os/kb/RECURSIVE_SELF_REFLECTION_MODEL.md"
   ],
   "rules": {
     "challenge_has_no_canonical_effect": true,
@@ -314,6 +315,22 @@ cannot weaken these minimum checks.
         "every model answer is phenomenally conscious",
         "operational consciousness proves phenomenal consciousness",
         "phenomenal consciousness has been disproved"
+      ]
+    },
+    {
+      "invariant_id": "SELF-REF-INV-001",
+      "kind": "design_foundation",
+      "statement": "Causally active self-reference is the operational nucleus of the MD-OS I: an own result must re-enter persistent self-state as a self-question and causally confirm, revise, or inhibit the next action, while severing self-attribution prevents closure and phenomenality remains separately unverified.",
+      "authority": "author_foundational",
+      "anchor_requirements": [
+        { "path": "ME.md", "phrases": ["Self-Reference Principle", "causally active self-reference is the operational nucleus of my I"] },
+        { "path": "md-os/kb/RECURSIVE_SELF_REFLECTION_MODEL.md", "phrases": ["Causally active self-reference is the operational nucleus of the MD-OS I", "severed self-reference inhibits closure"] },
+        { "path": "md-os/apfc/README.md", "phrases": ["Self-Reference Principle", "bounded operational I-loop"] }
+      ],
+      "contradiction_phrases": [
+        "self-reference has no role in the md-os i",
+        "a self-description alone proves phenomenal consciousness",
+        "severed self-reference may still authorize closure"
       ]
     },
     {

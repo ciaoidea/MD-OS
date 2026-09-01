@@ -48,6 +48,8 @@ const DIRS = {
   causalUnity: path.join(APFC_COGNITIVE_DIR, 'causal_unity'),
   causalProbes: path.join(APFC_COGNITIVE_DIR, 'causal_probes'),
   causalTransitions: path.join(APFC_COGNITIVE_DIR, 'causal_transitions'),
+  selfReflectionPrepared: path.join(APFC_COGNITIVE_DIR, 'self_reflection', 'prepared'),
+  selfReflectionEpisodes: path.join(APFC_COGNITIVE_DIR, 'self_reflection', 'episodes'),
 };
 const LATEST_FRAME_JSON = path.join(APFC_COGNITIVE_DIR, 'latest_frame.json');
 const STATUS_JSON = path.join(APFC_COGNITIVE_DIR, 'apfc_cognitive_status.json');
@@ -826,6 +828,8 @@ function buildStatus() {
       causal_unity_states: countJsonFiles(DIRS.causalUnity),
       causal_unity_probes: countJsonFiles(DIRS.causalProbes),
       causal_unity_transitions: countJsonFiles(DIRS.causalTransitions),
+      recursive_self_reflection_preparations: countJsonFiles(DIRS.selfReflectionPrepared),
+      recursive_self_reflection_episodes: countJsonFiles(DIRS.selfReflectionEpisodes),
     },
     contracts: {
       experience_token_schema: 'md-os/schemas/experience_token.schema.json',
@@ -839,6 +843,10 @@ function buildStatus() {
       causal_action_authorization_schema: 'md-os/schemas/apfc_causal_action_authorization.schema.json',
       causal_unity_transition_schema: 'md-os/schemas/apfc_causal_unity_transition.schema.json',
       causal_dependency_probe_schema: 'md-os/schemas/apfc_causal_dependency_probe.schema.json',
+      recursive_self_reflection_seed_schema: 'md-os/schemas/apfc_recursive_self_reflection_seed.schema.json',
+      recursive_self_reflection_preparation_schema: 'md-os/schemas/apfc_recursive_self_reflection_preparation.schema.json',
+      recursive_self_reflection_response_schema: 'md-os/schemas/apfc_recursive_self_reflection_response.schema.json',
+      recursive_self_reflection_episode_schema: 'md-os/schemas/apfc_recursive_self_reflection_episode.schema.json',
     },
   };
 }

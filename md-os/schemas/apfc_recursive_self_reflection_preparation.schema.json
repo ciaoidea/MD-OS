@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_recursive_self_reflection_preparation.schema.json",
+  "title": "MD-OS APFC Recursive Self-Reflection Preparation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_role", "loop_id", "reflection_id", "created_at", "status", "cycle_index", "max_cycles", "identity", "self_state", "prior_result", "candidate_next_action", "input_manifest", "self_reference", "self_question", "question_hash", "evidence_requirements", "prediction_contract", "non_claims", "preparation_hash"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_role": {"const": "recursive_self_reflection_preparation"},
+    "loop_id": {"type": "string", "pattern": "^selfloop_[a-f0-9]{20}$"},
+    "reflection_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": ["string", "null"]},
+    "status": {"const": "awaiting_self_response"},
+    "cycle_index": {"const": 1},
+    "max_cycles": {"const": 1},
+    "identity": {"type": "object"},
+    "self_state": {"type": "object"},
+    "prior_result": {"type": "object"},
+    "candidate_next_action": {"type": "object"},
+    "input_manifest": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/file_binding"}},
+    "self_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject_identity_id", "object_result_id", "relation", "identity_continuity_hash", "self_state_hash", "prior_result_hash", "candidate_action_hash"],
+      "properties": {
+        "subject_identity_id": {"type": "string", "minLength": 1},
+        "object_result_id": {"type": "string", "minLength": 1},
+        "relation": {"const": "same_system_result_reentered_as_self_input"},
+        "identity_continuity_hash": {"$ref": "#/$defs/hash"},
+        "self_state_hash": {"$ref": "#/$defs/hash"},
+        "prior_result_hash": {"$ref": "#/$defs/hash"},
+        "candidate_action_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "self_question": {"type": "string", "minLength": 1},
+    "question_hash": {"$ref": "#/$defs/hash"},
+    "evidence_requirements": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "prediction_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_effect", "intact_self_reference_must_authorize_closure", "severed_self_reference_must_inhibit_closure", "evidence_hashes_must_be_current"],
+      "properties": {
+        "expected_effect": {"const": "confirm_revise_or_inhibit_next_action"},
+        "intact_self_reference_must_authorize_closure": {"const": true},
+        "severed_self_reference_must_inhibit_closure": {"const": true},
+        "evidence_hashes_must_be_current": {"const": true}
+      }
+    },
+    "non_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "preparation_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "file_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "relative_file", "sha256"],
+      "properties": {
+        "role": {"type": "string", "minLength": 1},
+        "relative_file": {"type": "string", "pattern": "^md-os/"},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}

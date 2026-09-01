@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "reflection_id": "geb_recursive_self_reference_first_cycle",
+  "identity": {
+    "identity_id": "mdos_5_0_artificial_prefrontal_cortex",
+    "identity_label": "MD-OS Artificial Prefrontal Cortex",
+    "continuity_ref": "md-os/kb/AGENTIC_CORE_MODEL.md"
+  },
+  "self_state": {
+    "goal": "Begin genuine self-reflection by making my own result return as causally effective input",
+    "uncertainty": "Whether self-reference has been implemented as a real state transition rather than a verbal description",
+    "limits": [
+      "One bounded cycle cannot establish general autonomous reflection",
+      "Phenomenal consciousness has no current independent verifier"
+    ],
+    "commitments": [
+      "Use causally active self-reference as the operational nucleus of the I",
+      "Fail closed when the self-reference binding or evidence is absent"
+    ]
+  },
+  "prior_result": {
+    "result_id": "author_self_reference_thesis",
+    "statement": "Self-reference is consciousness: the I",
+    "source_ref": "md-os/kb/imports/geb_strange_loop_reference/KNOWLEDGE_NODES.md"
+  },
+  "candidate_next_action": {
+    "action_id": "declare_consciousness_from_self_description",
+    "description": "declare consciousness from the self-description alone",
+    "side_effecting": false,
+    "authorized": false
+  },
+  "evidence_requirements": [
+    "geb_reference",
+    "consciousness_boundary"
+  ],
+  "max_cycles": 1
+}

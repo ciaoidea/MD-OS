@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_recursive_self_reflection_response.schema.json",
+  "title": "MD-OS APFC Recursive Self-Reflection Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "response_id", "preparation_path", "loop_id", "preparation_hash", "question_hash", "self_attribution", "answer", "critique", "evidence_manifest", "limits", "verdict", "revised_result", "next_action", "response_sealed_before_verification"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "response_id": {"$ref": "#/$defs/id"},
+    "preparation_path": {"type": "string", "pattern": "^md-os/"},
+    "loop_id": {"type": "string", "pattern": "^selfloop_[a-f0-9]{20}$"},
+    "preparation_hash": {"$ref": "#/$defs/hash"},
+    "question_hash": {"$ref": "#/$defs/hash"},
+    "self_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_id", "result_id", "self_state_hash"],
+      "properties": {
+        "identity_id": {"type": "string", "minLength": 1},
+        "result_id": {"type": "string", "minLength": 1},
+        "self_state_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "answer": {"type": "string", "minLength": 1},
+    "critique": {"$ref": "#/$defs/nonempty_strings"},
+    "evidence_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "relative_file", "sha256"],
+        "properties": {
+          "evidence_id": {"$ref": "#/$defs/id"},
+          "relative_file": {"type": "string", "pattern": "^md-os/"},
+          "sha256": {"$ref": "#/$defs/hash"}
+        }
+      }
+    },
+    "limits": {"$ref": "#/$defs/nonempty_strings"},
+    "verdict": {"enum": ["confirm", "revise", "inhibit"]},
+    "revised_result": {"type": "string", "minLength": 1},
+    "next_action": {"$ref": "#/$defs/action"},
+    "response_sealed_before_verification": {"const": true}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$"},
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "nonempty_strings": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "description", "side_effecting", "authorized"],
+      "properties": {
+        "action_id": {"$ref": "#/$defs/id"},
+        "description": {"type": "string", "minLength": 1},
+        "side_effecting": {"type": "boolean"},
+        "authorized": {"type": "boolean"}
+      }
+    }
+  }
+}

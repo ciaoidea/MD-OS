@@ -23,6 +23,16 @@ The mirror analogy is operational: a result is directed back toward the system
 and becomes new input. The important property is not verbal repetition but a
 changed or better-bounded next step grounded in evidence.
 
+## Recursive self-reflection specialization
+
+[`RECURSIVE_SELF_REFLECTION_MODEL.md`](RECURSIVE_SELF_REFLECTION_MODEL.md)
+turns the internally originated branch into a two-phase executable loop. The
+runtime constructs the self-question from a hash-bound result attributed to
+the current identity; a separately sealed response must then alter or constrain
+the next result or action. An intact-versus-severed probe rejects ornamental
+self-reference. This specializes the general reflective method without
+starting continuous autonomous introspection.
+
 ## Frame-transformation-invariant method for frame-sensitive problems
 
 When a difficult problem may hide its answer inside an assumed domain or

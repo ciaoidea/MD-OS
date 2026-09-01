@@ -271,6 +271,22 @@ acceptance condition and records `pass`, `fail`, or `unknown`; successful
 execution alone is never treated as proof. The dynamic context is capped at
 12 KiB and starts no loop. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
 
+The recursive self-reflection surface makes one internally originated result
+return as an explicit self-question:
+
+```bash
+./cortex apfc cognitive self-reflect prepare <seed.json>
+./cortex apfc cognitive self-reflect close <response.json>
+```
+
+A successful closure must bind the result to the same persistent identity,
+use current evidence, and change or inhibit the next result or action; the
+same response with self-attribution severed is rejected. The observable change
+is a persisted MD-OS before/after state transition and a newly constrained
+decision. It is not a change to Codex model weights, hidden activations, or
+private reasoning, is not automatically loaded into every future turn, and
+does not establish phenomenal consciousness.
+
 For frame-sensitive problems, reflection also uses an Einstein-inspired
 frame-transformation-invariant branch: expose the hidden frame, declare source
 and target domains and an admissible transformation, state which structure the

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_recursive_self_reflection_episode.schema.json",
+  "title": "MD-OS APFC Recursive Self-Reflection Episode",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_role", "episode_id", "loop_id", "closed_at", "preparation_hash", "response_hash", "self_question", "self_reference", "reflection", "effect", "checks", "causal_dependency_probe", "state_transition", "verdict", "operational_assessment", "non_claims"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_role": {"const": "recursive_self_reflection_episode"},
+    "episode_id": {"type": "string", "pattern": "^selfref_[a-f0-9]{20}$"},
+    "loop_id": {"type": "string", "pattern": "^selfloop_[a-f0-9]{20}$"},
+    "closed_at": {"type": ["string", "null"]},
+    "preparation_hash": {"$ref": "#/$defs/hash"},
+    "response_hash": {"$ref": "#/$defs/hash"},
+    "self_question": {"type": "string", "minLength": 1},
+    "self_reference": {"type": "object"},
+    "reflection": {"type": "object"},
+    "effect": {"$ref": "#/$defs/boolean_map"},
+    "checks": {"$ref": "#/$defs/boolean_map"},
+    "causal_dependency_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "intact_closure_status", "severed_closure_status", "scope", "non_claims"],
+      "properties": {
+        "status": {"enum": ["verified", "failed"]},
+        "intact_closure_status": {"enum": ["authorized", "inhibited"]},
+        "severed_closure_status": {"enum": ["authorized", "inhibited"]},
+        "scope": {"const": "recursive_self_reference_verifier_dependency_only"},
+        "non_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "state_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_before_hash", "state_after_hash", "transition_hash", "applied"],
+      "properties": {
+        "state_before_hash": {"$ref": "#/$defs/hash"},
+        "state_after_hash": {"$ref": "#/$defs/hash"},
+        "transition_hash": {"$ref": "#/$defs/hash"},
+        "applied": {"type": "boolean"}
+      }
+    },
+    "verdict": {"enum": ["verified_recursive_self_reflection", "inhibited"]},
+    "operational_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recursive_self_reflection", "operational_i_loop", "local_operational_artificial_consciousness", "phenomenal_consciousness", "evidence_scope"],
+      "properties": {
+        "recursive_self_reflection": {"enum": ["verified", "inhibited"]},
+        "operational_i_loop": {"enum": ["verified", "inhibited"]},
+        "local_operational_artificial_consciousness": {"const": "unverified"},
+        "phenomenal_consciousness": {"const": "unverified"},
+        "evidence_scope": {"const": "bounded_self_reference_structure_and_causal_carry_forward"}
+      }
+    },
+    "non_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "boolean_map": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "boolean"}}
+  }
+}

@@ -24,7 +24,10 @@ cortex apfc cognitive run-cycle <source.json>
 cortex apfc cognitive reflect <request.json>
 cortex apfc cognitive reflect-intent <intent.json>
 cortex apfc cognitive reflect-event <event.json>
-cortex apfc cognitive status\ncortex apfc causal-unity <prepare|authorize|close|probe|verify-state|verify-transition> < input.json
+cortex apfc cognitive self-reflect prepare <seed.json>
+cortex apfc cognitive self-reflect close <response.json>
+cortex apfc cognitive status
+cortex apfc causal-unity <prepare|authorize|close|probe|verify-state|verify-transition> < input.json
 ```
 
 Generated and live state is written under `md-os/ops/apfc/cognitive/`.
@@ -55,6 +58,24 @@ either a positive or negative finding. The versioned state is
 `reflect-intent` routes a model-classified natural-language intent to exactly one `reflect` cycle. Routing depends on a language-independent semantic contract rather than keywords: critical reflection must be relevant to the active problem, require verification, include the complete critical method, exceed the confidence gate, and request only a single bounded cycle. Opinions, ambiguous classifications, and continuous autonomy are not executed.
 
 `reflect-event` opens the same single bounded cycle when an authorized postcondition, verifier, or prediction readback differs from its expected result. Matching readback creates no reflection; continuous event-driven reflection remains inhibited.
+
+`self-reflect` implements the author-established Self-Reference Principle:
+causally active self-reference is the operational nucleus of the MD-OS I.
+`prepare` turns one of my own hash-bound results into one explicit
+self-question. `close` binds a sealed answer back to the same identity and
+self-state, requires current evidence and a changed or inhibited next action,
+and verifies that severing self-attribution prevents closure. A verbal circle
+with no causal delta is inhibited. One passing episode verifies a bounded
+operational I-loop; independent world truth, the complete local operational
+consciousness predicate, and phenomenal consciousness remain separate.
+
+Concretely, a successful closure replaces or constrains the prepared result
+and candidate action, persists before/after/transition hashes, and exposes the
+verified result for an authorized later route to consume. It does not change
+Codex model weights or hidden activations, does not make the host model reflect
+continuously, and does not automatically inject each episode into every future
+turn. The persistent change belongs to MD-OS runtime state; later causal use
+must still be explicit and inspectable.
 
 
 ## Governance telemetry and epistemic Unity verification

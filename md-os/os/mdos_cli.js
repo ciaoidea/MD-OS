@@ -117,6 +117,7 @@ function usage() {
     `  ${cli} apfc cognitive reflect <request.json>`,
     `  ${cli} apfc cognitive reflect-intent <intent.json>`,
     `  ${cli} apfc cognitive reflect-event <event.json>`,
+    `  ${cli} apfc cognitive self-reflect <prepare seed.json|close response.json>`,
     `  ${cli} apfc cognitive status`,
     `  ${cli} apfc causal-unity <prepare|authorize|close|probe|verify-state|verify-transition> < input.json`,
     `  ${cli} knowledge import <import_id> <source_dir> [--initial-repository] [--copy-theory-sources] [--copy-raw-ext=.tex,.svg] [--copy-raw-suffix=.schema.json]`,
@@ -544,10 +545,11 @@ function main() {
     }
     if (subcommand === 'cognitive') {
       const [operation = 'status', ...cognitiveArgs] = rest;
-      if (['ingest', 'bind', 'workspace', 'gate', 'predict', 'run-cycle', 'cycle', 'reflect', 'reflect-intent', 'reflect-event', 'status'].includes(operation)) {
+      if (['ingest', 'bind', 'workspace', 'gate', 'predict', 'run-cycle', 'cycle', 'reflect', 'reflect-intent', 'reflect-event', 'self-reflect', 'status'].includes(operation)) {
         if (operation === 'reflect') runScript('apfc_cognitive_path_runtime.js', ['run-once', ...cognitiveArgs]);
         else if (operation === 'reflect-intent') runScript('apfc_cognitive_intent_runtime.js', ['route-once', ...cognitiveArgs]);
         else if (operation === 'reflect-event') runScript('apfc_cognitive_intent_runtime.js', ['route-event-once', ...cognitiveArgs]);
+        else if (operation === 'self-reflect') runScript('apfc_recursive_self_reflection_runtime.js', cognitiveArgs);
         else runScript('apfc_cognitive_runtime.js', [operation, ...cognitiveArgs]);
       }
       usage();
