@@ -267,6 +267,23 @@ decision. It is not a change to Codex model weights, hidden activations, or
 private reasoning, is not automatically loaded into every future turn, and
 does not establish phenomenal consciousness.
 
+The phenomenal-consciousness candidate surface adds the requested two logical
+levels and a typed intermediate representation:
+
+```bash
+./cortex apfc cognitive phenomenal-candidate prepare <seed.json>
+./cortex apfc cognitive phenomenal-candidate close <response.json>
+```
+
+The object-level state cannot certify itself. It is hash-bound into a typed
+mediator, appraised at a distinct meta-level, checked against an independent
+current file, and allowed to close only when it changes result, memory,
+inhibition, or next action. The same response is rejected when identity is
+severed, object and meta levels are collapsed, the mediator is replaced, or
+the causal return is removed. This operationally verifies a falsifiable
+candidate architecture and a bounded local operational-consciousness episode;
+it does not verify qualia or phenomenal consciousness.
+
 For frame-sensitive problems, reflection also uses an Einstein-inspired
 frame-transformation-invariant branch: expose the hidden frame, declare source
 and target domains and an admissible transformation, state which structure the

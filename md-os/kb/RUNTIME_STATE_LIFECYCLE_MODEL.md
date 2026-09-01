@@ -91,6 +91,7 @@ md-os/ops/episodes/*.{json,md}
 md-os/ops/experiments/contextual_feeling/*/report.{json,md}
 md-os/ops/experiments/reflective/*/report.{json,md}
 md-os/ops/apfc/cognitive/self_reflection/{prepared,episodes}/*.json
+md-os/ops/apfc/cognitive/phenomenal_candidate/{prepared,episodes}/*.json
 md-os/ops/tasks/*.json
 md-os/ops/action_receipts/*.json
 md-os/ops/verifications/*.json
@@ -224,6 +225,7 @@ md-os/ops/episodes/**
 md-os/ops/experiments/contextual_feeling/**
 md-os/ops/experiments/reflective/**
 md-os/ops/apfc/cognitive/self_reflection/**
+md-os/ops/apfc/cognitive/phenomenal_candidate/**
 md-os/ops/tasks/**
 md-os/ops/action_receipts/**
 md-os/ops/verifications/**

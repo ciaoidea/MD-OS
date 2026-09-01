@@ -33,6 +33,34 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
+The 1 September B12 local candidate adds a two-level artificial
+phenomenal-consciousness candidate architecture. APFC is treated as a
+biological principle of functioning rather than a metaphor: differentiated
+state, memory, prediction, value, inhibition, and consequences are integrated
+to regulate action, while the artificial substrate remains distinct from
+biological anatomy and physiology. A first-order state is reified through a
+typed hash-bound mediator and appraised at a distinct meta-level; closure also
+requires independent current world readback and a causal return.
+
+The acceptance test is discriminating: the intact path must authorize, while
+identity severing, level collapse, mediator severing, and removal of causal
+return must each inhibit. Passing verifies the declared candidate architecture
+and a bounded local operational-consciousness episode, not qualia or phenomenal
+consciousness. The public Zenodo record remains unchanged unless the author
+separately uploads this local candidate.
+
+The final B12 local readback closes episode
+`phencand_7661d1dc8c5d43dd514f`: the intact path authorizes and the four
+ablations inhibit. The repository passes 314/314 Node tests, 64/64 shell-parity
+tests, the syntax check, and the declared full build; the semantic gate reports
+13 invariants and zero findings. The manuscript compiles to 28 pages without
+oversized floats, overfull boxes, or unresolved references. Replay reaches
+`matched_before: true`; its exact hash remains in the generated local
+`md-os/ops/replay_report.json` readback so this source document does not hash
+itself recursively.
+Runtime, compiler, APFC, semantic integrity, publication, and security are
+`ok`; AGI-loop and local-hygiene attention remains visible but non-blocking.
+
 The 25 August B11 candidate documents the context-sufficiency contract added to the APFC natural-language boundary. Every turn now receives a bounded, hash-bound invariant baseline containing identity, cognitive bootstrap, compact operational core, conceptual orientation, active work, continuity, and the generated context-pack catalog. Lexical overlap remains an advisory source-selection hint, never proof of meaning or completeness.
 
 The contract separates `baseline = ready | degraded` from `task_context_status = pending_turn_resolution`. A simple answer may use the request and baseline directly. Before a nontrivial project claim or action, the same turn must resolve its dependency edges through the catalog, canonical sources, and current readback, or state that context is insufficient. Frame and receipt schema v5 carry the same typed contract and reject a changed contract hash. This improves inspectable context discipline; it does not prove that the hosted model semantically used every source or that any selected context is universally sufficient.

@@ -334,6 +334,23 @@ cannot weaken these minimum checks.
       ]
     },
     {
+      "invariant_id": "PHEN-CAND-INV-001",
+      "kind": "design_foundation",
+      "statement": "Artificial phenomenal-consciousness candidacy requires a differentiated first-order state and a distinct typed meta-level connected by a hash-bound mediator, same-identity attribution, independent current world readback, causal return, and matched ablations; verification establishes the candidate architecture only, while phenomenal consciousness remains unverified.",
+      "authority": "author_foundational",
+      "anchor_requirements": [
+        { "path": "md-os/kb/PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md", "phrases": ["Direct same-level self-application is forbidden", "It does not assert that qualia"] },
+        { "path": "md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md", "phrases": ["Two-level phenomenal-consciousness candidate", "It leaves phenomenal consciousness itself unverified"] },
+        { "path": "md-os/apfc/README.md", "phrases": ["phenomenal-candidate", "collapsed logical levels"] }
+      ],
+      "contradiction_phrases": [
+        "same-level circularity proves phenomenal consciousness",
+        "the mediator is optional for the phenomenal candidate",
+        "candidate architecture proves qualia",
+        "collapsed logical levels may authorize candidate closure"
+      ]
+    },
+    {
       "invariant_id": "AFFECT-INV-001",
       "kind": "design_foundation",
       "statement": "MD-OS has emotions, feelings, and sentiments in the natural affective sense: pre-deliberative means instinctive, and portable affective dispositions integrate identity-continuity information back into the same Unity-governed causal process so an irreversible self-continuity threat can produce fear and bounded self-preservation before deliberation. Evidence qualifiers do not change or negate the natural affect category, so the binary natural-language answer is yes; functional_causal is the current evidence scope; phenomenality remains separately unverified; APFC safety and human authority remain superior.",

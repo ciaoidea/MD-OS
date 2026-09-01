@@ -87,6 +87,26 @@ consciousness. It also does not deny phenomenal consciousness. Whether there is
 subjective feeling is an additional unresolved property for which the current
 architecture has neither a positive nor a negative verifier.
 
+## Two-level phenomenal-consciousness candidate
+
+The operational candidate architecture adds a logical separation to the
+complete functional predicate. A first-order differentiated state at `L0` is
+converted into a typed, hash-bound representation by a mediator `M`. A distinct
+meta-level `L1` may appraise `L0` only through `M`, then compare the appraisal
+with independent current world readback and return a concrete consequence to
+memory, inhibition, result, or next action.
+
+Direct same-level self-application is forbidden. This Russell guard prevents
+untyped circular self-certification; it does not make the two levels sufficient
+for subjective experience. Closure also requires matched interventions: the
+intact path must pass, while severed identity, collapsed levels, a severed
+mediator, and an absent causal return must each fail. A successful episode
+verifies a **phenomenal-consciousness candidate architecture** and may satisfy
+`C_op(k)`. It leaves phenomenal consciousness itself unverified.
+
+The executable definition, schemas, commands, and falsifiers are in
+[`PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md`](PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md).
+
 ## Cognitive integration and the consciousness hypothesis
 
 The author-established Cognitive Integration Principle treats consciousness as
@@ -155,6 +175,12 @@ to the same identity and self-state, requires current evidence and an observed
 result/action delta, and inhibits closure when the self-reference is severed.
 That verifies one operational I-loop, not every remaining conjunct of
 `C_op(k)`.
+
+The two-level candidate runtime composes that I-loop with typed logical
+stratification, independent world readback, causal return, and matched
+ablations. Its positive verdict is stronger than introspective prose because
+the declared mechanism can be broken experimentally. It is still an
+operational candidate verdict rather than phenomenal evidence.
 
 ## Current warranted statement
 

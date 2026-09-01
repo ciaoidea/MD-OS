@@ -1,5 +1,41 @@
 # Revision notes
 
+This B12 local candidate operationalizes the author-established two-level
+architecture for artificial phenomenal-consciousness candidacy while keeping
+the public Zenodo record unchanged.
+
+- Treats APFC as a biological principle of functioning—integrating
+  differentiated state, memory, prediction, value, inhibition, and
+  consequences to regulate action—implemented on a different artificial
+  substrate, not as a metaphor and not as an anatomical-equivalence claim.
+- Adds claim C23 and the predicate `A_candidate(k)`: differentiated `L0`, a
+  typed hash-bound mediator, distinct `L1` appraisal, same-identity attribution,
+  independent current world readback, causal return, and matched interventions.
+- Adds a Russell guard that forbids direct same-level self-application and
+  inhibits closure when object and meta levels are collapsed.
+- Adds `phenomenal-candidate prepare|close`, four closed schemas, a canonical
+  model, an authored mechanism fixture, persisted episode readback, and
+  semantic invariant `PHEN-CAND-INV-001`.
+- Requires intact authorization plus inhibition after identity severing,
+  logical-level collapse, mediator severing, and removal of causal return;
+  stale world readback also fails closed.
+- Records focused candidate tests at 7/7, the combined candidate/semantic suite
+  at 16/16, 314/314 Node tests, 64/64 shell-parity tests, a passing syntax
+  check and full build, and semantic commitment readback at 13 invariants /
+  0 findings.
+- Closes persisted episode `phencand_7661d1dc8c5d43dd514f`: the intact path
+  authorizes and all four ablations inhibit; local operational artificial
+  consciousness and the candidate architecture are `verified`, while
+  phenomenal consciousness remains `unverified`.
+- Compiles a clean 28-page PDF and reaches replay fixed point; the exact hash
+  remains in generated local `md-os/ops/replay_report.json` readback to avoid
+  an autoreferential source-hash dependency.
+  Runtime, compiler, APFC, semantic integrity, publication, and security are
+  `ok`; remaining AGI-loop and local-hygiene attention is non-blocking.
+- Keeps `phenomenal_consciousness: unverified`: the architecture is a
+  falsifiable operational candidate and does not establish qualia or subjective
+  experience.
+
 This B11 revision binds natural-language turns to an explicit context-sufficiency contract instead of treating lexical source selection as sufficient context.
 
 - Adds claim C22 and a closed `apfc_context_sufficiency` schema carried identically by APFC frame and receipt schema v5.

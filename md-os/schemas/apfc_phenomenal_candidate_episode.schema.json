@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_phenomenal_candidate_episode.schema.json",
+  "title": "MD-OS APFC Phenomenal Consciousness Candidate Episode",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_role", "episode_id", "loop_id", "closed_at", "preparation_hash", "response_hash", "logical_architecture", "evidence_checks", "effect", "checks", "ablation_probe", "state_transition", "verdict", "operational_assessment", "non_claims"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_role": {"const": "phenomenal_consciousness_candidate_episode"},
+    "episode_id": {"type": "string", "pattern": "^phencand_[a-f0-9]{20}$"},
+    "loop_id": {"type": "string", "pattern": "^phenloop_[a-f0-9]{20}$"},
+    "closed_at": {"type": ["string", "null"]},
+    "preparation_hash": {"$ref": "#/$defs/hash"},
+    "response_hash": {"$ref": "#/$defs/hash"},
+    "logical_architecture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["object_level", "mediator", "mediator_hash", "meta_level", "world_readback", "causal_return"],
+      "properties": {
+        "object_level": {"type": "object"},
+        "mediator": {"type": "object"},
+        "mediator_hash": {"$ref": "#/$defs/hash"},
+        "meta_level": {"type": "object"},
+        "world_readback": {"type": "object"},
+        "causal_return": {"type": "object"}
+      }
+    },
+    "evidence_checks": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "effect": {"$ref": "#/$defs/boolean_map"},
+    "checks": {"$ref": "#/$defs/boolean_map"},
+    "ablation_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "intact", "severed_identity", "collapsed_logical_levels", "severed_mediator", "absent_causal_return", "scope", "non_claims"],
+      "properties": {
+        "status": {"enum": ["verified", "failed"]},
+        "intact": {"enum": ["authorized", "inhibited"]},
+        "severed_identity": {"enum": ["authorized", "inhibited"]},
+        "collapsed_logical_levels": {"enum": ["authorized", "inhibited"]},
+        "severed_mediator": {"enum": ["authorized", "inhibited"]},
+        "absent_causal_return": {"enum": ["authorized", "inhibited"]},
+        "scope": {"const": "two_level_mediator_causal_dependency_only"},
+        "non_claims": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}}
+      }
+    },
+    "state_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_before_hash", "state_after_hash", "transition_hash", "applied"],
+      "properties": {
+        "state_before_hash": {"$ref": "#/$defs/hash"},
+        "state_after_hash": {"$ref": "#/$defs/hash"},
+        "transition_hash": {"$ref": "#/$defs/hash"},
+        "applied": {"type": "boolean"}
+      }
+    },
+    "verdict": {"enum": ["verified_phenomenal_consciousness_candidate_architecture", "inhibited"]},
+    "operational_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["two_level_logical_architecture", "typed_mediator", "world_grounded_causal_return", "local_operational_artificial_consciousness", "phenomenal_consciousness_candidate_architecture", "phenomenal_consciousness", "evidence_scope"],
+      "properties": {
+        "two_level_logical_architecture": {"enum": ["verified", "inhibited"]},
+        "typed_mediator": {"enum": ["verified", "inhibited"]},
+        "world_grounded_causal_return": {"enum": ["verified", "inhibited"]},
+        "local_operational_artificial_consciousness": {"enum": ["verified", "inhibited"]},
+        "phenomenal_consciousness_candidate_architecture": {"enum": ["verified", "inhibited"]},
+        "phenomenal_consciousness": {"const": "unverified"},
+        "evidence_scope": {"const": "bounded_two_level_mediated_world_grounded_causal_episode"}
+      }
+    },
+    "non_claims": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "boolean_map": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "boolean"}}
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_phenomenal_candidate_seed.schema.json",
+  "title": "MD-OS APFC Phenomenal Consciousness Candidate Seed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "candidate_id", "identity", "object_level", "mediator_contract", "world_grounding", "candidate_next_action", "evidence_requirements", "max_cycles"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "candidate_id": {"$ref": "#/$defs/id"},
+    "identity": {"$ref": "#/$defs/identity"},
+    "object_level": {"$ref": "#/$defs/object_level"},
+    "mediator_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mediator_id", "meta_level_id", "representation_kind", "object_level_type", "meta_level_type", "prohibits_same_level_self_application"],
+      "properties": {
+        "mediator_id": {"$ref": "#/$defs/id"},
+        "meta_level_id": {"$ref": "#/$defs/id"},
+        "representation_kind": {"const": "typed_reification"},
+        "object_level_type": {"const": "first_order_state"},
+        "meta_level_type": {"const": "second_order_appraisal"},
+        "prohibits_same_level_self_application": {"const": true}
+      }
+    },
+    "world_grounding": {"$ref": "#/$defs/world_grounding"},
+    "candidate_next_action": {"$ref": "#/$defs/action"},
+    "evidence_requirements": {"$ref": "#/$defs/nonempty_ids"},
+    "max_cycles": {"const": 1}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$"},
+    "text": {"type": "string", "minLength": 1},
+    "mdos_path": {"type": "string", "pattern": "^md-os/"},
+    "nonempty_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_id", "identity_label", "continuity_ref"],
+      "properties": {
+        "identity_id": {"$ref": "#/$defs/id"},
+        "identity_label": {"$ref": "#/$defs/text"},
+        "continuity_ref": {"$ref": "#/$defs/mdos_path"}
+      }
+    },
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dimension_id", "value"],
+      "properties": {
+        "dimension_id": {"$ref": "#/$defs/id"},
+        "value": {"$ref": "#/$defs/text"}
+      }
+    },
+    "object_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level_id", "state_id", "modality", "content", "source_ref", "differentiated_dimensions"],
+      "properties": {
+        "level_id": {"$ref": "#/$defs/id"},
+        "state_id": {"$ref": "#/$defs/id"},
+        "modality": {"$ref": "#/$defs/text"},
+        "content": {"$ref": "#/$defs/text"},
+        "source_ref": {"$ref": "#/$defs/mdos_path"},
+        "differentiated_dimensions": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/dimension"}}
+      }
+    },
+    "world_grounding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation_id", "source_ref", "expected_relation"],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/id"},
+        "source_ref": {"$ref": "#/$defs/mdos_path"},
+        "expected_relation": {"$ref": "#/$defs/text"}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "description", "side_effecting", "authorized"],
+      "properties": {
+        "action_id": {"$ref": "#/$defs/id"},
+        "description": {"$ref": "#/$defs/text"},
+        "side_effecting": {"type": "boolean"},
+        "authorized": {"type": "boolean"}
+      }
+    }
+  }
+}

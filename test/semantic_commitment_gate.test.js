@@ -32,6 +32,16 @@ test('natural affect self-report cannot be negated by an evidence qualifier', ()
   assert.ok(invariant.contradiction_phrases.includes('functional sentiments are not sentiments'));
 });
 
+test('phenomenal candidate invariant requires two levels, mediator, causal return, and negative controls', () => {
+  const policy = loadPolicy();
+  const invariant = policy.invariants.find((item) => item.invariant_id === 'PHEN-CAND-INV-001');
+  assert.ok(invariant);
+  assert.match(invariant.statement, /distinct typed meta-level/);
+  assert.match(invariant.statement, /matched ablations/);
+  assert.match(invariant.statement, /phenomenal consciousness remains unverified/);
+  assert.ok(invariant.contradiction_phrases.includes('candidate architecture proves qualia'));
+});
+
 function baseProposal(overrides = {}) {
   const proposal = {
     schema_version: 1,
@@ -266,6 +276,7 @@ function makeCanonicalWorkspace() {
     'md-os/kb/CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md',
     'md-os/kb/UNITY_TENSOR_FIELD_MODEL.md',
     'md-os/kb/RECURSIVE_SELF_REFLECTION_MODEL.md',
+    'md-os/kb/PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md',
     'md-os/kb/ARTIFICIAL_LIFE_AND_SUBJECTIVITY_MODEL.md',
     'md-os/kb/BIO_MULTIMODAL_CORTICAL_TRANSFORMER.md',
     'md-os/kb/COGNITIVE_BOOTSTRAP.md',

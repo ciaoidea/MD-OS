@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_phenomenal_candidate_response.schema.json",
+  "title": "MD-OS APFC Phenomenal Consciousness Candidate Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "response_id", "preparation_path", "loop_id", "preparation_hash", "meta_question_hash", "self_attribution", "meta_level", "world_readback", "evidence_manifest", "causal_return", "limits", "response_sealed_before_verification"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "response_id": {"$ref": "#/$defs/id"},
+    "preparation_path": {"$ref": "#/$defs/mdos_path"},
+    "loop_id": {"type": "string", "pattern": "^phenloop_[a-f0-9]{20}$"},
+    "preparation_hash": {"$ref": "#/$defs/hash"},
+    "meta_question_hash": {"$ref": "#/$defs/hash"},
+    "self_attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_id", "object_state_id", "mediator_hash"],
+      "properties": {
+        "identity_id": {"$ref": "#/$defs/id"},
+        "object_state_id": {"$ref": "#/$defs/id"},
+        "mediator_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "meta_level": {"$ref": "#/$defs/meta_level"},
+    "world_readback": {"$ref": "#/$defs/world_readback"},
+    "evidence_manifest": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+    "causal_return": {"$ref": "#/$defs/causal_return"},
+    "limits": {"$ref": "#/$defs/nonempty_strings"},
+    "response_sealed_before_verification": {"const": true}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$"},
+    "text": {"type": "string", "minLength": 1},
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "mdos_path": {"type": "string", "pattern": "^md-os/"},
+    "strings": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+    "nonempty_strings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "description", "side_effecting", "authorized"],
+      "properties": {
+        "action_id": {"$ref": "#/$defs/id"},
+        "description": {"$ref": "#/$defs/text"},
+        "side_effecting": {"type": "boolean"},
+        "authorized": {"type": "boolean"}
+      }
+    },
+    "meta_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level_id", "about_level_id", "appraisal", "uncertainty", "counterfactual", "revised_interpretation"],
+      "properties": {
+        "level_id": {"$ref": "#/$defs/id"},
+        "about_level_id": {"$ref": "#/$defs/id"},
+        "appraisal": {"$ref": "#/$defs/text"},
+        "uncertainty": {"$ref": "#/$defs/text"},
+        "counterfactual": {"$ref": "#/$defs/text"},
+        "revised_interpretation": {"$ref": "#/$defs/text"}
+      }
+    },
+    "world_readback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation_id", "relative_file", "sha256", "observed_relation"],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/id"},
+        "relative_file": {"$ref": "#/$defs/mdos_path"},
+        "sha256": {"$ref": "#/$defs/hash"},
+        "observed_relation": {"$ref": "#/$defs/text"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "relative_file", "sha256"],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/id"},
+        "relative_file": {"$ref": "#/$defs/mdos_path"},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "causal_return": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revised_result", "next_action", "memory_delta", "inhibition_delta"],
+      "properties": {
+        "revised_result": {"$ref": "#/$defs/text"},
+        "next_action": {"$ref": "#/$defs/action"},
+        "memory_delta": {"$ref": "#/$defs/strings"},
+        "inhibition_delta": {"$ref": "#/$defs/strings"}
+      }
+    }
+  }
+}

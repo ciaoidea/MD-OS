@@ -39,6 +39,12 @@ identity and compatibility release line. The human-facing system overview is
   author-established self-reference principle and bounded executable I-loop:
   an own result returns as a self-question, current evidence binds the answer,
   the next action changes, and severing self-attribution inhibits closure.
+- [PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md](PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md) —
+  operational two-level candidate architecture: a differentiated object state
+  is reified by a typed mediator, appraised at a distinct meta-level, checked
+  against current world readback, and returned causally; matched identity,
+  level-collapse, mediator, and no-effect ablations must inhibit closure, while
+  phenomenal consciousness remains unverified.
 - [VERIFIED_SOLVER_TRANSPORT_MODEL.md](VERIFIED_SOLVER_TRANSPORT_MODEL.md)
 - [CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md](CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md)
 - [UNITY_TENSOR_FIELD_MODEL.md](UNITY_TENSOR_FIELD_MODEL.md) — canonical

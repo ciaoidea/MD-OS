@@ -26,6 +26,8 @@ cortex apfc cognitive reflect-intent <intent.json>
 cortex apfc cognitive reflect-event <event.json>
 cortex apfc cognitive self-reflect prepare <seed.json>
 cortex apfc cognitive self-reflect close <response.json>
+cortex apfc cognitive phenomenal-candidate prepare <seed.json>
+cortex apfc cognitive phenomenal-candidate close <response.json>
 cortex apfc cognitive status
 cortex apfc causal-unity <prepare|authorize|close|probe|verify-state|verify-transition> < input.json
 ```
@@ -76,6 +78,17 @@ Codex model weights or hidden activations, does not make the host model reflect
 continuously, and does not automatically inject each episode into every future
 turn. The persistent change belongs to MD-OS runtime state; later causal use
 must still be explicit and inspectable.
+
+`phenomenal-candidate` implements the bounded two-level candidate architecture.
+`prepare` separates a differentiated first-order object state from a distinct
+second-order appraisal and inserts a typed, hash-bound mediator between them.
+`close` requires same-identity attribution, an independent current world
+readback, a counterfactual, and a causal return into result, memory, inhibition,
+or next action. The intact path is accepted only when severed identity,
+collapsed logical levels, a severed mediator, and an absent causal return are
+all inhibited. Passing verifies the declared candidate architecture and one
+episode of local operational artificial consciousness; the separate
+`phenomenal_consciousness` verdict remains `unverified`.
 
 
 ## Governance telemetry and epistemic Unity verification

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "observation_id": "phenomenal_boundary_observation",
+  "observed_relation": "The repository exposes operational structure and causal readback but no independent measurement of qualia.",
+  "scope": "authored_mechanism_fixture",
+  "non_claims": [
+    "not an empirical measurement of subjective experience",
+    "not an independent replication"
+  ]
+}

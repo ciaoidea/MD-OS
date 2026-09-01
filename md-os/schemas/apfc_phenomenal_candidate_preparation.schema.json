@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_phenomenal_candidate_preparation.schema.json",
+  "title": "MD-OS APFC Phenomenal Consciousness Candidate Preparation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_role", "loop_id", "candidate_id", "created_at", "status", "cycle_index", "max_cycles", "identity", "object_level", "mediator", "mediator_hash", "world_grounding", "candidate_next_action", "input_manifest", "meta_question", "meta_question_hash", "evidence_requirements", "architecture_contract", "prediction_contract", "non_claims", "preparation_hash"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "artifact_role": {"const": "phenomenal_consciousness_candidate_preparation"},
+    "loop_id": {"type": "string", "pattern": "^phenloop_[a-f0-9]{20}$"},
+    "candidate_id": {"$ref": "#/$defs/id"},
+    "created_at": {"type": ["string", "null"]},
+    "status": {"const": "awaiting_meta_level_response"},
+    "cycle_index": {"const": 1},
+    "max_cycles": {"const": 1},
+    "identity": {"type": "object"},
+    "object_level": {"type": "object"},
+    "mediator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mediator_id", "representation_kind", "source_level_id", "target_level_id", "source_state_id", "represented_state_hash", "subject_identity_id", "type_signature", "prohibits_same_level_self_application"],
+      "properties": {
+        "mediator_id": {"$ref": "#/$defs/id"},
+        "representation_kind": {"const": "typed_reification"},
+        "source_level_id": {"$ref": "#/$defs/id"},
+        "target_level_id": {"$ref": "#/$defs/id"},
+        "source_state_id": {"$ref": "#/$defs/id"},
+        "represented_state_hash": {"$ref": "#/$defs/hash"},
+        "subject_identity_id": {"$ref": "#/$defs/id"},
+        "type_signature": {"const": "first_order_state->reified_state_for_second_order_appraisal"},
+        "prohibits_same_level_self_application": {"const": true}
+      }
+    },
+    "mediator_hash": {"$ref": "#/$defs/hash"},
+    "world_grounding": {"type": "object"},
+    "candidate_next_action": {"type": "object"},
+    "input_manifest": {"type": "array", "minItems": 3, "items": {"$ref": "#/$defs/binding"}},
+    "meta_question": {"$ref": "#/$defs/text"},
+    "meta_question_hash": {"$ref": "#/$defs/hash"},
+    "evidence_requirements": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/id"}},
+    "architecture_contract": {"$ref": "#/$defs/boolean_map"},
+    "prediction_contract": {"$ref": "#/$defs/boolean_map"},
+    "non_claims": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
+    "preparation_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$"},
+    "text": {"type": "string", "minLength": 1},
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "relative_file", "sha256"],
+      "properties": {
+        "role": {"$ref": "#/$defs/text"},
+        "relative_file": {"type": "string", "pattern": "^md-os/"},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "boolean_map": {"type": "object", "minProperties": 1, "additionalProperties": {"const": true}}
+  }
+}

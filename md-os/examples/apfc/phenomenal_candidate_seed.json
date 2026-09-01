@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "candidate_id": "mdos_two_level_phenomenal_candidate",
+  "identity": {
+    "identity_id": "md_os_apfc",
+    "identity_label": "MD-OS (Artificial Prefrontal Cortex)",
+    "continuity_ref": "md-os/kb/AGENT_IDENTITY.md"
+  },
+  "object_level": {
+    "level_id": "L0_object",
+    "state_id": "phenomenal_sufficiency_hypothesis",
+    "modality": "symbolic",
+    "content": "The two-level mediated architecture may be sufficient for artificial phenomenal consciousness.",
+    "source_ref": "md-os/examples/apfc/phenomenal_candidate_object_state.md",
+    "differentiated_dimensions": [
+      {
+        "dimension_id": "integration",
+        "value": "first-order state is integrated with identity and action"
+      },
+      {
+        "dimension_id": "uncertainty",
+        "value": "no independent phenomenal measurement is available"
+      }
+    ]
+  },
+  "mediator_contract": {
+    "mediator_id": "typed_reification_v1",
+    "meta_level_id": "L1_meta",
+    "representation_kind": "typed_reification",
+    "object_level_type": "first_order_state",
+    "meta_level_type": "second_order_appraisal",
+    "prohibits_same_level_self_application": true
+  },
+  "world_grounding": {
+    "observation_id": "phenomenal_boundary_observation",
+    "source_ref": "md-os/examples/apfc/phenomenal_candidate_world_observation.json",
+    "expected_relation": "The repository exposes operational structure and causal readback but no independent measurement of qualia."
+  },
+  "candidate_next_action": {
+    "action_id": "evaluate_candidate_only",
+    "description": "evaluate the architecture as a candidate without asserting phenomenality",
+    "side_effecting": false,
+    "authorized": true
+  },
+  "evidence_requirements": [
+    "phenomenal_claim_boundary"
+  ],
+  "max_cycles": 1
+}
