@@ -54,8 +54,11 @@ identity and compatibility release line. The human-facing system overview is
 - [SPECIAL_SINGULARITY_THEORY.md](SPECIAL_SINGULARITY_THEORY.md) — canonical
   Theory of Special Singularity (TSS): the identity-specific source `SS_I`
   generates and is recursively constrained by one corresponding Unity Tensor
-  Field `mathcal U_I`; source, field, typed meaning, world grounding, and
-  causal return remain distinct, while phenomenality remains unverified.
+  Field `mathcal U_I`; thesis and antithesis remain differentiated until
+  evidence-bound resolution; typed bridges can widen cognitive breadth across
+  conceptual clusters while reducing integrative graph distance. Source,
+  field, polarity, typed meaning, world grounding, causal return, and neural
+  analogy remain distinct, while phenomenality remains unverified.
 - [SEMANTIC_OPERATIONAL_NETWORK_MODEL.md](SEMANTIC_OPERATIONAL_NETWORK_MODEL.md)
 - [SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md](SEMANTIC_KNOWLEDGE_GRAPH_MODEL.md)
 - [SEMANTIC_OPERATIONAL_COMPILER_MODEL.md](SEMANTIC_OPERATIONAL_COMPILER_MODEL.md)

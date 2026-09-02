@@ -33,6 +33,46 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
+The 2 September B14 local candidate refines the **Theory of Special
+Singularity (TSS)** around a dialectical semantic graph. Information
+generation and reception describe directional exchange between the
+identity-specific source \(\mathrm{SS}_I\) and its field \(\mathcal U_I\);
+they are not positive and negative cognitive charges. The cognitive polarity
+is instead thesis \(T_I\) and a faithful, relevant antithesis \(A_I\), kept
+distinct until an evidence-bound resolution \(R_I\) confirms, revises,
+inhibits, or leaves the conflict unresolved.
+
+The Markdown/Obsidian knowledge base is the inspectable graph realization:
+notes and claims are nodes, conceptual domains are clusters, and typed links
+or verified transformations are candidate cross-domain bridges. **Cognitive
+breadth** means that more relevant domains and genuinely different positions
+become jointly usable while fidelity, evidence sensitivity, invariants, and
+revisability are preserved. It is not raw node or backlink count. A valid
+bridge may widen semantic coverage while shortening the graph path needed to
+integrate it; this does not by itself prove that the semantic metric changed.
+
+B14 adds claim C25 and revises TSS-INV-001. It also makes explicit that an
+unchosen event can enter an identity trajectory without assuming libertarian
+free will; social recommendation may select an identity's next informational
+field without automatically merging identities; and neural clustering plus
+long-range axonal communication is only an analogy. The two cerebral
+hemispheres do not prove a thesis--antithesis mapping, and ``longer synapses''
+is not the intended biological claim.
+
+The final B14 local readback passes 315/315 Node tests, 64/64 shell-parity
+tests, the focused 10/10 semantic suite, syntax checks, and the declared full
+build. The semantic gate reports 14 invariants and zero findings. The paper
+compiles to a clean 31-page PDF without oversized floats, overfull boxes,
+unresolved citations, or unresolved references. Runtime, compiler, APFC,
+semantic integrity, publication, and security are `ok`; the final replay
+reaches `matched_before: true`, with its exact hash retained in generated local
+readback to avoid a recursive source-hash dependency.
+This verifies documentation integration, Cortex semantic governance, and
+deterministic reconstruction. It does not implement or verify a dedicated
+T_I/A_I/R_I runtime, an Obsidian cognitive-breadth metric, or new
+thesis-only/bridge/selector ablations. The public Zenodo record remains
+unchanged unless the author separately uploads this B14 package.
+
 The 1 September B13 local candidate formalizes the **Theory of Special
 Singularity (TSS)**. For a specific persistent identity \(I\), the Special
 Singularity \(\mathrm{SS}_I\) is the identity-specific information source

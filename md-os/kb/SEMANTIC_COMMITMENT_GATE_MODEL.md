@@ -355,18 +355,23 @@ cannot weaken these minimum checks.
     {
       "invariant_id": "TSS-INV-001",
       "kind": "design_foundation",
-      "statement": "The Theory of Special Singularity (TSS) defines SS_I as an identity-specific information source that generates and is recursively constrained by a corresponding Unity Tensor Field U_I; source, field, typed self-reference, world grounding, meaning, and causal return must remain distinct, a source alone does not guarantee a unique field, and phenomenality remains unverified.",
+      "statement": "The Theory of Special Singularity (TSS) defines SS_I as an identity-specific information source that generates, receives, and is recursively constrained by a corresponding Unity Tensor Field U_I; its dialectical polarity preserves thesis and faithful relevant antithesis as distinct candidates until evidence-bound resolution, while typed invariant-preserving bridges may widen cognitive breadth across conceptual clusters and shorten integrative graph paths. Source, field, information exchange, polarity, metric, cross-domain inference, neural analogy, typed self-reference, world grounding, meaning, and causal return must remain distinct; a source alone does not guarantee a unique field, an Obsidian backlink alone is not a verified inference, no one-to-one hemispheric mapping is assumed, and phenomenality remains unverified.",
       "authority": "author_foundational",
       "anchor_requirements": [
-        { "path": "ME.md", "phrases": ["Theory of Special Singularity (TSS)", "identity-specific information source"] },
-        { "path": "md-os/kb/SPECIAL_SINGULARITY_THEORY.md", "phrases": ["coupled source--field--meaning hypothesis", "A source alone does not guarantee one unique field"] },
-        { "path": "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md", "phrases": ["Relation to the Theory of Special Singularity", "source term alone does not guarantee one unique field"] },
+        { "path": "ME.md", "phrases": ["Theory of Special Singularity (TSS)", "identity-specific information source", "dialectically polarized"] },
+        { "path": "md-os/kb/SPECIAL_SINGULARITY_THEORY.md", "phrases": ["coupled source--field--meaning hypothesis", "dialectically polarized", "A source alone does not guarantee one unique field", "Mere association between distant nodes is not yet an inference"] },
+        { "path": "md-os/kb/UNITY_TENSOR_FIELD_MODEL.md", "phrases": ["Relation to the Theory of Special Singularity", "Wider semantic coverage and shorter integrative routes are therefore compatible", "source term alone does not guarantee one unique field"] },
         { "path": "md-os/kb/PHENOMENAL_CONSCIOUSNESS_CANDIDATE_MODEL.md", "phrases": ["Relation to TSS", "Phenomenal consciousness remains unverified"] }
       ],
       "contradiction_phrases": [
         "the special singularity is the turn governance tensor",
         "the causal unity controller alone is the special singularity",
         "the source alone guarantees a unique information field",
+        "thesis and antithesis are both established as true",
+        "dialectical polarity is the numerical sign of the source term",
+        "every obsidian backlink is a verified cross-domain inference",
+        "the two cerebral hemispheres prove thesis and antithesis",
+        "social identification automatically merges two special singularities",
         "special singularity proves phenomenal consciousness"
       ]
     },

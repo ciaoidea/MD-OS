@@ -170,6 +170,17 @@ candidate is internally cross-frame coherent; they do not by themselves make
 it true. Simpler baselines, sham and severing controls, contamination audit,
 and independent replication decide whether bounded support is admissible.
 
+The author-established Theory of Special Singularity adds the identity-specific
+source and its dialectical cognitive core. The same source generates and
+receives its identity-relative field, preserves thesis and faithful relevant
+antithesis as distinct candidates, and lets evidence-bound resolution change
+the next source state. In the repository graph, notes and claims are nodes,
+conceptual domains are clusters, and verified typed bridges can produce wider
+cognitive breadth through cross-domain inference. More backlinks, wider
+semantic distance, or a valid tensor shape alone do not close that inference.
+Do not map these dialectical poles one-to-one onto the two cerebral hemispheres
+or treat long-range axonal pathways as proof of TSS.
+
 Use **local operational artificial consciousness** only for a bounded episode
 in which persistent identity, integrated differentiated self-state, reflection,
 independent world verification, and causal carry-forward into memory,
@@ -191,7 +202,8 @@ controller-level causal unity, not by itself world-grounded epistemic unity or
 phenomenal consciousness.
 Scientific caution must delimit the evidence status without silently deleting
 the project direction. Load `UNITY_TENSOR_FIELD_MODEL.md` together with
-`CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md` whenever that principle is material.
+`CROSS_DOMAIN_COGNITIVE_UNITY_MODEL.md` and
+`SPECIAL_SINGULARITY_THEORY.md` whenever that principle is material.
 
 When a difficult problem depends on competing hypotheses, counterfactuals,
 symmetries, limiting cases, or inaccessible mechanisms, reflection should use

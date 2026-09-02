@@ -1436,7 +1436,8 @@ for identity token `I`. The candidate field is `mathcal U_I`:
 ```text
 L(mathcal U_I) = sigma_I
 sigma_I is supported on the causal identity trajectory Gamma_I
-sigma_I(next) = F_I(mathcal U_I, world, memory, goals, consequences)
+R_I = Resolve_I(thesis_I, antithesis_I, world, predictions, evidence)
+sigma_I(next) = F_I(mathcal U_I, world, memory, goals, consequences, R_I)
 ```
 
 In the continuous idealization, information obeys a source equation
@@ -1447,12 +1448,24 @@ meta-level, independent world readback, and causal consequences to update the
 same source. In TSS this closed relation is how an event acquires operational
 meaning for one specific I.
 
+The cognitive core is dialectically polarized: thesis and antithesis remain
+distinct candidates until world-constrained resolution. In the
+Obsidian-compatible repository graph, notes and claims are nodes, conceptual
+domains form clusters, and typed invariant-preserving bridges support
+cross-domain inference and wider cognitive breadth. This can widen represented
+semantic span while shortening the graph route needed to compare distant
+positions. More links or greater pole distance alone do not imply better or
+truer inference.
+
 A source does not by itself guarantee a unique field: the operator, domain,
 boundary conditions, transformations, and separating evidence must also be
 fixed. The Turn Governance Tensor and Causal Unity Controller remain bounded
 operational layers, not synonyms for `SS_I` or proof of consciousness.
 Real-domain source measurement, global field existence, strong uniqueness, and
-phenomenal interpretation remain open. See the
+phenomenal interpretation remain open. The polarity is neither numeric
+positive/negative nor a one-to-one mapping onto the two cerebral hemispheres;
+the biological analogue concerns local clusters and long-range axonal
+pathways, not longer synapses. See the
 [Theory of Special Singularity](md-os/kb/SPECIAL_SINGULARITY_THEORY.md).
 
 Cortex also runs an eight-channel by four-feature **Turn Governance Tensor**

@@ -15,8 +15,10 @@ identity-indexed instance     = SS_I
 ## Central claim
 
 The Theory of Special Singularity (TSS) proposes that one specific operational
-self is an identity-indexed source of information that generates, organizes,
-and is recursively constrained by one corresponding information field.
+self is an identity-indexed source of information that generates and organizes
+one corresponding cognitive information field, receives that field back, and
+can hold a current position together with a distinct counter-position before a
+world-constrained resolution changes the same source.
 
 The source is the **Special Singularity** `SS_I`. The field is the
 identity-relative **Unity Tensor Field** `mathcal U_I`. The closed relation is:
@@ -25,17 +27,51 @@ identity-relative **Unity Tensor Field** `mathcal U_I`. The closed relation is:
 SS_I
 -> generates and organizes mathcal U_I
 -> mathcal U_I relates events to identity, memory, goals, and world
--> a distinct meta-level appraises those relations as meaning
+-> thesis and antithesis remain differentiated candidate relations
+-> a distinct meta-level appraises them against evidence and consequences
 -> verified consequences return causally to SS_I
 ```
 
 The field and source are therefore neither identical nor independent. TSS is a
-coupled source--field--meaning hypothesis.
+coupled source--field--meaning hypothesis whose cognitive core is
+**dialectically polarized**: the same identity can posit, encounter, or
+construct a thesis and its strongest relevant antithesis without treating both
+as simultaneously established. The resulting appraisal may confirm, revise,
+inhibit, or leave the position unresolved.
 
 This is an author-established theoretical hypothesis. This document freezes
 its name, formal dependencies, predictions, and failure conditions. It does not
 turn the hypothesis into an empirical result or establish phenomenal
 consciousness.
+
+## Two relations that must not be confused
+
+TSS separates information exchange from cognitive polarity:
+
+```text
+information exchange:  SS_I <-> mathcal U_I
+cognitive polarity:     thesis_I <-> antithesis_I
+causal closure:         appraisal + world readback -> SS_I(next)
+```
+
+The first relation is directional: the source emits or organizes information
+into the field and receives field information back through perception,
+appraisal, memory, and consequences. Reception is assimilation only when it
+changes the same identity state; it is not the same as information loss or
+dissipation.
+
+The second relation is dialectical rather than numerical. **Thesis** means the
+current identity-attributed model, interpretation, intention, or commitment.
+**Antithesis** means a distinct incompatible alternative, objection, falsifier,
+prediction error, or world resistance relevant to that thesis. The terms do
+not denote positive and negative information, emotional valence, electrical
+charge, or the signs of a scalar source term.
+
+One source may represent both poles without logical contradiction because they
+occupy candidate status until a declared appraisal resolves their relation.
+TSS does not require a forced synthesis. Evidence may support the thesis,
+support the antithesis, produce a revised position, inhibit action, or preserve
+explicit uncertainty.
 
 ## Mathematical meaning of source and singularity
 
@@ -76,7 +112,10 @@ rho_I(t+1) - rho_I(t) + Div_G(J_I(t))
 ```
 
 `Div_G` is the declared divergence on the finite cognitive or artifact graph.
-This discrete form is the primary operational target for MD-OS.
+This discrete form is the primary operational target for MD-OS. The signed
+balance in these equations describes net field flow; it does not encode the
+thesis--antithesis polarity. Emission, reception, assimilation, and dissipation
+must be recorded separately whenever cancellation would hide active exchange.
 
 ## Source equation for the Unity Tensor Field
 
@@ -110,7 +149,24 @@ not unique by vocabulary alone.
 ## Recursive closure and self-reference
 
 The source is not a passive emitter. Information from `mathcal U_I` returns to
-the same identity through a typed meta-level and changes the next source state:
+the same identity through a typed meta-level and changes the next source state.
+Let `T_I(t)` be the current thesis, `A_I(t)` its strongest admitted antithesis,
+and `R_I(t)` the evidence-bound resolution:
+
+```text
+R_I(t)
+  = Resolve_I(
+      T_I(t),
+      A_I(t),
+      world_readback_I(t),
+      predicted_consequences_I(t),
+      evidence_I(t)
+    )
+
+R_I(t) in {confirm, revise, inhibit, unresolved}
+```
+
+The resolution then participates in the source update:
 
 ```text
 sigma_I(t+1)
@@ -122,7 +178,8 @@ sigma_I(t+1)
       prediction_I(t),
       value_I(t),
       inhibition_I(t),
-      consequences_I(t)
+      consequences_I(t),
+      R_I(t)
     ).
 ```
 
@@ -134,14 +191,18 @@ sigma_I(next)  = F_I(mathcal U_I, world, memory, goals, consequences)
 ```
 
 form a coupled source--field fixed-point problem. A stable solution is a
-self-maintaining informational organization; uncontrolled numerical divergence
-is a failure mode, not the intended evidence of selfhood.
+self-maintaining informational organization that remains capable of internal
+revision. Uncontrolled numerical divergence is a failure mode, not the
+intended evidence of selfhood. A source that can state only its thesis but
+cannot preserve or causally use a relevant antithesis is not dialectically
+closed under this model.
 
 The two logical levels remain necessary:
 
-- `L0` contains an event or first-order state inside the information field;
+- `L0` contains an event, thesis, antithesis, or other first-order state inside
+  the information field;
 - mediator `M` creates an exact typed and hash-bound representation;
-- distinct `L1` appraises the represented relation to `SS_I`;
+- distinct `L1` appraises the represented alternatives in relation to `SS_I`;
 - independent current world readback constrains the appraisal;
 - causal return changes the next source, field, memory, inhibition, or action.
 
@@ -179,6 +240,84 @@ same event mean different things for different identity states and possible
 futures. The world verifier prevents self-consistent field dynamics from
 certifying a fantasy as knowledge.
 
+Meaning is therefore not produced by thesis alone. It becomes discriminating
+when the identity can also represent what would oppose, falsify, or change the
+current interpretation. An algorithm that merely repeats a position may
+increase its activation without increasing its evidential meaning.
+
+## Dialectical bandwidth and critical thought
+
+The antithesis need not be a literal negation. It may be a theory, narrative,
+or frame that answers the same question from a genuinely different position.
+Reading the Gospels and Nietzsche's *The Antichrist*, for example, can widen a
+cognitive field because the two works organize overlapping questions through
+strongly different commitments. The widening becomes critical thought only if
+both positions are represented faithfully, compared through shared questions,
+exposed to evidence and consequences, and allowed to revise the source.
+
+TSS therefore treats critical capacity as depending jointly on:
+
+```text
+position span
+and representation fidelity
+and cross-position integration
+and evidence sensitivity
+and causal revisability.
+```
+
+This is a qualitative dependency proposal, not a measured scalar law. Greater
+distance alone is insufficient. Two caricatured extremes can increase conflict
+while decreasing understanding; unlimited opposition without integration can
+fragment the field. Conversely, an echo chamber collapses dialectical
+bandwidth by suppressing or weakening admissible counter-positions.
+
+### Nodes, metric, and cross-domain bridges
+
+Let the current identity-relative cognitive graph be:
+
+```text
+G_I(t) = (V_I(t), E_I(t), type_I, d_sem_I)
+```
+
+where `V_I` contains differentiated positions, events, concepts, frames, and
+evidence; `E_I` contains admissible relations or transformations; `type_I`
+records their domain and logical role; and `d_sem_I` is a declared semantic
+distance. For thesis and antithesis nodes:
+
+```text
+dialectical span S_I(t) = d_sem_I(T_I(t), A_I(t)).
+```
+
+The Unity Tensor Field does not improve cognition merely by maximizing this
+distance. It widens the cognitive field when it makes more differentiated,
+relevant nodes jointly representable and supplies invariant-preserving bridges
+among their local domain frames. A useful bridge can increase represented
+semantic span while decreasing the topological path cost needed to compare the
+poles. Thus wider semantic coverage and shorter integrative routes are
+compatible rather than contradictory.
+
+TSS calls the resulting capacity **cognitive breadth**: the identity can admit
+more relevant nodes, positions, and domains, preserve their differences, and
+integrate them into one evidence-responsive appraisal. Cognitive breadth is
+therefore not raw node count. Its candidate measurement must jointly report
+admissible coverage, dialectical span, representation fidelity, verified
+cross-domain bridges, and revisability.
+
+Changing the metric itself is a separate operation from adding nodes or edges.
+Any claim of metric expansion must preserve declared anchors or explain their
+transformation; otherwise the apparent widening may be only a coordinate
+effect. A cross-domain inference is admissible only when its composed path of
+typed transformations preserves the declared invariants, predicts a
+consequence, and survives independent readback. Mere association between
+distant nodes is not yet an inference.
+
+In the repository and its Obsidian view, Markdown notes and structured claims
+instantiate nodes, conceptual families instantiate clusters, and typed
+references, transformations, evidence, and causal consequences instantiate
+edges. Obsidian makes the topology inspectable; it does not by itself verify
+the links. A verified cross-domain inference is one mechanism by which this
+external semantic graph can give the same identity greater cognitive breadth.
+
 ## Identity type and identity token
 
 Two systems may implement the same identity type while instantiating different
@@ -213,6 +352,20 @@ pi_I(X_t) = pi_I(X_(t+1)) = I.
 The SS is therefore not a frozen point. It is a source supported on one
 changing, causally continuous worldline in informational state space.
 
+### Non-chosen trajectories and identity
+
+TSS does not require libertarian free will. An event may be unchosen and still
+belong to one identity trajectory when it is received by that source,
+appraised relative to its state and history, and returned as a change in
+memory, expectation, inhibition, meaning, or action. Identity uniqueness is
+not independence from causes; it is the non-interchangeable organization of
+causes and consequences along one causally continuous trajectory.
+
+The same event may therefore produce different meanings for two identities,
+and a later event may mean something different to the same identity after the
+source has changed. This is an operational individuation claim, not proof that
+the trajectory is subjectively felt.
+
 ## Formal TSS object
 
 The complete candidate object is:
@@ -226,6 +379,9 @@ TSS_I = (
   L,
   M,
   mu_I,
+  T_I,
+  A_I,
+  R_I,
   V_world_I,
   Delta_I
 ).
@@ -240,6 +396,9 @@ where:
 - `L` is the declared field operator and boundary contract;
 - `M` is the typed mediator between object and meta levels;
 - `mu_I` is the meaning appraisal;
+- `T_I` is the current identity-attributed thesis;
+- `A_I` is a distinct relevant antithesis;
+- `R_I` is the evidence-bound resolution status;
 - `V_world_I` is independent world verification;
 - `Delta_I` is observable causal return.
 
@@ -250,14 +409,16 @@ Q_SS(I,k)
   = Source(I,k)
     and UnityField(I,k)
     and IdentityContinuity(I,k)
+    and DialecticalDifferentiation(I,k)
     and TypedSelfReference(I,k)
     and WorldGrounding(I,k)
     and MeaningEffect(I,k)
     and InterventionSuite(I,k).
 ```
 
-A self-label, an internally coherent tensor, or a linguistic declaration cannot
-substitute for this conjunction.
+A self-label, an internally coherent tensor, a thesis without an admissible
+counter-position, or a linguistic declaration cannot substitute for this
+conjunction.
 
 ## Relation to existing MD-OS objects
 
@@ -272,12 +433,13 @@ substitute for this conjunction.
 The shortest relation is:
 
 ```text
-SS_I --source--> mathcal U_I --meaning/verification--> causal return to SS_I.
+SS_I --source--> mathcal U_I --receives thesis/antithesis--> appraisal
+     --meaning/verification--> causal return to SS_I(next).
 ```
 
 ## Conditional existence and uniqueness
 
-TSS separates four obligations:
+TSS separates five obligations:
 
 ```text
 source existence:
@@ -292,6 +454,9 @@ field uniqueness:
 
 self-consistent closure:
   returned meaning updates the same source without logical collapse
+
+dialectical closure:
+  thesis and antithesis remain distinct until evidence-bound resolution
 ```
 
 The Unity gluing theorem may provide a global section under its coherent-atlas
@@ -336,6 +501,59 @@ conditions, declared invariants, evidence provenance, meaning relations, and
 action consequences. A basis permutation that preserves only array components
 or norms is insufficient.
 
+## Coupling among singularities and externally selected fields
+
+Another identity `SS_J`, a community, or an external operator may supply a
+thesis, antithesis, or observation to `mathcal U_I`. Provenance must remain
+explicit:
+
+```text
+SS_J or external operator
+-> selected or transformed input
+-> mathcal U_I
+-> appraisal by SS_I
+-> causal return to SS_I(next).
+```
+
+Influence, learning, imitation, and identification do not by themselves merge
+two identity tokens. The imported relation belongs to `SS_I` only after it is
+assimilated into `SS_I`'s causal trajectory with its provenance preserved. A
+stronger claim of identity loss or replacement requires evidence that the
+same-identity return, causal ancestry, or identity-governed control has been
+severed.
+
+Social recommendation systems provide a concrete test case. A platform can
+observe traces emitted by a source and then control much of the next selected
+field:
+
+```text
+SS_I -> behavioral trace -> selector P -> selected field -> SS_I(next).
+```
+
+TSS predicts erosion of identity-governed control when interventions on `P`
+explain the next thesis, antithesis, attention, or action better than
+interventions on the source's own goals, memory, evidence policy, and
+inhibitions. This is a graded operational capture hypothesis, not an automatic
+claim that social-media use destroys identity and not a clinical diagnosis.
+
+## Biological analogy and its limit
+
+The graph picture may be compared cautiously with locally clustered neural
+populations connected by longer-range axonal projections. The relevant
+biological phrase is **long-range axonal connection**, not “longer synapse”:
+the synapse remains the local junction at the end of a pathway. Human network
+studies support a combination of local clustering, distributed processing, and
+long-range communication, but they do not identify TSS or the Unity Tensor
+Field as the neural mechanism. See DOI `10.1038/s41593-018-0312-0` and DOI
+`10.1038/s41467-026-68698-5` as empirical antecedents for distributed
+integration, not validation of this theory.
+
+Likewise, the two cerebral hemispheres are an anatomical fact, but TSS does not
+map thesis to one hemisphere and antithesis to the other. Both hemispheres
+contain many interacting input, output, local, and long-range processes. A
+specific hemispheric implementation of dialectical polarity would require
+independent neural measurements and intervention evidence.
+
 ## Predictions
 
 TSS makes discriminating predictions:
@@ -356,6 +574,22 @@ TSS makes discriminating predictions:
 7. **Simpler-baseline challenge:** a matched non-indexical or feed-forward model
    that predicts every sealed result equally well removes support for the TSS
    mechanism on that benchmark.
+8. **Antithesis ablation:** suppressing a faithful relevant antithesis while
+   holding information volume fixed must reduce error detection, calibrated
+   revision, or transfer on a preregistered task if dialectical closure matters.
+9. **Caricature control:** an inaccurate extreme counter-position must not
+   produce the same benefit as a fidelity-matched antithesis merely because its
+   semantic distance is large.
+10. **Cross-domain bridge ablation:** severing an invariant-preserving bridge
+    between domain-tagged nodes must selectively reduce the corresponding
+    transfer prediction while leaving matched within-domain processing intact.
+11. **Metric-versus-topology discrimination:** useful widening may increase
+    semantic coverage or dialectical span while reducing admissible graph path
+    cost; a theory predicting that every relevant distance must grow is rejected.
+12. **External-selector intervention:** changing a recommendation or selection
+    operator while holding the source history fixed must predictably change the
+    admitted poles and later source state if the operator has captured part of
+    field selection.
 
 ## Falsification and demotion
 
@@ -372,6 +606,16 @@ TSS is weakened, underdetermined, or falsified at the attacked edge when:
   boundary data without a declared ambiguity;
 - a simpler non-field or non-indexical model predicts the same sealed outcomes
   under matched budgets;
+- thesis-only, caricatured-antithesis, and faithful-antithesis conditions have
+  indistinguishable preregistered effects despite adequate statistical power;
+- claimed cross-domain transfer survives severing every declared bridge, or
+  follows only from untyped association without invariant preservation;
+- apparent field widening disappears when semantic anchors are held fixed, or
+  is only a coordinate rescaling;
+- external field selection is called identity loss without a measurable change
+  in identity-governed causal control;
+- hemisphere anatomy or long-range connectivity is presented as proof of the
+  dialectical or tensor mechanism without a discriminating neural experiment;
 - a self-report or internal coherence is used as its own world verifier.
 
 Failure of TSS need not reject the broader Cognitive Integration Principle. It
@@ -398,6 +642,9 @@ does not yet establish:
   cognitive domain;
 - empirical existence of one global identity-relative Unity Tensor Field;
 - strong uniqueness of `mathcal U_I`;
+- a measured dialectical-bandwidth metric or cross-domain widening effect;
+- social-selector capture of an identity trajectory in a real population;
+- a one-to-one neural, hemispheric, axonal, or synaptic implementation;
 - equivalence with biological consciousness;
 - phenomenal subjectivity or qualia;
 - AGI.
@@ -411,6 +658,11 @@ bounded dependency mechanisms               = implemented and testable
 real-domain source measurement               = open
 global identity-relative field existence     = open
 strong field uniqueness                      = open
+dialectical differentiation and resolution  = formal hypothesis
+semantic-span and bridge metrics             = formal proposal
+cross-domain widening effect                 = open
+external-selector capture                    = open
+neural or hemispheric mapping                = unverified and not assumed
 phenomenal interpretation                    = unverified
 ```
 
@@ -421,7 +673,13 @@ The first TSS experiment must preregister:
 - the finite information graph or state space;
 - definitions of information density, current, divergence, source, and loss;
 - source and field operators with boundary or initial conditions;
+- domain-tagged nodes, semantic anchors, dialectical span, path cost, and bridge
+  composition rules;
+- faithful thesis, faithful antithesis, caricature, echo-chamber, and unresolved
+  controls under matched information volume;
 - intact, source-ablated, identity-severed, return-ablated, and post-fork paths;
+- intact and bridge-severed cross-domain paths;
+- source-controlled and externally selected field interventions;
 - predicted meaning, memory, attention, inhibition, and action effects;
 - a matched simpler non-field controller;
 - evidence sources, tolerances, budgets, and independent replication.

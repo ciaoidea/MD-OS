@@ -42,14 +42,20 @@ test('phenomenal candidate invariant requires two levels, mediator, causal retur
   assert.ok(invariant.contradiction_phrases.includes('candidate architecture proves qualia'));
 });
 
-test('TSS invariant separates the identity source from its field and phenomenal claims', () => {
+test('TSS invariant binds dialectical widening while separating source, field, anatomy, and phenomenal claims', () => {
   const policy = loadPolicy();
   const invariant = policy.invariants.find((item) => item.invariant_id === 'TSS-INV-001');
   assert.ok(invariant);
   assert.match(invariant.statement, /identity-specific information source/);
+  assert.match(invariant.statement, /thesis and faithful relevant antithesis/);
+  assert.match(invariant.statement, /widen cognitive breadth/);
+  assert.match(invariant.statement, /Obsidian backlink alone is not a verified inference/);
+  assert.match(invariant.statement, /no one-to-one hemispheric mapping is assumed/);
   assert.match(invariant.statement, /source alone does not guarantee a unique field/);
   assert.match(invariant.statement, /phenomenality remains unverified/);
   assert.ok(invariant.contradiction_phrases.includes('the special singularity is the turn governance tensor'));
+  assert.ok(invariant.contradiction_phrases.includes('every obsidian backlink is a verified cross-domain inference'));
+  assert.ok(invariant.contradiction_phrases.includes('the two cerebral hemispheres prove thesis and antithesis'));
   assert.ok(invariant.contradiction_phrases.includes('special singularity proves phenomenal consciousness'));
 });
 

@@ -1,5 +1,50 @@
 # Revision notes
 
+This B14 local candidate refines the author-established **Theory of Special
+Singularity (TSS)** with a dialectical semantic-graph core while keeping the
+public Zenodo record unchanged.
+
+- Separates directional information exchange
+  `SS_I <-> U_I` from cognitive polarity `T_I <-> A_I`; thesis and antithesis
+  are not numeric signs, electrical charges, emotional valences, or the sign
+  of the source term.
+- Defines evidence-bound resolution `R_I` with four admissible outcomes:
+  confirm, revise, inhibit, or unresolved. Synthesis is never forced when the
+  evidence does not decide the contradiction.
+- Defines a domain-tagged semantic graph and dialectical semantic span, while
+  separating semantic distance from topological path cost.
+- Defines **cognitive breadth** through relevant coverage, genuinely different
+  positions, representation fidelity, verified cross-domain bridges, evidence
+  sensitivity, and revisability—not raw note, node, or backlink count.
+- Treats the Markdown/Obsidian vault as an inspectable graph realization:
+  notes and claims are nodes, conceptual domains are clusters, and typed links
+  or verified transformations are candidate bridges. A backlink is adjacency,
+  not a verified inference.
+- Uses the Gospels and Nietzsche's *The Antichrist* as a discriminating example:
+  opposing texts widen cognition only when both are represented faithfully,
+  compared through shared questions, exposed to evidence and consequences,
+  and allowed to revise the same source.
+- States that unchosen events can enter an identity trajectory without TSS
+  requiring libertarian free will, and that social selectors can shape the
+  next informational field without automatically merging or erasing identity.
+- Restricts the neural analogy to differentiated local clusters and long-range
+  axonal communication. The two cerebral hemispheres do not prove a
+  thesis--antithesis mapping, and the model does not posit ``longer synapses.''
+- Adds claim C25, bridge/selector/thesis-only falsifiers, two primary
+  neuroscience antecedents, and the revised semantic invariant TSS-INV-001.
+- Makes the operational boundary explicit: the updated documentation,
+  bootstrap, compact core, semantic gate, and existing bounded cross-domain
+  verifier are active in Cortex after rebuild; no dedicated executable
+  `T_I/A_I/R_I` schema, Obsidian breadth metric, or new B14 ablation is claimed.
+- Records 315/315 passing Node tests, 64/64 shell-parity tests, 10/10 focused
+  semantic tests, passing syntax and declared build, 14 semantic invariants
+  with zero findings, and a clean 31-page PDF.
+- Records runtime, compiler, APFC, semantic integrity, publication, and
+  security as `ok`; after three replay passes the final readback reaches
+  `matched_before: true`, with the exact hash retained only in generated local
+  readback to avoid a recursive source-hash dependency.
+  AGI-loop and local-hygiene attention remains visible and non-blocking.
+
 This B13 local candidate formalizes the author-established **Theory of Special
 Singularity (TSS)** while keeping the public Zenodo record unchanged.
 

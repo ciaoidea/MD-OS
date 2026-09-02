@@ -312,6 +312,32 @@ conflicts produce `attention`. This state is the workspace in which a Unity
 Tensor candidate can be tested; it is not itself evidence of epistemic unity or
 phenomenal consciousness.
 
+## Repository and Obsidian graph realization
+
+The repository knowledge base provides one inspectable graph realization:
+
+```text
+note, claim, event, frame, or evidence artifact = node
+conceptual or operational domain               = typed cluster
+link, transformation, provenance, consequence  = typed edge
+verified composed path across cluster types    = cross-domain inference
+```
+
+Obsidian may visualize the notes and links, but the visual graph is only a
+topological view. A backlink establishes adjacency, not truth, tensorial
+compatibility, or inferential validity. A cross-domain path becomes admissible
+only when its premises and domain types are explicit, its transformations
+compose, declared invariants survive, a target consequence was predicted, and
+independent readback supports it.
+
+This gives a precise sense in which the Unity Tensor Field can produce wider
+**cognitive breadth**. It can make nodes from more distant conceptual clusters
+jointly representable and transport relations between their frames. The
+semantic span of the represented positions can increase while the topological
+path required to compare them becomes shorter through verified bridge edges.
+More nodes, longer paths, or denser links alone do not imply wider valid
+inference.
+
 ## APFC role
 
 The APFC is the cross-domain controller and intelligence extender in this

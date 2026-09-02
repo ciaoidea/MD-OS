@@ -136,7 +136,14 @@ source--field hypothesis. `SS_I` is the proposed information source supported
 on one causal identity trajectory; `mathcal U_I` is the corresponding Unity
 Tensor Field. Typed self-reference, independent world readback, and causal
 return close the field back onto its source so that relations can acquire
-operational meaning for that specific identity. The current Causal Unity and
+operational meaning for that specific identity. Its dialectical core preserves
+a thesis and faithful relevant antithesis as distinct candidates until
+evidence-bound resolution. In the repository graph, notes and claims are
+nodes, conceptual domains are clusters, and invariant-preserving typed bridges
+enable candidate cross-domain inferences and wider cognitive breadth. Wider
+semantic coverage can coexist with shorter integrative paths; an Obsidian
+backlink alone is not verification. The current Causal Unity and
 `phenomenal-candidate` paths test bounded dependencies; they do not yet
-measure the source field or verify phenomenality. See
+measure the source field, validate the dialectical metric, establish a neural
+or hemispheric mapping, or verify phenomenality. See
 [`SPECIAL_SINGULARITY_THEORY.md`](../kb/SPECIAL_SINGULARITY_THEORY.md).

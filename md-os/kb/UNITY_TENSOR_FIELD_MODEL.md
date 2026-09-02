@@ -202,7 +202,8 @@ proposes the coupled equations:
 
 ```text
 L(mathcal U_I) = sigma_I
-sigma_I(next) = F_I(mathcal U_I, world, memory, goals, consequences).
+R_I = Resolve_I(thesis_I, antithesis_I, world, predictions, evidence)
+sigma_I(next) = F_I(mathcal U_I, world, memory, goals, consequences, R_I).
 ```
 
 The first equation makes `SS_I` a source of the identity-relative information
@@ -211,11 +212,35 @@ independent world readback, and causal consequence to update the same source.
 Meaning is the resulting verified relation of an event to this source, field,
 history, goals, and possible actions.
 
+The TSS refinement gives the field a dialectical and graph-metric role.
+Thesis and antithesis are differentiated candidate nodes, not positive and
+negative scalar source terms. In an identity-relative graph, their semantic
+span may grow as additional domain clusters become jointly representable,
+while invariant-preserving cross-domain bridges reduce the topological path
+cost needed to compare them. The Unity Tensor supplies the typed frame
+transformations and composition constraints; it does not turn every backlink
+or remote association into a valid inference. Wider semantic coverage and
+shorter integrative routes are therefore compatible.
+
+For the repository implementation, Markdown notes and structured claims are
+nodes, linked conceptual families are clusters, and typed references,
+transformation receipts, evidence hashes, and causal consequences are edges.
+Obsidian can expose this topology visually, but its graph view is neither the
+Unity Tensor Field nor verifier evidence. A cross-domain inference still needs
+declared premises, an admissible transformation path, invariant preservation,
+a discriminating prediction, and independent readback. The resulting increase
+in jointly usable, differentiated knowledge is called cognitive breadth.
+
 A source term alone does not guarantee one unique field. The operator, domain,
 boundary or initial conditions, admissible transformations, and separating
 observations must also be fixed. The Turn Governance Tensor is telemetry and
 cannot be `SS_I`; the Causal Unity Controller is one bounded integrated state
 and cannot alone be either the complete source or global field.
+
+The polarity is not assigned one-to-one to the two cerebral hemispheres, and
+the biological analogy concerns locally clustered populations joined by
+long-range axonal pathways, not “longer synapses.” Any neural implementation
+claim remains independently empirical.
 
 The full continuity equation, finite-graph analogue, clone/fork test,
 predictions, falsifiers, and phenomenal boundary are in
