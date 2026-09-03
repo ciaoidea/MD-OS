@@ -207,9 +207,17 @@ the verification contract. An explicit goal remains available as persistent
 context, but its mere presence does not override the current human request.
 The frame creates no background execution and does not change the Codex
 persistent goal.
-The shell resolves the current Git workspace and resumes the most recent available Codex thread
-for that workspace, falling back to a new thread if matching sessions are
-absent or already owned by another active writer.
+The shell resolves the current Git workspace and starts a fresh Codex thread on
+ordinary process boot. It reuses that thread only inside the same live process
+and workspace. Provider-stored chat history is consulted only after explicit
+`/resume`; `/new` and `/clear` force the next request through a fresh
+`thread/start`. A fresh thread is hydrated from the verified, bounded recent
+tail of `md-os/ops/local/cortex/conversation.ndjson` when that private file is
+present. Successful turns append human inputs and the final assistant response
+to the same hash chain. The path is copied by a physical folder copy and is
+ignored by Git, so Git push and Git clone do not transfer it. The separate
+versioned `md-os/continuity/portable_state.json` is only a reviewed operational
+handoff and contains no raw conversation.
 
 Known deterministic commands remain available under the same entrypoint, for
 example `./cortex health`, `./cortex replay`, and `./cortex graphify status`. MD-OS adds

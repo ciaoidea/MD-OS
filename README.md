@@ -154,8 +154,9 @@ for a long input on its own line.
 
 Codex slash commands are recognized directly. Use `/help` for the full catalog;
 core commands including `/goal`, `/compact`, `/rename`, `/fork`, `/new`,
-`/clear`, `/status`, `/model`, `/diff`, and `/review` have native Cortex or App
-Server adapters. UI-only commands stay visible and return a capability notice.
+`/resume`, `/clear`, `/status`, `/model`, `/diff`, and `/review` have native
+Cortex or App Server adapters. UI-only commands stay visible and return a
+capability notice.
 
 Press `Esc` during an active turn to interrupt it immediately, just like
 `Ctrl-C`, while keeping the Cortex REPL open. At an idle prompt, `Esc` cancels
@@ -174,7 +175,10 @@ bounded, hash-bound context contract. Its invariant baseline contains identity,
 cognitive bootstrap, compact operational core, conceptual orientation, active
 work, continuity, and the generated context-pack catalog even when the human
 wording shares no tokens with those files. Lexical matches to recent summaries
-or health state are advisory only. For nontrivial claims or actions, the active
+are not imported automatically; host-local `last_turn.md` and `last_summary.md`
+remain explicit diagnostic artifacts. Health readback is advisory only. A verified
+`md-os/continuity/portable_state.json` adds reviewed clone-carried working
+context; invalid hashes reject the whole snapshot. For nontrivial claims or actions, the active
 turn must resolve the actual task dependencies through the catalog and current
 canonical readback, or report that its context is insufficient. The resulting
 context names included and omitted sources and preserves the original human
@@ -188,10 +192,29 @@ substitutions, and the native command language of Linux, macOS, BSD, or
 Windows. Valid native commands bypass Codex completely.
 
 On the first natural-language request, `cortex` starts one Codex App Server
-process. It resolves the current Git workspace, resumes the most recent matching
-native Codex thread when one exists, or starts a new one. Moving to another
-repository selects that repository's thread; moving back restores the earlier
-binding.
+process and a fresh Codex thread. It never searches or resumes provider-side
+Codex history during ordinary boot. When the workspace contains the verified
+private chronology at `md-os/ops/local/cortex/conversation.ndjson`, Cortex
+hydrates the fresh thread from a bounded recent tail. Every successful exchange
+appends the human input, any steering inputs, and the final assistant response.
+Hidden reasoning, tool traces, model ids, and Codex thread ids are excluded.
+Later turns reuse the live thread in the same process and workspace. Use
+`/resume` only when importing the latest provider-stored Codex conversation is
+an explicit choice; use `/new` to detach and start another fresh thread.
+
+This creates two deliberately different transfer paths. Copying or moving the
+whole folder with `cp -a`, `rsync -a`, an archive, or an equivalent file copy
+also copies the private chronology, so Cortex can continue on the other path or
+computer. A Git commit, push, or clone does not carry that file: the entire
+`md-os/ops/local/` tree is ignored, and the dedicated path is explicitly listed
+in `.gitignore`. The public `md-os/continuity/portable_state.json` remains only
+a reviewed operational summary and contains no raw conversation. Set
+`MDOS_PRIVATE_CONVERSATION=off` to disable private recording and hydration.
+
+The private chronology is private relative to GitHub, not invisible to the
+model service: the bounded excerpt must be sent to the configured Codex/model
+provider to reconstruct conversational context. Use a local model if the text
+must never leave the machine at inference time.
 
 The Cortex REPL and its Python shell engine are long-lived processes; rebuilding
 generated state does not hot-reload their source code. After updating
@@ -211,7 +234,7 @@ The resulting flow is:
 ```text
 native input -> real shell -> bounded observation ──────────────┐
                                                                 │
-natural input -> workspace -> thread list/resume/start -> Codex ├─> readback
+natural input -> workspace -> fresh/live thread -> Codex ───────┼─> readback
                                       ├-> AGENTS.md discovery   │
                                       ├-> APFC turn frame       │
                                       ├-> reasoning and plan    │
@@ -234,8 +257,10 @@ authority, executors, sensors, verifiers, and ledger readback. The shell is the
 operational fusion point, not a replacement for either layer.
 
 The volatile observation queue is not written into tracked files. Codex keeps
-its own resumable thread history outside the repository; MD-OS does not copy raw
-chat into Git. Tool output is streamed without flattening line breaks. The
+optional resumable thread history outside the repository, but MD-OS neither
+uses it for ordinary boot nor copies raw chat into Git. Clone-carried
+operational continuity comes only from the reviewed portable snapshot. Tool
+output is streamed without flattening line breaks. The
 default `MDOS_CODEX_TRACE=full` view also shows available reasoning summaries,
 plans, commands, diffs, tools, and progress; `compact` and `quiet`
 reduce that readback. `MDOS_CODEX_COLOR=auto` restores terminal-aware ANSI
@@ -2102,9 +2127,10 @@ A host runtime should:
 `cortex` is the Cortex-derived agentic-shell path: MD-OS owns the persistent REPL
 and executes already-valid native input without a model call; natural language
 enters the complete Codex agent loop bound to the current workspace. The shell
-lists and resumes existing native Codex threads, preserves repository
-instruction discovery, tools, sandboxing, approvals, verification, and session
-history, and queues native command/output readback as bounded sensory context.
+starts fresh by default, resumes an existing native Codex thread only after
+explicit `/resume`, preserves repository instruction discovery, tools,
+sandboxing, approvals, and verification, and queues native command/output
+readback as bounded sensory context.
 The existing shell mechanics are preserved; Ollama is not used. See
 [docs/SEMANTIC_SHELL.md](docs/SEMANTIC_SHELL.md).
 

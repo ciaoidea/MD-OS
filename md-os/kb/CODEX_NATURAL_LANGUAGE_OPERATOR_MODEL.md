@@ -269,7 +269,7 @@ human input
 │   -> bounded observation
 └── natural language
     -> current workspace
-    -> native Codex thread list/resume/start
+    -> fresh thread by default, live same-workspace reuse, explicit /resume
     -> AGENTS.md discovery
     -> APFC turn frame -> reason -> plan -> explore -> bounded tool -> APFC gate
     -> observe -> correct -> verify -> report
@@ -299,7 +299,23 @@ host command. Direct human commands retain host-shell authority. Agent-selected
 actions run inside the workspace sandbox and APFC action gate. Final assistant text
 is never itself an executable capability.
 
-Codex-native thread history remains outside the repository. Shared interactive
-sessions preserve the live thread across terminal transports, while workspace
-changes select workspace-specific threads; raw conversation and shell history do not
-become canonical MD-OS memory without the semantic commitment gate.
+Codex-native thread history remains outside the repository and is not consulted
+during ordinary Cortex boot. Shared interactive sessions preserve their
+already-live thread across terminal transports. Workspace changes start fresh
+threads. The operator must issue `/resume` to import the latest matching
+provider-stored conversation.
+
+A separate private chronology lives at
+`md-os/ops/local/cortex/conversation.ndjson`. Cortex records successful human
+inputs and final assistant responses there, verifies its hash chain, and gives
+a bounded recent tail to a new thread. A physical folder copy carries the file;
+Git ignores it, so push and clone do not. It is local working context, never
+canonical MD-OS memory or publication input. The selected excerpt is still sent
+to the configured model provider during inference.
+
+Clone-carried working continuity is instead read from the verified
+`md-os/continuity/portable_state.json` artifact. The snapshot is
+non-canonical, excludes raw transcripts and host/model/thread identifiers, and
+must fail closed on any self-hash, identity-source, or evidence mismatch.
+Host-local `last_turn.md` and `last_summary.md` artifacts are likewise excluded
+from implicit turn context and require an explicit historical-diagnostic task.

@@ -51,6 +51,8 @@ task-spec-outside-mdos-*/
 
 # MD-OS local, generated, and live runtime state.
 # Demo seeds live under md-os/examples/.
+# Private Cortex conversation continuity: physical-copy only, never Git.
+md-os/ops/local/cortex/
 md-os/ops/*
 !md-os/ops/.gitkeep
 !md-os/ops/releases/

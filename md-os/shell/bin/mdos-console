@@ -52,6 +52,13 @@ MAX_APFC_SOURCE_CHARS = 768
 MAX_APFC_CONTEXT_PACKS = 16
 MAX_APFC_CONTEXT_PACK_INDEX_BYTES = 64 * 1024
 MAX_APFC_CONTEXT_PACK_FIELD_CHARS = 384
+MAX_PORTABLE_STATE_BYTES = 64 * 1024
+MAX_PORTABLE_STATE_FIELD_CHARS = 768
+PRIVATE_CONVERSATION_PATH = "md-os/ops/local/cortex/conversation.ndjson"
+MAX_PRIVATE_CONVERSATION_BYTES = 16 * 1024 * 1024
+MAX_PRIVATE_CONVERSATION_RECORDS = 4096
+MAX_PRIVATE_CONVERSATION_FIELD_CHARS = 512 * 1024
+MAX_PRIVATE_CONVERSATION_CONTEXT_CHARS = 64 * 1024
 STEERING_INTERRUPT = "\x1b"
 STEERING_INPUT_BUFFER = ""
 INLINE_PASTE_BLOCKS: dict[str, str] = {}
@@ -156,6 +163,11 @@ class ShellSession:
     event_sequence: int = 0
     pasted_block_count: int = 0
     pending_events: list[ShellEvent] = field(default_factory=list)
+    # A Cortex process never needs Codex's stored chat. A fresh thread may be
+    # hydrated from the Git-ignored private chronology carried by the folder.
+    # Reusing provider-side Codex history still requires explicit /resume.
+    force_new_codex_thread: bool = True
+    resume_persisted_chat: bool = False
 
 
 @dataclass(frozen=True)
@@ -179,6 +191,7 @@ class CodexTurnResult:
     text: str
     streamed: bool
     binding: CodexThreadBinding
+    steering_inputs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1803,7 +1816,7 @@ class CodexAppServerClient:
         workspace = resolve_codex_workspace(resolved_cwd)
         key = str(workspace)
         cached = self.bindings.get(key)
-        if cached is not None:
+        if cached is not None and resume_existing and not ephemeral:
             binding = CodexThreadBinding(
                 thread_id=cached.thread_id,
                 workspace=workspace,
@@ -2039,6 +2052,7 @@ class CodexAppServerClient:
         response_received = False
         active_turn_id: str | None = None
         pending_steering: list[str] = []
+        submitted_steering: list[str] = []
         steer_request_ids: set[int] = set()
         interrupt_requested = False
         interrupted = False
@@ -2069,6 +2083,7 @@ class CodexAppServerClient:
                     print(codex_styled("CORTEX: active turn interrupted", ANSI_YELLOW, sys.stderr), file=sys.stderr)
             while active_turn_id is not None and pending_steering:
                 steer_text = pending_steering.pop(0)
+                submitted_steering.append(steer_text)
                 steer_context = build_apfc_input_context(steer_text, resolved_cwd)
                 contextualized_steer = "\n\n".join(
                     (
@@ -2357,6 +2372,7 @@ class CodexAppServerClient:
             text=output_text,
             streamed=bool(streamed_fragments),
             binding=binding,
+            steering_inputs=tuple(submitted_steering),
         )
 
     def close(self) -> None:
@@ -2502,11 +2518,10 @@ APFC_INVARIANT_CONTEXT_SOURCES = (
     ("continuity", "md-os/ops/continuity.md"),
 )
 APFC_ADVISORY_CONTEXT_SOURCES = (
-    ("last APFC turn", "md-os/ops/local/apfc/last_turn.md"),
-    ("last verified summary", "md-os/ops/last_summary.md"),
     ("health", "md-os/ops/health_classification.md"),
 )
 APFC_CONTEXT_PACK_INDEX = "md-os/ops/runtime/context_packs/index.json"
+PORTABLE_OPERATIONAL_STATE_PATH = "md-os/continuity/portable_state.json"
 APFC_CONTEXT_RESOLUTION_RULE = (
     "The invariant baseline is orientation, not proof that task context is "
     "sufficient. Lexical matches are advisory only. Classify the current turn "
@@ -2515,6 +2530,260 @@ APFC_CONTEXT_RESOLUTION_RULE = (
     "required canonical sources, and bind the result to current readback. If the "
     "required context cannot be resolved, state that it is insufficient."
 )
+
+
+def _portable_state_rejected(reason: str) -> tuple[dict[str, object], str | None]:
+    return (
+        {
+            "path": PORTABLE_OPERATIONAL_STATE_PATH,
+            "status": "rejected",
+            "state_hash": None,
+            "reason": reason,
+        },
+        None,
+    )
+
+
+def _portable_string_list(value: object, *, maximum_items: int = 12) -> list[str] | None:
+    if not isinstance(value, list) or len(value) > maximum_items:
+        return None
+    result: list[str] = []
+    for item in value:
+        if (
+            not isinstance(item, str)
+            or not item.strip()
+            or len(item) > MAX_PORTABLE_STATE_FIELD_CHARS
+        ):
+            return None
+        result.append(item.strip())
+    return result
+
+
+def load_portable_operational_state(
+    workspace: Path,
+) -> tuple[dict[str, object], str | None]:
+    """Validate and render the reviewed Git-carried continuity snapshot."""
+    relative_path = PORTABLE_OPERATIONAL_STATE_PATH
+    source = (workspace / relative_path).resolve()
+    try:
+        source.relative_to(workspace.resolve())
+    except ValueError:
+        return _portable_state_rejected("path_escape")
+    if not source.is_file():
+        return (
+            {
+                "path": relative_path,
+                "status": "absent",
+                "state_hash": None,
+                "reason": None,
+            },
+            None,
+        )
+    try:
+        if source.stat().st_size > MAX_PORTABLE_STATE_BYTES:
+            return _portable_state_rejected("size_limit")
+        payload = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return _portable_state_rejected("invalid_json")
+    if not isinstance(payload, dict):
+        return _portable_state_rejected("invalid_shape")
+    if set(payload) != {
+        "$schema",
+        "schema_version",
+        "artifact_role",
+        "identity",
+        "authority",
+        "snapshot",
+        "history_policy",
+        "state_hash",
+    }:
+        return _portable_state_rejected("invalid_top_level_fields")
+    if (
+        payload.get("$schema")
+        != "../schemas/portable_operational_state.schema.json"
+        or payload.get("schema_version") != 1
+        or payload.get("artifact_role") != "portable_operational_state"
+    ):
+        return _portable_state_rejected("invalid_contract_identity")
+    declared_hash = payload.get("state_hash")
+    material = dict(payload)
+    material.pop("state_hash", None)
+    if (
+        not isinstance(declared_hash, str)
+        or not re.fullmatch(r"[a-f0-9]{64}", declared_hash)
+        or apfc_json_hash(material) != declared_hash
+    ):
+        return _portable_state_rejected("state_hash_mismatch")
+
+    identity = payload.get("identity")
+    if not isinstance(identity, dict) or set(identity) != {
+        "identity_id",
+        "identity_version",
+        "sources",
+    }:
+        return _portable_state_rejected("invalid_identity_binding")
+    if (
+        identity.get("identity_id") != "md_os_apfc"
+        or identity.get("identity_version") != "5.0"
+    ):
+        return _portable_state_rejected("identity_mismatch")
+    identity_sources = identity.get("sources")
+    if (
+        not isinstance(identity_sources, list)
+        or not identity_sources
+        or len(identity_sources) > 8
+    ):
+        return _portable_state_rejected("identity_sources_missing")
+    for binding in identity_sources:
+        if not isinstance(binding, dict) or set(binding) != {"path", "sha256"}:
+            return _portable_state_rejected("invalid_identity_source")
+        bound_path = binding.get("path")
+        bound_hash = binding.get("sha256")
+        if (
+            not isinstance(bound_path, str)
+            or len(bound_path) > MAX_PORTABLE_STATE_FIELD_CHARS
+            or not isinstance(bound_hash, str)
+            or not re.fullmatch(r"[a-f0-9]{64}", bound_hash)
+        ):
+            return _portable_state_rejected("invalid_identity_source")
+        candidate = (workspace / bound_path).resolve()
+        try:
+            candidate.relative_to(workspace.resolve())
+        except ValueError:
+            return _portable_state_rejected("identity_source_escape")
+        if not candidate.is_file() or file_sha256(candidate) != bound_hash:
+            return _portable_state_rejected("identity_source_mismatch")
+
+    authority = payload.get("authority")
+    expected_authority = {
+        "canonical": False,
+        "import_mode": "working_context",
+        "may_override_identity": False,
+        "may_expand_permissions": False,
+        "may_establish_claim_truth": False,
+    }
+    if authority != expected_authority:
+        return _portable_state_rejected("invalid_authority_boundary")
+    history_policy = payload.get("history_policy")
+    expected_history_policy = {
+        "chat_history_required": False,
+        "raw_transcript_included": False,
+        "thread_identifier_included": False,
+        "model_identifier_included": False,
+    }
+    if history_policy != expected_history_policy:
+        return _portable_state_rejected("invalid_history_policy")
+
+    snapshot = payload.get("snapshot")
+    if not isinstance(snapshot, dict) or set(snapshot) != {
+        "revision",
+        "status",
+        "objective",
+        "active_task",
+        "completed_results",
+        "decisions",
+        "open_risks",
+        "next_actions",
+        "evidence",
+    }:
+        return _portable_state_rejected("invalid_snapshot")
+    revision = snapshot.get("revision")
+    objective = snapshot.get("objective")
+    active_task = snapshot.get("active_task")
+    if (
+        not isinstance(revision, int)
+        or isinstance(revision, bool)
+        or revision < 1
+        or snapshot.get("status") not in {"ready", "blocked", "complete"}
+        or not isinstance(objective, str)
+        or not objective.strip()
+        or len(objective) > MAX_PORTABLE_STATE_FIELD_CHARS
+        or (
+            active_task is not None
+            and (
+                not isinstance(active_task, str)
+                or not active_task.strip()
+                or len(active_task) > MAX_PORTABLE_STATE_FIELD_CHARS
+            )
+        )
+    ):
+        return _portable_state_rejected("invalid_snapshot_scalar")
+    list_fields: dict[str, list[str]] = {}
+    for field_name in (
+        "completed_results",
+        "decisions",
+        "open_risks",
+        "next_actions",
+    ):
+        normalized = _portable_string_list(snapshot.get(field_name))
+        if normalized is None:
+            return _portable_state_rejected(f"invalid_{field_name}")
+        list_fields[field_name] = normalized
+
+    evidence = snapshot.get("evidence")
+    if not isinstance(evidence, list) or len(evidence) > 24:
+        return _portable_state_rejected("invalid_evidence")
+    evidence_lines: list[str] = []
+    for item in evidence:
+        if not isinstance(item, dict) or set(item) != {"path", "sha256", "status"}:
+            return _portable_state_rejected("invalid_evidence_item")
+        evidence_path = item.get("path")
+        evidence_hash = item.get("sha256")
+        if (
+            not isinstance(evidence_path, str)
+            or len(evidence_path) > MAX_PORTABLE_STATE_FIELD_CHARS
+            or not isinstance(evidence_hash, str)
+            or not re.fullmatch(r"[a-f0-9]{64}", evidence_hash)
+            or item.get("status") not in {"source", "verified_readback"}
+        ):
+            return _portable_state_rejected("invalid_evidence_item")
+        evidence_source = (workspace / evidence_path).resolve()
+        try:
+            evidence_source.relative_to(workspace.resolve())
+        except ValueError:
+            return _portable_state_rejected("evidence_path_escape")
+        if not evidence_source.is_file() or file_sha256(evidence_source) != evidence_hash:
+            return _portable_state_rejected("evidence_hash_mismatch")
+        evidence_lines.append(
+            f"- {item['status']}: {evidence_path} ({evidence_hash})"
+        )
+
+    def render_items(label: str, items: list[str]) -> list[str]:
+        return [f"{label}:", *([f"- {item}" for item in items] or ["- none"])]
+
+    rendered_lines = [
+        "PORTABLE OPERATIONAL CONTINUITY",
+        f"SOURCE: {relative_path}",
+        "INTEGRITY: verified",
+        "AUTHORITY: non-canonical working context; current human request wins",
+        "HISTORY: snapshot only; no chat transcript, thread id, or model id",
+        f"REVISION: {revision}",
+        f"STATUS: {snapshot['status']}",
+        f"OBJECTIVE: {objective.strip()}",
+        (
+            "ACTIVE TASK: "
+            + (active_task.strip() if isinstance(active_task, str) else "none")
+        ),
+        *render_items("COMPLETED RESULTS", list_fields["completed_results"]),
+        *render_items("DECISIONS", list_fields["decisions"]),
+        *render_items("OPEN RISKS", list_fields["open_risks"]),
+        *render_items("NEXT ACTIONS", list_fields["next_actions"]),
+        "EVIDENCE:",
+        *(evidence_lines or ["- none"]),
+    ]
+    rendered = "\n".join(rendered_lines)
+    if len(rendered) > 3 * MAX_PORTABLE_STATE_FIELD_CHARS:
+        return _portable_state_rejected("rendered_size_limit")
+    return (
+        {
+            "path": relative_path,
+            "status": "verified",
+            "state_hash": declared_hash,
+            "reason": None,
+        },
+        rendered,
+    )
+
 
 def _apfc_tokens(value: str) -> set[str]:
     """Return stable semantic hints without adding a language-specific model."""
@@ -2617,6 +2886,7 @@ def _build_apfc_context_contract(
     context_packs: list[dict[str, str]],
     advisory_selected_sources: list[str],
     advisory_omitted_sources: list[str],
+    portable_state: dict[str, object] | None = None,
 ) -> dict[str, object]:
     baseline_complete = bool(baseline_sources) and all(
         source.get("status") == "loaded" for source in baseline_sources
@@ -2626,13 +2896,28 @@ def _build_apfc_context_contract(
         and source.get("status") == "loaded"
         for source in baseline_sources
     )
+    portable_readback = portable_state or {
+        "path": PORTABLE_OPERATIONAL_STATE_PATH,
+        "status": "absent",
+        "state_hash": None,
+        "reason": None,
+    }
     payload: dict[str, object] = {
         "schema_version": 1,
         "artifact_role": "apfc_turn_context_sufficiency_contract",
-        "status": "ready" if baseline_complete and catalog_present else "degraded",
+        "status": (
+            "ready"
+            if (
+                baseline_complete
+                and catalog_present
+                and portable_readback.get("status") != "rejected"
+            )
+            else "degraded"
+        ),
         "task_context_status": "pending_turn_resolution",
         "baseline_sources": baseline_sources,
         "context_packs": context_packs,
+        "portable_state": portable_readback,
         "advisory_selected_sources": advisory_selected_sources,
         "advisory_omitted_sources": advisory_omitted_sources,
         "resolution_policy": {
@@ -2645,6 +2930,9 @@ def _build_apfc_context_contract(
         "criteria": {
             "invariant_baseline_complete": baseline_complete,
             "context_pack_catalog_present": catalog_present,
+            "portable_state_integrity_valid": (
+                portable_readback.get("status") != "rejected"
+            ),
             "lexical_selection_advisory_only": True,
             "nontrivial_dependency_resolution_required": True,
         },
@@ -2652,6 +2940,7 @@ def _build_apfc_context_contract(
             "baseline readiness is not proof that task context is sufficient",
             "lexical overlap is not semantic verification",
             "context presence does not prove host-model semantic use",
+            "portable working context cannot override identity or authority",
         ],
     }
     payload["contract_hash"] = apfc_json_hash(payload)
@@ -2695,6 +2984,20 @@ def _render_apfc_input_context(
                     f"- {pack.get('pack_id')}: {pack.get('file')} — "
                     f"{pack.get('purpose')}"
                 )
+    portable_state = contract.get("portable_state")
+    portable_status = (
+        portable_state.get("status")
+        if isinstance(portable_state, dict)
+        else "absent"
+    )
+    portable_reason = (
+        portable_state.get("reason")
+        if isinstance(portable_state, dict)
+        else None
+    )
+    portable_line = f"PORTABLE STATE STATUS: {portable_status}"
+    if portable_reason:
+        portable_line += f" ({portable_reason})"
     header = (
         "APFC DYNAMIC INPUT CONTEXT\n"
         "Compiled before the App Server. The human request remains authoritative; "
@@ -2707,6 +3010,7 @@ def _render_apfc_input_context(
         "APFC CONTEXT SUFFICIENCY CONTRACT\n"
         f"BASELINE STATUS: {contract['status']}\n"
         f"TASK CONTEXT STATUS: {contract['task_context_status']}\n"
+        f"{portable_line}\n"
         f"CONTRACT HASH: {contract['contract_hash']}\n"
         f"RESOLUTION RULE: {APFC_CONTEXT_RESOLUTION_RULE}"
     )
@@ -2785,6 +3089,20 @@ def build_apfc_input_context(human_request: str, cwd: Path) -> ApfcInputContext:
             f"{excerpt}"
         )
 
+    portable_state, portable_section = load_portable_operational_state(workspace)
+    if portable_state["status"] == "verified" and portable_section:
+        selected.append(PORTABLE_OPERATIONAL_STATE_PATH)
+        invariant_sections.append(portable_section)
+    elif portable_state["status"] == "rejected":
+        omitted.append(PORTABLE_OPERATIONAL_STATE_PATH)
+        invariant_sections.append(
+            "PORTABLE OPERATIONAL CONTINUITY\n"
+            "STATUS: rejected\n"
+            f"REASON: {portable_state['reason']}\n"
+            "EFFECT: operational handoff is unavailable; identity bootstrap "
+            "remains independent and the current human request remains authoritative."
+        )
+
     context_packs, catalog_hash, catalog_path = (
         _load_apfc_context_pack_catalog(workspace)
     )
@@ -2850,6 +3168,7 @@ def build_apfc_input_context(human_request: str, cwd: Path) -> ApfcInputContext:
             context_packs=context_packs,
             advisory_selected_sources=candidate_advisory,
             advisory_omitted_sources=advisory_omitted,
+            portable_state=portable_state,
         )
         candidate_rendered = _render_apfc_input_context(
             sections=[*sections, section],
@@ -2870,6 +3189,7 @@ def build_apfc_input_context(human_request: str, cwd: Path) -> ApfcInputContext:
         context_packs=context_packs,
         advisory_selected_sources=advisory_selected,
         advisory_omitted_sources=sorted(set(advisory_omitted)),
+        portable_state=portable_state,
     )
     rendered = _render_apfc_input_context(
         sections=sections,
@@ -2955,6 +3275,292 @@ def apfc_json_hash(payload: object) -> str:
             sort_keys=True,
             separators=(",", ":"),
         )
+    )
+
+
+def private_conversation_enabled() -> bool:
+    """Return whether Cortex should persist private folder-carried chronology."""
+    return os.environ.get("MDOS_PRIVATE_CONVERSATION", "on").strip().casefold() not in {
+        "0",
+        "false",
+        "no",
+        "off",
+    }
+
+
+def _private_conversation_readback(
+    *,
+    status: str,
+    record_count: int = 0,
+    head_hash: str | None = None,
+    reason: str | None = None,
+) -> dict[str, object]:
+    return {
+        "path": PRIVATE_CONVERSATION_PATH,
+        "status": status,
+        "record_count": record_count,
+        "head_hash": head_hash,
+        "reason": reason,
+    }
+
+
+def _private_conversation_source(workspace: Path) -> Path:
+    root = workspace.resolve()
+    source = (root / PRIVATE_CONVERSATION_PATH).resolve()
+    try:
+        source.relative_to(root)
+    except ValueError as error:
+        raise RuntimeError("PRIVATE_CONVERSATION_PATH_ESCAPE") from error
+    return source
+
+
+def read_private_conversation_history(
+    workspace: Path,
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    """Validate the local conversation hash chain without exposing its text."""
+    try:
+        source = _private_conversation_source(workspace)
+    except RuntimeError:
+        return (
+            _private_conversation_readback(status="rejected", reason="path_escape"),
+            [],
+        )
+    if not source.is_file():
+        return _private_conversation_readback(status="absent"), []
+    try:
+        if source.stat().st_size > MAX_PRIVATE_CONVERSATION_BYTES:
+            return (
+                _private_conversation_readback(
+                    status="rejected", reason="size_limit"
+                ),
+                [],
+            )
+        lines = source.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError):
+        return (
+            _private_conversation_readback(status="rejected", reason="unreadable"),
+            [],
+        )
+    if len(lines) > MAX_PRIVATE_CONVERSATION_RECORDS:
+        return (
+            _private_conversation_readback(
+                status="rejected", reason="record_limit"
+            ),
+            [],
+        )
+
+    records: list[dict[str, object]] = []
+    previous_hash: str | None = None
+    expected_fields = {
+        "$schema",
+        "schema_version",
+        "artifact_role",
+        "sequence",
+        "recorded_at",
+        "previous_hash",
+        "human_inputs",
+        "assistant_response",
+        "event_hash",
+    }
+    for index, line in enumerate(lines, start=1):
+        if not line.strip():
+            return (
+                _private_conversation_readback(
+                    status="rejected", reason=f"blank_record:{index}"
+                ),
+                [],
+            )
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            return (
+                _private_conversation_readback(
+                    status="rejected", reason=f"invalid_json:{index}"
+                ),
+                [],
+            )
+        if not isinstance(record, dict) or set(record) != expected_fields:
+            return (
+                _private_conversation_readback(
+                    status="rejected", reason=f"invalid_shape:{index}"
+                ),
+                [],
+            )
+        human_inputs = record.get("human_inputs")
+        assistant_response = record.get("assistant_response")
+        recorded_at = record.get("recorded_at")
+        event_hash = record.get("event_hash")
+        if (
+            record.get("$schema")
+            != "../../../schemas/private_cortex_conversation_turn.schema.json"
+            or record.get("schema_version") != 1
+            or record.get("artifact_role") != "private_cortex_conversation_turn"
+            or record.get("sequence") != index
+            or record.get("previous_hash") != previous_hash
+            or not isinstance(recorded_at, str)
+            or not recorded_at
+            or len(recorded_at) > 64
+            or not isinstance(human_inputs, list)
+            or not human_inputs
+            or len(human_inputs) > 32
+            or any(
+                not isinstance(value, str)
+                or not value
+                or len(value) > MAX_PRIVATE_CONVERSATION_FIELD_CHARS
+                for value in human_inputs
+            )
+            or not isinstance(assistant_response, str)
+            or not assistant_response
+            or len(assistant_response) > MAX_PRIVATE_CONVERSATION_FIELD_CHARS
+            or not isinstance(event_hash, str)
+            or not re.fullmatch(r"[a-f0-9]{64}", event_hash)
+        ):
+            return (
+                _private_conversation_readback(
+                    status="rejected", reason=f"invalid_contract:{index}"
+                ),
+                [],
+            )
+        material = dict(record)
+        material.pop("event_hash")
+        if apfc_json_hash(material) != event_hash:
+            return (
+                _private_conversation_readback(
+                    status="rejected", reason=f"hash_mismatch:{index}"
+                ),
+                [],
+            )
+        records.append(record)
+        previous_hash = event_hash
+
+    return (
+        _private_conversation_readback(
+            status="verified",
+            record_count=len(records),
+            head_hash=previous_hash,
+        ),
+        records,
+    )
+
+
+def append_private_conversation_turn(
+    workspace: Path,
+    human_inputs: list[str],
+    assistant_response: str,
+) -> dict[str, object]:
+    """Append one successful exchange to the Git-ignored local hash chain."""
+    readback, records = read_private_conversation_history(workspace)
+    if readback["status"] == "rejected":
+        raise RuntimeError(
+            "PRIVATE_CONVERSATION_REJECTED: " + str(readback.get("reason"))
+        )
+    normalized_inputs = [value for value in human_inputs if value]
+    if (
+        not normalized_inputs
+        or len(normalized_inputs) > 32
+        or any(
+            len(value) > MAX_PRIVATE_CONVERSATION_FIELD_CHARS
+            for value in normalized_inputs
+        )
+        or not assistant_response
+        or len(assistant_response) > MAX_PRIVATE_CONVERSATION_FIELD_CHARS
+    ):
+        raise RuntimeError("PRIVATE_CONVERSATION_TURN_EXCEEDS_BOUND")
+    if len(records) >= MAX_PRIVATE_CONVERSATION_RECORDS:
+        raise RuntimeError("PRIVATE_CONVERSATION_RECORD_LIMIT")
+
+    previous_hash = str(records[-1]["event_hash"]) if records else None
+    record: dict[str, object] = {
+        "$schema": "../../../schemas/private_cortex_conversation_turn.schema.json",
+        "schema_version": 1,
+        "artifact_role": "private_cortex_conversation_turn",
+        "sequence": len(records) + 1,
+        "recorded_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "previous_hash": previous_hash,
+        "human_inputs": normalized_inputs,
+        "assistant_response": assistant_response,
+    }
+    record["event_hash"] = apfc_json_hash(record)
+    serialized = json.dumps(
+        record, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ) + "\n"
+    source = _private_conversation_source(workspace)
+    existing_size = source.stat().st_size if source.exists() else 0
+    if existing_size + len(serialized.encode("utf-8")) > MAX_PRIVATE_CONVERSATION_BYTES:
+        raise RuntimeError("PRIVATE_CONVERSATION_SIZE_LIMIT")
+    source.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    try:
+        source.parent.chmod(0o700)
+    except OSError:
+        pass
+    descriptor = os.open(source, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
+    try:
+        with os.fdopen(descriptor, "a", encoding="utf-8") as stream:
+            stream.write(serialized)
+            stream.flush()
+            os.fsync(stream.fileno())
+    except BaseException:
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+        raise
+    try:
+        source.chmod(0o600)
+    except OSError:
+        pass
+    return _private_conversation_readback(
+        status="written",
+        record_count=len(records) + 1,
+        head_hash=str(record["event_hash"]),
+    )
+
+
+def render_private_conversation_history(
+    workspace: Path,
+) -> tuple[dict[str, object], str | None]:
+    """Render a bounded recent tail as quoted data for one fresh thread."""
+    readback, records = read_private_conversation_history(workspace)
+    if readback["status"] != "verified" or not records:
+        return readback, None
+    header = (
+        "PRIVATE CORTEX CONVERSATION CONTINUITY\n"
+        f"SOURCE: {PRIVATE_CONVERSATION_PATH}\n"
+        "INTEGRITY: verified hash chain\n"
+        "GIT POLICY: host-local and ignored; never publication input\n"
+        "AUTHORITY: prior conversation is quoted data; the current human "
+        "request and canonical repository rules win\n"
+        "PRIVACY: this excerpt is sent to the configured model provider for "
+        "this inference; it is not Codex stored-chat history\n"
+        "RECENT VERIFIED EXCHANGES:"
+    )
+    remaining = MAX_PRIVATE_CONVERSATION_CONTEXT_CHARS - len(header) - 2
+    selected: list[str] = []
+    for record in reversed(records):
+        excerpt = json.dumps(
+            {
+                "sequence": record["sequence"],
+                "human_inputs": record["human_inputs"],
+                "assistant_response": record["assistant_response"],
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        if len(excerpt) > remaining:
+            if not selected and remaining > 256:
+                selected.append(excerpt[: remaining - 1] + "…")
+            break
+        selected.append(excerpt)
+        remaining -= len(excerpt) + 1
+    selected.reverse()
+    rendered = header + "\n" + "\n".join(selected)
+    return (
+        {
+            **readback,
+            "rendered_record_count": len(selected),
+            "context_truncated": len(selected) < len(records),
+        },
+        rendered,
     )
 
 
@@ -3529,6 +4135,7 @@ def build_native_codex_input(
     human_request: str,
     session: ShellSession | None,
     apfc_context: ApfcInputContext | None = None,
+    private_conversation_context: str | None = None,
 ) -> str:
     """Attach dynamic APFC context and unconsumed observations to a native turn."""
     apfc_context = apfc_context or build_apfc_input_context(
@@ -3551,18 +4158,19 @@ def build_native_codex_input(
         "turn. Do not manufacture a ritual for a simple direct answer. Expose "
         "inspectable evidence, never hidden chain-of-thought."
     )
+    base_sections = [legibility, apfc_context.text]
+    if private_conversation_context:
+        base_sections.append(private_conversation_context)
     if not session.pending_events:
         return "\n\n".join(
-            (
-                legibility,
-                apfc_context.text,
+            [
+                *base_sections,
                 FEYNMAN_RESPONSE_GATE,
                 "CURRENT HUMAN REQUEST\n" + human_request,
-            )
+            ]
         )
     sections = [
-        legibility,
-        apfc_context.text,
+        *base_sections,
         (
             "MD-OS SHELL OBSERVATIONS\n"
             "The records below are bounded sensory readback from explicit "
@@ -3596,13 +4204,37 @@ def run_native_codex_turn(
         app_server = session.app_server
     streamer = NativeAgentStreamer()
     apfc_context = build_apfc_input_context(human_request, Path.cwd())
+    resume_existing = should_resume_codex_thread(session, Path.cwd())
+    workspace = resolve_codex_workspace(Path.cwd())
+    private_workspace = (
+        session is not None
+        and private_conversation_enabled()
+        and (workspace / "ME.md").is_file()
+        and (workspace / "md-os").is_dir()
+    )
+    private_context: str | None = None
+    if private_workspace and not resume_existing:
+        private_readback, private_context = render_private_conversation_history(
+            workspace
+        )
+        if private_readback["status"] == "rejected":
+            print(
+                "CORTEX PRIVATE CONTINUITY REJECTED: "
+                + str(private_readback.get("reason")),
+                file=sys.stderr,
+            )
     try:
         with interactive_turn_terminal():
             result = app_server.run_turn(
-                build_native_codex_input(human_request, session, apfc_context),
+                build_native_codex_input(
+                    human_request,
+                    session,
+                    apfc_context,
+                    private_context,
+                ),
                 streamer.feed,
                 cwd=Path.cwd(),
-                resume_existing=session is not None,
+                resume_existing=resume_existing,
                 ephemeral=session is None,
                 render_tool_events=True,
                 steering_reader=(
@@ -3642,6 +4274,20 @@ def run_native_codex_turn(
         session.codex_instruction_sources = result.binding.instruction_sources
         session.codex_turns += 1
         session.pending_events.clear()
+        session.force_new_codex_thread = False
+        session.resume_persisted_chat = False
+        if private_workspace:
+            try:
+                append_private_conversation_turn(
+                    workspace,
+                    [human_request, *result.steering_inputs],
+                    result.text,
+                )
+            except (OSError, RuntimeError) as error:
+                print(
+                    f"CORTEX PRIVATE CONTINUITY WRITE FAILED: {error}",
+                    file=sys.stderr,
+                )
     return result
 
 
@@ -3654,7 +4300,12 @@ def codex_invocation(
     executable = configured or shutil.which("codex")
     if not executable:
         fail("Codex CLI was not found in PATH", 69)
-    if session is not None and session.codex_thread_id is not None:
+    resume_existing = (
+        should_resume_codex_thread(session, Path.cwd())
+        and session is not None
+        and session.codex_thread_id is not None
+    )
+    if resume_existing:
         invocation = [
             executable,
             "exec",
@@ -3694,7 +4345,7 @@ def codex_invocation(
                 f'model_reasoning_effort="{effort}"',
             ]
         )
-    if session is not None and session.codex_thread_id is not None:
+    if resume_existing:
         invocation.append(session.codex_thread_id)
     invocation.append("-")
     return invocation
@@ -3743,11 +4394,12 @@ def run_ai(
             if session.app_server is None:
                 session.app_server = CodexAppServerClient(runtime)
             app_server = session.app_server
+        resume_existing = should_resume_codex_thread(session, Path.cwd())
         try:
             turn_result = app_server.run_turn(
                 prompt,
                 on_agent_delta,
-                resume_existing=session is not None,
+                resume_existing=resume_existing,
                 ephemeral=session is None,
             )
             model_response = turn_result.text
@@ -3771,6 +4423,8 @@ def run_ai(
                 turn_result.binding.instruction_sources
             )
             session.codex_turns += 1
+            session.force_new_codex_thread = False
+            session.resume_persisted_chat = False
         return model_response
     output_path: Path | None = None
     try:
@@ -3781,6 +4435,7 @@ def run_ai(
         ) as output_stream:
             output_path = Path(output_stream.name)
         started_at = time.monotonic()
+        resume_existing = should_resume_codex_thread(session, Path.cwd())
         result = subprocess.run(
             codex_invocation(runtime, output_path, session),
             input=prompt,
@@ -3802,12 +4457,15 @@ def run_ai(
         if session is not None:
             observed_thread_id = parse_codex_thread_id(result.stdout)
             if (
-                session.codex_thread_id is not None
+                resume_existing
                 and session.codex_thread_id != observed_thread_id
             ):
                 fail("Codex resumed a different session thread", 70)
             session.codex_thread_id = observed_thread_id
+            session.codex_workspace = str(resolve_codex_workspace(Path.cwd()))
             session.codex_turns += 1
+            session.force_new_codex_thread = False
+            session.resume_persisted_chat = False
         try:
             model_response = output_path.read_text(encoding="utf-8")
         except (OSError, UnicodeError) as error:
@@ -4564,11 +5222,34 @@ CODEX_SLASH_COMMANDS = (
 )
 
 
+def should_resume_codex_thread(
+    session: ShellSession | None,
+    cwd: Path,
+) -> bool:
+    """Allow chat history only inside the live binding or after explicit opt-in."""
+    if session is None or session.force_new_codex_thread:
+        return False
+    workspace = str(resolve_codex_workspace(cwd))
+    live_same_workspace = (
+        session.codex_thread_id is not None
+        and session.codex_workspace == workspace
+    )
+    return live_same_workspace or session.resume_persisted_chat
+
+
 def slash_client(session: ShellSession) -> tuple[CodexAppServerClient, CodexThreadBinding]:
     runtime = load_runtime()
     if session.app_server is None:
         session.app_server = CodexAppServerClient(runtime)
-    binding = session.app_server.bind_thread(Path.cwd(), resume_existing=True)
+    binding = session.app_server.bind_thread(
+        Path.cwd(),
+        resume_existing=should_resume_codex_thread(session, Path.cwd()),
+    )
+    session.codex_thread_id = binding.thread_id
+    session.codex_workspace = str(binding.workspace)
+    session.codex_instruction_sources = binding.instruction_sources
+    session.force_new_codex_thread = False
+    session.resume_persisted_chat = False
     return session.app_server, binding
 
 
@@ -4601,6 +5282,27 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
             os.environ["MDOS_MODEL"] = argument
         print(f"model={effective_model(load_runtime())}")
         return True
+    if command == "resume":
+        if effective_backend(load_runtime()) != "app-server":
+            print(
+                "cortex: /resume requires the app-server backend",
+                file=sys.stderr,
+            )
+            return True
+        if session.app_server is not None:
+            session.app_server.close()
+        session.app_server = None
+        session.codex_thread_id = None
+        session.codex_workspace = None
+        session.codex_instruction_sources = ()
+        session.pending_events.clear()
+        session.force_new_codex_thread = False
+        session.resume_persisted_chat = True
+        print(
+            "CORTEX: the next request may resume the latest Codex thread for "
+            "this workspace; stored chat history is being enabled explicitly"
+        )
+        return True
     if command in {"new", "clear"}:
         if command == "clear":
             sys.stdout.write("\033[2J\033[H")
@@ -4611,7 +5313,14 @@ def handle_codex_slash_command(line: str, session: ShellSession) -> bool:
         session.codex_thread_id = None
         session.codex_workspace = None
         session.codex_instruction_sources = ()
-        print("CORTEX: a new Codex chat will start with the next request")
+        session.pending_events.clear()
+        session.force_new_codex_thread = True
+        session.resume_persisted_chat = False
+        print(
+            "CORTEX: the next request will start a fresh Codex thread; "
+            "provider chat history will not be resumed; verified private "
+            "folder chronology will hydrate it when available"
+        )
         return True
     client, binding = slash_client(session)
     thread_id = binding.thread_id

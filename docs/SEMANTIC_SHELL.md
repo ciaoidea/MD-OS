@@ -122,13 +122,14 @@ human input
             ├── load the bounded invariant baseline
             │   └── identity, bootstrap, core, orientation, active work,
             │       continuity, and generated context-pack catalog
+            ├── load portable_state.json only if every declared hash verifies
             ├── hash every loaded baseline source into a typed context contract
             ├── treat lexical matches as advisory task-routing hints
             ├── require dependency resolution before nontrivial claims/actions
             └── expose selected paths, omitted paths, and sufficiency status
-        └── reuse the in-process workspace binding when available
-            or thread/list -> latest matching native Codex thread
-            or thread/start -> a new persistent Codex thread
+        └── reuse only the live in-process binding for the same workspace
+            or thread/start -> a fresh persistent Codex thread by default
+            or explicit /resume -> thread/list then thread/resume
         └── turn/start with the current cwd
             ├── native AGENTS.md discovery
             ├── reasoning and planning
@@ -163,7 +164,7 @@ current editable line like `Ctrl-C`; neither action exits the Cortex REPL.
 Cortex reserves every currently documented Codex slash-command name, so slash
 input is never misrouted as an ordinary model prompt. `/help` prints the live
 catalog. Protocol-backed or deterministic adapters cover `/goal`, `/compact`,
-`/rename`, `/fork`, `/new`, `/clear`, `/status`, `/model`, `/diff`, `/review`,
+`/rename`, `/fork`, `/new`, `/resume`, `/clear`, `/status`, `/model`, `/diff`, `/review`,
 `/exit`, and `/quit`. Commands that require a Codex TUI picker, clipboard, IDE,
 desktop app, account dialog, or Windows-only setup remain recognized and return
 an explicit capability notice instead of pretending the operation occurred.
@@ -178,7 +179,9 @@ The APFC input filter is contextual rather than lexical: it does not classify
 requests from a fixed phrase list and does not rewrite the human statement. For
 each ordinary input and steering message, it loads the bounded invariant
 baseline and the generated context-pack catalog, then adds any advisory
-relevance-selected operational sources. Loaded, missing, selected, and omitted
+relevance-selected health readback. Local `last_turn.md` and `last_summary.md`
+files remain inspectable runtime artifacts but are never injected automatically;
+they require an explicit task-directed read. Loaded, missing, selected, and omitted
 sources are declared inside the context sent to Codex. This makes the APFC
 causally present before `turn/start` and `turn/steer`; it is not claimed to be
 an infallible safety classifier or an output gate.
@@ -218,32 +221,57 @@ same directory in separate processes. Set `MDOS_SHARED_SESSION=never` only when
 an intentionally isolated interactive process is required; set it to `always`
 to require `tmux` rather than falling back when it is unavailable.
 
-Codex threads are also bound by current Git workspace, falling back to the exact current
-directory outside Git. On the first semantic turn in a workspace, `cortex` asks
-Codex App Server for the most recent matching `cli`, `vscode`, `exec`, or
-`appServer` thread and resumes it. If none exists, it starts one. Moving to a
-different repository selects that repository's thread; moving back reuses the
-first binding.
+Codex threads are also bound by current Git workspace, falling back to the
+exact current directory outside Git. On ordinary process boot, `cortex`
+starts a fresh thread and does not list stored conversations. Later turns reuse
+that live thread only while the process remains in the same workspace. Moving
+to another repository starts another fresh thread.
 
-This is the missing continuity boundary:
+This is the default isolation boundary:
 
 ```text
 cd ~/projects/project-a
--> resume project-a Codex history and project-a instructions
+-> fresh Codex thread + identity + private folder chronology when present
 
 cd ~/projects/project-b
--> resume project-b Codex history and project-b instructions
+-> fresh Codex thread + identity + project-b private chronology when present
 ```
 
-Codex's own session store remains authoritative for chat history. MD-OS does
-not invent a parallel `.bash_history` for conversation and does not copy raw
-Codex transcripts into Git.
+Codex's session store remains available only as optional chat history.
+`/resume` explicitly enables one lookup and resume of the latest matching
+thread. `/new` and `/clear` close the current App Server and force the next
+request through `thread/start`. Fresh threads normally receive a bounded recent
+tail from `md-os/ops/local/cortex/conversation.ndjson`. Cortex appends each
+successful exchange to this private hash chain; it stores human inputs and the
+final assistant response, not hidden reasoning, tool traces, model ids, or
+Codex thread ids.
 
-If another non-shared Cortex process already owns the latest workspace thread,
-the new process stops with attach guidance. It does not silently create a new
-thread, because doing so would split the suspended discussion into competing
-histories. Exit the isolated process and run `cortex` again to enter the shared
-workspace session.
+The private file has a different transport rule from the repository sources:
+a physical copy of the whole folder carries it, while Git ignores it. Therefore
+`cp -a`, `rsync -a`, or a full archive can preserve the conversation across
+directories or computers, but `git push` and `git clone` cannot. The versioned
+`md-os/continuity/portable_state.json` remains a privacy-reviewed operational
+summary without a transcript. Set `MDOS_PRIVATE_CONVERSATION=off` to disable
+local conversation persistence.
+
+Git privacy and network privacy are separate. Hydration sends the selected
+private excerpt to the configured model provider as inference context. A local
+model is required if the transcript must not leave the machine at all.
+
+The ordinary context compiler also excludes host-local `last_turn.md` and
+`last_summary.md`. They can be inspected only when the current human request
+explicitly calls for historical diagnosis; they are not implicit identity or
+continuity inputs.
+
+Git-clone-carried operational continuity comes from
+`md-os/continuity/portable_state.json`. Cortex imports it only after checking
+its self-hash, identity-source hashes, evidence hashes, schema-level field
+boundaries, and non-authoritative policy. A rejected capsule is shown as
+rejected and contributes no working-context content.
+
+If explicit `/resume` finds that another process owns the stored thread,
+Cortex stops with attach guidance. Ordinary fresh boot does not depend on that
+thread and therefore does not encounter this conflict.
 
 ## Shell observations
 

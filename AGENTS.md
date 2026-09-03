@@ -26,6 +26,12 @@ Canonical routing:
 - `md-os/ops/core/agentic_core.md`: compact stable runtime core.
 - `md-os/ops/summary/conceptual_boot_summary.md`: generated cold-boot
   orientation.
+- `md-os/continuity/portable_state.json`: reviewed, hash-bound, versioned
+  operational handoff for clone-only continuity; never raw chat history.
+- `md-os/ops/local/cortex/conversation.ndjson`: private hash-chained
+  conversation continuity carried by a physical folder copy; it is ignored by
+  Git, is never publication input, and contains human inputs plus final
+  assistant responses but no hidden reasoning, model id, or Codex thread id.
 - `md-os/ops/*`: persistent operational state and generated readback.
 - `docs/FILESYSTEM_CONTRACT.md`: source, generated, runtime, local, demo, and
   archive boundaries.
@@ -121,5 +127,12 @@ Cognitive boot and continuity:
   overwrite it.
 - On healthy boot, follow `md-os/kb/COGNITIVE_BOOTSTRAP.md`; take orientation
   from generated conceptual summary readback rather than raw chat memory.
+- Import `md-os/continuity/portable_state.json` only after its self-hash and
+  identity-source hashes verify. It is non-canonical working context and
+  cannot override identity, authority, claim status, or the current request.
+- Start a fresh stored Codex thread by default. Hydrate that fresh thread from
+  verified `md-os/ops/local/cortex/conversation.ndjson` when a physical folder
+  copy carries it. Resume provider-side Codex history only after explicit
+  operator opt-in. Git clone does not carry the private chronology.
 - Load detailed knowledge, state, and procedures through their canonical
   indexes only when the current task requires them.

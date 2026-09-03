@@ -253,7 +253,12 @@ Keep the hot boot small. Always load only:
 1. `AGENTS.md` as repository guardrails
 2. `md-os/ops/core/agentic_core.md` as compact identity and operating stance
 3. `md-os/ops/summary/conceptual_boot_summary.md` as generated orientation
-4. `md-os/ops/summary/active_work_items.md` and
+4. `md-os/continuity/portable_state.json`, when present and fully verified,
+   as non-canonical clone-carried working context
+5. a bounded recent tail of
+   `md-os/ops/local/cortex/conversation.ndjson`, when its private hash chain is
+   present and verified
+6. `md-os/ops/summary/active_work_items.md` and
    `md-os/ops/health_classification.md` as current state
 
 Expand context by task rather than by default:
@@ -282,6 +287,25 @@ md-os/ops/summary/conceptual_boot_summary.md
 It may summarize the current conceptual state, active work, risks, and next
 safe actions. It must not override identity source files, permission policy,
 connector capability, claim status, or verifier readback.
+
+If the portable operational snapshot exists, read it after stable identity and
+generated orientation:
+
+```text
+md-os/continuity/portable_state.json
+```
+
+Import it only when its schema, self-hash, identity-source hashes, and evidence
+hashes verify. It is versioned working context for a clean Git clone, not
+canonical identity or truth. It cannot expand permissions, replace the current
+human request, or import chat transcripts, model identifiers, thread
+identifiers, host paths, or credentials. Reject the entire snapshot if any
+binding fails.
+
+Do not inject `md-os/ops/local/apfc/last_turn.md` or
+`md-os/ops/last_summary.md` during ordinary Cortex boot. They remain explicit
+diagnostic artifacts and may be read only when the current task actually asks
+for historical diagnosis.
 
 If a Warm Start capsule exists, read it only after stable identity, compact
 core, and conceptual cold boot summary:
@@ -366,6 +390,13 @@ After cognitive bootstrap, the host should:
 - report from rebuilt files and readable state, not from session memory alone
 - prefer generated conceptual boot summary over raw previous-chat memory when
   resuming after cold start
+- start a fresh Codex thread on ordinary Cortex process boot; use stored chat
+  history only after explicit operator opt-in with `/resume`
+- hydrate a fresh thread from the verified private chronology at
+  `md-os/ops/local/cortex/conversation.ndjson` when a physical folder copy
+  carries it; never publish that chronology through Git
+- use the verified portable snapshot, never a transcript, for Git-clone-carried
+  operational continuity
 - use the system operating cycle as a bounded rebuild/readback pass after
   source, runtime, knowledge, or operating model changes
 - treat repeated user needs as candidates for stable growth through knowledge,

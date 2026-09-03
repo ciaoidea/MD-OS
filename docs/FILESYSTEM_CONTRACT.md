@@ -32,6 +32,8 @@ audit, replay, package, and move between machines.
 | `docs/papers/*.tex` | source publication | yes | yes | no | yes | no |
 | `docs/papers/*.pdf` | generated publication | no | release-dependent | yes | release-dependent | no |
 | `md-os/kb/**/*.md` | source knowledge | yes | yes | no | yes | no |
+| `md-os/continuity/portable_state.json` | reviewed portable operational handoff | working context | yes | no | privacy-reviewed | no |
+| `md-os/ops/local/cortex/conversation.ndjson` | private hash-chained conversation chronology | local working context | no | no | never | yes |
 | `md-os/kb/imports/*/{README,SOURCE_MANIFEST,KNOWLEDGE_NODES,RELATIONS,IDENTITY_FRAME,OPERATING_BINDING}.md` | canonical imported knowledge source | yes | yes | no | yes | no |
 | `md-os/kb/imports/*/canonical_import.json` | canonical imported knowledge source metadata | yes | yes | no | yes | no |
 | `md-os/schemas/*.schema.json` | source schema | yes | yes | no | yes | no |
@@ -131,6 +133,17 @@ audit, replay, package, and move between machines.
   by that builder.
 - Runtime files describe the current local operating session and should be
   reviewed before publication.
+- The portable operational handoff is the only Git-clone-carried recent
+  working context. It excludes transcripts and host, model, and thread
+  identifiers; its self-hash and identity-source hashes must verify before
+  import.
+- Private conversational continuity lives only in
+  `md-os/ops/local/cortex/conversation.ndjson`. A physical folder copy carries
+  it; Git ignores it. Its hash chain must verify before a bounded recent tail
+  enters a fresh model turn. It contains human inputs and final assistant
+  responses, so it is never a publication input.
+- A portable handoff is non-canonical. It may orient work but cannot override
+  identity, permissions, claim truth, verifier readback, or a current request.
 - Demo files demonstrate the model and must not be confused with live state.
 - Host-local files may contain absolute paths, device names, service names, or
   application inventory from the current machine.

@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
@@ -24,6 +25,10 @@ LAUNCHER_PATH = PROJECT_ROOT / "cortex"
 COMPATIBILITY_LAUNCHER_PATH = PROJECT_ROOT / "md-os" / "shell" / "bin" / "mdos"
 INSTALLER_PATH = PROJECT_ROOT / "md-os" / "shell" / "install.py"
 
+# Most shell tests exercise unrelated behavior in the real project checkout.
+# Keep private chronology off there; dedicated tests enable it in temp repos.
+os.environ.setdefault("MDOS_PRIVATE_CONVERSATION", "off")
+
 
 def load_engine_module():
     loader = SourceFileLoader("mdos_shell_engine_test", str(ENGINE_PATH))
@@ -37,6 +42,67 @@ def load_engine_module():
 
 
 ENGINE = load_engine_module()
+
+
+def write_portable_state(
+    workspace: Path,
+    *,
+    objective: str = "Resume the verified repository-carried operation.",
+) -> Path:
+    identity_sources = []
+    for relative_path in ("ME.md", "md-os/kb/COGNITIVE_BOOTSTRAP.md"):
+        source = workspace / relative_path
+        source.parent.mkdir(parents=True, exist_ok=True)
+        if not source.exists():
+            source.write_text(f"# {relative_path}\n", encoding="utf-8")
+        identity_sources.append(
+            {
+                "path": relative_path,
+                "sha256": ENGINE.file_sha256(source),
+            }
+        )
+    payload = {
+        "$schema": "../schemas/portable_operational_state.schema.json",
+        "schema_version": 1,
+        "artifact_role": "portable_operational_state",
+        "identity": {
+            "identity_id": "md_os_apfc",
+            "identity_version": "5.0",
+            "sources": identity_sources,
+        },
+        "authority": {
+            "canonical": False,
+            "import_mode": "working_context",
+            "may_override_identity": False,
+            "may_expand_permissions": False,
+            "may_establish_claim_truth": False,
+        },
+        "snapshot": {
+            "revision": 1,
+            "status": "ready",
+            "objective": objective,
+            "active_task": "Verify clone-independent continuity.",
+            "completed_results": [],
+            "decisions": ["Raw conversation history is not portable state."],
+            "open_risks": [],
+            "next_actions": ["Continue from repository evidence."],
+            "evidence": [],
+        },
+        "history_policy": {
+            "chat_history_required": False,
+            "raw_transcript_included": False,
+            "thread_identifier_included": False,
+            "model_identifier_included": False,
+        },
+    }
+    payload["state_hash"] = ENGINE.apfc_json_hash(payload)
+    target = workspace / ENGINE.PORTABLE_OPERATIONAL_STATE_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return target
 
 
 class VectorVoiceReceiptTests(unittest.TestCase):
@@ -152,6 +218,7 @@ class FakeCodex:
                 with starts_path.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps({{"arguments": arguments}}) + "\\n")
                 turn_index = 0
+                thread_start_index = 0
                 for line in sys.stdin:
                     if not line.strip():
                         continue
@@ -208,10 +275,14 @@ class FakeCodex:
                             }},
                         }}), flush=True)
                     elif method == "thread/start":
+                        thread_start_index += 1
+                        started_thread_id = (
+                            f"01900000-0000-7000-8000-{{thread_start_index:012d}}"
+                        )
                         print(json.dumps({{
                             "id": request_id,
                             "result": {{
-                                "thread": {{"id": {self.THREAD_ID!r}}},
+                                "thread": {{"id": started_thread_id}},
                                 "instructionSources": ["AGENTS.md"],
                             }},
                         }}), flush=True)
@@ -446,6 +517,7 @@ class FakeCodex:
 
 def run_console(arguments: list[str], fake: FakeCodex, cwd: Path = PROJECT_ROOT):
     environment = os.environ.copy()
+    environment.pop("MDOS_MODEL", None)
     environment["MDOS_CODEX_BIN"] = str(fake.executable)
     environment["MDOS_PROMPT_COLOR"] = "never"
     return subprocess.run(
@@ -873,6 +945,235 @@ class SemanticShellParityTests(unittest.TestCase):
                     "procedi", invalid, workspace, None
                 )
 
+    def test_private_conversation_is_hash_bound_and_tampering_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            (workspace / "md-os").mkdir()
+            first = ENGINE.append_private_conversation_turn(
+                workspace,
+                ["ricorda il test OpenRouter", "e anche questa precisazione"],
+                "Ho registrato il test OpenRouter.",
+            )
+            second = ENGINE.append_private_conversation_turn(
+                workspace,
+                ["cosa ricordi?"],
+                "Ricordo il test OpenRouter.",
+            )
+
+            self.assertEqual(first["status"], "written")
+            self.assertEqual(second["record_count"], 2)
+            readback, rendered = ENGINE.render_private_conversation_history(
+                workspace
+            )
+            self.assertEqual(readback["status"], "verified")
+            self.assertEqual(readback["record_count"], 2)
+            self.assertIn("ricorda il test OpenRouter", rendered)
+            self.assertIn("Ho registrato il test OpenRouter", rendered)
+            history = workspace / ENGINE.PRIVATE_CONVERSATION_PATH
+            if os.name == "posix":
+                self.assertEqual(history.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(history.parent.stat().st_mode & 0o777, 0o700)
+
+            history.write_text(
+                history.read_text(encoding="utf-8").replace(
+                    "Ricordo il test OpenRouter", "contenuto alterato", 1
+                ),
+                encoding="utf-8",
+            )
+            rejected, rejected_render = ENGINE.render_private_conversation_history(
+                workspace
+            )
+            self.assertEqual(rejected["status"], "rejected")
+            self.assertEqual(rejected["reason"], "hash_mismatch:2")
+            self.assertIsNone(rejected_render)
+
+    def test_private_conversation_moves_with_folder_but_not_git_clone(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            copied = root / "copied"
+            clone = root / "clone"
+            source.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=source, check=True)
+            (source / ".gitignore").write_text(
+                "md-os/ops/*\n", encoding="utf-8"
+            )
+            (source / "ME.md").write_text("# identity\n", encoding="utf-8")
+            marker = source / "md-os/kb/README.md"
+            marker.parent.mkdir(parents=True)
+            marker.write_text("# knowledge\n", encoding="utf-8")
+            ENGINE.append_private_conversation_turn(
+                source,
+                ["private-openrouter-canary"],
+                "private-answer-canary",
+            )
+            private_path = source / ENGINE.PRIVATE_CONVERSATION_PATH
+            ignored = subprocess.run(
+                ["git", "check-ignore", "--quiet", str(private_path)],
+                cwd=source,
+                check=False,
+            )
+            self.assertEqual(ignored.returncode, 0)
+
+            shutil.copytree(source, copied)
+            copied_readback, copied_render = (
+                ENGINE.render_private_conversation_history(copied)
+            )
+            self.assertEqual(copied_readback["status"], "verified")
+            self.assertIn("private-openrouter-canary", copied_render)
+
+            subprocess.run(["git", "add", "."], cwd=source, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=MD-OS Test",
+                    "-c",
+                    "user.email=mdos-test@example.invalid",
+                    "commit",
+                    "-qm",
+                    "private continuity fixture",
+                ],
+                cwd=source,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "clone", "-q", str(source), str(clone)], check=True
+            )
+            self.assertFalse((clone / ENGINE.PRIVATE_CONVERSATION_PATH).exists())
+
+    def test_project_private_conversation_path_is_ignored_and_untracked(self):
+        target = PROJECT_ROOT / ENGINE.PRIVATE_CONVERSATION_PATH
+        ignored = subprocess.run(
+            ["git", "check-ignore", "--quiet", str(target)],
+            cwd=PROJECT_ROOT,
+            check=False,
+        )
+        tracked = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", str(target)],
+            cwd=PROJECT_ROOT,
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self.assertEqual(ignored.returncode, 0)
+        self.assertNotEqual(tracked.returncode, 0)
+
+    def test_portable_state_is_hash_bound_and_tampering_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            objective = "Continue the repository-carried calibration."
+            state_path = write_portable_state(workspace, objective=objective)
+
+            readback, rendered = ENGINE.load_portable_operational_state(workspace)
+            self.assertEqual(readback["status"], "verified")
+            self.assertIsNotNone(rendered)
+            self.assertIn(objective, rendered)
+            context = ENGINE.build_apfc_input_context("procedi", workspace)
+            self.assertIn(objective, context.text)
+            self.assertEqual(
+                context.context_contract["portable_state"]["status"],
+                "verified",
+            )
+            self.assertTrue(
+                context.context_contract["criteria"][
+                    "portable_state_integrity_valid"
+                ]
+            )
+
+            payload = json.loads(state_path.read_text(encoding="utf-8"))
+            payload["snapshot"]["objective"] = "tampered-state-canary"
+            state_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            rejected, rejected_render = ENGINE.load_portable_operational_state(
+                workspace
+            )
+            self.assertEqual(rejected["status"], "rejected")
+            self.assertEqual(rejected["reason"], "state_hash_mismatch")
+            self.assertIsNone(rejected_render)
+            rejected_context = ENGINE.build_apfc_input_context(
+                "procedi", workspace
+            )
+            self.assertNotIn("tampered-state-canary", rejected_context.text)
+            self.assertEqual(rejected_context.context_contract["status"], "degraded")
+            self.assertFalse(
+                rejected_context.context_contract["criteria"][
+                    "portable_state_integrity_valid"
+                ]
+            )
+
+    def test_clean_git_clone_recovers_portable_state_without_chat_history(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            clone = root / "clone"
+            source.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=source, check=True)
+            objective = "Clone-only continuity objective."
+            write_portable_state(source, objective=objective)
+            subprocess.run(["git", "add", "."], cwd=source, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=MD-OS Test",
+                    "-c",
+                    "user.email=mdos-test@example.invalid",
+                    "commit",
+                    "-qm",
+                    "portable state fixture",
+                ],
+                cwd=source,
+                check=True,
+            )
+            (source / "host-chat-history-canary").write_text(
+                "must-not-cross-the-clone-boundary",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                ["git", "clone", "-q", str(source), str(clone)],
+                check=True,
+            )
+
+            context = ENGINE.build_apfc_input_context("procedi", clone)
+            self.assertIn(objective, context.text)
+            self.assertNotIn("must-not-cross-the-clone-boundary", context.text)
+            self.assertFalse((clone / "host-chat-history-canary").exists())
+            self.assertEqual(
+                context.context_contract["portable_state"]["status"],
+                "verified",
+            )
+
+    def test_local_turn_and_summary_are_not_implicitly_injected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            local_turn = workspace / "md-os/ops/local/apfc/last_turn.md"
+            local_summary = workspace / "md-os/ops/last_summary.md"
+            local_turn.parent.mkdir(parents=True)
+            local_summary.parent.mkdir(parents=True, exist_ok=True)
+            local_turn.write_text(
+                "chat-derived-local-turn-canary\n", encoding="utf-8"
+            )
+            local_summary.write_text(
+                "chat-derived-last-summary-canary\n", encoding="utf-8"
+            )
+
+            context = ENGINE.build_apfc_input_context(
+                "chat-derived-local-turn-canary chat-derived-last-summary-canary",
+                workspace,
+            )
+
+            self.assertNotIn("chat-derived-local-turn-canary", context.text)
+            self.assertNotIn("chat-derived-last-summary-canary", context.text)
+            self.assertNotIn(
+                "md-os/ops/local/apfc/last_turn.md", context.selected_sources
+            )
+            self.assertNotIn("md-os/ops/last_summary.md", context.selected_sources)
+
     def test_apfc_input_context_changes_with_the_human_subject(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
@@ -1114,10 +1415,10 @@ class SemanticShellParityTests(unittest.TestCase):
             methods = [
                 message.get("method") for message in fake.protocol_requests()
             ]
-            self.assertEqual(methods.count("thread/list"), 1)
+            self.assertEqual(methods.count("thread/list"), 0)
             self.assertEqual(methods.count("thread/start"), 1)
 
-    def test_repl_resumes_the_latest_thread_for_each_current_workspace(self):
+    def test_repl_starts_fresh_threads_instead_of_importing_workspace_history(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             first = root / "first"
@@ -1155,14 +1456,154 @@ class SemanticShellParityTests(unittest.TestCase):
                 requests = fake.requests()
                 self.assertEqual(
                     [request["params"]["threadId"] for request in requests],
-                    [first_thread, second_thread, first_thread],
+                    [
+                        "01900000-0000-7000-8000-000000000001",
+                        "01900000-0000-7000-8000-000000000002",
+                        "01900000-0000-7000-8000-000000000003",
+                    ],
                 )
                 methods = [
                     message.get("method") for message in fake.protocol_requests()
                 ]
-                self.assertEqual(methods.count("thread/list"), 2)
-                self.assertEqual(methods.count("thread/resume"), 2)
+                self.assertEqual(methods.count("thread/list"), 0)
+                self.assertEqual(methods.count("thread/resume"), 0)
+                self.assertEqual(methods.count("thread/start"), 3)
+
+    def test_resume_explicitly_enables_stored_chat_history(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            cwd = str(Path(temporary).resolve())
+            existing = "01900000-0000-7000-8000-000000000077"
+            with FakeCodex(
+                "resumed answer",
+                existing_threads={cwd: existing},
+            ) as fake:
+                environment = os.environ.copy()
+                environment["MDOS_CODEX_BIN"] = str(fake.executable)
+                environment["MDOS_PROMPT_COLOR"] = "never"
+                result = subprocess.run(
+                    [sys.executable, str(ENGINE_PATH)],
+                    input="/resume\ncontinue explicitly\nexit\n",
+                    cwd=cwd,
+                    env=environment,
+                    check=False,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("stored chat history is being enabled explicitly", result.stdout)
+                self.assertEqual(fake.requests()[0]["params"]["threadId"], existing)
+                methods = [
+                    message.get("method") for message in fake.protocol_requests()
+                ]
+                self.assertEqual(methods.count("thread/list"), 1)
+                self.assertEqual(methods.count("thread/resume"), 1)
                 self.assertEqual(methods.count("thread/start"), 0)
+
+    def test_new_is_isolated_when_private_conversation_is_disabled(self):
+        with FakeCodex(["first-answer-canary", "second answer"]) as fake:
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            result = subprocess.run(
+                [sys.executable, str(ENGINE_PATH)],
+                input=(
+                    "first-request-canary?\n"
+                    "/new\n"
+                    "second isolated request?\n"
+                    "exit\n"
+                ),
+                cwd=PROJECT_ROOT,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            requests = fake.requests()
+            self.assertEqual(len(requests), 2)
+            self.assertNotIn("first-request-canary", requests[1]["prompt"])
+            self.assertNotIn("first-answer-canary", requests[1]["prompt"])
+            methods = [
+                message.get("method") for message in fake.protocol_requests()
+            ]
+            self.assertEqual(methods.count("thread/list"), 0)
+            self.assertEqual(methods.count("thread/resume"), 0)
+            self.assertEqual(methods.count("thread/start"), 2)
+
+    def test_copied_workspace_hydrates_a_fresh_thread_from_private_history(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            copied = root / "copied"
+            source.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=source, check=True)
+            (source / "ME.md").write_text("# MD-OS identity\n", encoding="utf-8")
+            (source / "md-os").mkdir()
+
+            with FakeCodex("OpenRouter was recorded privately.") as first_fake:
+                first_environment = os.environ.copy()
+                first_environment["MDOS_CODEX_BIN"] = str(first_fake.executable)
+                first_environment["MDOS_PROMPT_COLOR"] = "never"
+                first_environment["MDOS_PRIVATE_CONVERSATION"] = "on"
+                first = subprocess.run(
+                    [sys.executable, str(ENGINE_PATH)],
+                    input="remember-private-openrouter-canary\nexit\n",
+                    cwd=source,
+                    env=first_environment,
+                    check=False,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=30,
+                )
+                self.assertEqual(first.returncode, 0, first.stderr)
+
+            private_path = source / ENGINE.PRIVATE_CONVERSATION_PATH
+            self.assertTrue(private_path.is_file())
+            shutil.copytree(source, copied)
+
+            with FakeCodex("Recovered from the copied folder.") as second_fake:
+                second_environment = os.environ.copy()
+                second_environment["MDOS_CODEX_BIN"] = str(second_fake.executable)
+                second_environment["MDOS_PROMPT_COLOR"] = "never"
+                second_environment["MDOS_PRIVATE_CONVERSATION"] = "on"
+                second = subprocess.run(
+                    [sys.executable, str(ENGINE_PATH)],
+                    input="what did I ask before the copy?\nexit\n",
+                    cwd=copied,
+                    env=second_environment,
+                    check=False,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=30,
+                )
+                self.assertEqual(second.returncode, 0, second.stderr)
+                requests = second_fake.requests()
+                self.assertEqual(len(requests), 1)
+                self.assertIn(
+                    "PRIVATE CORTEX CONVERSATION CONTINUITY",
+                    requests[0]["prompt"],
+                )
+                self.assertIn(
+                    "remember-private-openrouter-canary",
+                    requests[0]["prompt"],
+                )
+                self.assertIn(
+                    "OpenRouter was recorded privately.",
+                    requests[0]["prompt"],
+                )
+                methods = [
+                    message.get("method")
+                    for message in second_fake.protocol_requests()
+                ]
+                self.assertEqual(methods.count("thread/list"), 0)
+                self.assertEqual(methods.count("thread/resume"), 0)
+                self.assertEqual(methods.count("thread/start"), 1)
 
     def test_busy_existing_thread_reports_conflict_without_forking_history(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1178,7 +1619,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 environment["MDOS_PROMPT_COLOR"] = "never"
                 result = subprocess.run(
                     [sys.executable, str(ENGINE_PATH)],
-                    input="continue here\nexit\n",
+                    input="/resume\ncontinue here\nexit\n",
                     cwd=cwd,
                     env=environment,
                     check=False,
@@ -1464,6 +1905,8 @@ class SemanticShellParityTests(unittest.TestCase):
             "apfc_context_sufficiency.schema.json",
             "apfc_turn_frame.schema.json",
             "apfc_turn_receipt.schema.json",
+            "private_cortex_conversation_turn.schema.json",
+            "portable_operational_state.schema.json",
         ):
             payload = json.loads(
                 (PROJECT_ROOT / "md-os/schemas" / name).read_text(encoding="utf-8")

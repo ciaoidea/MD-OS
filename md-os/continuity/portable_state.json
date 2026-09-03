@@ -1,0 +1,87 @@
+{
+  "$schema": "../schemas/portable_operational_state.schema.json",
+  "schema_version": 1,
+  "artifact_role": "portable_operational_state",
+  "identity": {
+    "identity_id": "md_os_apfc",
+    "identity_version": "5.0",
+    "sources": [
+      {
+        "path": "ME.md",
+        "sha256": "11ee22e7d39227f24da5f3ffd1eaf2ddbc4f2766473d95b7e7afe7860ec465b1"
+      },
+      {
+        "path": "md-os/kb/COGNITIVE_BOOTSTRAP.md",
+        "sha256": "b978bc8c2ca8d655a7914474be356e0909ab1277a6e455613f75cf0ebbd12455"
+      }
+    ]
+  },
+  "authority": {
+    "canonical": false,
+    "import_mode": "working_context",
+    "may_override_identity": false,
+    "may_expand_permissions": false,
+    "may_establish_claim_truth": false
+  },
+  "snapshot": {
+    "revision": 2,
+    "status": "complete",
+    "objective": "Keep MD-OS continuity independent of Codex chat while private conversation follows physical folder copies, never normal Git transfers.",
+    "active_task": null,
+    "completed_results": [
+      "Cortex loads a hash-bound public operational snapshot.",
+      "Fresh threads load a bounded tail of the private folder chronology without resuming Codex history.",
+      "Interactive turns append human inputs and the final answer to md-os/ops/local/cortex/conversation.ndjson.",
+      "Normal Git add, commit, push, and clone exclude the ignored private chronology.",
+      "Only explicit /resume requests provider-side Codex history."
+    ],
+    "decisions": [
+      "Canonical identity remains separate; this public snapshot is non-canonical working context.",
+      "Git carries reviewed public continuity; physical folder copies also carry ignored private chronology.",
+      "Private records omit reasoning traces, tool traces, model IDs, and Codex thread IDs."
+    ],
+    "open_risks": [
+      "A bounded history excerpt reaches the configured model provider; fully offline inference needs a local model.",
+      "git add -f can bypass ignore, so staged paths must be inspected.",
+      "Turns predating this feature are not reconstructed."
+    ],
+    "next_actions": [
+      "Restart Cortex and run the documented directory-copy canary test.",
+      "Never force-add md-os/ops/local/**."
+    ],
+    "evidence": [
+      {
+        "path": "md-os/shell/bin/mdos-console",
+        "sha256": "dfb5f624cd8b0991d5dc5e685dd3ecf305e59b3bfb1fce31acb1b16d925eba9a",
+        "status": "source"
+      },
+      {
+        "path": "md-os/schemas/portable_operational_state.schema.json",
+        "sha256": "64baf2a9a4b0be6cd30993271b8475fc0ad1c3c5e6fbce1802499466e7c6c60a",
+        "status": "source"
+      },
+      {
+        "path": "md-os/schemas/apfc_context_sufficiency.schema.json",
+        "sha256": "935706004bdf351904d38f08dada58d78776b8d35bcd206e6f16a9883f3ae202",
+        "status": "source"
+      },
+      {
+        "path": "test/test_mdos_shell.py",
+        "sha256": "5f3dc18b050e398c91921cfca113e20c87af2969d2fe0dc364a7700dc35b5865",
+        "status": "source"
+      },
+      {
+        "path": "md-os/schemas/private_cortex_conversation_turn.schema.json",
+        "sha256": "d10fa42e37fd95811ca49deb08161afb6780961f11d76aa42dbb585ebc12b714",
+        "status": "source"
+      }
+    ]
+  },
+  "history_policy": {
+    "chat_history_required": false,
+    "raw_transcript_included": false,
+    "thread_identifier_included": false,
+    "model_identifier_included": false
+  },
+  "state_hash": "9b6f1f34dbf391c0e7a3bbe71aa16066e45012810ff8709f2e0ab9f2a0a9cc63"
+}

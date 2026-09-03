@@ -11,6 +11,7 @@
     "task_context_status",
     "baseline_sources",
     "context_packs",
+    "portable_state",
     "advisory_selected_sources",
     "advisory_omitted_sources",
     "resolution_policy",
@@ -54,6 +55,27 @@
         }
       }
     },
+    "portable_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "status", "state_hash", "reason"],
+      "properties": {
+        "path": { "const": "md-os/continuity/portable_state.json" },
+        "status": { "enum": ["absent", "verified", "rejected"] },
+        "state_hash": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            { "type": "null" }
+          ]
+        },
+        "reason": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
     "advisory_selected_sources": {
       "type": "array",
       "items": { "type": "string" }
@@ -80,12 +102,14 @@
       "required": [
         "invariant_baseline_complete",
         "context_pack_catalog_present",
+        "portable_state_integrity_valid",
         "lexical_selection_advisory_only",
         "nontrivial_dependency_resolution_required"
       ],
       "properties": {
         "invariant_baseline_complete": { "type": "boolean" },
         "context_pack_catalog_present": { "type": "boolean" },
+        "portable_state_integrity_valid": { "type": "boolean" },
         "lexical_selection_advisory_only": { "const": true },
         "nontrivial_dependency_resolution_required": { "const": true }
       }

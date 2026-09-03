@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/portable_operational_state.schema.json",
+  "title": "MD-OS Portable Operational State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "artifact_role",
+    "identity",
+    "authority",
+    "snapshot",
+    "history_policy",
+    "state_hash"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "../schemas/portable_operational_state.schema.json"
+    },
+    "schema_version": { "const": 1 },
+    "artifact_role": { "const": "portable_operational_state" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_id", "identity_version", "sources"],
+      "properties": {
+        "identity_id": { "const": "md_os_apfc" },
+        "identity_version": { "const": "5.0" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1, "maxLength": 768 },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical",
+        "import_mode",
+        "may_override_identity",
+        "may_expand_permissions",
+        "may_establish_claim_truth"
+      ],
+      "properties": {
+        "canonical": { "const": false },
+        "import_mode": { "const": "working_context" },
+        "may_override_identity": { "const": false },
+        "may_expand_permissions": { "const": false },
+        "may_establish_claim_truth": { "const": false }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "status",
+        "objective",
+        "active_task",
+        "completed_results",
+        "decisions",
+        "open_risks",
+        "next_actions",
+        "evidence"
+      ],
+      "properties": {
+        "revision": { "type": "integer", "minimum": 1 },
+        "status": { "enum": ["ready", "blocked", "complete"] },
+        "objective": { "type": "string", "minLength": 1, "maxLength": 768 },
+        "active_task": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 768 },
+            { "type": "null" }
+          ]
+        },
+        "completed_results": { "$ref": "#/$defs/boundedStrings" },
+        "decisions": { "$ref": "#/$defs/boundedStrings" },
+        "open_risks": { "$ref": "#/$defs/boundedStrings" },
+        "next_actions": { "$ref": "#/$defs/boundedStrings" },
+        "evidence": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256", "status"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1, "maxLength": 768 },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "status": { "enum": ["source", "verified_readback"] }
+            }
+          }
+        }
+      }
+    },
+    "history_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chat_history_required",
+        "raw_transcript_included",
+        "thread_identifier_included",
+        "model_identifier_included"
+      ],
+      "properties": {
+        "chat_history_required": { "const": false },
+        "raw_transcript_included": { "const": false },
+        "thread_identifier_included": { "const": false },
+        "model_identifier_included": { "const": false }
+      }
+    },
+    "state_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "boundedStrings": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 768
+      }
+    }
+  }
+}
