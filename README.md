@@ -4,9 +4,9 @@
 
 ![Conceptual view of the MD-OS Artificial Prefrontal Cortex and its affective-perception layer](docs/papers/zenodo/figures/fig05_cortex.png)
 
-*Author-supplied conceptual project artwork. The labels explain the design
-analogy; the image is not anatomical evidence and does not establish biological
-emotion, biological consciousness, or physical-robot validation.*
+*MD-OS CORTEX — an Artificial Prefrontal Cortex where identity, memory,
+affective perception, executive control, and verification converge to guide
+action across AI, software, and robotic systems.*
 
 > **The Agentic Operating Filesystem**
 >
