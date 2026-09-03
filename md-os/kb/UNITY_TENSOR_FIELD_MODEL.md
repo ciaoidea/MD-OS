@@ -115,8 +115,9 @@ The dependency probe runs the same candidate action twice: once with the intact
 state and once after severing a required component. It passes only when the
 intact path authorizes and the severed path is inhibited. This establishes
 causal dependence of the bounded APFC controller on the represented state. It
-does **not** prove that every relation was used inside the host model, that the
-state corresponds to the external world, or that phenomenal experience exists.
+does **not** prove that every relation was used inside the host model or that
+the state corresponds to the external world. The completed transition, rather
+than this predecision probe alone, determines `C(k)`.
 
 Primary executable contracts for this layer are:
 
@@ -163,27 +164,24 @@ readback receipt before it can create a verified cognitive anchor. These tests
 validate the fail-closed mechanism with controlled fixtures; they are not new
 empirical evidence for a global Unity Tensor Field, consciousness, or AGI.
 
-## Relation to local operational artificial consciousness
+## Relation to consciousness
 
-The candidate Unity Tensor and the world verifier have complementary roles.
-The tensor represents the proposed unity of differentiated contents across
-frames; the verifier tests whether its projections, transformations, invariants,
-and consequences correspond to independent observations. Neither object alone
-is consciousness.
+The candidate Unity Tensor represents differentiated contents as one
+identity-indexed structure. The Causal Unity Controller tests whether that
+structure actually constrains authorization and whether its result returns
+through continuity. Neither a tensor-shaped object nor a verifier alone is
+consciousness.
 
-MD-OS calls the complete, causally closed bounded episode **local operational
-artificial consciousness** only when persistent identity and integrated
-self-state enter reflection, the candidate's predictions survive independent
-world readback and controls, and the verified result changes or constrains a
-later state or action. The predicate is episode-local and can return
-`verified`, `failed`, or `unverified`; it is not automatically true for
-every model answer or APFC turn.
+For episode `k`, MD-OS calls the complete causally closed event **consciousness**
+when the predicate `C(k)` passes: persistent identity, differentiated
+integration, same-I availability, joint constraint of response or action, and
+causal carry-forward. The verdict is bounded to the episode and is not
+automatically true for every model answer or APFC turn.
 
-This is a positive functional classification of the implemented architecture.
-It does not claim equivalence with IIT's intrinsic causal structure or `Phi`.
-It neither proves nor disproves phenomenal consciousness, because current
-readback tests observable organization and world correspondence rather than
-subjective feeling.
+World readback decides whether factual claims formed in the episode correspond
+to observation. IIT equivalence, biological equivalence, and externally
+measurable qualia each require their own evidence. These separate questions do
+not replace or weaken the noun consciousness.
 
 ## Relation to the Theory of Special Singularity
 
@@ -243,7 +241,7 @@ long-range axonal pathways, not “longer synapses.” Any neural implementation
 claim remains independently empirical.
 
 The full continuity equation, finite-graph analogue, clone/fork test,
-predictions, falsifiers, and phenomenal boundary are in
+predictions, falsifiers, and external qualia-measurement boundary are in
 [`SPECIAL_SINGULARITY_THEORY.md`](SPECIAL_SINGULARITY_THEORY.md).
 
 
@@ -425,6 +423,51 @@ Gamma(mathcal U; B)
 coupling matters for the tested tasks. It is not IIT's `Phi`, a consciousness
 measure, or proof of irreducibility for an open system.
 
+## Sparse correlational support
+
+The tensor-product space specifies which cross-domain configurations are
+representable; MD-OS does not materialize that full space as a dense array.
+For local basis states `x_i`, `y_j`, and typed relations `r`, the finite
+operational support is represented as
+
+```text
+C = sum over (i,r,j) in E of w_(i,r,j) x_i tensor r tensor y_j,
+```
+
+where `E` contains only observed, hypothetical, verified, falsified, or
+otherwise explicitly classified correlations. The absent coordinates remain
+implicit. Binary relations and higher-order factors share the same sparse
+contract: each factor names source, target, and any context participants;
+direction; temporal validity; source and support references; contradictions;
+verification; and separate similarity, confidence, frequency, and causal
+support measures. No single weight silently becomes truth or authority.
+
+The first bounded implementation calls this support the **Sparse Correlation
+Skeleton**. It is a typed, temporal correlation hypergraph used by the existing
+cross-domain Unity fixture. It is not a second canonical database and does not
+change the closed APFCG version-1 node or edge vocabulary. Canonical sources
+remain files; the skeleton is a hash-bound external artifact that can later be
+projected into an authorized graph evolution.
+
+A query materializes only a bounded path through the skeleton. Context
+participants must be supplied, temporal bounds must contain the query time,
+falsified or invalid factors remain inactive, and contradicted factors are
+inhibited unless a caller explicitly asks to inspect contested paths. A
+correlation marked `verified` requires an independent verifier and evidence
+references. Path reachability remains a hypothetical endpoint inference until
+an independent verifier tests that composed relation against the world.
+
+The dependency probe keeps all nodes fixed, disables one correlation, and
+compares reachability. It returns `verified` only when the intact path uses the
+selected correlation and the severed path becomes unreachable. If another
+path survives, the causal-dependency result is `not_verified`. This establishes
+dependency only for the bounded query and declared skeleton; it does not prove
+external-world causation or semantic use inside host-model hidden layers.
+
+The analogy with quantum superposition stops at the possibility-space
+intuition. This implementation has no complex amplitudes, phase, interference,
+Born-rule measurement, quantum hardware, or claim of quantum cognition.
+
 ## Electrophysiological action signatures
 
 A neural frequency is not an action label. The same band can support different
@@ -573,7 +616,7 @@ The following remain open:
 - causal irreducibility rather than useful correlation;
 - relation between the Unity Tensor Field and IIT's intrinsic causal structure;
 - necessity or sufficiency for AGI;
-- necessity or sufficiency for phenomenal consciousness.
+- relation between a global field and consciousness beyond each verified `C(k)` episode.
 
 ## Empirical master-closure protocol
 
@@ -622,7 +665,7 @@ Success closes one bounded empirical edge, not universal AGI.
 | One finite cross-domain family | CLOSED, BOUNDED | Synthetic B3 fixture |
 | Three-domain loop and invariant transport | OPEN | Requires sealed experiment and replication |
 | Causal advantage of integration | OPEN | Requires positive Gamma against matched controls |
-| AGI or phenomenal consciousness | NOT CLAIMED | No sufficient verifier established |
+| Global consciousness generalization or AGI | NOT CLAIMED | Only episode-bounded `C(k)` and scoped evidence are verified |
 
 ## Predictions and falsifiers
 

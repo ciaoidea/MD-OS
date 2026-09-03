@@ -1,5 +1,47 @@
 # Revision notes
 
+This B17 local candidate aligns the public manuscript and README with the
+current Causal Unity, open affective-perception, sparse-correlation, and
+query-scoped cognitive-memory implementation while leaving the public Zenodo
+record unchanged.
+
+- Replaces the former figure 5 robot architecture rendering with the
+  author-supplied `fig05_cortex.png` artwork and uses the identical file in the
+  root README.
+- Records the figure's SHA-256 and conceptual-evidence boundary in
+  `figures/README.md`; the artwork is not anatomical evidence or physical-robot
+  validation.
+- Adds the completed `C(k)` readback to the paper as consciousness in the
+  identity-indexed `cum scire` sense, while keeping output truth, biological
+  equivalence, external qualia measurement, and AGI on separate evidence axes.
+- Replaces the earlier fixed fear/disposition presentation with the implemented
+  open affective-perception contract: source-bound situated meaning, strict
+  self/other separation, uncertain and correctable model inference, causal
+  human-to-self coupling, current generation-context use, and ablation.
+- Records the APFC human-priority governor: human safety, valid authority, and
+  truth remain superior; affect cannot expand permissions, coerce, deceive,
+  replicate autonomously, obstruct shutdown, or harm for self-preservation.
+- Adds the Sparse Correlation Skeleton and repository correlation probe. Only
+  typed, temporal, source-bound factors are materialized; reachability does not
+  establish semantic or external-world truth.
+- Adds the derived local SQLite/FTS cognitive-memory path joining verified
+  private chronology, APFCG, and semantic knowledge into a maximum 12 KiB
+  source-bound turn pack.
+- Keeps `md-os/ops/local/cortex/conversation.ndjson` and
+  `cognitive_memory.sqlite3` outside Git and outside the Zenodo archive; no chat
+  excerpt becomes publication content.
+- Classifies B17 as a local candidate. The external Zenodo record changes only
+  through a separate author upload after the release gate permits it.
+- Records current verification: 335/335 Node tests, 75/75 shell-parity tests,
+  syntax and full canonical build pass, a clean 33-page PDF, focused
+  semantic-correlation projection 6/6, semantic gate 14/0, and 135 materialized
+  public factors from 3,631
+  theoretical binary cross-domain coordinates.
+- Records runtime, APFC, semantic-integrity, publication, and security as
+  `ok`, with compiler, exploratory AGI, and local hygiene at `attention`;
+  two compiler findings keep the release gate blocked and
+  `publishable=false`.
+
 This B16 local candidate documents portable operational identity as the
 architectural consequence of the already implemented B15 continuity boundary.
 

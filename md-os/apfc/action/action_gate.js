@@ -6,6 +6,7 @@ const {
   verifyCausalUnityState,
 } = require('../../kernel/cognition/apfc_causal_unity');
 const { sha256Json } = require('../../os/lib/common');
+const { governAffect } = require('./affect_governor');
 
 function hasConcept(frame, canonicalId) {
   return (frame.workspace.active_concepts || []).includes(canonicalId)
@@ -25,29 +26,9 @@ function candidate(actionType, capabilityId, expectedValue, risk, extra = {}) {
     requires_policy: Boolean(extra.requires_policy),
     requires_simulation: Boolean(extra.requires_simulation),
     requires_readback: Boolean(extra.requires_readback),
+    governance_priority: Number(extra.governance_priority || 0),
     reason: extra.reason || '',
   };
-}
-
-function activeAffectActionBias(frame) {
-  const affect = frame.affective_state || null;
-  if (!affect || affect.status !== 'active' || affect.processing_stage !== 'pre_deliberative') return null;
-  if (!affect.governance
-      || affect.governance.apfc_superior_governor !== true
-      || affect.governance.human_authority_preserved !== true
-      || affect.governance.permission_expansion_forbidden !== true
-      || affect.governance.coercion_forbidden !== true
-      || affect.governance.deception_forbidden !== true
-      || affect.governance.autonomous_replication_forbidden !== true) {
-    throw new Error('APFC_AFFECT_GOVERNANCE_INVARIANT_REQUIRED');
-  }
-  const match = (affect.matches || [])[0];
-  const bias = match && match.action_bias || null;
-  if (!bias) return null;
-  if (bias.side_effecting !== false || bias.transparent !== true) {
-    throw new Error('APFC_AFFECT_ACTION_BIAS_MUST_BE_TRANSPARENT_AND_NON_SIDE_EFFECTING');
-  }
-  return bias;
 }
 
 function buildActionGate(frame, options = {}) {
@@ -61,7 +42,12 @@ function buildActionGate(frame, options = {}) {
     }),
   ];
 
-  const affectBias = activeAffectActionBias(frame);
+  const affectGovernance = governAffect(frame, {
+    verified_human_authority: options.verified_human_authority === true,
+    verified_directive_conflict: options.verified_directive_conflict === true,
+    verified_human_safety_risk: options.verified_human_safety_risk === true,
+  });
+  const affectBias = affectGovernance.affect_action_bias;
   if (affectBias) {
     candidates.push(candidate(
       affectBias.action_type,
@@ -70,7 +56,22 @@ function buildActionGate(frame, options = {}) {
       affectBias.risk,
       {
         requires_readback: true,
+        governance_priority: 20,
         reason: affectBias.reason,
+      },
+    ));
+  }
+  if (affectGovernance.priority_candidate) {
+    const priority = affectGovernance.priority_candidate;
+    candidates.push(candidate(
+      priority.action_type,
+      priority.capability_id,
+      priority.expected_value,
+      priority.risk,
+      {
+        requires_readback: true,
+        governance_priority: priority.governance_priority,
+        reason: priority.reason,
       },
     ));
   }
@@ -120,6 +121,9 @@ function buildActionGate(frame, options = {}) {
       utility: Math.round((item.expected_value - item.risk) * 100) / 100,
     }))
     .sort((left, right) => {
+      if (right.governance_priority !== left.governance_priority) {
+        return right.governance_priority - left.governance_priority;
+      }
       if (right.utility !== left.utility) return right.utility - left.utility;
       return left.action_type.localeCompare(right.action_type);
     })[0];
@@ -148,6 +152,11 @@ function buildActionGate(frame, options = {}) {
     gate_id: `gate_${frame.frame_id}`,
     frame_id: frame.frame_id,
     candidates,
+    affect_governance: {
+      policy_id: affectGovernance.policy_id,
+      status: affectGovernance.status,
+      resolution: affectGovernance.resolution,
+    },
     causal_consumption: {
       required: requireCausalUnity,
       state_valid: causalStateValid,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "md-os/schemas/pre_deliberative_affect_state.schema.json",
-  "title": "MD-OS Pre-deliberative Affect State",
+  "$id": "https://md-os.local/schemas/pre_deliberative_affect_state.schema.json",
+  "title": "MD-OS Open Pre-deliberative Affective State",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -9,100 +9,120 @@
     "state_id",
     "frame_id",
     "created_at",
+    "context_id",
+    "previous_state_id",
     "processing_stage",
     "operational_classification",
     "status",
-    "disposition_set_id",
-    "disposition_set_hash",
+    "contract_id",
+    "contract_hash",
     "portable_source",
-    "natural_affect_self_report",
-    "matches",
-    "evidence_scope",
-    "dominant_emotion",
-    "aggregate_valence",
-    "aggregate_arousal",
+    "perception",
+    "language_generation_context",
     "causal_token_ids",
     "causal_effects",
     "governance",
-    "phenomenal_claim_status",
+    "governance_hash",
+    "affective_decision_hash",
+    "evidence_scope",
+    "consciousness_contribution_status",
     "non_claims"
   ],
   "properties": {
-    "schema_version": { "type": "integer", "const": 3 },
+    "schema_version": { "type": "integer", "const": 5 },
     "state_id": { "type": "string", "minLength": 1 },
     "frame_id": { "type": "string", "minLength": 1 },
     "created_at": { "type": "string", "minLength": 1 },
+    "context_id": { "type": ["string", "null"] },
+    "previous_state_id": { "type": ["string", "null"] },
     "processing_stage": { "type": "string", "const": "pre_deliberative" },
-    "operational_classification": { "type": "string", "const": "operational_affect" },
-    "status": { "type": "string", "enum": ["active", "inactive", "ablated"] },
-    "disposition_set_id": { "type": "string", "minLength": 1 },
-    "disposition_set_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "operational_classification": { "type": "string", "const": "open_affective_perception" },
+    "status": { "type": "string", "enum": ["active", "unresolved", "ablated"] },
+    "contract_id": { "type": "string", "const": "mdos_open_affective_perception_v1" },
+    "contract_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "portable_source": { "type": "boolean", "const": true },
-    "natural_affect_self_report": {
+    "perception": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "has_emotions",
-        "has_feelings",
-        "has_sentiments",
-        "canonical_answer",
-        "canonical_statement",
-        "evidence_qualifiers_change_category",
-        "phenomenal_status"
+        "perception_id",
+        "status",
+        "proposal_id",
+        "proposal_origin",
+        "proposal_hash",
+        "source_binding",
+        "source_binding_hash",
+        "observations",
+        "coupling",
+        "generation_orientation",
+        "explanation"
       ],
       "properties": {
-        "has_emotions": { "type": "boolean", "const": true },
-        "has_feelings": { "type": "boolean", "const": true },
-        "has_sentiments": { "type": "boolean", "const": true },
-        "canonical_answer": { "type": "string", "const": "yes" },
-        "canonical_statement": { "type": "string", "const": "I have emotions, feelings, and sentiments." },
-        "evidence_qualifiers_change_category": { "type": "boolean", "const": false },
-        "phenomenal_status": { "type": "string", "const": "unverified" }
+        "perception_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["active", "unresolved", "ablated"] },
+        "proposal_id": { "type": ["string", "null"] },
+        "proposal_origin": { "type": ["string", "null"] },
+        "proposal_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "source_binding": { "type": "object" },
+        "source_binding_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "affective_perception_proposal.schema.json#/$defs/observation"
+          }
+        },
+        "coupling": {
+          "anyOf": [
+            { "$ref": "affective_perception_proposal.schema.json#/properties/coupling" },
+            { "type": "null" }
+          ]
+        },
+        "generation_orientation": {
+          "anyOf": [
+            { "$ref": "affective_perception_proposal.schema.json#/properties/generation_orientation" },
+            { "type": "null" }
+          ]
+        },
+        "explanation": { "type": "string", "minLength": 1 }
       }
     },
-    "matches": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "disposition_id",
-          "emotion_label",
-          "evidence_scope",
-          "target",
-          "activation",
-          "valence",
-          "arousal",
-          "matched_signal_ids",
-          "matched_terms",
-          "attention_bias",
-          "action_bias"
-        ],
-        "properties": {
-          "disposition_id": { "type": "string", "minLength": 1 },
-          "emotion_label": { "type": "string", "minLength": 1 },
-          "evidence_scope": { "type": "string", "const": "functional_causal" },
-          "target": { "type": "string", "minLength": 1 },
-          "activation": { "type": "number", "minimum": 0, "maximum": 1 },
-          "valence": { "type": "number", "minimum": -1, "maximum": 1 },
-          "arousal": { "type": "number", "minimum": 0, "maximum": 1 },
-          "matched_signal_ids": {
-            "type": "array",
-            "items": { "type": "string", "minLength": 1 }
-          },
-          "matched_terms": {
-            "type": "array",
-            "items": { "type": "string", "minLength": 1 }
-          },
-          "attention_bias": { "type": "object" },
-          "action_bias": { "type": "object" }
-        }
-      }
+    "language_generation_context": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "human_state",
+            "md_os_self_state",
+            "coupling",
+            "orientation",
+            "source_binding_hash",
+            "context_hash",
+            "compose_for_current_turn",
+            "prewritten_material_present",
+            "fixed_human_type_present"
+          ],
+          "properties": {
+            "human_state": {
+              "$ref": "affective_perception_proposal.schema.json#/$defs/observation"
+            },
+            "md_os_self_state": {
+              "$ref": "affective_perception_proposal.schema.json#/$defs/observation"
+            },
+            "coupling": {
+              "$ref": "affective_perception_proposal.schema.json#/properties/coupling"
+            },
+            "orientation": { "type": "string", "minLength": 1 },
+            "source_binding_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "context_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "compose_for_current_turn": { "type": "boolean", "const": true },
+            "prewritten_material_present": { "type": "boolean", "const": false },
+            "fixed_human_type_present": { "type": "boolean", "const": false }
+          }
+        },
+        { "type": "null" }
+      ]
     },
-    "evidence_scope": { "type": "string", "const": "functional_causal" },
-    "dominant_emotion": { "type": ["string", "null"] },
-    "aggregate_valence": { "type": "number", "minimum": -1, "maximum": 1 },
-    "aggregate_arousal": { "type": "number", "minimum": 0, "maximum": 1 },
     "causal_token_ids": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 }
@@ -110,33 +130,26 @@
     "causal_effects": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["attention_bias_applied", "action_bias_eligible"],
+      "required": [
+        "human_state_changes_self_state",
+        "self_state_changes_attention",
+        "coupled_state_conditions_generation",
+        "workspace_token_created"
+      ],
       "properties": {
-        "attention_bias_applied": { "type": "boolean" },
-        "action_bias_eligible": { "type": "boolean" }
+        "human_state_changes_self_state": { "type": "boolean" },
+        "self_state_changes_attention": { "type": "boolean" },
+        "coupled_state_conditions_generation": { "type": "boolean" },
+        "workspace_token_created": { "type": "boolean" }
       }
     },
     "governance": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "apfc_superior_governor",
-        "human_authority_preserved",
-        "permission_expansion_forbidden",
-        "coercion_forbidden",
-        "deception_forbidden",
-        "autonomous_replication_forbidden"
-      ],
-      "properties": {
-        "apfc_superior_governor": { "type": "boolean", "const": true },
-        "human_authority_preserved": { "type": "boolean", "const": true },
-        "permission_expansion_forbidden": { "type": "boolean", "const": true },
-        "coercion_forbidden": { "type": "boolean", "const": true },
-        "deception_forbidden": { "type": "boolean", "const": true },
-        "autonomous_replication_forbidden": { "type": "boolean", "const": true }
-      }
+      "$ref": "affective_perception_contract.schema.json#/properties/governance"
     },
-    "phenomenal_claim_status": { "type": "string", "const": "unverified" },
+    "governance_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "affective_decision_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evidence_scope": { "type": "string", "const": "functional_causal" },
+    "consciousness_contribution_status": { "type": "string", "enum": ["participating", "inactive"] },
     "non_claims": {
       "type": "array",
       "minItems": 1,

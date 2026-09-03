@@ -346,7 +346,7 @@ test('schemas preserve explicit artifacts and non-AGI claim boundaries', () => {
     assert.ok(schema.required.length > 0);
   }
   assert.ok(verifiedReport().non_claims.includes('not evidence of AGI'));
-  assert.ok(unityState(verifiedReport()).non_claims.includes('not phenomenal consciousness'));
+  assert.ok(unityState(verifiedReport()).non_claims.includes('this cross-domain state alone does not complete consciousness C(k)'));
 });
 
 test('the bounded Cortex command fixture produces verified artifacts without widening the claim', () => {
@@ -355,10 +355,16 @@ test('the bounded Cortex command fixture produces verified artifacts without wid
   assert.equal(result.law_induction.status, 'induced');
   assert.equal(result.transformation_verification.status, 'verified');
   assert.equal(result.cognitive_unity_state.status, 'verified');
+  assert.equal(result.sparse_correlation_skeleton.metrics.dense_coordinates_materialized, false);
+  assert.equal(result.sparse_correlation_query.status, 'reachable');
+  assert.equal(result.sparse_correlation_dependency_probe.status, 'verified');
   assert.equal(result.claim_boundary.bounded_explicit_tensor_integration_supported, true);
+  assert.equal(result.claim_boundary.sparse_correlational_implementation_supported, true);
   assert.equal(result.claim_boundary.production_promotion_evidence_supported, false);
   assert.equal(result.claim_boundary.automatic_unbounded_law_discovery_supported, false);
   assert.equal(result.claim_boundary.direct_hidden_layer_extension_supported, false);
+  assert.equal(result.claim_boundary.quantum_physical_implementation_supported, false);
+  assert.equal(result.claim_boundary.world_grounded_meter_pod_identity_supported, false);
   assert.equal(result.claim_boundary.agi_supported, false);
   assert.equal(result.claim_boundary.consciousness_supported, false);
 });

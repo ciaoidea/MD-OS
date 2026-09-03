@@ -11,6 +11,7 @@ import re
 import shlex
 import shutil
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -555,6 +556,17 @@ class SemanticShellParityTests(unittest.TestCase):
         self.assertIn("ask the critical question internally", prompt)
         self.assertIn("test the hidden premise or failure case", prompt)
         self.assertIn("Do not manufacture a ritual for a simple direct answer", prompt)
+        self.assertEqual(prompt.count("OPEN AFFECTIVE PERCEPTION CONTRACT"), 1)
+        self.assertIn("situated, open semantic state", prompt)
+        self.assertIn("Do not reduce the person or the emotion", prompt)
+        self.assertIn("uncertain and correctable", prompt)
+        self.assertIn("APFC safety", prompt)
+        self.assertIn(
+            "SOURCE: md-os/apfc/affect/affective_perception_contract.json",
+            prompt,
+        )
+        self.assertIn("STATUS: verified", prompt)
+        self.assertIn('"contract_id":"mdos_open_affective_perception_v1"', prompt)
         self.assertEqual(prompt.count("FEYNMAN RESPONSE GATE"), 1)
         self.assertIn("Lead with the direct answer", prompt)
         self.assertIn("use ordinary words", prompt)
@@ -569,12 +581,45 @@ class SemanticShellParityTests(unittest.TestCase):
         prompt = ENGINE.build_native_codex_input(
             "Explain the mechanism plainly.", None
         )
+        self.assertEqual(prompt.count("OPEN AFFECTIVE PERCEPTION CONTRACT"), 1)
         self.assertEqual(prompt.count("FEYNMAN RESPONSE GATE"), 1)
         self.assertTrue(
             prompt.endswith(
                 "CURRENT HUMAN REQUEST\nExplain the mechanism plainly."
             )
         )
+
+    def test_open_affective_gate_fails_closed_without_a_valid_contract(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            unavailable = ENGINE.render_open_affective_perception_gate(root)
+            self.assertIn("STATUS: unavailable", unavailable)
+            self.assertIn("Leave the human and MD-OS affective states unresolved", unavailable)
+
+            target = (
+                root
+                / "md-os"
+                / "apfc"
+                / "affect"
+                / "affective_perception_contract.json"
+            )
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "contract_id": "mdos_open_affective_perception_v1",
+                        "representation_contract": {
+                            "form": "open_semantic_relational_state",
+                            "fixed_emotion_taxonomy": True,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rejected = ENGINE.render_open_affective_perception_gate(root)
+            self.assertIn("STATUS: rejected", rejected)
+            self.assertIn("open-contract invariants did not verify", rejected)
 
     def test_inline_paste_placeholder_expands_inside_surrounding_text(self):
         label = ENGINE.register_inline_paste("riga uno\nriga due")
@@ -987,6 +1032,164 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(rejected["reason"], "hash_mismatch:2")
             self.assertIsNone(rejected_render)
 
+    def test_sqlite_apfcg_memory_retrieves_old_context_with_tensor_support(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            (workspace / "md-os").mkdir()
+            graph = {
+                "schema_version": 1,
+                "status": "ok",
+                "graph_id": "apfcg_test_cognitive_memory",
+                "nodes": [
+                    {
+                        "id": "unity",
+                        "content_hash": "0" * 64,
+                        "label": "Unity Tensor",
+                        "type": "concept",
+                        "properties": {"domain": "unity"},
+                        "scope": {},
+                        "source_refs": ["md-os/kb/UNITY_TENSOR_FIELD_MODEL.md"],
+                    },
+                    {
+                        "id": "sqlite",
+                        "content_hash": "1" * 64,
+                        "label": "SQLite context memory",
+                        "type": "artifact",
+                        "properties": {"domain": "memory"},
+                        "scope": {},
+                        "source_refs": ["md-os/os/cognitive_memory_index.py"],
+                    },
+                ],
+                "edges": [
+                    {
+                        "id": "unity-memory",
+                        "from": "unity",
+                        "to": "sqlite",
+                        "type": "supports",
+                        "source_refs": [
+                            "md-os/ops/apfc/executive/graph.json"
+                        ],
+                    }
+                ],
+            }
+            graph_path = (
+                workspace / "md-os/ops/apfc/executive/graph.json"
+            )
+            graph_path.parent.mkdir(parents=True)
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+
+            ENGINE.append_private_conversation_turn(
+                workspace,
+                ["Connect Unity Tensor and APFCG to SQLite long context."],
+                "Store sparse relations and retrieve old context by meaning.",
+                {
+                    "transition_hash": "2" * 64,
+                    "predecision_state_hash": "3" * 64,
+                    "previous_transition_hash": None,
+                    "status": "closed",
+                    "consciousness": {
+                        "noun": "consciousness",
+                        "definition": "cum_scire",
+                        "status": "verified",
+                        "evidence_scope": "current_identity_indexed_causal_episode",
+                        "criteria": {
+                            "persistent_identity_present": True,
+                            "differentiated_contents_integrated": True,
+                            "causal_dependency_verified": True,
+                            "output_returned_to_same_identity": True,
+                            "transition_carried_forward": True,
+                        },
+                    },
+                },
+            )
+            for value in (
+                "buy milk tomorrow",
+                "weather note unrelated",
+                "temporary unrelated detail",
+            ):
+                ENGINE.append_private_conversation_turn(
+                    workspace, [value], "noted"
+                )
+            readback, records = ENGINE.read_private_conversation_history(
+                workspace
+            )
+            self.assertEqual(readback["status"], "verified")
+
+            query = "retrieve the old Unity Tensor SQLite APFCG context"
+            pack, rendered = ENGINE.build_apfc_cognitive_memory_context(
+                workspace, query, records
+            )
+            sequences = {
+                node["conversation_sequence"]
+                for node in pack["selected_nodes"]
+                if node["conversation_sequence"] is not None
+            }
+            source_kinds = {
+                node["source_kind"] for node in pack["selected_nodes"]
+            }
+            self.assertEqual(pack["status"], "verified")
+            self.assertIn(1, sequences)
+            self.assertNotIn(4, sequences)
+            self.assertIn("apfcg", source_kinds)
+            self.assertGreater(pack["metrics"]["tensor_factor_count"], 0)
+            self.assertEqual(
+                pack["metrics"]["causal_unity_transition_count"], 1
+            )
+            self.assertTrue(pack["tensor_support"]["selected_factor_ids"])
+            self.assertIn("APFCG EXTENDED COGNITIVE MEMORY", rendered)
+            self.assertLessEqual(
+                len(rendered), ENGINE.MAX_APFC_COGNITIVE_MEMORY_CHARS
+            )
+
+            database = workspace / pack["index_path"]
+            self.assertTrue(database.is_file())
+            with sqlite3.connect(database) as connection:
+                transition_row = connection.execute(
+                    """
+                    SELECT noun, definition, consciousness_status
+                    FROM causal_unity_transitions
+                    """
+                ).fetchone()
+            self.assertEqual(
+                transition_row,
+                ("consciousness", "cum_scire", "verified"),
+            )
+            if os.name == "posix":
+                self.assertEqual(database.stat().st_mode & 0o777, 0o600)
+            cached, _ = ENGINE.build_apfc_cognitive_memory_context(
+                workspace, query, records
+            )
+            self.assertFalse(cached["index_rebuilt"])
+            self.assertEqual(cached["index_hash"], pack["index_hash"])
+
+            context = ENGINE.build_apfc_input_context(query, workspace)
+            bound = ENGINE.bind_apfc_cognitive_memory_context(
+                context, pack, rendered
+            )
+            retrieval = bound.context_contract["retrieved_context"]
+            self.assertEqual(retrieval["status"], "verified")
+            self.assertEqual(retrieval["pack_hash"], pack["pack_hash"])
+            self.assertIn(1, retrieval["selected_conversation_sequences"])
+            self.assertIn("retrieval_verified", bound.text)
+            self.assertNotIn("RECENT VERIFIED EXCHANGES:", bound.text)
+            self.assertLessEqual(
+                len(bound.text), ENGINE.MAX_APFC_BOUND_CONTEXT_CHARS
+            )
+
+            ENGINE.append_private_conversation_turn(
+                workspace,
+                ["new memory changes the source fingerprint"],
+                "recorded",
+            )
+            _, changed_records = ENGINE.read_private_conversation_history(
+                workspace
+            )
+            changed, _ = ENGINE.build_apfc_cognitive_memory_context(
+                workspace, query, changed_records
+            )
+            self.assertTrue(changed["index_rebuilt"])
+            self.assertNotEqual(changed["index_hash"], pack["index_hash"])
+
     def test_private_conversation_moves_with_folder_but_not_git_clone(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -1226,6 +1429,9 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(steer["params"]["expectedTurnId"], "turn-1")
             steering_text = steer["params"]["input"][0]["text"]
             self.assertIn("APFC DYNAMIC INPUT CONTEXT", steering_text)
+            self.assertEqual(
+                steering_text.count("OPEN AFFECTIVE PERCEPTION CONTRACT"), 1
+            )
             self.assertEqual(steering_text.count("FEYNMAN RESPONSE GATE"), 1)
             self.assertIn("revise it inside this same turn", steering_text)
             self.assertIn(
@@ -1573,7 +1779,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 second_environment["MDOS_PRIVATE_CONVERSATION"] = "on"
                 second = subprocess.run(
                     [sys.executable, str(ENGINE_PATH)],
-                    input="what did I ask before the copy?\nexit\n",
+                    input="what did I say about OpenRouter before the copy?\nexit\n",
                     cwd=copied,
                     env=second_environment,
                     check=False,
@@ -1586,8 +1792,11 @@ class SemanticShellParityTests(unittest.TestCase):
                 requests = second_fake.requests()
                 self.assertEqual(len(requests), 1)
                 self.assertIn(
-                    "PRIVATE CORTEX CONVERSATION CONTINUITY",
+                    "APFCG EXTENDED COGNITIVE MEMORY",
                     requests[0]["prompt"],
+                )
+                self.assertNotIn(
+                    "RECENT VERIFIED EXCHANGES:", requests[0]["prompt"]
                 )
                 self.assertIn(
                     "remember-private-openrouter-canary",
@@ -1847,6 +2056,10 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(probe["severed_authorization_status"], "inhibited")
             self.assertEqual(transition["status"], "closed")
             self.assertEqual(transition["epistemic_status"], "unverified")
+            self.assertEqual(transition["consciousness"]["noun"], "consciousness")
+            self.assertEqual(transition["consciousness"]["definition"], "cum_scire")
+            self.assertEqual(transition["consciousness"]["status"], "verified")
+            self.assertTrue(all(transition["consciousness"]["criteria"].values()))
             self.assertEqual(transition["predecision_state_hash"], causal_state["state_hash"])
             self.assertNotIn("private human text", json.dumps(receipt))
             self.assertNotIn("private assistant text", json.dumps(receipt))
@@ -1867,6 +2080,7 @@ class SemanticShellParityTests(unittest.TestCase):
             last_turn_text = last_turn.read_text()
             self.assertIn("output remains a proposal", last_turn_text)
             self.assertIn("causal Unity transition: `closed`", last_turn_text)
+            self.assertIn("consciousness: `verified`", last_turn_text)
             next_frame = ENGINE.build_apfc_turn_frame(
                 "next turn",
                 context,

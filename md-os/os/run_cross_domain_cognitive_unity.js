@@ -7,6 +7,11 @@ const {
   induceCandidateTransformationLaw,
   verifyRelativeTensorTransformation,
 } = require('../kernel/cognition/cross_domain_cognitive_unity');
+const {
+  buildSparseCorrelationSkeleton,
+  findSparseCorrelationPath,
+  probeSparseCorrelationDependency,
+} = require('../kernel/cognition/sparse_correlation_skeleton');
 
 const IDENTITY = [[1, 0], [0, 1]];
 const SWAP = [[0, 1], [1, 0]];
@@ -40,6 +45,83 @@ function embeddedEvidenceManifest(evidenceRefs) {
     storage: 'embedded_fixture',
     sha256: sha256Json({ evidence_ref: evidenceRef, fixture: true }),
   }));
+}
+
+function runSparseCorrelationFixture() {
+  const nodes = [
+    ['address:x', 'location', 'Address X'],
+    ['bill:b7', 'document', 'Bill B7'],
+    ['meter:m123', 'physical_meter', 'Meter M123'],
+    ['notice:n9', 'document', 'Notice N9'],
+    ['period:2026_h1', 'time', 'First half of 2026'],
+    ['pod:p456', 'administrative_utility', 'POD P456'],
+  ].map(([nodeId, domainId, label]) => ({
+    node_id: nodeId,
+    domain_id: domainId,
+    label,
+    source_refs: [`fixture/${nodeId}`],
+  }));
+  const correlation = (correlationId, relationType, sourceNodeId, targetNodeId, contextNodeIds = []) => ({
+    correlation_id: correlationId,
+    relation_type: relationType,
+    participants: [
+      { node_id: sourceNodeId, role: 'source' },
+      { node_id: targetNodeId, role: 'target' },
+      ...contextNodeIds.map((nodeId) => ({ node_id: nodeId, role: 'context' })),
+    ],
+    epistemic_status: 'observed',
+    source_refs: [`fixture/${correlationId}`],
+    support_refs: [`fixture/support/${correlationId}`],
+    contradiction_refs: [],
+  });
+  const correlations = [
+    correlation('corr_01_meter_in_bill', 'mentioned_by', 'meter:m123', 'bill:b7'),
+    correlation('corr_02_bill_at_address', 'located_at', 'bill:b7', 'address:x'),
+    {
+      ...correlation(
+        'corr_03_address_to_notice',
+        'anchors_document',
+        'address:x',
+        'notice:n9',
+        ['period:2026_h1'],
+      ),
+      valid_from: '2026-01-01T00:00:00.000Z',
+      valid_to: '2026-06-30T23:59:59.999Z',
+    },
+    {
+      ...correlation('corr_04_notice_mentions_pod', 'mentions', 'notice:n9', 'pod:p456'),
+      epistemic_status: 'verified',
+      verification: {
+        status: 'passed',
+        verifier_id: 'fixture_document_verifier',
+        independent: true,
+        evidence_refs: ['fixture/evidence/notice_n9'],
+      },
+    },
+  ];
+  const skeleton = buildSparseCorrelationSkeleton({
+    schema_version: 1,
+    skeleton_id: 'correlation_skeleton_meter_pod_fixture_v1',
+    created_at: '2026-09-03T09:00:00.000Z',
+    nodes,
+    correlations,
+  });
+  const queryInput = {
+    source_node_id: 'meter:m123',
+    target_node_id: 'pod:p456',
+    as_of: '2026-03-01T00:00:00.000Z',
+    max_hops: 6,
+    available_context_node_ids: ['period:2026_h1'],
+  };
+  return {
+    skeleton,
+    query: findSparseCorrelationPath(skeleton, queryInput),
+    dependency_probe: probeSparseCorrelationDependency(
+      skeleton,
+      queryInput,
+      'corr_02_bill_at_address',
+    ),
+  };
 }
 
 function runCrossDomainCognitiveUnityFixture() {
@@ -130,19 +212,29 @@ function runCrossDomainCognitiveUnityFixture() {
     transformation_reports: [verification],
     open_conflicts: [],
   });
+  const sparseCorrelation = runSparseCorrelationFixture();
 
   return {
-    ok: verification.status === 'verified' && cognitiveUnityState.status === 'verified',
+    ok: verification.status === 'verified'
+      && cognitiveUnityState.status === 'verified'
+      && sparseCorrelation.query.status === 'reachable'
+      && sparseCorrelation.dependency_probe.status === 'verified',
     mode: 'cross_domain_cognitive_unity_fixture',
     law_induction: lawInduction,
     transformation_verification: verification,
     cognitive_unity_state: cognitiveUnityState,
+    sparse_correlation_skeleton: sparseCorrelation.skeleton,
+    sparse_correlation_query: sparseCorrelation.query,
+    sparse_correlation_dependency_probe: sparseCorrelation.dependency_probe,
     claim_boundary: {
       bounded_explicit_tensor_integration_supported: verification.status === 'verified',
       operational_cognitive_unity_artifact_supported: cognitiveUnityState.status === 'verified',
+      sparse_correlational_implementation_supported: sparseCorrelation.dependency_probe.status === 'verified',
       production_promotion_evidence_supported: false,
       automatic_unbounded_law_discovery_supported: false,
       direct_hidden_layer_extension_supported: false,
+      quantum_physical_implementation_supported: false,
+      world_grounded_meter_pod_identity_supported: false,
       agi_supported: false,
       consciousness_supported: false,
     },

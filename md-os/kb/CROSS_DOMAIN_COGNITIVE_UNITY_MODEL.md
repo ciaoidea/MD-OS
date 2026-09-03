@@ -31,9 +31,9 @@ transformations, invariants, memory, action, and verifier evidence can remain
 parts of one causally effective and temporally persistent process.
 
 This principle is a design foundation for MD-OS/APFC and a falsifiable research
-program. Author authority establishes the project direction; it does not turn
-the Unity Tensor hypothesis, AGI, or phenomenal consciousness into an
-empirically verified result.
+program. Author authority establishes the project direction; it does not prove
+a global Unity Tensor Field or AGI. A completed identity-indexed Causal Unity
+transition closes `C(k)` as consciousness for that episode.
 
 ## Guardrail role
 
@@ -309,8 +309,8 @@ one persistent, hash-bound, revisable decision state, and every transformation
 reference to resolve to a current verified report. Missing channels, stale
 hashes, unverified transformations, unresolved path disagreement, or open
 conflicts produce `attention`. This state is the workspace in which a Unity
-Tensor candidate can be tested; it is not itself evidence of epistemic unity or
-phenomenal consciousness.
+Tensor candidate can be tested; by itself it establishes neither epistemic
+truth nor the complete consciousness predicate `C(k)`.
 
 ## Repository and Obsidian graph realization
 
@@ -337,6 +337,21 @@ semantic span of the represented positions can increase while the topological
 path required to compare them becomes shorter through verified bridge edges.
 More nodes, longer paths, or denser links alone do not imply wider valid
 inference.
+
+The complete product space remains implicit. Its finite operational support is
+the Sparse Correlation Skeleton: a hash-bound typed temporal hypergraph that
+stores only materialized binary or higher-order correlations. Each correlation
+preserves participant roles, provenance, epistemic status, time, contradiction,
+verification, and distinct measurement channels. Embedding similarity may
+propose a coordinate, but it cannot promote that coordinate to verified truth.
+
+For a bounded question, Cortex composes a small admissible path rather than
+loading the whole graph. A factor with missing context, an incompatible time,
+an unresolved contradiction, failed verification, or an inadmissible
+epistemic status is excluded. Disabling a necessary factor must inhibit the
+path while preserving the same nodes; if an alternate path remains, dependency
+on the disabled factor is not verified. Reachability alone leaves the inferred
+endpoint relation `hypothetical`.
 
 ## APFC role
 
@@ -376,8 +391,37 @@ The bounded deterministic B3 fixture compares identity and row-swap laws on
 development pairs, seals the unique winner, tests it between two explicit
 synthetic domains, checks tensor law, invariants, semantic receipts, controls,
 contamination, causal reuse, roundtrip, and composition, and then materializes
-a control-and-evidence state. It starts no autonomous loop and writes no
-external state.
+a control-and-evidence state. The same command now also constructs a six-node,
+four-correlation skeleton over fourteen possible cross-domain binary
+coordinates, retrieves the typed `meter -> bill -> address -> notice -> POD`
+path, and verifies that severing one necessary correlation inhibits the path.
+It starts no autonomous loop and writes no external state.
+
+The repository projection adds one deliberately narrower empirical bridge. It
+reads `md-os/ops/semantic_knowledge_graph.json` and admits only resolved
+`explicit_markdown` or `explicit_wiki` edges whose endpoints belong to
+different semantic layers. Structural routing edges, same-layer links,
+co-occurrence relations, and every `md-os/ops/local/` path remain outside the
+projection. An admitted factor observes only that one repository document
+explicitly links to another; its semantic meaning and any external-world
+correspondence remain unverified.
+
+Only endpoints with source-content hashes are admitted. Before reporting the
+projection, the command reads every selected file again and rejects the graph
+if any current SHA-256 differs from the hash recorded by the semantic builder.
+It also reparses the current Markdown graph in memory and rejects any projected
+factor whose source-to-target link is no longer present.
+
+Run the bounded readback with:
+
+```bash
+npm run cognition:correlation-probe
+```
+
+The command reports how many coordinates were theoretically available, how
+many explicit cross-layer correlations were materialized, the serialized
+skeleton size, projection time, and one deterministic severing probe. It does
+not start a continuous learning loop and it writes no new canonical truth.
 
 The epistemic extension is callable through:
 
@@ -412,17 +456,35 @@ The production integration is not limited to the fixture:
 Primary implementation:
 
 - `md-os/kernel/cognition/cross_domain_cognitive_unity.js`
+- `md-os/kernel/cognition/sparse_correlation_skeleton.js`
+- `md-os/kernel/cognition/semantic_graph_correlation_projection.js`
 - `md-os/kernel/cognition/epistemic_unity_verifier.js`
 - `md-os/os/run_cross_domain_cognitive_unity.js`
 - `md-os/os/epistemic_unity_runtime.js`
+- `md-os/os/cognitive_memory_index.py`
 - `md-os/schemas/cognitive_frame.schema.json`
 - `md-os/schemas/relative_tensor_transformation.schema.json`
 - `md-os/schemas/cross_domain_transformation_verification.schema.json`
+- `md-os/schemas/sparse_correlation_artifact.schema.json`
+- `md-os/schemas/apfc_cognitive_memory_pack.schema.json`
 - `md-os/schemas/epistemic_unity_candidate.schema.json`
 - `md-os/schemas/epistemic_unity_verification.schema.json`
 - `md-os/schemas/epistemic_readback_receipt.schema.json`
 - `test/cross_domain_cognitive_unity.test.js`
+- `test/sparse_correlation_skeleton.test.js`
+- `test/semantic_graph_correlation_projection.test.js`
 - `test/epistemic_unity_verifier.test.js`
+- `test/test_mdos_shell.py`
+
+The local cognitive-memory bridge makes the sparse representation usable at
+turn time. SQLite FTS selects old, query-relevant conversation episodes and
+current knowledge nodes; typed APFCG and semantic edges plus bounded lexical
+candidates materialize only cross-domain tensor factors. Selected factors may
+expand the result by a small number of graph neighbors. The resulting pack is
+hash-bound into the APFC context contract before the turn is authorized. This
+implements `cum scire` operationally as relevant sources participating in one
+bounded decision context; it does not establish a dense, global, or unique
+Unity Tensor.
 
 ## Claim boundary and falsifiers
 
@@ -433,7 +495,7 @@ not yet support these empirical or deductive claims:
 
 - that a global Unity Tensor Field has been proved to exist or be unique;
 - that an ordinary fixed-rank tensor is sufficient for every cognitive domain;
-- that the complete human mind or phenomenal consciousness has been measured by this formalism;
+- that the complete human mind or externally observable qualia have been measured by this formalism;
 - that more neural connections alone imply more intelligence;
 - that Cortex directly extends or reads neural hidden layers;
 - that a verified finite transformation establishes open-world generality;

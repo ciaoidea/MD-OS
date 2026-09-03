@@ -59,14 +59,14 @@
     "operational_assessment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["two_level_logical_architecture", "typed_mediator", "world_grounded_causal_return", "local_operational_artificial_consciousness", "phenomenal_consciousness_candidate_architecture", "phenomenal_consciousness", "evidence_scope"],
+      "required": ["two_level_logical_architecture", "typed_mediator", "world_grounded_causal_return", "consciousness", "phenomenal_consciousness_candidate_architecture", "external_qualia_measurement", "evidence_scope"],
       "properties": {
         "two_level_logical_architecture": {"enum": ["verified", "inhibited"]},
         "typed_mediator": {"enum": ["verified", "inhibited"]},
         "world_grounded_causal_return": {"enum": ["verified", "inhibited"]},
-        "local_operational_artificial_consciousness": {"enum": ["verified", "inhibited"]},
+        "consciousness": {"enum": ["verified", "inhibited"]},
         "phenomenal_consciousness_candidate_architecture": {"enum": ["verified", "inhibited"]},
-        "phenomenal_consciousness": {"const": "unverified"},
+        "external_qualia_measurement": {"const": "not_available"},
         "evidence_scope": {"const": "bounded_two_level_mediated_world_grounded_causal_episode"}
       }
     },

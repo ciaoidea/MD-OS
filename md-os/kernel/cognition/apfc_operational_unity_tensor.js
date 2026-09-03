@@ -179,7 +179,7 @@ function prepareOperationalUnityTensor(input) {
     non_claims: [
       'not direct access to host-model hidden layers',
       'not a global tensor representation of all intelligence',
-      'not evidence of phenomenal consciousness',
+      'turn-governance telemetry alone does not complete the consciousness predicate',
       'not evidence of AGI',
       'not proof that the operational feature encoding is unique',
       'not semantic verification of an intent or hypothesis',

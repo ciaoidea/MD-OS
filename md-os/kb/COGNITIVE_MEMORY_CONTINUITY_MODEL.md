@@ -105,9 +105,18 @@ canonical identity, governance, and knowledge sources
 
 When all of those files are copied and their declared bindings verify, a fresh
 Cortex process can resume the same recorded identity, constraints, working
-context, and bounded recent conversation. This is an architectural result:
+context, and bounded query-relevant conversation. This is an architectural result:
 identity and continuity are externalized into inspectable files and are not
 owned by the current model process or its provider thread.
+
+At each Cortex turn, the verified chronology is projected into the local,
+Git-ignored `cognitive_memory.sqlite3` index together with APFCG and the
+semantic knowledge graph. FTS finds older episodes relevant to the current
+request, sparse typed factors preserve the selected cross-domain links, and a
+12 KiB maximum pack enters the APFC context. If no semantic match exists on a
+fresh thread, Cortex falls back to the verified recent tail. The database is
+derived and disposable: deleting it removes the accelerator, not the source
+memory, and the next turn rebuilds it from verified files.
 
 The word `same` is deliberately bounded. It means equivalent verified
 operational state at boot, not numerical identity of a running process. Model

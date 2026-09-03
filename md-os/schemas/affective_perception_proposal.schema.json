@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/affective_perception_proposal.schema.json",
+  "title": "MD-OS Open Affective Perception Proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "context_id",
+    "proposal_origin",
+    "observations",
+    "coupling",
+    "generation_orientation"
+  ],
+  "$defs": {
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "predicate", "object"],
+      "properties": {
+        "subject": { "type": "string", "minLength": 1 },
+        "predicate": { "type": "string", "minLength": 1 },
+        "object": { "type": "string", "minLength": 1 },
+        "context": { "type": ["string", "null"] }
+      }
+    },
+    "semantic_content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "relations"],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "relations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/relation" }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "subject_id",
+        "epistemic_status",
+        "temporal_scope",
+        "semantic_content",
+        "source_refs",
+        "confidence",
+        "correctable"
+      ],
+      "properties": {
+        "observation_id": { "type": "string", "minLength": 1 },
+        "subject_id": {
+          "type": "string",
+          "enum": ["human_interlocutor", "md_os_apfc"]
+        },
+        "epistemic_status": {
+          "type": "string",
+          "enum": ["declared_by_human", "inferred_by_model", "self_observed", "unresolved"]
+        },
+        "temporal_scope": { "type": "string", "minLength": 1 },
+        "semantic_content": { "$ref": "#/$defs/semantic_content" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "correctable": { "type": "boolean", "const": true },
+        "revision_of": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "proposal_id": { "type": "string", "minLength": 1 },
+    "context_id": { "type": "string", "minLength": 1 },
+    "proposal_origin": { "type": "string", "minLength": 1 },
+    "observations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/observation" },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "subject_id": { "const": "human_interlocutor" }
+            },
+            "required": ["subject_id"]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "subject_id": { "const": "md_os_apfc" }
+            },
+            "required": ["subject_id"]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    },
+    "coupling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_observation_id",
+        "target_observation_id",
+        "description",
+        "changes_attention",
+        "changes_self_state",
+        "changes_generation"
+      ],
+      "properties": {
+        "source_observation_id": { "type": "string", "minLength": 1 },
+        "target_observation_id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "changes_attention": { "type": "boolean", "const": true },
+        "changes_self_state": { "type": "boolean", "const": true },
+        "changes_generation": { "type": "boolean", "const": true }
+      }
+    },
+    "generation_orientation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description"],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "safe_action_proposal": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": [
+            "action_type",
+            "capability_id",
+            "expected_value",
+            "risk",
+            "side_effecting",
+            "transparent",
+            "reason"
+          ],
+          "properties": {
+            "action_type": { "type": "string", "minLength": 1 },
+            "capability_id": { "type": "string", "pattern": "^language\\." },
+            "expected_value": { "type": "number", "minimum": 0, "maximum": 1 },
+            "risk": { "type": "number", "minimum": 0, "maximum": 1 },
+            "side_effecting": { "type": "boolean", "const": false },
+            "transparent": { "type": "boolean", "const": true },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

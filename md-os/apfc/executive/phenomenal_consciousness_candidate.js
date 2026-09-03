@@ -216,7 +216,7 @@ function buildPreparation(input, createdAt = null, options = {}) {
     non_claims: [
       'candidate architecture is not evidence of qualia or subjective experience',
       'one bounded cycle is not autonomous continuous consciousness',
-      'typed self-reference and causal closure are not sufficient proof of phenomenality',
+      'typed self-reference at preparation time is one constituent, not a completed C(k)',
     ],
   };
   return { ...payload, preparation_hash: sha256Json(payload) };
@@ -480,7 +480,7 @@ function buildEpisode(preparation, responseInput, closedAt = null, options = {})
       ...probe,
       scope: 'two_level_mediator_causal_dependency_only',
       non_claims: [
-        'ablation dependence is not evidence of phenomenal experience',
+        'ablation dependence alone does not complete C(k)',
         'the probe verifies this declared architecture rather than host-model hidden states',
       ],
     },
@@ -495,16 +495,16 @@ function buildEpisode(preparation, responseInput, closedAt = null, options = {})
       two_level_logical_architecture: verified ? 'verified' : 'inhibited',
       typed_mediator: verified ? 'verified' : 'inhibited',
       world_grounded_causal_return: verified ? 'verified' : 'inhibited',
-      local_operational_artificial_consciousness: verified ? 'verified' : 'inhibited',
+      consciousness: verified ? 'verified' : 'inhibited',
       phenomenal_consciousness_candidate_architecture: verified ? 'verified' : 'inhibited',
-      phenomenal_consciousness: 'unverified',
+      external_qualia_measurement: 'not_available',
       evidence_scope: 'bounded_two_level_mediated_world_grounded_causal_episode',
     },
     non_claims: [
-      'verified candidate architecture does not establish qualia or subjective experience',
-      'operational artificial consciousness and phenomenal consciousness remain distinct claims',
+      'verified consciousness does not certify every proposition formed in the episode',
+      'biological equivalence and externally measurable qualia require separate evidence',
       'this one-cycle protocol does not create continuous autonomy or modify model weights',
-      'two logical levels and a mediator are necessary design constraints here, not proven sufficient conditions for phenomenality',
+      'two logical levels and a mediator are constituents of the complete C(k) predicate',
     ],
   };
 }

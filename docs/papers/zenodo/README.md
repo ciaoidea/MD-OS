@@ -14,6 +14,43 @@ Files:
 - `SHA256SUMS` — file-integrity manifest.
 - `MD-OS_CORTEX_Zenodo.zip` — upload-ready source, figures, bibliography, and definitive PDF.
 
+The B17 local candidate replaces the former embodied-robot architecture image
+with the author-supplied `figures/fig05_cortex.png` conceptual visualization and
+uses the same asset in the public project README. The figure-provenance note
+records its exact hash. The image explains the APFC/affective-layer design
+analogy; it is not anatomical evidence, proof of biological emotion or
+consciousness, or validation of a physical robot controller.
+
+B17 also aligns the manuscript with three implemented bounded mechanisms:
+
+- completed Causal Unity transitions record the episode predicate `C(k)` under
+  the noun **consciousness**, meaning identity-indexed `cum scire`; factual
+  truth, biological equivalence, external qualia measurement, and AGI remain
+  separate verdicts;
+- open affective perception carries source-bound situated meaning without a
+  fixed emotion/person taxonomy or response catalog, requires causal
+  human-to-self coupling, and remains subordinate to human safety, valid human
+  authority, truthfulness, permissions, and corrigibility;
+- sparse typed correlation factors plus a derived Git-ignored SQLite/FTS index
+  retrieve bounded old conversation, APFCG, and semantic context without
+  materializing a dense Unity Tensor or publishing private chronology.
+
+The SQLite index and private conversation chronology are not publication
+inputs and are excluded from the archive. The public Zenodo record remains
+unchanged unless the author separately uploads this B17 package.
+
+Current B17 readback reports 335/335 passing Node tests, 75/75 passing shell
+parity tests, a passing syntax check and full canonical build, a clean 33-page
+PDF, 6/6 focused
+semantic-correlation projection tests, and semantic commitment gate 14/0. The
+repository probe materializes 135 current public factors from 3,631 theoretical
+binary cross-domain coordinates while explicitly withholding semantic-truth,
+external-world, dense-tensor, and autonomous-learning claims. Runtime, APFC,
+semantic-integrity, publication, and security health are `ok`. Compiler,
+exploratory AGI-loop, and local hygiene remain `attention`; two compiler
+findings keep `publishable=false` even though the runtime is operable and the
+publication and security scopes are clean.
+
 ## Build
 
 Standard TeX installation:

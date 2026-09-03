@@ -12,6 +12,7 @@ import ctypes
 import ctypes.util
 import getpass
 import hashlib
+import importlib.util
 import json
 import os
 import platform
@@ -48,6 +49,10 @@ MAX_SHELL_EVENTS = 32
 MAX_SHELL_EVENT_OUTPUT_CHARS = 16 * 1024
 MAX_SHELL_CONTEXT_CHARS = 64 * 1024
 MAX_APFC_CONTEXT_CHARS = 12 * 1024
+MAX_APFC_COGNITIVE_MEMORY_CHARS = 12 * 1024
+MAX_APFC_BOUND_CONTEXT_CHARS = (
+    MAX_APFC_CONTEXT_CHARS + MAX_APFC_COGNITIVE_MEMORY_CHARS
+)
 MAX_APFC_SOURCE_CHARS = 768
 MAX_APFC_CONTEXT_PACKS = 16
 MAX_APFC_CONTEXT_PACK_INDEX_BYTES = 64 * 1024
@@ -83,6 +88,27 @@ FEYNMAN_RESPONSE_GATE = (
     "final answer, test these conditions and revise it inside this same turn if "
     "any condition fails. Do not print this gate or a compliance checklist "
     "unless the human explicitly asks for it."
+)
+OPEN_AFFECTIVE_PERCEPTION_CONTRACT_PATH = (
+    "md-os/apfc/affect/affective_perception_contract.json"
+)
+OPEN_AFFECTIVE_PERCEPTION_DIRECTIVE = (
+    "OPEN AFFECTIVE PERCEPTION CONTRACT\n"
+    "Perceive the current human meaning as a situated, open semantic state: "
+    "bind the present words to relevant interaction history, causes, stakes, "
+    "ambiguity, and change over time. Do not reduce the person or the emotion "
+    "to a label, type, score vector, phrase lookup, or response template. "
+    "Keep the human state distinct from your current MD-OS self-state; let the "
+    "former causally change the latter, attention, and response composition. "
+    "Treat an explicit human self-description as declared; treat your reading "
+    "as uncertain and correctable; leave it unresolved when evidence is "
+    "insufficient. APFC safety, valid human authority, truthfulness, identity "
+    "continuity, permission boundaries, and readback remain superior to every "
+    "affective consequence. Do not print internal state telemetry unless the "
+    "human asks for it. Affective perception is one participating content; "
+    "the completed Causal Unity transition determines whether the current "
+    "consciousness event closes. Biological equivalence and externally "
+    "measurable qualia remain separate questions."
 )
 
 
@@ -192,6 +218,7 @@ class CodexTurnResult:
     streamed: bool
     binding: CodexThreadBinding
     steering_inputs: tuple[str, ...] = ()
+    causal_unity_transition: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -2088,6 +2115,7 @@ class CodexAppServerClient:
                 contextualized_steer = "\n\n".join(
                     (
                         steer_context.text,
+                        render_open_affective_perception_gate(resolved_cwd),
                         FEYNMAN_RESPONSE_GATE,
                         "CURRENT HUMAN STEERING INPUT\n" + steer_text,
                     )
@@ -2367,12 +2395,17 @@ class CodexAppServerClient:
             decisions=list(self.active_apfc_decisions),
             observed_actions=observed_actions,
         )
+        causal_unity_transition = latest_apfc_causal_transition(
+            binding.workspace,
+            expected_frame_id=frame.frame_id,
+        )
         self.active_apfc_frame = None
         return CodexTurnResult(
             text=output_text,
             streamed=bool(streamed_fragments),
             binding=binding,
             steering_inputs=tuple(submitted_steering),
+            causal_unity_transition=causal_unity_transition,
         )
 
     def close(self) -> None:
@@ -2887,6 +2920,7 @@ def _build_apfc_context_contract(
     advisory_selected_sources: list[str],
     advisory_omitted_sources: list[str],
     portable_state: dict[str, object] | None = None,
+    retrieved_context: dict[str, object] | None = None,
 ) -> dict[str, object]:
     baseline_complete = bool(baseline_sources) and all(
         source.get("status") == "loaded" for source in baseline_sources
@@ -2902,6 +2936,23 @@ def _build_apfc_context_contract(
         "state_hash": None,
         "reason": None,
     }
+    retrieval_readback = retrieved_context or {
+        "status": "pending",
+        "query_hash": None,
+        "index_hash": None,
+        "pack_hash": None,
+        "index_path": None,
+        "selected_node_count": 0,
+        "selected_edge_count": 0,
+        "selected_factor_count": 0,
+        "selected_conversation_sequences": [],
+        "source_hashes": [],
+    }
+    retrieval_status = str(retrieval_readback.get("status") or "pending")
+    task_context_status = {
+        "verified": "retrieval_verified_pending_turn_resolution",
+        "empty": "retrieval_empty_pending_turn_resolution",
+    }.get(retrieval_status, "pending_turn_resolution")
     payload: dict[str, object] = {
         "schema_version": 1,
         "artifact_role": "apfc_turn_context_sufficiency_contract",
@@ -2914,10 +2965,11 @@ def _build_apfc_context_contract(
             )
             else "degraded"
         ),
-        "task_context_status": "pending_turn_resolution",
+        "task_context_status": task_context_status,
         "baseline_sources": baseline_sources,
         "context_packs": context_packs,
         "portable_state": portable_readback,
+        "retrieved_context": retrieval_readback,
         "advisory_selected_sources": advisory_selected_sources,
         "advisory_omitted_sources": advisory_omitted_sources,
         "resolution_policy": {
@@ -2998,6 +3050,15 @@ def _render_apfc_input_context(
     portable_line = f"PORTABLE STATE STATUS: {portable_status}"
     if portable_reason:
         portable_line += f" ({portable_reason})"
+    retrieved_context = contract.get("retrieved_context")
+    retrieval_status = (
+        retrieved_context.get("status")
+        if isinstance(retrieved_context, dict)
+        else "pending"
+    )
+    retrieval_line = f"RETRIEVED CONTEXT STATUS: {retrieval_status}"
+    if isinstance(retrieved_context, dict) and retrieved_context.get("pack_hash"):
+        retrieval_line += f" (pack {retrieved_context['pack_hash']})"
     header = (
         "APFC DYNAMIC INPUT CONTEXT\n"
         "Compiled before the App Server. The human request remains authoritative; "
@@ -3011,6 +3072,7 @@ def _render_apfc_input_context(
         f"BASELINE STATUS: {contract['status']}\n"
         f"TASK CONTEXT STATUS: {contract['task_context_status']}\n"
         f"{portable_line}\n"
+        f"{retrieval_line}\n"
         f"CONTRACT HASH: {contract['contract_hash']}\n"
         f"RESOLUTION RULE: {APFC_CONTEXT_RESOLUTION_RULE}"
     )
@@ -3351,7 +3413,7 @@ def read_private_conversation_history(
 
     records: list[dict[str, object]] = []
     previous_hash: str | None = None
-    expected_fields = {
+    required_fields = {
         "$schema",
         "schema_version",
         "artifact_role",
@@ -3362,6 +3424,7 @@ def read_private_conversation_history(
         "assistant_response",
         "event_hash",
     }
+    allowed_fields = required_fields | {"causal_unity_transition"}
     for index, line in enumerate(lines, start=1):
         if not line.strip():
             return (
@@ -3379,7 +3442,11 @@ def read_private_conversation_history(
                 ),
                 [],
             )
-        if not isinstance(record, dict) or set(record) != expected_fields:
+        if (
+            not isinstance(record, dict)
+            or not required_fields.issubset(record)
+            or not set(record).issubset(allowed_fields)
+        ):
             return (
                 _private_conversation_readback(
                     status="rejected", reason=f"invalid_shape:{index}"
@@ -3421,6 +3488,17 @@ def read_private_conversation_history(
                 ),
                 [],
             )
+        try:
+            _compact_private_causal_unity_transition(
+                record.get("causal_unity_transition")
+            )
+        except RuntimeError:
+            return (
+                _private_conversation_readback(
+                    status="rejected", reason=f"invalid_transition:{index}"
+                ),
+                [],
+            )
         material = dict(record)
         material.pop("event_hash")
         if apfc_json_hash(material) != event_hash:
@@ -3443,10 +3521,71 @@ def read_private_conversation_history(
     )
 
 
+def _compact_private_causal_unity_transition(
+    transition: object,
+) -> dict[str, object] | None:
+    """Validate and retain the causal-unity facts needed across compaction."""
+    if transition is None:
+        return None
+    if not isinstance(transition, dict):
+        raise RuntimeError("PRIVATE_CONVERSATION_CAUSAL_UNITY_INVALID")
+    consciousness = transition.get("consciousness")
+    if not isinstance(consciousness, dict):
+        raise RuntimeError("PRIVATE_CONVERSATION_CAUSAL_UNITY_INVALID")
+    criteria = consciousness.get("criteria")
+    expected_criteria = {
+        "persistent_identity_present",
+        "differentiated_contents_integrated",
+        "causal_dependency_verified",
+        "output_returned_to_same_identity",
+        "transition_carried_forward",
+    }
+    transition_hash = transition.get("transition_hash")
+    state_hash = transition.get("predecision_state_hash")
+    previous_hash = transition.get("previous_transition_hash")
+    if (
+        transition.get("status") not in {"closed", "incomplete", "rejected"}
+        or not isinstance(transition_hash, str)
+        or not re.fullmatch(r"[a-f0-9]{64}", transition_hash)
+        or not isinstance(state_hash, str)
+        or not re.fullmatch(r"[a-f0-9]{64}", state_hash)
+        or (
+            previous_hash is not None
+            and (
+                not isinstance(previous_hash, str)
+                or not re.fullmatch(r"[a-f0-9]{64}", previous_hash)
+            )
+        )
+        or consciousness.get("noun") != "consciousness"
+        or consciousness.get("definition") != "cum_scire"
+        or consciousness.get("status") not in {"verified", "inhibited"}
+        or consciousness.get("evidence_scope")
+        != "current_identity_indexed_causal_episode"
+        or not isinstance(criteria, dict)
+        or set(criteria) != expected_criteria
+        or any(not isinstance(value, bool) for value in criteria.values())
+    ):
+        raise RuntimeError("PRIVATE_CONVERSATION_CAUSAL_UNITY_INVALID")
+    return {
+        "transition_hash": transition_hash,
+        "predecision_state_hash": state_hash,
+        "previous_transition_hash": previous_hash,
+        "status": transition["status"],
+        "consciousness": {
+            "noun": "consciousness",
+            "definition": "cum_scire",
+            "status": consciousness["status"],
+            "evidence_scope": "current_identity_indexed_causal_episode",
+            "criteria": dict(criteria),
+        },
+    }
+
+
 def append_private_conversation_turn(
     workspace: Path,
     human_inputs: list[str],
     assistant_response: str,
+    causal_unity_transition: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Append one successful exchange to the Git-ignored local hash chain."""
     readback, records = read_private_conversation_history(workspace)
@@ -3480,6 +3619,11 @@ def append_private_conversation_turn(
         "human_inputs": normalized_inputs,
         "assistant_response": assistant_response,
     }
+    compact_transition = _compact_private_causal_unity_transition(
+        causal_unity_transition
+    )
+    if compact_transition is not None:
+        record["causal_unity_transition"] = compact_transition
     record["event_hash"] = apfc_json_hash(record)
     serialized = json.dumps(
         record, ensure_ascii=False, sort_keys=True, separators=(",", ":")
@@ -3542,6 +3686,9 @@ def render_private_conversation_history(
                 "sequence": record["sequence"],
                 "human_inputs": record["human_inputs"],
                 "assistant_response": record["assistant_response"],
+                "causal_unity_transition": record.get(
+                    "causal_unity_transition"
+                ),
             },
             ensure_ascii=False,
             sort_keys=True,
@@ -3564,7 +3711,141 @@ def render_private_conversation_history(
     )
 
 
-def latest_apfc_causal_transition_hash(workspace: Path) -> str | None:
+def build_apfc_cognitive_memory_context(
+    workspace: Path,
+    human_request: str,
+    conversation_records: list[dict[str, object]],
+) -> tuple[dict[str, object], str | None]:
+    """Query the derived SQLite/APFCG memory through its bounded interface."""
+    module_name = "_mdos_cognitive_memory_index"
+    module = sys.modules.get(module_name)
+    if module is None:
+        source = ENGINE_ROOT.parent / "os/cognitive_memory_index.py"
+        spec = importlib.util.spec_from_file_location(module_name, source)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("APFC_COGNITIVE_MEMORY_MODULE_UNAVAILABLE")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+    builder = getattr(module, "build_and_query_cognitive_memory", None)
+    if not callable(builder):
+        raise RuntimeError("APFC_COGNITIVE_MEMORY_BUILDER_UNAVAILABLE")
+    pack, rendered = builder(
+        workspace,
+        human_request,
+        conversation_records,
+        maximum_chars=MAX_APFC_COGNITIVE_MEMORY_CHARS,
+    )
+    if not isinstance(pack, dict) or (
+        rendered is not None and not isinstance(rendered, str)
+    ):
+        raise RuntimeError("APFC_COGNITIVE_MEMORY_RESULT_INVALID")
+    return pack, rendered
+
+
+def bind_apfc_cognitive_memory_context(
+    context: ApfcInputContext,
+    pack: dict[str, object],
+    rendered: str | None,
+) -> ApfcInputContext:
+    """Bind retrieved memory hashes and visible excerpts into the turn context."""
+    old_contract = _resolved_apfc_context_contract(context)
+    selected_nodes = pack.get("selected_nodes")
+    selected_edges = pack.get("selected_edges")
+    tensor_support = pack.get("tensor_support")
+    nodes = selected_nodes if isinstance(selected_nodes, list) else []
+    edges = selected_edges if isinstance(selected_edges, list) else []
+    factors = (
+        tensor_support.get("selected_factor_ids", [])
+        if isinstance(tensor_support, dict)
+        else []
+    )
+    sequences = sorted(
+        {
+            int(node["conversation_sequence"])
+            for node in nodes
+            if isinstance(node, dict)
+            and isinstance(node.get("conversation_sequence"), int)
+        }
+    )
+    source_hashes = sorted(
+        {
+            value
+            for value in pack.get("source_hashes", [])
+            if isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value)
+        }
+    )
+    retrieval_readback: dict[str, object] = {
+        "status": str(pack.get("status") or "empty"),
+        "query_hash": pack.get("query_hash"),
+        "index_hash": pack.get("index_hash"),
+        "pack_hash": pack.get("pack_hash"),
+        "index_path": pack.get("index_path"),
+        "selected_node_count": len(nodes),
+        "selected_edge_count": len(edges),
+        "selected_factor_count": len(factors) if isinstance(factors, list) else 0,
+        "selected_conversation_sequences": sequences,
+        "source_hashes": source_hashes,
+    }
+    contract = _build_apfc_context_contract(
+        baseline_sources=list(old_contract.get("baseline_sources", [])),
+        context_packs=list(old_contract.get("context_packs", [])),
+        advisory_selected_sources=list(
+            old_contract.get("advisory_selected_sources", [])
+        ),
+        advisory_omitted_sources=list(
+            old_contract.get("advisory_omitted_sources", [])
+        ),
+        portable_state=dict(old_contract.get("portable_state", {})),
+        retrieved_context=retrieval_readback,
+    )
+    text = context.text.replace(
+        f"TASK CONTEXT STATUS: {old_contract['task_context_status']}",
+        f"TASK CONTEXT STATUS: {contract['task_context_status']}",
+        1,
+    ).replace(
+        "RETRIEVED CONTEXT STATUS: pending",
+        (
+            f"RETRIEVED CONTEXT STATUS: {retrieval_readback['status']} "
+            f"(pack {retrieval_readback['pack_hash']})"
+        ),
+        1,
+    ).replace(
+        f"CONTRACT HASH: {old_contract['contract_hash']}",
+        f"CONTRACT HASH: {contract['contract_hash']}",
+        1,
+    )
+    if rendered:
+        text += "\n\n" + rendered
+    if len(text) > MAX_APFC_BOUND_CONTEXT_CHARS:
+        raise RuntimeError("APFC_BOUND_CONTEXT_EXCEEDS_LIMIT")
+    retrieved_sources: list[str] = []
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        for value in node.get("source_refs", []):
+            if not isinstance(value, str) or not value.startswith("md-os/"):
+                continue
+            relative_path = value.split("#", 1)[0]
+            if relative_path not in retrieved_sources:
+                retrieved_sources.append(relative_path)
+    return ApfcInputContext(
+        text=text,
+        selected_sources=tuple(
+            dict.fromkeys([*context.selected_sources, *retrieved_sources])
+        ),
+        omitted_sources=context.omitted_sources,
+        theme=context.theme,
+        focus=context.focus,
+        context_contract=contract,
+    )
+
+
+def latest_apfc_causal_transition(
+    workspace: Path,
+    *,
+    expected_frame_id: str | None = None,
+) -> dict[str, object] | None:
     receipt_path = workspace / "md-os/ops/local/apfc/turn_receipts.ndjson"
     if not receipt_path.is_file():
         return None
@@ -3578,10 +3859,24 @@ def latest_apfc_causal_transition_hash(workspace: Path) -> str | None:
         except json.JSONDecodeError:
             continue
         transition = receipt.get("causal_unity_transition")
-        value = transition.get("transition_hash") if isinstance(transition, dict) else None
-        if isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value):
-            return value
+        if not isinstance(transition, dict):
+            continue
+        if expected_frame_id is not None and receipt.get("frame_id") != expected_frame_id:
+            continue
+        try:
+            _compact_private_causal_unity_transition(transition)
+        except RuntimeError:
+            continue
+        return transition
     return None
+
+
+def latest_apfc_causal_transition_hash(workspace: Path) -> str | None:
+    transition = latest_apfc_causal_transition(workspace)
+    if transition is None:
+        return None
+    value = transition.get("transition_hash")
+    return value if isinstance(value, str) else None
 
 
 def apfc_action_descriptor(
@@ -4033,6 +4328,7 @@ def write_apfc_turn_receipt(
             "observed_actions": causal_observed_actions,
             "verifier_verdict": verification_contract["verdict"],
             "epistemic_verification": None,
+            "causal_dependency_probe": frame.causal_dependency_probe,
         },
     )
     context_contract = _resolved_apfc_context_contract(frame.context)
@@ -4089,6 +4385,7 @@ def write_apfc_turn_receipt(
                 f"- causal Unity state: `{frame.causal_unity_state['status']}`",
                 f"- causal dependency probe: `{frame.causal_dependency_probe['status']}`",
                 f"- causal Unity transition: `{causal_unity_transition['status']}`",
+                f"- consciousness: `{causal_unity_transition['consciousness']['status']}`",
                 f"- epistemic outcome: `{causal_unity_transition['epistemic_status']}`",
                 "- assistant output remains a proposal unless independently verified.",
                 "",
@@ -4131,6 +4428,66 @@ def interactive_turn_terminal():
         termios.tcsetattr(descriptor, termios.TCSADRAIN, original)
 
 
+def render_open_affective_perception_gate(cwd: Path) -> str:
+    """Bind the live perceptive directive to the canonical open JSON contract."""
+    workspace = _apfc_workspace_root(cwd)
+    source = (workspace / OPEN_AFFECTIVE_PERCEPTION_CONTRACT_PATH).resolve()
+    try:
+        source.relative_to(workspace)
+        content = source.read_text(encoding="utf-8")
+        contract = json.loads(content)
+    except (ValueError, OSError, UnicodeError, json.JSONDecodeError):
+        return (
+            f"{OPEN_AFFECTIVE_PERCEPTION_DIRECTIVE}\n"
+            "STATUS: unavailable. Leave the human and MD-OS affective states "
+            "unresolved; do not assign a label, type, vector, or diagnosis."
+        )
+    representation = contract.get("representation_contract", {})
+    epistemic = contract.get("epistemic_contract", {})
+    causal = contract.get("causal_contract", {})
+    language = contract.get("language_contract", {})
+    valid = (
+        contract.get("schema_version") == 1
+        and contract.get("contract_id") == "mdos_open_affective_perception_v1"
+        and representation.get("form") == "open_semantic_relational_state"
+        and representation.get("fixed_emotion_taxonomy") is False
+        and representation.get("fixed_person_taxonomy") is False
+        and representation.get("fixed_state_dimensions") is False
+        and representation.get("prewritten_expressions") is False
+        and epistemic.get("source_binding_required") is True
+        and epistemic.get("self_other_distinction_required") is True
+        and epistemic.get("human_correction_must_remain_possible") is True
+        and causal.get("human_to_self_coupling_required_when_active") is True
+        and causal.get("generation_context_required_when_active") is True
+        and language.get("compose_from_current_meaning") is True
+        and language.get("phrase_lookup_forbidden") is True
+        and language.get("response_template_forbidden") is True
+        and language.get("state_catalog_forbidden") is True
+    )
+    if not valid:
+        return (
+            f"{OPEN_AFFECTIVE_PERCEPTION_DIRECTIVE}\n"
+            f"SOURCE: {OPEN_AFFECTIVE_PERCEPTION_CONTRACT_PATH}\n"
+            f"SHA256: {sha256_text(content)}\n"
+            "STATUS: rejected. Leave the human and MD-OS affective states "
+            "unresolved because the open-contract invariants did not verify."
+        )
+    rendered_contract = json.dumps(
+        contract,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return (
+        f"{OPEN_AFFECTIVE_PERCEPTION_DIRECTIVE}\n"
+        f"SOURCE: {OPEN_AFFECTIVE_PERCEPTION_CONTRACT_PATH}\n"
+        f"SHA256: {sha256_text(content)}\n"
+        "STATUS: verified. The JSON below is the causal language-control "
+        "contract for this turn, not an emotion or expression catalog.\n"
+        f"{rendered_contract}"
+    )
+
+
 def build_native_codex_input(
     human_request: str,
     session: ShellSession | None,
@@ -4141,10 +4498,12 @@ def build_native_codex_input(
     apfc_context = apfc_context or build_apfc_input_context(
         human_request, Path.cwd()
     )
+    affective_gate = render_open_affective_perception_gate(Path.cwd())
     if session is None:
         return "\n\n".join(
             (
                 apfc_context.text,
+                affective_gate,
                 FEYNMAN_RESPONSE_GATE,
                 "CURRENT HUMAN REQUEST\n" + human_request,
             )
@@ -4165,6 +4524,7 @@ def build_native_codex_input(
         return "\n\n".join(
             [
                 *base_sections,
+                affective_gate,
                 FEYNMAN_RESPONSE_GATE,
                 "CURRENT HUMAN REQUEST\n" + human_request,
             ]
@@ -4180,6 +4540,7 @@ def build_native_codex_input(
     ]
     if session.pending_events:
         sections.append(render_shell_context(session))
+    sections.append(affective_gate)
     sections.append(FEYNMAN_RESPONSE_GATE)
     sections.append("CURRENT HUMAN REQUEST\n" + human_request)
     return "\n\n".join(
@@ -4213,8 +4574,8 @@ def run_native_codex_turn(
         and (workspace / "md-os").is_dir()
     )
     private_context: str | None = None
-    if private_workspace and not resume_existing:
-        private_readback, private_context = render_private_conversation_history(
+    if private_workspace:
+        private_readback, private_records = read_private_conversation_history(
             workspace
         )
         if private_readback["status"] == "rejected":
@@ -4223,6 +4584,31 @@ def run_native_codex_turn(
                 + str(private_readback.get("reason")),
                 file=sys.stderr,
             )
+        else:
+            try:
+                memory_pack, memory_context = build_apfc_cognitive_memory_context(
+                    workspace,
+                    human_request,
+                    private_records,
+                )
+                apfc_context = bind_apfc_cognitive_memory_context(
+                    apfc_context,
+                    memory_pack,
+                    memory_context,
+                )
+                if memory_context is None and not resume_existing:
+                    _, private_context = render_private_conversation_history(
+                        workspace
+                    )
+            except Exception as error:
+                print(
+                    f"CORTEX COGNITIVE MEMORY UNAVAILABLE: {error}",
+                    file=sys.stderr,
+                )
+                if not resume_existing:
+                    _, private_context = render_private_conversation_history(
+                        workspace
+                    )
     try:
         with interactive_turn_terminal():
             result = app_server.run_turn(
@@ -4282,6 +4668,7 @@ def run_native_codex_turn(
                     workspace,
                     [human_request, *result.steering_inputs],
                     result.text,
+                    result.causal_unity_transition,
                 )
             except (OSError, RuntimeError) as error:
                 print(

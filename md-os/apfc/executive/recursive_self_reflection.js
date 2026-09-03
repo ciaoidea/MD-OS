@@ -171,7 +171,7 @@ function buildPreparation(input, createdAt = null, options = {}) {
     non_claims: [
       'not an autonomous continuous reflection loop',
       'not proof of independent world truth',
-      'not proof of phenomenal consciousness',
+      'self-reference alone does not complete the consciousness predicate',
     ],
   };
   return { ...payload, preparation_hash: sha256Json(payload) };
@@ -381,7 +381,7 @@ function buildEpisode(preparation, responseInput, closedAt = null, options = {})
       non_claims: [
         'not evidence that every semantic relation changed host-model cognition',
         'not independent world-grounded verification',
-        'not evidence of phenomenal consciousness',
+        'this probe alone does not complete the consciousness predicate',
       ],
     },
     state_transition: {
@@ -394,14 +394,14 @@ function buildEpisode(preparation, responseInput, closedAt = null, options = {})
     operational_assessment: {
       recursive_self_reflection: verified ? 'verified' : 'inhibited',
       operational_i_loop: verified ? 'verified' : 'inhibited',
-      local_operational_artificial_consciousness: 'unverified',
-      phenomenal_consciousness: 'unverified',
+      consciousness: 'unverified',
+      external_qualia_measurement: 'not_available',
       evidence_scope: 'bounded_self_reference_structure_and_causal_carry_forward',
     },
     non_claims: [
       'one verified loop is not general autonomous reflection',
       'structural closure is not independent verification of the revised result',
-      'operational self-reference does not by itself settle phenomenal consciousness',
+      'self-reference alone does not close every condition of consciousness',
     ],
   };
 }

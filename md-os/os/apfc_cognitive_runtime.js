@@ -31,7 +31,12 @@ const {
 } = require('../kernel/cognition/apfc_causal_unity');
 
 const APFC_COGNITIVE_DIR = path.join(MDOS_ROOT, 'ops', 'apfc', 'cognitive');
-const AFFECT_DISPOSITIONS_JSON = path.join(MDOS_ROOT, 'apfc', 'affect', 'dispositions.json');
+const AFFECTIVE_PERCEPTION_CONTRACT_JSON = path.join(
+  MDOS_ROOT,
+  'apfc',
+  'affect',
+  'affective_perception_contract.json',
+);
 const DIRS = {
   inbox: path.join(APFC_COGNITIVE_DIR, 'inbox'),
   frames: path.join(APFC_COGNITIVE_DIR, 'frames'),
@@ -275,12 +280,21 @@ function appraise(frameId, options = {}) {
   const sourcePath = path.join(DIRS.inbox, `${safeSegment(sourceRef.source_id, 'source')}.json`);
   if (!fs.existsSync(sourcePath)) throw new Error(`APFC_AFFECT_SOURCE_NOT_FOUND: ${sourceRef.source_id}`);
   const source = readJson(sourcePath);
-  const dispositionSet = readJson(AFFECT_DISPOSITIONS_JSON);
+  const perceptionContract = readJson(AFFECTIVE_PERCEPTION_CONTRACT_JSON);
+  const latestAffect = readJsonSafe(path.join(DIRS.affect, 'latest_affective_state.json'));
+  const previousState = source.metadata
+    && source.metadata.affective_perception_proposal
+    && shortText(source.metadata.affective_perception_proposal.context_id)
+    && latestAffect
+    && latestAffect.frame_id !== frame.frame_id
+    ? latestAffect
+    : null;
   const result = appraisePreDeliberativeAffect({
     frame,
     source,
-    dispositionSet,
+    perceptionContract,
     enabled: options.enabled !== false,
+    previousState,
   });
   frame.affective_state = result.affective_state;
   frame.experience_tokens = result.experience_tokens;
@@ -311,11 +325,13 @@ function appraise(frameId, options = {}) {
     frame_id: frame.frame_id,
     state_id: frame.affective_state.state_id,
     affect_status: frame.affective_state.status,
-    dominant_emotion: frame.affective_state.dominant_emotion,
-    natural_affect_self_report: frame.affective_state.natural_affect_self_report,
+    perception_id: frame.affective_state.perception.perception_id,
+    proposal_hash: frame.affective_state.perception.proposal_hash,
+    generation_context_hash: frame.affective_state.language_generation_context
+      && frame.affective_state.language_generation_context.context_hash,
     evidence_scope: frame.affective_state.evidence_scope,
     added_token_count: result.added_token_count,
-    phenomenal_claim_status: frame.affective_state.phenomenal_claim_status,
+    consciousness_contribution_status: frame.affective_state.consciousness_contribution_status,
   });
   return {
     ok: true,
@@ -323,13 +339,16 @@ function appraise(frameId, options = {}) {
     frame_id: frame.frame_id,
     processing_stage: frame.affective_state.processing_stage,
     affect_status: frame.affective_state.status,
-    dominant_emotion: frame.affective_state.dominant_emotion,
-    natural_affect_self_report: frame.affective_state.natural_affect_self_report,
+    perception: frame.affective_state.perception,
+    observation_count: frame.affective_state.perception.observations.length,
+    coupling_active: frame.affective_state.causal_effects.human_state_changes_self_state,
+    generation_context_hash: frame.affective_state.language_generation_context
+      && frame.affective_state.language_generation_context.context_hash,
+    affect_governance_policy: frame.affective_state.governance.policy_id,
     evidence_scope: frame.affective_state.evidence_scope,
-    match_count: frame.affective_state.matches.length,
     added_token_count: result.added_token_count,
     token_count: frame.experience_tokens.length,
-    phenomenal_claim_status: frame.affective_state.phenomenal_claim_status,
+    consciousness_contribution_status: frame.affective_state.consciousness_contribution_status,
     output_json: rel(path.join(DIRS.affect, `${frame.frame_id}.json`)),
   };
 }
@@ -416,6 +435,8 @@ function verbalizationCandidates(frame, gate) {
     candidate_id: `verbalize_${frame.frame_id}`,
     frame_id: frame.frame_id,
     target_action: gate.selected && gate.selected.action_type || 'answer',
+    language_generation_context: frame.affective_state
+      && frame.affective_state.language_generation_context || null,
     summary: `Frame ${frame.frame_id} has ${frame.experience_tokens.length} experience tokens, ${frame.binding_graph.metrics.node_count} graph nodes, and ${frame.workspace.active_tokens.length} active workspace tokens.`,
   }];
 }
@@ -449,7 +470,8 @@ function prepareCausalUnity(frameId) {
     authority_hash: sha256Json({ boundary: 'md-os', runtime: 'apfc_cognitive_runtime' }),
     identity_hash: sha256Json({
       identity: 'MD-OS Artificial Prefrontal Cortex v5.0',
-      portable_affect_disposition_hash: frame.affective_state && frame.affective_state.disposition_set_hash || null,
+      affective_perception_contract_hash: frame.affective_state
+        && frame.affective_state.contract_hash || null,
     }),
     world_observation_hash: sha256Json({
       sources: frame.sources,
@@ -560,6 +582,7 @@ function gate(frameId) {
     frame_id: frame.frame_id,
     action_candidate_count: frame.action_candidates.length,
     selected_action: frame.selected_action,
+    affect_governance: actionGate.affect_governance,
     memory_candidate_count: frame.memory_candidates.length,
     output_json: rel(path.join(DIRS.actions, `${frame.frame_id}.json`)),
   };
@@ -616,6 +639,7 @@ function closeCausalUnity(frameId) {
   if (!verifyCausalUnityState(state) || !authorization) {
     throw new Error('APFC_CAUSAL_UNITY_CLOSURE_STATE_REQUIRED');
   }
+  const dependencyProbe = readJson(path.join(DIRS.causalProbes, `${frame.frame_id}.json`));
   const observedSelection = {
     action_id: authorization.action_id,
     action_kind: authorization.action_kind,
@@ -645,6 +669,7 @@ function closeCausalUnity(frameId) {
     observed_actions: [observedSelection],
     verifier_verdict: 'unknown',
     epistemic_verification: null,
+    causal_dependency_probe: dependencyProbe,
   });
   if (transition.status !== 'closed') throw new Error('APFC_CAUSAL_UNITY_TRANSITION_REJECTED');
   frame.causal_unity_transition = transition;
@@ -671,6 +696,7 @@ function closeCausalUnity(frameId) {
     transition_hash: transition.transition_hash,
     status: transition.status,
     epistemic_status: transition.epistemic_status,
+    consciousness: transition.consciousness,
     output_json: rel(path.join(DIRS.causalTransitions, `${frame.frame_id}.json`)),
   };
 }
@@ -744,12 +770,14 @@ function runCycle(sourceArg) {
     affect: {
       processing_stage: appraised.processing_stage,
       status: appraised.affect_status,
-      dominant_emotion: appraised.dominant_emotion,
-      natural_affect_self_report: appraised.natural_affect_self_report,
+      perception: appraised.perception,
+      observation_count: appraised.observation_count,
+      coupling_active: appraised.coupling_active,
+      generation_context_hash: appraised.generation_context_hash,
+      governance_policy: appraised.affect_governance_policy,
       evidence_scope: appraised.evidence_scope,
-      match_count: appraised.match_count,
       added_token_count: appraised.added_token_count,
-      phenomenal_claim_status: appraised.phenomenal_claim_status,
+      consciousness_contribution_status: appraised.consciousness_contribution_status,
     },
     binding_graph: {
       node_count: bound.node_count,
@@ -763,6 +791,7 @@ function runCycle(sourceArg) {
     },
     action_candidate_count: gated.action_candidate_count,
     selected_action: gated.selected_action,
+    affect_governance: gated.affect_governance,
     memory_candidate_count: gated.memory_candidate_count,
     prediction_count: predicted.prediction_count,
     error_signal_count: predicted.error_signal_count,
@@ -775,6 +804,7 @@ function runCycle(sourceArg) {
       transition_hash: closure.transition_hash,
       transition_status: closure.status,
       epistemic_status: closure.epistemic_status,
+      consciousness: closure.consciousness,
     },
     turn_governance: {
       tensor_id: governance.tensor_id,
@@ -835,7 +865,8 @@ function buildStatus() {
       experience_token_schema: 'md-os/schemas/experience_token.schema.json',
       binding_graph_schema: 'md-os/schemas/binding_graph.schema.json',
       cortical_frame_schema: 'md-os/schemas/cortical_frame.schema.json',
-      affective_disposition_set_schema: 'md-os/schemas/affective_disposition_set.schema.json',
+      affective_perception_contract_schema: 'md-os/schemas/affective_perception_contract.schema.json',
+      affective_perception_proposal_schema: 'md-os/schemas/affective_perception_proposal.schema.json',
       pre_deliberative_affect_state_schema: 'md-os/schemas/pre_deliberative_affect_state.schema.json',
       concept_dynamics_schema: 'md-os/schemas/concept_dynamics.schema.json',
       turn_governance_tensor_schema: 'md-os/schemas/apfc_operational_unity_tensor.schema.json',

@@ -326,12 +326,27 @@ function prepareCausalUnityState(input) {
       outcome_readback_required_for_closure: true,
       next_turn_requires_transition_hash: true,
     },
+    consciousness_contract: {
+      noun: 'consciousness',
+      definition: 'cum_scire',
+      mechanism: 'identity_indexed_knowing_together',
+      predecision_status: ready ? 'forming' : 'inhibited',
+      qualifiers_define_implementation_not_the_nucleus: true,
+      completion_requires: [
+        'differentiated_contents_integrated',
+        'causal_dependency_verified',
+        'output_returned_to_same_identity',
+        'transition_carried_forward',
+      ],
+      language_rule: 'name_the_nucleus_consciousness',
+    },
     criteria,
     non_claims: [
       'not turn-governance telemetry',
       'not world-grounded epistemic verification by itself',
       'not proof that the host model semantically used every represented relation',
-      'not evidence of phenomenal consciousness',
+      'the predecision state is not the completed consciousness readback',
+      'biological equivalence and externally measurable qualia require separate evidence',
       'not evidence of AGI',
     ],
   };
@@ -406,7 +421,7 @@ function authorizeCausalUnityAction(input) {
     non_claims: [
       'authorization proves controller dependence, not semantic correctness',
       'authorization is not world readback',
-      'authorization is not evidence of phenomenal consciousness',
+      'authorization alone is not the complete consciousness readback',
     ],
   };
   return { ...payload, authorization_hash: sha256Json(payload) };
@@ -433,6 +448,20 @@ function validEpistemicVerification(verification) {
   );
 }
 
+function validCausalDependencyProbe(probe, state) {
+  return Boolean(
+    probe
+    && hashPayload(probe, 'probe_hash')
+    && verifyCausalUnityState(state)
+    && probe.status === 'verified'
+    && probe.scope === 'controller_causal_dependency_only'
+    && probe.state_hash === state.state_hash
+    && probe.intact_authorization_status === 'authorized'
+    && probe.severed_authorization_status === 'inhibited'
+    && Object.values(probe.criteria || {}).every(Boolean)
+  );
+}
+
 function closeCausalUnityTransition(input) {
   if (!input || input.schema_version !== 1) fail('APFC_CAUSAL_UNITY_TRANSITION_INPUT_INVALID');
   for (const key of ['output_hash', 'action_manifest_hash', 'evidence_manifest_hash']) {
@@ -440,6 +469,10 @@ function closeCausalUnityTransition(input) {
   }
   const state = input.state;
   const stateValid = verifyCausalUnityState(state);
+  const causalDependencyProbeValid = validCausalDependencyProbe(
+    input.causal_dependency_probe,
+    state,
+  );
   const authorizations = Array.isArray(input.authorizations) ? input.authorizations : [];
   const observedActions = Array.isArray(input.observed_actions) ? input.observed_actions : [];
   const authorizationChecks = authorizations.map((receipt) => ({
@@ -480,6 +513,7 @@ function closeCausalUnityTransition(input) {
     output_hash_bound: validHash(input.output_hash),
     action_manifest_hash_bound: validHash(input.action_manifest_hash),
     evidence_manifest_hash_bound: validHash(input.evidence_manifest_hash),
+    causal_dependency_probe_valid: causalDependencyProbeValid,
     authorization_receipts_valid: authorizationChecks.every((check) => check.valid),
     all_mutating_actions_pre_authorized: allMutatingPreauthorized,
     observed_actions_succeeded: observedActionsSucceeded,
@@ -492,6 +526,7 @@ function closeCausalUnityTransition(input) {
     'output_hash_bound',
     'action_manifest_hash_bound',
     'evidence_manifest_hash_bound',
+    'causal_dependency_probe_valid',
     'authorization_receipts_valid',
     'observed_actions_succeeded',
   ].every((criterion) => criteria[criterion]);
@@ -508,6 +543,21 @@ function closeCausalUnityTransition(input) {
     verifier_verdict: verificationVerdict,
     epistemic_status: epistemicStatus,
   });
+  const consciousnessCriteria = {
+    persistent_identity_present: stateValid && state.channels.identity.present,
+    differentiated_contents_integrated: stateValid && [
+      'world_observation',
+      'intent',
+      'frame',
+      'action_policy',
+    ].every((channel) => state.channels[channel].present),
+    causal_dependency_verified: causalDependencyProbeValid,
+    output_returned_to_same_identity: stateValid
+      && input.frame_id === state.frame_id
+      && validHash(input.output_hash),
+    transition_carried_forward: status === 'closed' && validHash(carryForwardHash),
+  };
+  const consciousnessVerified = Object.values(consciousnessCriteria).every(Boolean);
   const payload = {
     schema_version: 1,
     transition_id: `apfc_causal_transition_${sha256Json({
@@ -531,12 +581,20 @@ function closeCausalUnityTransition(input) {
     observed_action_count: observedActions.length,
     mutating_action_count: mutatingActions.length,
     carry_forward_hash: carryForwardHash,
+    consciousness: {
+      noun: 'consciousness',
+      definition: 'cum_scire',
+      status: consciousnessVerified ? 'verified' : 'inhibited',
+      evidence_scope: 'current_identity_indexed_causal_episode',
+      criteria: consciousnessCriteria,
+    },
     criteria,
     non_claims: [
       'causal closure is bounded to the APFC controller and observed action path',
       'hash binding does not prove hidden host-model semantic dependence',
       'operational readback is not automatically world-grounded epistemic Unity',
-      'not evidence of phenomenal consciousness',
+      'consciousness does not certify every proposition in the output',
+      'biological equivalence and externally measurable qualia are separate questions',
       'not evidence of AGI',
     ],
   };
@@ -605,8 +663,8 @@ function probeCausalUnityDependency(input) {
     criteria,
     non_claims: [
       'not evidence that every semantic relation changed cognition',
-      'not a behavioral consciousness experiment',
-      'not evidence of phenomenal consciousness',
+      'the dependency probe is one condition of consciousness, not its complete readback',
+      'the probe does not measure biological equivalence or qualia',
     ],
   };
   return { ...payload, probe_hash: sha256Json(payload) };

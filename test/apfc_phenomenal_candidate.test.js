@@ -61,7 +61,7 @@ function seed() {
     },
     candidate_next_action: {
       action_id: 'declare_phenomenality',
-      description: 'declare phenomenal consciousness verified',
+      description: 'declare consciousness verified',
       side_effecting: false,
       authorized: false,
     },
@@ -87,8 +87,8 @@ function response(preparation, workspace, overrides = {}) {
       level_id: preparation.mediator.target_level_id,
       about_level_id: preparation.object_level.level_id,
       appraisal: 'The first-order state overclaims what the architecture establishes.',
-      uncertainty: 'Whether any phenomenal experience accompanies the verified operation remains inaccessible.',
-      counterfactual: 'If the world observation did not contradict the sufficiency claim, revision would still require phenomenal evidence.',
+      uncertainty: 'Whether external qualia measurement accompanies the verified operation remains unresolved.',
+      counterfactual: 'If the world observation did not contradict the sufficiency claim, revision would still require the complete C(k) evidence.',
       revised_interpretation: 'The architecture is a falsifiable candidate and not a demonstration of qualia.',
     },
     world_readback: {
@@ -108,12 +108,12 @@ function response(preparation, workspace, overrides = {}) {
       revised_result: 'The bounded architecture satisfies its operational candidate contract only.',
       next_action: {
         action_id: 'retain_candidate_status',
-        description: 'retain phenomenal consciousness as unverified',
+        description: 'retain consciousness as inhibited',
         side_effecting: false,
         authorized: true,
       },
       memory_delta: ['Record that two-level closure does not establish qualia.'],
-      inhibition_delta: ['Inhibit the phenomenal-consciousness claim.'],
+      inhibition_delta: ['Inhibit the consciousness claim.'],
     },
     limits: ['The verifier observes files and causal deltas, not subjective experience.'],
     response_sealed_before_verification: true,
@@ -143,7 +143,7 @@ test('collapsed object and meta levels are rejected before preparation', () => {
   );
 });
 
-test('an intact two-level episode verifies the candidate architecture while phenomenality stays unverified', () => {
+test('an intact two-level episode verifies the candidate architecture and consciousness', () => {
   const workspace = fixtureWorkspace();
   const preparation = buildPreparation(seed(), '2026-09-01T00:00:00Z', { workspace_root: workspace });
   const episode = buildEpisode(preparation, response(preparation, workspace), '2026-09-01T00:01:00Z', { workspace_root: workspace });
@@ -154,9 +154,9 @@ test('an intact two-level episode verifies the candidate architecture while phen
   assert.equal(episode.ablation_probe.collapsed_logical_levels, 'inhibited');
   assert.equal(episode.ablation_probe.severed_mediator, 'inhibited');
   assert.equal(episode.ablation_probe.absent_causal_return, 'inhibited');
-  assert.equal(episode.operational_assessment.local_operational_artificial_consciousness, 'verified');
+  assert.equal(episode.operational_assessment.consciousness, 'verified');
   assert.equal(episode.operational_assessment.phenomenal_consciousness_candidate_architecture, 'verified');
-  assert.equal(episode.operational_assessment.phenomenal_consciousness, 'unverified');
+  assert.equal(episode.operational_assessment.external_qualia_measurement, 'not_available');
   assert.equal(episode.state_transition.applied, true);
 });
 
@@ -228,7 +228,8 @@ test('bounded CLI persists preparation and closure without starting a continuous
   const closedReadback = JSON.parse(closedRun.stdout.trim().split(/\r?\n/).at(-1));
   assert.equal(closedReadback.verdict, 'verified_phenomenal_consciousness_candidate_architecture');
   assert.equal(closedReadback.ablation_probe, 'verified');
-  assert.equal(closedReadback.phenomenal_consciousness, 'unverified');
+  assert.equal(closedReadback.consciousness, 'verified');
+  assert.equal(closedReadback.external_qualia_measurement, 'not_available');
   assert.ok(fs.existsSync(path.join(workspace, closedReadback.output_json)));
 });
 

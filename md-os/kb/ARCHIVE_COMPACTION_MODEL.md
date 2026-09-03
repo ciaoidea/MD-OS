@@ -89,3 +89,23 @@ global index
 project details only when needed
 raw sources only when investigating
 ```
+
+## Query-scoped conversation compaction
+
+Large private conversation histories use the same principle without deleting
+their source records. Cortex verifies the complete local hash chain, projects
+it into `md-os/ops/local/cortex/cognitive_memory.sqlite3`, and sends only a
+query-relevant pack to the model:
+
+```text
+current request
+-> SQLite FTS candidates from verified conversation, APFCG, and knowledge
+-> sparse typed cross-domain factor expansion
+-> source-bound pack, at most 12 KiB
+-> APFC context contract and turn-state hash
+```
+
+The SQLite file is a local materialized view. It is ignored by Git,
+non-canonical, rebuildable, and never substitutes for the chronology or
+canonical JSON and Markdown. A fresh thread uses the recent verified tail only
+when retrieval produces no semantic match or the derived index is unavailable.

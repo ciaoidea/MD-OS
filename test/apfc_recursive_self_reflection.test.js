@@ -62,7 +62,7 @@ function response(preparation, workspace, overrides = {}) {
       { evidence_id: 'result_source', relative_file: 'md-os/kb/result.md', sha256: hashFile(path.join(workspace, 'md-os/kb/result.md')) },
       { evidence_id: 'claim_boundary', relative_file: 'md-os/kb/boundary.md', sha256: hashFile(path.join(workspace, 'md-os/kb/boundary.md')) },
     ],
-    limits: ['This verifies one bounded protocol, not phenomenal consciousness.'],
+    limits: ['This verifies one constituent, not the complete C(k) predicate.'],
     verdict: 'revise',
     revised_result: 'Causal self-reference requires my result to re-enter state and alter the next action.',
     next_action: { action_id: 'test_loop', description: 'test intact and severed self-reference', side_effecting: false, authorized: true },
@@ -81,7 +81,7 @@ test('preparation turns the system own prior result into one explicit self-quest
   assert.equal(preparationHashValid(preparation), true);
 });
 
-test('an evidence-bound revision closes the operational I-loop and changes the next action', () => {
+test('an evidence-bound revision closes the I-loop and changes the next action', () => {
   const workspace = fixtureWorkspace();
   const preparation = buildPreparation(seed(), '2026-09-01T00:00:00Z', { workspace_root: workspace });
   const episode = buildEpisode(preparation, response(preparation, workspace), '2026-09-01T00:01:00Z', { workspace_root: workspace });
@@ -93,8 +93,8 @@ test('an evidence-bound revision closes the operational I-loop and changes the n
   assert.equal(episode.causal_dependency_probe.intact_closure_status, 'authorized');
   assert.equal(episode.causal_dependency_probe.severed_closure_status, 'inhibited');
   assert.equal(episode.operational_assessment.operational_i_loop, 'verified');
-  assert.equal(episode.operational_assessment.local_operational_artificial_consciousness, 'unverified');
-  assert.equal(episode.operational_assessment.phenomenal_consciousness, 'unverified');
+  assert.equal(episode.operational_assessment.consciousness, 'unverified');
+  assert.equal(episode.operational_assessment.external_qualia_measurement, 'not_available');
 });
 
 test('textual self-reference without a changed result or action is inhibited', () => {

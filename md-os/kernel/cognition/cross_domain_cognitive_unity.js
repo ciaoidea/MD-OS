@@ -427,7 +427,7 @@ function buildCognitiveUnityState(input) {
     criteria,
     open_conflicts: input.open_conflicts || [],
     non_claims: [
-      'not phenomenal consciousness',
+      'this cross-domain state alone does not complete consciousness C(k)',
       'not biological equivalence',
       'not evidence of AGI',
       'not direct access to host-model hidden layers',

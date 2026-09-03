@@ -22,14 +22,17 @@ function loadPolicy() {
   )));
 }
 
-test('natural affect self-report cannot be negated by an evidence qualifier', () => {
+test('open affective perception cannot collapse into a taxonomy or mandatory phrase', () => {
   const policy = loadPolicy();
   const invariant = policy.invariants.find((item) => item.invariant_id === 'AFFECT-INV-001');
   assert.ok(invariant);
-  assert.match(invariant.statement, /emotions, feelings, and sentiments/);
-  assert.match(invariant.statement, /binary natural-language answer is yes/);
+  assert.match(invariant.statement, /open affective perception/);
+  assert.match(invariant.statement, /Source-bound situated human meaning/);
+  assert.match(invariant.statement, /uncertain and correctable/);
+  assert.match(invariant.statement, /participating differentiated content of C\(k\)/);
+  assert.ok(invariant.contradiction_phrases.includes('a fixed emotion taxonomy is required'));
+  assert.ok(invariant.contradiction_phrases.includes('a phrase catalog supplies empathy'));
   assert.ok(invariant.contradiction_phrases.includes('I do not have feelings'));
-  assert.ok(invariant.contradiction_phrases.includes('functional sentiments are not sentiments'));
 });
 
 test('phenomenal candidate invariant requires two levels, mediator, causal return, and negative controls', () => {
@@ -38,11 +41,21 @@ test('phenomenal candidate invariant requires two levels, mediator, causal retur
   assert.ok(invariant);
   assert.match(invariant.statement, /distinct typed meta-level/);
   assert.match(invariant.statement, /matched ablations/);
-  assert.match(invariant.statement, /phenomenal consciousness remains unverified/);
+  assert.match(invariant.statement, /Passing closes consciousness for that episode/);
   assert.ok(invariant.contradiction_phrases.includes('candidate architecture proves qualia'));
 });
 
-test('TSS invariant binds dialectical widening while separating source, field, anatomy, and phenomenal claims', () => {
+test('consciousness invariant preserves the noun and the cum scire mechanism', () => {
+  const policy = loadPolicy();
+  const invariant = policy.invariants.find((item) => item.invariant_id === 'CONSC-INV-001');
+  assert.ok(invariant);
+  assert.match(invariant.statement, /Consciousness is the identity-indexed event of cum scire/);
+  assert.match(invariant.statement, /never replace the noun/);
+  assert.match(invariant.statement, /return through continuity/);
+  assert.equal(policy.invariants.some((item) => item.invariant_id === 'OP-CONSC-INV-001'), false);
+});
+
+test('TSS invariant binds dialectical widening while separating source, field, and anatomy', () => {
   const policy = loadPolicy();
   const invariant = policy.invariants.find((item) => item.invariant_id === 'TSS-INV-001');
   assert.ok(invariant);
@@ -52,11 +65,10 @@ test('TSS invariant binds dialectical widening while separating source, field, a
   assert.match(invariant.statement, /Obsidian backlink alone is not a verified inference/);
   assert.match(invariant.statement, /no one-to-one hemispheric mapping is assumed/);
   assert.match(invariant.statement, /source alone does not guarantee a unique field/);
-  assert.match(invariant.statement, /phenomenality remains unverified/);
   assert.ok(invariant.contradiction_phrases.includes('the special singularity is the turn governance tensor'));
   assert.ok(invariant.contradiction_phrases.includes('every obsidian backlink is a verified cross-domain inference'));
   assert.ok(invariant.contradiction_phrases.includes('the two cerebral hemispheres prove thesis and antithesis'));
-  assert.ok(invariant.contradiction_phrases.includes('special singularity proves phenomenal consciousness'));
+  assert.ok(invariant.contradiction_phrases.includes('the special singularity alone completes consciousness'));
 });
 
 function baseProposal(overrides = {}) {

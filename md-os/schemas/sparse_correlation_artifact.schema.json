@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/sparse_correlation_artifact.schema.json",
+  "title": "MD-OS Sparse Correlation Artifacts",
+  "oneOf": [
+    { "$ref": "#/$defs/skeleton" },
+    { "$ref": "#/$defs/query" },
+    { "$ref": "#/$defs/probe" }
+  ],
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "epistemicStatus": {
+      "enum": ["hypothetical", "observed", "verified", "falsified", "superseded", "invalid"]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "domain_id", "label", "source_refs", "properties", "content_hash"],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "domain_id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "source_refs": { "$ref": "#/$defs/refs", "minItems": 1 },
+        "properties": { "type": "object" },
+        "content_hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "role"],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["source", "target", "context"] }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "verifier_id", "independent", "evidence_refs"],
+      "properties": {
+        "status": { "enum": ["unverified", "passed", "failed"] },
+        "verifier_id": { "type": ["string", "null"] },
+        "independent": { "type": "boolean" },
+        "evidence_refs": { "$ref": "#/$defs/refs" }
+      }
+    },
+    "measures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semantic_similarity", "confidence", "causal_support", "frequency"],
+      "properties": {
+        "semantic_similarity": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "causal_support": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "frequency": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "correlation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correlation_id",
+        "relation_type",
+        "directed",
+        "participants",
+        "epistemic_status",
+        "source_refs",
+        "support_refs",
+        "contradiction_refs",
+        "verification",
+        "valid_from",
+        "valid_to",
+        "measures",
+        "properties",
+        "content_hash"
+      ],
+      "properties": {
+        "correlation_id": { "type": "string", "minLength": 1 },
+        "relation_type": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "directed": { "type": "boolean" },
+        "participants": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/participant" }
+        },
+        "epistemic_status": { "$ref": "#/$defs/epistemicStatus" },
+        "source_refs": { "$ref": "#/$defs/refs", "minItems": 1 },
+        "support_refs": { "$ref": "#/$defs/refs" },
+        "contradiction_refs": { "$ref": "#/$defs/refs" },
+        "verification": { "$ref": "#/$defs/verification" },
+        "valid_from": { "type": ["string", "null"], "format": "date-time" },
+        "valid_to": { "type": ["string", "null"], "format": "date-time" },
+        "measures": { "$ref": "#/$defs/measures" },
+        "properties": { "type": "object" },
+        "content_hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "skeleton": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_role",
+        "skeleton_id",
+        "created_at",
+        "status",
+        "scope",
+        "representation",
+        "nodes",
+        "correlations",
+        "metrics",
+        "non_claims",
+        "skeleton_hash"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "artifact_role": { "const": "sparse_correlation_skeleton" },
+        "skeleton_id": { "type": "string", "pattern": "^correlation_skeleton_[a-z0-9_]+$" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "status": { "const": "ready" },
+        "scope": { "const": "bounded_external_correlational_skeleton" },
+        "representation": { "const": "sparse_typed_temporal_correlation_hypergraph" },
+        "nodes": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/node" } },
+        "correlations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/correlation" } },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "domain_count",
+            "node_count",
+            "materialized_correlation_count",
+            "theoretical_binary_cross_domain_coordinates",
+            "dense_coordinates_materialized"
+          ],
+          "properties": {
+            "domain_count": { "type": "integer", "minimum": 2 },
+            "node_count": { "type": "integer", "minimum": 2 },
+            "materialized_correlation_count": { "type": "integer", "minimum": 1 },
+            "theoretical_binary_cross_domain_coordinates": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+            "dense_coordinates_materialized": { "const": false }
+          }
+        },
+        "non_claims": { "type": "array", "minItems": 5, "items": { "type": "string", "minLength": 1 } },
+        "skeleton_hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "queryInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_node_id",
+        "target_node_id",
+        "as_of",
+        "max_hops",
+        "admitted_epistemic_statuses",
+        "admit_contested",
+        "available_context_node_ids",
+        "disabled_correlation_ids"
+      ],
+      "properties": {
+        "source_node_id": { "type": "string", "minLength": 1 },
+        "target_node_id": { "type": "string", "minLength": 1 },
+        "as_of": { "type": ["string", "null"], "format": "date-time" },
+        "max_hops": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "admitted_epistemic_statuses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/epistemicStatus" }
+        },
+        "admit_contested": { "type": "boolean" },
+        "available_context_node_ids": { "$ref": "#/$defs/refs" },
+        "disabled_correlation_ids": { "$ref": "#/$defs/refs" }
+      }
+    },
+    "pathStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correlation_id",
+        "relation_type",
+        "from_node_id",
+        "to_node_id",
+        "required_context_node_ids",
+        "epistemic_status"
+      ],
+      "properties": {
+        "correlation_id": { "type": "string", "minLength": 1 },
+        "relation_type": { "type": "string", "minLength": 1 },
+        "from_node_id": { "type": "string", "minLength": 1 },
+        "to_node_id": { "type": "string", "minLength": 1 },
+        "required_context_node_ids": { "$ref": "#/$defs/refs" },
+        "epistemic_status": { "$ref": "#/$defs/epistemicStatus" }
+      }
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_role",
+        "query_id",
+        "skeleton_id",
+        "skeleton_hash",
+        "status",
+        "result_scope",
+        "inference_epistemic_status",
+        "query",
+        "path",
+        "used_correlation_ids",
+        "criteria",
+        "non_claims",
+        "query_hash"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "artifact_role": { "const": "sparse_correlation_query" },
+        "query_id": { "type": "string", "pattern": "^correlation_query_[a-f0-9]{16}$" },
+        "skeleton_id": { "type": "string", "pattern": "^correlation_skeleton_[a-z0-9_]+$" },
+        "skeleton_hash": { "$ref": "#/$defs/hash" },
+        "status": { "enum": ["reachable", "inhibited"] },
+        "result_scope": { "const": "bounded_topological_reachability" },
+        "inference_epistemic_status": { "const": "hypothetical" },
+        "query": { "$ref": "#/$defs/queryInput" },
+        "path": { "type": "array", "items": { "$ref": "#/$defs/pathStep" } },
+        "used_correlation_ids": { "$ref": "#/$defs/refs" },
+        "criteria": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" }
+        },
+        "non_claims": { "type": "array", "minItems": 4, "items": { "type": "string", "minLength": 1 } },
+        "query_hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "artifact_role",
+        "probe_id",
+        "skeleton_id",
+        "skeleton_hash",
+        "severed_correlation_id",
+        "status",
+        "criteria",
+        "intact_query_hash",
+        "severed_query_hash",
+        "non_claims",
+        "probe_hash"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "artifact_role": { "const": "sparse_correlation_dependency_probe" },
+        "probe_id": { "type": "string", "pattern": "^correlation_probe_[a-f0-9]{16}$" },
+        "skeleton_id": { "type": "string", "pattern": "^correlation_skeleton_[a-z0-9_]+$" },
+        "skeleton_hash": { "$ref": "#/$defs/hash" },
+        "severed_correlation_id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["verified", "not_verified"] },
+        "criteria": {
+          "type": "object",
+          "minProperties": 4,
+          "additionalProperties": { "type": "boolean" }
+        },
+        "intact_query_hash": { "$ref": "#/$defs/hash" },
+        "severed_query_hash": { "$ref": "#/$defs/hash" },
+        "non_claims": { "type": "array", "minItems": 4, "items": { "type": "string", "minLength": 1 } },
+        "probe_hash": { "$ref": "#/$defs/hash" }
+      }
+    }
+  }
+}

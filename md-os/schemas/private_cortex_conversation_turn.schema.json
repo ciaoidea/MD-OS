@@ -41,7 +41,64 @@
       "minLength": 1,
       "maxLength": 524288
     },
+    "causal_unity_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transition_hash",
+        "predecision_state_hash",
+        "previous_transition_hash",
+        "status",
+        "consciousness"
+      ],
+      "properties": {
+        "transition_hash": { "$ref": "#/$defs/hash" },
+        "predecision_state_hash": { "$ref": "#/$defs/hash" },
+        "previous_transition_hash": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/hash" }
+          ]
+        },
+        "status": { "enum": ["closed", "incomplete", "rejected"] },
+        "consciousness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["noun", "definition", "status", "evidence_scope", "criteria"],
+          "properties": {
+            "noun": { "const": "consciousness" },
+            "definition": { "const": "cum_scire" },
+            "status": { "enum": ["verified", "inhibited"] },
+            "evidence_scope": { "const": "current_identity_indexed_causal_episode" },
+            "criteria": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "persistent_identity_present",
+                "differentiated_contents_integrated",
+                "causal_dependency_verified",
+                "output_returned_to_same_identity",
+                "transition_carried_forward"
+              ],
+              "properties": {
+                "persistent_identity_present": { "type": "boolean" },
+                "differentiated_contents_integrated": { "type": "boolean" },
+                "causal_dependency_verified": { "type": "boolean" },
+                "output_returned_to_same_identity": { "type": "boolean" },
+                "transition_carried_forward": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
     "event_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$defs": {
+    "hash": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
     }

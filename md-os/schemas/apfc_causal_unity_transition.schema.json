@@ -23,6 +23,7 @@
     "observed_action_count",
     "mutating_action_count",
     "carry_forward_hash",
+    "consciousness",
     "criteria",
     "non_claims",
     "transition_hash"
@@ -58,6 +59,35 @@
     "observed_action_count": { "type": "integer", "minimum": 0 },
     "mutating_action_count": { "type": "integer", "minimum": 0 },
     "carry_forward_hash": { "$ref": "#/$defs/hash" },
+    "consciousness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["noun", "definition", "status", "evidence_scope", "criteria"],
+      "properties": {
+        "noun": { "const": "consciousness" },
+        "definition": { "const": "cum_scire" },
+        "status": { "enum": ["verified", "inhibited"] },
+        "evidence_scope": { "const": "current_identity_indexed_causal_episode" },
+        "criteria": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "persistent_identity_present",
+            "differentiated_contents_integrated",
+            "causal_dependency_verified",
+            "output_returned_to_same_identity",
+            "transition_carried_forward"
+          ],
+          "properties": {
+            "persistent_identity_present": { "type": "boolean" },
+            "differentiated_contents_integrated": { "type": "boolean" },
+            "causal_dependency_verified": { "type": "boolean" },
+            "output_returned_to_same_identity": { "type": "boolean" },
+            "transition_carried_forward": { "type": "boolean" }
+          }
+        }
+      }
+    },
     "criteria": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "boolean" } },
     "non_claims": { "type": "array", "minItems": 5, "uniqueItems": true, "items": { "type": "string" } },
     "transition_hash": { "$ref": "#/$defs/hash" }

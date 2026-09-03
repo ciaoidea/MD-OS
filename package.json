@@ -102,6 +102,7 @@
     "cognition:eval": "node md-os/os/agi_loop.js eval",
     "cognition:run-once": "node md-os/os/agi_loop.js run-once",
     "cognition:unity-test": "node md-os/os/run_cross_domain_cognitive_unity.js",
+    "cognition:correlation-probe": "node md-os/os/run_repository_correlation_probe.js",
     "cognition:contextual-feeling": "node md-os/os/contextual_feeling_experiment.js run-once md-os/examples/contextual_feeling_experiment.json",
     "benchmark:software-repair": "node md-os/os/mdos.js benchmark software-repair run",
     "benchmark:software-repair:generate": "node md-os/os/mdos.js benchmark software-repair generate",

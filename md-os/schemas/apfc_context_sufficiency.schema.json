@@ -12,6 +12,7 @@
     "baseline_sources",
     "context_packs",
     "portable_state",
+    "retrieved_context",
     "advisory_selected_sources",
     "advisory_omitted_sources",
     "resolution_policy",
@@ -23,7 +24,13 @@
     "schema_version": { "const": 1 },
     "artifact_role": { "const": "apfc_turn_context_sufficiency_contract" },
     "status": { "enum": ["ready", "degraded"] },
-    "task_context_status": { "const": "pending_turn_resolution" },
+    "task_context_status": {
+      "enum": [
+        "pending_turn_resolution",
+        "retrieval_verified_pending_turn_resolution",
+        "retrieval_empty_pending_turn_resolution"
+      ]
+    },
     "baseline_sources": {
       "type": "array",
       "items": {
@@ -73,6 +80,55 @@
             { "type": "string", "minLength": 1 },
             { "type": "null" }
           ]
+        }
+      }
+    },
+    "retrieved_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "query_hash", "index_hash", "pack_hash", "index_path",
+        "selected_node_count", "selected_edge_count", "selected_factor_count",
+        "selected_conversation_sequences", "source_hashes"
+      ],
+      "properties": {
+        "status": { "enum": ["pending", "verified", "empty"] },
+        "query_hash": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            { "type": "null" }
+          ]
+        },
+        "index_hash": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            { "type": "null" }
+          ]
+        },
+        "pack_hash": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            { "type": "null" }
+          ]
+        },
+        "index_path": {
+          "oneOf": [
+            { "const": "md-os/ops/local/cortex/cognitive_memory.sqlite3" },
+            { "type": "null" }
+          ]
+        },
+        "selected_node_count": { "type": "integer", "minimum": 0, "maximum": 12 },
+        "selected_edge_count": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "selected_factor_count": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "selected_conversation_sequences": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "source_hashes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
         }
       }
     },

@@ -129,6 +129,12 @@ Ordinary operating rule:
   source matches as advisory only; before a nontrivial claim or action, resolve
   the real dependency edges against canonical sources and current readback or
   report insufficient context
+- when private Cortex continuity is enabled, verify the complete conversation
+  hash chain before querying `md-os/ops/local/cortex/cognitive_memory.sqlite3`;
+  bind the query, index, source, pack, selected-node, selected-edge, and sparse
+  factor readback into the APFC context contract; treat SQLite as a disposable
+  local index and use the recent-tail fallback only when bounded retrieval is
+  empty or unavailable on a fresh thread
 - read `md-os/ops/health_classification.md` before treating a global health
   `critical` as runtime failure; it separates runtime, compiler, AGI-loop,
   publication, security, and local-hygiene scopes without lowering severity

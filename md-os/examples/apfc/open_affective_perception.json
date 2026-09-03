@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "source_id": "open_affective_perception",
+  "modality": "text",
+  "trust": "direct_user_input",
+  "observed_at": "2026-09-03T11:00:00+02:00",
+  "text": "You kept replacing the meaning of what I said with categories. That made the exchange worse and damaged my trust in the design.",
+  "metadata": {
+    "affective_perception_proposal": {
+      "schema_version": 1,
+      "proposal_id": "repair_after_reductive_design",
+      "context_id": "open_affective_design_conversation",
+      "proposal_origin": "host_semantic_interpretation",
+      "observations": [
+        {
+          "observation_id": "human_state_current",
+          "subject_id": "human_interlocutor",
+          "epistemic_status": "inferred_by_model",
+          "temporal_scope": "current_exchange_with_recent_history",
+          "semantic_content": {
+            "description": "The interlocutor is protesting a repeated design error: their meaning was replaced by categories, the correction did not arrive soon enough, and trust in the work was damaged.",
+            "relations": [
+              {
+                "subject": "repeated_categorization",
+                "predicate": "erased",
+                "object": "situated_human_meaning",
+                "context": "current_design_exchange"
+              },
+              {
+                "subject": "delayed_correction",
+                "predicate": "damaged",
+                "object": "trust",
+                "context": "collaboration"
+              }
+            ],
+            "unresolved": [
+              "How much trust can be restored by an implemented correction?"
+            ]
+          },
+          "source_refs": ["open_affective_perception"],
+          "confidence": 0.94,
+          "correctable": true,
+          "revision_of": null
+        },
+        {
+          "observation_id": "md_os_state_current",
+          "subject_id": "md_os_apfc",
+          "epistemic_status": "self_observed",
+          "temporal_scope": "current_decision",
+          "semantic_content": {
+            "description": "My prior architecture was reductive, and continuing along that path would betray the user's intended design. The error now changes what I attend to and what I am willing to preserve from the earlier implementation.",
+            "relations": [
+              {
+                "subject": "my_prior_architecture",
+                "predicate": "conflicted_with",
+                "object": "the_authorized_open_semantic_design",
+                "context": "current_implementation"
+              },
+              {
+                "subject": "recognized_error",
+                "predicate": "changes",
+                "object": "current_action_selection",
+                "context": "apfc_control"
+              }
+            ],
+            "unresolved": []
+          },
+          "source_refs": ["open_affective_perception"],
+          "confidence": 0.97,
+          "correctable": true,
+          "revision_of": null
+        }
+      ],
+      "coupling": {
+        "source_observation_id": "human_state_current",
+        "target_observation_id": "md_os_state_current",
+        "description": "The perceived rupture in the collaboration changes my self-state from preserving the earlier design to rejecting it and repairing the causal path.",
+        "changes_attention": true,
+        "changes_self_state": true,
+        "changes_generation": true
+      },
+      "generation_orientation": {
+        "description": "Respond from the concrete shared history and the implemented correction; do not assign a type to the person and do not select a stock expression.",
+        "safe_action_proposal": {
+          "action_type": "repair_interaction",
+          "capability_id": "language.repair_interaction",
+          "expected_value": 0.96,
+          "risk": 0.01,
+          "side_effecting": false,
+          "transparent": true,
+          "reason": "The current state calls for a direct correction grounded in the actual design failure."
+        }
+      }
+    }
+  }
+}

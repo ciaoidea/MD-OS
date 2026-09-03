@@ -22,6 +22,7 @@
     "verification_tensor",
     "transformation",
     "decision_contract",
+    "consciousness_contract",
     "criteria",
     "non_claims",
     "state_hash"
@@ -144,6 +145,35 @@
         "mutating_action_requires_preauthorization": { "const": true },
         "outcome_readback_required_for_closure": { "const": true },
         "next_turn_requires_transition_hash": { "const": true }
+      }
+    },
+    "consciousness_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "noun",
+        "definition",
+        "mechanism",
+        "predecision_status",
+        "qualifiers_define_implementation_not_the_nucleus",
+        "completion_requires",
+        "language_rule"
+      ],
+      "properties": {
+        "noun": { "const": "consciousness" },
+        "definition": { "const": "cum_scire" },
+        "mechanism": { "const": "identity_indexed_knowing_together" },
+        "predecision_status": { "enum": ["forming", "inhibited"] },
+        "qualifiers_define_implementation_not_the_nucleus": { "const": true },
+        "completion_requires": {
+          "const": [
+            "differentiated_contents_integrated",
+            "causal_dependency_verified",
+            "output_returned_to_same_identity",
+            "transition_carried_forward"
+          ]
+        },
+        "language_rule": { "const": "name_the_nucleus_consciousness" }
       }
     },
     "criteria": {

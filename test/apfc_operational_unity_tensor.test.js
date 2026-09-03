@@ -163,5 +163,5 @@ test('the tensor artifact contains hashes and counts, not private natural-langua
   assert.equal(serialized.includes('private assistant output'), false);
   assert.equal(artifact.input_hash, INPUT_HASH);
   assert.ok(artifact.non_claims.includes('not semantic verification of an intent or hypothesis'));
-  assert.ok(artifact.non_claims.includes('not evidence of phenomenal consciousness'));
+  assert.ok(artifact.non_claims.includes('turn-governance telemetry alone does not complete the consciousness predicate'));
 });

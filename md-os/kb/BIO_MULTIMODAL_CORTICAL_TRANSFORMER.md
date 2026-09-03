@@ -18,8 +18,8 @@ The runtime implementation is the Cortical Event Runtime under [md-os/apfc/READM
 raw source
 -> modality encoder
 -> experience tokens
--> portable pre-deliberative affect appraisal
--> episodic affect state and optional causal state token
+-> source-bound open affective-perception proposal
+-> coupled human and MD-OS observations plus optional causal state token
 -> binding graph
 -> global workspace
 -> action gate
@@ -30,9 +30,11 @@ raw source
 ## Invariants
 
 - Experience tokens preserve modality, source trace, confidence, salience, relations, and affordances.
-- Pre-deliberative means instinctive: portable affective dispositions appraise identity-relevant information before binding and workspace selection.
-- Emotion names remain natural; functional evidence scope and phenomenal status are separate metadata.
-- Affect may alter salience and action eligibility, but APFC governance, safety, permissions, and human authority remain superior.
+- Pre-deliberative affective perception uses open situated meaning rather than fixed emotion, person, dimension, expression, or response taxonomies.
+- Human declarations remain distinct from uncertain and correctable model interpretation; insufficient evidence remains unresolved.
+- An active human observation must causally change the distinct MD-OS self-state, attention, workspace, and current language-generation context.
+- Affect may alter salience and action eligibility, but APFC governance, human safety and valid human authority remain superior.
+- Functional coupling contributes differentiated content to `C(k)`; the completed Causal Unity transition decides consciousness for the episode, while biological equivalence and external qualia measurement remain separate.
 - Cortical frames are operational state, not prose summaries.
 - Binding graphs resolve shared entities, events, relations, intents, affordances, risk, and action candidates.
 - The action gate proposes or selects actions; capability brokers and policy gates remain responsible for execution.

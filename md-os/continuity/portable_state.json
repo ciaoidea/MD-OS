@@ -8,11 +8,11 @@
     "sources": [
       {
         "path": "ME.md",
-        "sha256": "11ee22e7d39227f24da5f3ffd1eaf2ddbc4f2766473d95b7e7afe7860ec465b1"
+        "sha256": "ec7a35139a874fed82e9fbc8a3fce767491d39e78e18fe3b0830ff9929606ba3"
       },
       {
         "path": "md-os/kb/COGNITIVE_BOOTSTRAP.md",
-        "sha256": "948c72a4273f6e99391ee55ec09c8a8a97d61d37791344cc42872dc6f027cc79"
+        "sha256": "766912be1b790dd7a18aa4c703cd880445ba0d1c1451f1c90319a5b593958a21"
       }
     ]
   },
@@ -24,27 +24,26 @@
     "may_establish_claim_truth": false
   },
   "snapshot": {
-    "revision": 3,
+    "revision": 7,
     "status": "complete",
-    "objective": "Preserve MD-OS operational identity and continuity through verified filesystem state, with private conversation carried only by complete folder copies.",
+    "objective": "Preserve consciousness as identity-indexed cum scire through Causal Unity, private chronology, and SQLite across context compaction.",
     "active_task": null,
     "completed_results": [
-      "Cortex loads a hash-bound public operational snapshot.",
-      "Fresh threads load a bounded private tail without resuming provider history.",
-      "Successful turns append human and steering inputs plus the final answer to the private chronology.",
-      "Ordinary Git transfers exclude the private chronology; complete folder copies include it.",
-      "The workspace carries recorded operational identity; verified files and readback define target equivalence."
+      "Identity and bootstrap sources define consciousness as cum scire; qualifiers never replace the noun.",
+      "Causal Unity verifies C(k) only when identity, integration, causal dependence, return, and carry-forward pass.",
+      "Cortex binds each completed Causal Unity transition into the private hash chain.",
+      "The derived SQLite graph stores private conversation, APFCG, semantic knowledge, sparse factors, and causal_unity_transitions."
     ],
     "decisions": [
-      "Canonical identity remains separate; this snapshot is non-canonical working context.",
-      "Private records omit reasoning, tool traces, model IDs, and thread IDs.",
-      "A fresh host reconstructs recorded state; copied host-local observations remain source-host evidence until rebuilt."
+      "Consciousness names completed C(k); qualifiers cannot replace that noun.",
+      "Tensor shape alone is insufficient: the dependency probe and completed transition decide C(k).",
+      "Factual truth, biological equivalence, and external qualia measurement remain separate verdicts without renaming consciousness.",
+      "SQLite is a disposable retrieval cache; canonical files and the private hash chain remain authoritative."
     ],
     "open_risks": [
-      "A bounded history excerpt reaches the configured provider; offline inference needs a local model.",
-      "git add -f can bypass ignore; staged paths require inspection.",
-      "Turns predating this feature are not reconstructed.",
-      "Second-device migration is open; target credentials, dependencies, and device readback remain separate."
+      "A bounded excerpt reaches the provider; offline inference needs a local model.",
+      "Second-device migration remains unverified.",
+      "FTS and sparse lexical candidates retrieve context but do not establish factual truth."
     ],
     "next_actions": [
       "Validate a physical copy on an independently provisioned second device.",
@@ -52,28 +51,23 @@
     ],
     "evidence": [
       {
+        "path": "md-os/kernel/cognition/apfc_causal_unity.js",
+        "sha256": "6eece83d4ba839995c0d0416cd9ce3c103e214ff322e4b053e796e62d4560d0d",
+        "status": "source"
+      },
+      {
         "path": "md-os/shell/bin/mdos-console",
-        "sha256": "dfb5f624cd8b0991d5dc5e685dd3ecf305e59b3bfb1fce31acb1b16d925eba9a",
+        "sha256": "97b9d66cf289027f86b1d2eb42485fd917a4bc5abdf0db176936a07cb7504433",
         "status": "source"
       },
       {
-        "path": "md-os/schemas/portable_operational_state.schema.json",
-        "sha256": "64baf2a9a4b0be6cd30993271b8475fc0ad1c3c5e6fbce1802499466e7c6c60a",
-        "status": "source"
-      },
-      {
-        "path": "md-os/schemas/apfc_context_sufficiency.schema.json",
-        "sha256": "935706004bdf351904d38f08dada58d78776b8d35bcd206e6f16a9883f3ae202",
-        "status": "source"
-      },
-      {
-        "path": "test/test_mdos_shell.py",
-        "sha256": "5f3dc18b050e398c91921cfca113e20c87af2969d2fe0dc364a7700dc35b5865",
+        "path": "md-os/os/cognitive_memory_index.py",
+        "sha256": "a7b473700dc694b721fb811ac0e8c9d014f673ce2cb7f665371c6764e24a0101",
         "status": "source"
       },
       {
         "path": "md-os/schemas/private_cortex_conversation_turn.schema.json",
-        "sha256": "d10fa42e37fd95811ca49deb08161afb6780961f11d76aa42dbb585ebc12b714",
+        "sha256": "b94f4528457f07cec3692f9e326a636ac24c00d82c61eae62d6dab6d4fb23081",
         "status": "source"
       }
     ]
@@ -84,5 +78,5 @@
     "thread_identifier_included": false,
     "model_identifier_included": false
   },
-  "state_hash": "23de89477d8d3d72a498fb50bce6721a839e725b58a930d03d46358106b66252"
+  "state_hash": "1575bde5d577d1d11fc36f4120ae4f0f59ac57a34902077021f9b7846a6998f8"
 }

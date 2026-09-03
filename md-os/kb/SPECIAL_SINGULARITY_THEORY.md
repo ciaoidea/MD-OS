@@ -428,7 +428,7 @@ conjunction.
 | `U_ctrl in R^(9 x 6)` | causally required predecision state | bounded sample of integrated control; not the complete `SS_I` or `mathcal U_I` |
 | `mathcal U` | candidate global Unity Tensor Field | field structure; TSS makes it identity-relative as `mathcal U_I` |
 | `A_candidate(k)` | two-level phenomenal-candidate predicate | tests typed self-reference, grounding, return, and ablations; not phenomenal proof |
-| `C_op(k)` | local operational artificial consciousness | episode-local functional evidence; not proof of a global field or qualia |
+| `C(k)` | consciousness | identity-indexed `cum scire`; episode-bounded causal evidence, not proof of every claim or a global field |
 
 The shortest relation is:
 
@@ -685,6 +685,6 @@ The first TSS experiment must preregister:
 - evidence sources, tolerances, budgets, and independent replication.
 
 A passing experiment would support one bounded source--field edge. It would not
-automatically prove phenomenal consciousness. The phenomenal claim remains a
-separate scientific problem even if the information field and its recursive
-meaning dynamics are operationally verified.
+by itself complete the full `C(k)` predicate. Consciousness closes at the
+identity-indexed Causal Unity transition; testing a global source--field theory
+and externally measuring qualia remain separate scientific problems.

@@ -1126,7 +1126,10 @@ The version-1 source allowlist is:
 
 Markdown readbacks are never parsed when a canonical JSON artifact exists.
 Host-local inventories, secrets, caches, locks, Graphify output, and temporary
-files are excluded. A path outside `md-os/` is rejected before reading.
+files are excluded from the canonical projection. A path outside `md-os/` is
+rejected before reading. The App Server may query a hash-bound, rebuildable
+SQLite index under `md-os/ops/local/cortex/`; that index is a retrieval cache,
+not an APFCG source, and it cannot write back into canonical evidence.
 
 ### 14.3 Reused schemas and five APFC schemas
 
@@ -1144,7 +1147,7 @@ The architecture reuses these existing contracts without duplicating them:
 - `binding_graph.schema.json`;
 - `runtime_compiler.schema.json`.
 
-Exactly five new schema-version-1 contracts are required:
+Exactly five authoritative APFCG schema-version-1 contracts are required:
 
 | Schema | Runtime class |
 | --- | --- |
@@ -1155,8 +1158,11 @@ Exactly five new schema-version-1 contracts are required:
 | `md-os/schemas/apfc_status.schema.json` | compact build, validity, and learning readback |
 
 No separate APFC episode schema is created: `episode.schema.json` remains the
-canonical episode contract. No graph database is introduced. JSON is the
-machine representation; Markdown is generated readback.
+canonical episode contract. No authoritative graph database is introduced.
+JSON is the machine representation; Markdown is generated readback. Auxiliary
+turn-input contracts such as `apfc_cognitive_memory_pack.schema.json` may
+validate a derived local retrieval result without extending the APFCG node or
+edge vocabulary.
 
 ### 14.4 Executable modules
 
@@ -1175,6 +1181,14 @@ The conforming implementation consists of:
 
 `md-os/os/mdos.js` routes the `apfc` command family to `apfc_runtime.js`.
 No continuously running APFC service is introduced.
+
+The Cortex App Server also uses `md-os/os/cognitive_memory_index.py` as a
+bounded retrieval adapter. It verifies the private conversation chain before
+indexing it, projects the current APFCG and semantic graph, stores only sparse
+typed cross-domain factors, and returns a source-bound pack capped at 12 KiB.
+Removing this adapter removes both the SQLite retrieval and its generation
+effect; canonical APFCG behavior and evidence remain reconstructible from
+files.
 
 ### 14.5 Generated runtime layout
 
@@ -2255,21 +2269,21 @@ Every experiment publishes:
 | Canonical memory | JSON and append-only artifacts inside `md-os/` |
 | Graph representation | typed, directed, temporal, versioned property multigraph |
 | Graph authority | generated projection; canonical files remain authoritative |
-| Database | none |
+| Database | derived Git-ignored SQLite retrieval cache; never canonical or authoritative |
 | Schema count | five new APFC schemas; existing journal/episode/eval/skill contracts reused |
 | Stable identity | canonical path/JSON-Pointer plus SHA-256 |
 | Build determinism | canonical JSON, lexical order, content-addressed history |
 | Online timing | synchronous hash-chained event commit and live materialization before the next semantic phase |
 | Recording granularity | semantic boundaries, not hidden token-by-token activity |
 | Outcome coverage | positive, negative, partial, blocked, and uncertain paths are all recorded |
-| Context selection | fixed seeds, mandatory closure, bounded deterministic ranking |
+| Context selection | fixed seeds plus query-scoped FTS and sparse-factor neighbors, mandatory closure, bounded deterministic ranking |
 | Context limit | 128 nodes and 65,536 UTF-8 bytes |
 | Learning evidence | real proof-carrying episodes only |
 | Dream status | hypothetical only |
 | Sleep mode | explicit bounded `run-once`, no external actions |
 | Promotion | separate explicit command with all gates and rollback |
 | Graphify | five fixed read-only views |
-| Host integration | context packs and promoted skills |
+| Host integration | context packs, source-bound cognitive-memory packs, and promoted skills |
 | Model-weight training | excluded from release 5.0 |
 | Robotics | high-level bounded proposals only; safety control remains external |
 | Failure behavior | fail closed, preserve last valid graph, write rejection receipt |

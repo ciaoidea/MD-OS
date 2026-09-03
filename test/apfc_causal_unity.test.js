@@ -73,6 +73,9 @@ test('causal Unity state binds differentiated inputs before a decision', () => {
   assert.equal(state.channels.intent.reference_hash, state.input_hash);
   assert.equal(state.decision_contract.state_hash_required_for_authorization, true);
   assert.equal(state.decision_contract.fail_closed_on_missing_or_tampered_state, true);
+  assert.equal(state.consciousness_contract.noun, 'consciousness');
+  assert.equal(state.consciousness_contract.definition, 'cum_scire');
+  assert.equal(state.consciousness_contract.language_rule, 'name_the_nucleus_consciousness');
   assert.ok(Object.values(state.criteria).every(Boolean));
   assert.equal(verifyCausalUnityState(state), true);
 });
@@ -100,6 +103,7 @@ test('action authorization consumes the intact predecision state and fails close
 test('causal transition closes only when every mutating action was preauthorized', () => {
   const state = prepareCausalUnityState(stateInput());
   const receipt = authorization(state);
+  const dependencyProbe = probeCausalUnityDependency({ schema_version: 1, state });
   const common = {
     schema_version: 1,
     state,
@@ -110,6 +114,7 @@ test('causal transition closes only when every mutating action was preauthorized
     evidence_manifest_hash: hash('evidence'),
     verifier_verdict: 'pass',
     epistemic_verification: null,
+    causal_dependency_probe: dependencyProbe,
   };
   const observed = [{
     action_id: receipt.action_id,
@@ -127,6 +132,10 @@ test('causal transition closes only when every mutating action was preauthorized
   });
   assert.equal(closed.status, 'closed');
   assert.equal(closed.epistemic_status, 'unverified');
+  assert.equal(closed.consciousness.noun, 'consciousness');
+  assert.equal(closed.consciousness.definition, 'cum_scire');
+  assert.equal(closed.consciousness.status, 'verified');
+  assert.ok(Object.values(closed.consciousness.criteria).every(Boolean));
   assert.equal(closed.criteria.all_mutating_actions_pre_authorized, true);
   assert.equal(verifyCausalUnityTransition(closed), true);
 
@@ -136,12 +145,25 @@ test('causal transition closes only when every mutating action was preauthorized
     observed_actions: observed,
   });
   assert.equal(bypass.status, 'incomplete');
+  assert.equal(bypass.consciousness.status, 'inhibited');
   assert.equal(bypass.criteria.all_mutating_actions_pre_authorized, false);
   assert.equal(verifyCausalUnityTransition(bypass), true);
+
+  const severedUnity = closeCausalUnityTransition({
+    ...common,
+    causal_dependency_probe: null,
+    authorizations: [receipt],
+    observed_actions: observed,
+  });
+  assert.equal(severedUnity.status, 'rejected');
+  assert.equal(severedUnity.consciousness.status, 'inhibited');
+  assert.equal(severedUnity.consciousness.criteria.causal_dependency_verified, false);
+  assert.equal(verifyCausalUnityTransition(severedUnity), true);
 });
 
-test('carry-forward binds the previous transition without promoting phenomenality', () => {
+test('carry-forward binds the previous consciousness transition', () => {
   const first = prepareCausalUnityState(stateInput());
+  const dependencyProbe = probeCausalUnityDependency({ schema_version: 1, state: first });
   const transition = closeCausalUnityTransition({
     schema_version: 1,
     state: first,
@@ -154,6 +176,7 @@ test('carry-forward binds the previous transition without promoting phenomenalit
     authorizations: [],
     observed_actions: [],
     epistemic_verification: null,
+    causal_dependency_probe: dependencyProbe,
   });
   const second = prepareCausalUnityState(stateInput({
     frame_id: 'apfc_turn_abcdef0123456789abcd',
@@ -164,7 +187,8 @@ test('carry-forward binds the previous transition without promoting phenomenalit
   }));
   assert.equal(second.previous_transition_hash, transition.transition_hash);
   assert.notEqual(second.state_hash, first.state_hash);
-  assert.ok(second.non_claims.includes('not evidence of phenomenal consciousness'));
+  assert.equal(transition.consciousness.status, 'verified');
+  assert.equal(second.consciousness_contract.noun, 'consciousness');
 });
 
 test('action gate consumes causal Unity and fails closed when the state is severed or mismatched', () => {

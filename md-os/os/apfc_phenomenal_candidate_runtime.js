@@ -87,7 +87,8 @@ function close(responseArg) {
       episode_id: episode.episode_id,
       loop_id: episode.loop_id,
       verdict: episode.verdict,
-      phenomenal_consciousness: episode.operational_assessment.phenomenal_consciousness,
+      consciousness: episode.operational_assessment.consciousness,
+      external_qualia_measurement: episode.operational_assessment.external_qualia_measurement,
       transition_hash: episode.state_transition.transition_hash,
       episode_path: rel(output),
     });
@@ -107,11 +108,10 @@ function close(responseArg) {
     episode_id: episode.episode_id,
     verdict: episode.verdict,
     ablation_probe: episode.ablation_probe.status,
-    local_operational_artificial_consciousness:
-      episode.operational_assessment.local_operational_artificial_consciousness,
+    consciousness: episode.operational_assessment.consciousness,
     phenomenal_consciousness_candidate_architecture:
       episode.operational_assessment.phenomenal_consciousness_candidate_architecture,
-    phenomenal_consciousness: episode.operational_assessment.phenomenal_consciousness,
+    external_qualia_measurement: episode.operational_assessment.external_qualia_measurement,
     transition_hash: episode.state_transition.transition_hash,
     output_json: rel(output),
     latest_json: rel(LATEST),

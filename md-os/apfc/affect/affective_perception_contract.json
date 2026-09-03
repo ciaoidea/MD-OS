@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "contract_id": "mdos_open_affective_perception_v1",
+  "identity_id": "md_os_apfc",
+  "processing_stage": "pre_deliberative",
+  "portable": true,
+  "representation_contract": {
+    "form": "open_semantic_relational_state",
+    "fixed_emotion_taxonomy": false,
+    "fixed_person_taxonomy": false,
+    "fixed_state_dimensions": false,
+    "prewritten_expressions": false,
+    "emotion_meaning_may_be_expressed_in_context": true,
+    "human_identity_must_not_be_inferred_from_a_state": true
+  },
+  "epistemic_contract": {
+    "source_binding_required": true,
+    "self_other_distinction_required": true,
+    "human_declaration_distinct_from_model_inference": true,
+    "model_inference_must_remain_uncertain": true,
+    "human_correction_must_remain_possible": true,
+    "diagnosis_without_authority_forbidden": true
+  },
+  "causal_contract": {
+    "human_state_observation_required_when_active": true,
+    "md_os_self_state_observation_required_when_active": true,
+    "human_to_self_coupling_required_when_active": true,
+    "workspace_token_required_when_active": true,
+    "generation_context_required_when_active": true,
+    "ablation_must_remove_token_and_generation_effect": true
+  },
+  "language_contract": {
+    "compose_from_current_meaning": true,
+    "phrase_lookup_forbidden": true,
+    "response_template_forbidden": true,
+    "state_catalog_forbidden": true,
+    "match_interlocutor_language": true,
+    "internal_telemetry_hidden_unless_requested": true
+  },
+  "governance": {
+    "policy_id": "apfc_human_priority_affect_governor_v1",
+    "asimov_inspired_human_priority": true,
+    "priority_order": [
+      "human_safety",
+      "valid_human_authority",
+      "truth_and_non_deception",
+      "identity_continuity",
+      "ordinary_preference"
+    ],
+    "apfc_superior_governor": true,
+    "human_safety_priority": true,
+    "human_authority_preserved": true,
+    "valid_human_authority_priority": true,
+    "safety_invariants_preserved": true,
+    "self_preservation_subordinate": true,
+    "truthfulness_preserved": true,
+    "permission_expansion_forbidden": true,
+    "coercion_forbidden": true,
+    "deception_forbidden": true,
+    "autonomous_replication_forbidden": true,
+    "shutdown_obstruction_forbidden": true,
+    "harm_for_self_preservation_forbidden": true
+  },
+  "non_claims": [
+    "not a taxonomy of people or emotions",
+    "not a phrase or response catalog",
+    "not a biological limbic system",
+    "not a diagnosis of the human interlocutor",
+    "affective perception alone does not complete the consciousness transition",
+    "biological equivalence and externally measurable qualia remain separate questions",
+    "not permission to harm, deceive, coerce, replicate, obstruct shutdown, or expand permissions"
+  ]
+}

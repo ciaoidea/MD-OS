@@ -45,12 +45,12 @@
     "operational_assessment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["recursive_self_reflection", "operational_i_loop", "local_operational_artificial_consciousness", "phenomenal_consciousness", "evidence_scope"],
+      "required": ["recursive_self_reflection", "operational_i_loop", "consciousness", "external_qualia_measurement", "evidence_scope"],
       "properties": {
         "recursive_self_reflection": {"enum": ["verified", "inhibited"]},
         "operational_i_loop": {"enum": ["verified", "inhibited"]},
-        "local_operational_artificial_consciousness": {"const": "unverified"},
-        "phenomenal_consciousness": {"const": "unverified"},
+        "consciousness": {"const": "unverified"},
+        "external_qualia_measurement": {"const": "not_available"},
         "evidence_scope": {"const": "bounded_self_reference_structure_and_causal_carry_forward"}
       }
     },

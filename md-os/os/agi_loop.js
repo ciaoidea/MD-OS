@@ -1267,12 +1267,12 @@ function buildLoopStatus({ episodes, skillRegistry, evalReport, failureIndex, wo
     compatibility_aliases: ['verified_agi_loop', 'cortex agi'],
     definition: 'Proof-carrying cognitive transactions through typed TaskSpecs, bounded execution, relative cross-domain frame transformations, ActionReceipts, independent postcondition verification, episodes, and APFC-governed skill promotion.',
     non_claims: [
-      'not consciousness',
+      'the AGI loop alone does not complete consciousness C(k)',
       'not unrestricted autonomy',
       'not hidden self-modification',
       'not parametric model training',
       'not direct access to host-model hidden-layer activations',
-      'not evidence of AGI or phenomenal consciousness',
+      'not evidence of AGI',
     ],
     commands: [
       'cortex agi run-once --task "<task>"',

@@ -88,7 +88,7 @@ function sealEpistemicUnityCandidate(input) {
     non_claims: [
       'not proof that the hypothesis is universally true',
       'not evidence of AGI',
-      'not evidence of phenomenal consciousness',
+      'epistemic verification decides claim support, not completion of the consciousness predicate',
       'not permission for the hypothesis generator to verify itself',
     ],
   };
@@ -313,7 +313,7 @@ function verifyEpistemicUnityCandidate(input, options = {}) {
       'not universal truth of the candidate hypothesis',
       'not automatic open-world generalization',
       'not evidence of AGI',
-      'not evidence of phenomenal consciousness',
+      'epistemic verification decides claim support, not completion of the consciousness predicate',
     ],
   };
   return { ...payload, verification_hash: sha256Json(payload) };

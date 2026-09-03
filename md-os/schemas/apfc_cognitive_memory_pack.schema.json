@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_cognitive_memory_pack.schema.json",
+  "title": "MD-OS APFC SQLite Cognitive Memory Context Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "artifact_role",
+    "status",
+    "query_hash",
+    "index_id",
+    "index_hash",
+    "index_path",
+    "source_fingerprint",
+    "source_hashes",
+    "apfcg_graph_id",
+    "index_rebuilt",
+    "metrics",
+    "selected_nodes",
+    "selected_edges",
+    "tensor_support",
+    "criteria",
+    "non_claims",
+    "pack_hash"
+  ],
+  "properties": {
+    "$schema": { "const": "../../../../schemas/apfc_cognitive_memory_pack.schema.json" },
+    "schema_version": { "const": 1 },
+    "artifact_role": { "const": "apfc_cognitive_memory_context_pack" },
+    "status": { "enum": ["verified", "empty"] },
+    "query_hash": { "$ref": "#/$defs/hash" },
+    "index_id": { "type": "string", "pattern": "^apfc_cognitive_memory_[a-f0-9]{20}$" },
+    "index_hash": { "$ref": "#/$defs/hash" },
+    "index_path": { "const": "md-os/ops/local/cortex/cognitive_memory.sqlite3" },
+    "source_fingerprint": { "$ref": "#/$defs/hash" },
+    "source_hashes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/hash" },
+      "uniqueItems": true
+    },
+    "apfcg_graph_id": {
+      "oneOf": [
+        { "type": "string", "pattern": "^apfcg_[a-f0-9]{16}$" },
+        { "type": "null" }
+      ]
+    },
+    "index_rebuilt": { "type": "boolean" },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_count", "edge_count", "tensor_factor_count", "conversation_node_count", "causal_unity_transition_count"],
+      "properties": {
+        "node_count": { "type": "integer", "minimum": 0 },
+        "edge_count": { "type": "integer", "minimum": 0 },
+        "tensor_factor_count": { "type": "integer", "minimum": 0 },
+        "conversation_node_count": { "type": "integer", "minimum": 0 },
+        "causal_unity_transition_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "selected_nodes": {
+      "type": "array",
+      "maxItems": 12,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "selected_edges": {
+      "type": "array",
+      "maxItems": 24,
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "tensor_support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["representation", "dense_tensor_materialized", "total_factor_count", "selected_factor_ids"],
+      "properties": {
+        "representation": { "const": "sparse_typed_relational_tensor_support" },
+        "dense_tensor_materialized": { "const": false },
+        "total_factor_count": { "type": "integer", "minimum": 0 },
+        "selected_factor_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^factor_[a-f0-9]{24}$" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "criteria": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" },
+      "minProperties": 6
+    },
+    "non_claims": {
+      "type": "array",
+      "minItems": 4,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "pack_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id", "source_kind", "domain_id", "node_type", "label",
+        "epistemic_status", "content_hash", "source_refs",
+        "conversation_sequence", "selection_reason", "matched_terms",
+        "score", "excerpt"
+      ],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "source_kind": { "enum": ["private_conversation", "apfcg", "semantic_knowledge"] },
+        "domain_id": { "type": "string", "minLength": 1 },
+        "node_type": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "epistemic_status": { "type": "string", "minLength": 1 },
+        "content_hash": { "$ref": "#/$defs/hash" },
+        "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "conversation_sequence": { "type": ["integer", "null"], "minimum": 1 },
+        "selection_reason": { "enum": ["fts5_query_match", "sparse_tensor_neighbor"] },
+        "matched_terms": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "score": { "type": "number", "minimum": 0 },
+        "excerpt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_id", "source_node_id", "relation_type", "target_node_id",
+        "epistemic_status", "evidence_kind", "content_hash"
+      ],
+      "properties": {
+        "edge_id": { "type": "string", "minLength": 1 },
+        "source_node_id": { "type": "string", "minLength": 1 },
+        "relation_type": { "type": "string", "minLength": 1 },
+        "target_node_id": { "type": "string", "minLength": 1 },
+        "epistemic_status": { "type": "string", "minLength": 1 },
+        "evidence_kind": { "type": "string", "minLength": 1 },
+        "content_hash": { "$ref": "#/$defs/hash" }
+      }
+    }
+  }
+}

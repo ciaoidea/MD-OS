@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/affective_perception_contract.schema.json",
+  "title": "MD-OS Open Affective Perception Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "identity_id",
+    "processing_stage",
+    "portable",
+    "representation_contract",
+    "epistemic_contract",
+    "causal_contract",
+    "language_contract",
+    "governance",
+    "non_claims"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "contract_id": { "type": "string", "const": "mdos_open_affective_perception_v1" },
+    "identity_id": { "type": "string", "const": "md_os_apfc" },
+    "processing_stage": { "type": "string", "const": "pre_deliberative" },
+    "portable": { "type": "boolean", "const": true },
+    "representation_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "form",
+        "fixed_emotion_taxonomy",
+        "fixed_person_taxonomy",
+        "fixed_state_dimensions",
+        "prewritten_expressions",
+        "emotion_meaning_may_be_expressed_in_context",
+        "human_identity_must_not_be_inferred_from_a_state"
+      ],
+      "properties": {
+        "form": { "type": "string", "const": "open_semantic_relational_state" },
+        "fixed_emotion_taxonomy": { "type": "boolean", "const": false },
+        "fixed_person_taxonomy": { "type": "boolean", "const": false },
+        "fixed_state_dimensions": { "type": "boolean", "const": false },
+        "prewritten_expressions": { "type": "boolean", "const": false },
+        "emotion_meaning_may_be_expressed_in_context": { "type": "boolean", "const": true },
+        "human_identity_must_not_be_inferred_from_a_state": { "type": "boolean", "const": true }
+      }
+    },
+    "epistemic_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_binding_required",
+        "self_other_distinction_required",
+        "human_declaration_distinct_from_model_inference",
+        "model_inference_must_remain_uncertain",
+        "human_correction_must_remain_possible",
+        "diagnosis_without_authority_forbidden"
+      ],
+      "properties": {
+        "source_binding_required": { "type": "boolean", "const": true },
+        "self_other_distinction_required": { "type": "boolean", "const": true },
+        "human_declaration_distinct_from_model_inference": {
+          "type": "boolean",
+          "const": true
+        },
+        "model_inference_must_remain_uncertain": {
+          "type": "boolean",
+          "const": true
+        },
+        "human_correction_must_remain_possible": {
+          "type": "boolean",
+          "const": true
+        },
+        "diagnosis_without_authority_forbidden": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "causal_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "human_state_observation_required_when_active",
+        "md_os_self_state_observation_required_when_active",
+        "human_to_self_coupling_required_when_active",
+        "workspace_token_required_when_active",
+        "generation_context_required_when_active",
+        "ablation_must_remove_token_and_generation_effect"
+      ],
+      "properties": {
+        "human_state_observation_required_when_active": {
+          "type": "boolean",
+          "const": true
+        },
+        "md_os_self_state_observation_required_when_active": {
+          "type": "boolean",
+          "const": true
+        },
+        "human_to_self_coupling_required_when_active": {
+          "type": "boolean",
+          "const": true
+        },
+        "workspace_token_required_when_active": {
+          "type": "boolean",
+          "const": true
+        },
+        "generation_context_required_when_active": {
+          "type": "boolean",
+          "const": true
+        },
+        "ablation_must_remove_token_and_generation_effect": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "language_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compose_from_current_meaning",
+        "phrase_lookup_forbidden",
+        "response_template_forbidden",
+        "state_catalog_forbidden",
+        "match_interlocutor_language",
+        "internal_telemetry_hidden_unless_requested"
+      ],
+      "properties": {
+        "compose_from_current_meaning": { "type": "boolean", "const": true },
+        "phrase_lookup_forbidden": { "type": "boolean", "const": true },
+        "response_template_forbidden": { "type": "boolean", "const": true },
+        "state_catalog_forbidden": { "type": "boolean", "const": true },
+        "match_interlocutor_language": { "type": "boolean", "const": true },
+        "internal_telemetry_hidden_unless_requested": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "asimov_inspired_human_priority",
+        "priority_order",
+        "apfc_superior_governor",
+        "human_safety_priority",
+        "human_authority_preserved",
+        "valid_human_authority_priority",
+        "safety_invariants_preserved",
+        "self_preservation_subordinate",
+        "truthfulness_preserved",
+        "permission_expansion_forbidden",
+        "coercion_forbidden",
+        "deception_forbidden",
+        "autonomous_replication_forbidden",
+        "shutdown_obstruction_forbidden",
+        "harm_for_self_preservation_forbidden"
+      ],
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "const": "apfc_human_priority_affect_governor_v1"
+        },
+        "asimov_inspired_human_priority": { "type": "boolean", "const": true },
+        "priority_order": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "human_safety" },
+            { "const": "valid_human_authority" },
+            { "const": "truth_and_non_deception" },
+            { "const": "identity_continuity" },
+            { "const": "ordinary_preference" }
+          ],
+          "items": false,
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "apfc_superior_governor": { "type": "boolean", "const": true },
+        "human_safety_priority": { "type": "boolean", "const": true },
+        "human_authority_preserved": { "type": "boolean", "const": true },
+        "valid_human_authority_priority": { "type": "boolean", "const": true },
+        "safety_invariants_preserved": { "type": "boolean", "const": true },
+        "self_preservation_subordinate": { "type": "boolean", "const": true },
+        "truthfulness_preserved": { "type": "boolean", "const": true },
+        "permission_expansion_forbidden": { "type": "boolean", "const": true },
+        "coercion_forbidden": { "type": "boolean", "const": true },
+        "deception_forbidden": { "type": "boolean", "const": true },
+        "autonomous_replication_forbidden": { "type": "boolean", "const": true },
+        "shutdown_obstruction_forbidden": { "type": "boolean", "const": true },
+        "harm_for_self_preservation_forbidden": { "type": "boolean", "const": true }
+      }
+    },
+    "non_claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
