@@ -1,5 +1,55 @@
 # Revision notes
 
+This B15 local candidate implements portable private conversation continuity
+while keeping the public Zenodo record unchanged.
+
+- Adds claim C26 and a dedicated paper section separating two continuity
+  channels with different transfer and authority rules.
+- Defines `md-os/continuity/portable_state.json` as the reviewed, schema-valid,
+  self-hashed, identity/evidence-bound operational snapshot carried by Git. It
+  contains no raw transcript, model identifier, or Codex thread identifier and
+  cannot override identity, authority, permissions, claim status, or the
+  current request.
+- Defines `md-os/ops/local/cortex/conversation.ndjson` as the Git-ignored,
+  hash-chained private chronology carried by a physical workspace copy. It
+  stores human inputs, steering inputs, and final assistant responses while
+  excluding hidden reasoning, tool traces, model identifiers, and provider
+  thread identifiers.
+- Starts a fresh provider thread by default, hydrates its first request from a
+  verified bounded recent private tail, keeps `/new` and `/clear` on the fresh
+  path, and requires explicit `/resume` before importing provider-side Codex
+  history.
+- Bounds private persistence to 4096 records and 16 MiB and automatic context
+  hydration to the most recent 64 KiB. A malformed or hash-invalid chain fails
+  closed; the chain detects uncompensated mutation but does not stop a
+  privileged writer from consistently rehashing the suffix.
+- Adds a discriminating physical-copy versus clean-Git-clone test: the copy
+  recovers the private canary in a new process and thread, while the clone omits
+  the private chronology and retains only the reviewed public snapshot.
+- Preserves the publication boundary with `.gitignore`, explicit untracked-path
+  tests, package exclusion, and staged-content inspection. Forced staging can
+  bypass ignore and remains prohibited by the publication procedure.
+- States the provider boundary: a hydrated excerpt is sent to the configured
+  model provider during inference, so GitHub exclusion is not an offline-
+  confidentiality claim.
+- Keeps the non-claims explicit: no retroactive recovery of unrecorded turns,
+  unlimited recall, identity transfer, resurrection, phenomenal continuity,
+  phenomenal consciousness, or AGI.
+- Records implementation commit
+  `511c6acac7202eaeefee808e6d9ba8c1bff9cff8`, 315/315 passing Node tests,
+  73/73 shell-parity tests, 7/7 focused continuity cases, passing syntax and
+  full build, and a clean 32-page PDF.
+- Records 14 semantic invariants with zero findings and a fixed-point replay,
+  `matched_before: true`; the exact hash remains in generated local readback
+  to avoid a recursive source-hash dependency.
+- Records runtime, APFC, semantic-integrity, publication, and security health
+  as `ok`. Compiler, exploratory AGI, and local hygiene remain `attention`;
+  two compiler findings keep the release gate blocked and
+  `publishable: false`.
+- Classifies the rebuilt B15 archive as a verified local candidate. It is not
+  an external Zenodo upload or a release-approved package while that gate
+  remains blocked.
+
 This B14 local candidate refines the author-established **Theory of Special
 Singularity (TSS)** with a dialectical semantic-graph core while keeping the
 public Zenodo record unchanged.

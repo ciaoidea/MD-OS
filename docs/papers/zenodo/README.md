@@ -33,6 +33,51 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
+The 3 September B15 local candidate makes Cortex conversation continuity
+portable across directory and machine copies without publishing that private
+history through ordinary Git workflows. It separates two artifacts:
+
+- `md-os/continuity/portable_state.json` is a reviewed, schema-valid,
+  self-hashed operational snapshot carried by Git. It contains no raw chat,
+  model identifier, or Codex thread identifier and remains non-canonical
+  working context.
+- `md-os/ops/local/cortex/conversation.ndjson` is a Git-ignored, hash-chained
+  private chronology carried only when the workspace folder itself is copied.
+  It records human inputs and final assistant responses, not hidden reasoning,
+  tool traces, model identifiers, or provider thread identifiers.
+
+A normal Cortex process now starts a fresh Codex thread. On its first natural-
+language request, it verifies and loads a bounded recent tail of the private
+chronology when that file is present. `/new` and `/clear` return to this fresh-
+thread path; `/resume` is the explicit opt-in to provider-side Codex history.
+The discriminating test copies one workspace physically and also transfers it
+through commit plus clean clone: only the physical copy recovers the private
+canary, while the clone receives the public operational snapshot and starts a
+new local chronology after its first successful turn.
+
+B15 adds claim C26 and records the privacy boundary precisely. Git ignore
+protects normal add, commit, push, and clone flows but can be bypassed by forced
+staging, so staged paths and contents still require inspection. The selected
+private excerpt also reaches the configured model provider during inference;
+fully offline confidentiality requires a local model. The result establishes
+bounded filesystem-carried operational continuity, not unlimited recall,
+identity transfer, resurrection, phenomenal continuity, consciousness, or
+AGI. The public Zenodo record remains unchanged unless the author separately
+uploads this B15 package.
+
+The final B15 local readback passes 315/315 Node tests, 73/73 shell-parity
+tests, 7/7 focused continuity cases, syntax checks, and the declared full
+build. The semantic commitment gate reports 14 invariants and zero findings;
+replay reaches `matched_before: true`, with its exact hash retained in
+generated local readback to avoid a recursive source-hash dependency.
+The manuscript compiles to a clean 32-page PDF without oversized floats,
+overfull boxes, unresolved citations, or unresolved references. Runtime,
+APFC, semantic-integrity, publication, and security health are `ok`.
+Compiler, exploratory AGI, and local-hygiene health remain `attention`; two
+compiler findings are release-blocking, so the classifier currently reports
+`publishable: false`. This directory is a verified local Zenodo candidate,
+not an externally uploaded or release-approved revision.
+
 The 2 September B14 local candidate refines the **Theory of Special
 Singularity (TSS)** around a dialectical semantic graph. Information
 generation and reception describe directional exchange between the
