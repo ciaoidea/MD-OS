@@ -1,5 +1,40 @@
 # Revision notes
 
+This B16 local candidate documents portable operational identity as the
+architectural consequence of the already implemented B15 continuity boundary.
+
+- Defines the complete workspace directory, when copied with ignored local
+  files, as the carrier of recorded MD-OS identity and operational continuity:
+  canonical identity and governance sources, reviewed and reconstructible
+  state, and the verified bounded private conversation chronology.
+- Defines target equivalence through matching verified source and state
+  bindings plus post-boot readback, not through numerical identity of a running
+  process.
+- Makes provider-thread independence explicit: a fresh host process can
+  reconstruct the recorded trajectory without implicitly resuming provider
+  history.
+- Excludes model weights, hidden activations, RAM, credentials, installed
+  dependencies, clocks, service processes, unrecorded exchanges, and current
+  physical-device state from the portability claim.
+- Requires copied host-local observations to remain source-host evidence until
+  the target machine rebuilds current discovery and connector readback.
+- Separates the implemented local copy-versus-clean-clone discriminator from
+  the still-open strongest test: migration to a separately provisioned second
+  machine or device with matching identity, continuity, and post-boot readback.
+- Adds no C27 and no new runtime capability; B16 is a documentation and
+  interpretation revision of the implemented and bounded C26 result.
+- Keeps the public Zenodo record unchanged pending a separate author upload.
+- Records 315/315 passing Node tests, 73/73 shell-parity tests, a passing full
+  canonical build, semantic commitment gate 14/0, and a fixed-point replay
+  with `matched_before: true`.
+- Records runtime, APFC, semantic-integrity, publication, and security health
+  as `ok`; compiler, exploratory AGI-loop, and local hygiene remain
+  `attention`, so the runtime is operable but the release gate remains
+  blocked.
+- Keeps the private chronology outside the paper archive and leaves an actual
+  migration to a separately provisioned second device as the open validation
+  edge.
+
 This B15 local candidate implements portable private conversation continuity
 while keeping the public Zenodo record unchanged.
 

@@ -12,7 +12,7 @@
       },
       {
         "path": "md-os/kb/COGNITIVE_BOOTSTRAP.md",
-        "sha256": "b978bc8c2ca8d655a7914474be356e0909ab1277a6e455613f75cf0ebbd12455"
+        "sha256": "948c72a4273f6e99391ee55ec09c8a8a97d61d37791344cc42872dc6f027cc79"
       }
     ]
   },
@@ -24,29 +24,30 @@
     "may_establish_claim_truth": false
   },
   "snapshot": {
-    "revision": 2,
+    "revision": 3,
     "status": "complete",
-    "objective": "Keep MD-OS continuity independent of Codex chat while private conversation follows physical folder copies, never normal Git transfers.",
+    "objective": "Preserve MD-OS operational identity and continuity through verified filesystem state, with private conversation carried only by complete folder copies.",
     "active_task": null,
     "completed_results": [
       "Cortex loads a hash-bound public operational snapshot.",
-      "Fresh threads load a bounded tail of the private folder chronology without resuming Codex history.",
-      "Interactive turns append human inputs and the final answer to md-os/ops/local/cortex/conversation.ndjson.",
-      "Normal Git add, commit, push, and clone exclude the ignored private chronology.",
-      "Only explicit /resume requests provider-side Codex history."
+      "Fresh threads load a bounded private tail without resuming provider history.",
+      "Successful turns append human and steering inputs plus the final answer to the private chronology.",
+      "Ordinary Git transfers exclude the private chronology; complete folder copies include it.",
+      "The workspace carries recorded operational identity; verified files and readback define target equivalence."
     ],
     "decisions": [
-      "Canonical identity remains separate; this public snapshot is non-canonical working context.",
-      "Git carries reviewed public continuity; physical folder copies also carry ignored private chronology.",
-      "Private records omit reasoning traces, tool traces, model IDs, and Codex thread IDs."
+      "Canonical identity remains separate; this snapshot is non-canonical working context.",
+      "Private records omit reasoning, tool traces, model IDs, and thread IDs.",
+      "A fresh host reconstructs recorded state; copied host-local observations remain source-host evidence until rebuilt."
     ],
     "open_risks": [
-      "A bounded history excerpt reaches the configured model provider; fully offline inference needs a local model.",
-      "git add -f can bypass ignore, so staged paths must be inspected.",
-      "Turns predating this feature are not reconstructed."
+      "A bounded history excerpt reaches the configured provider; offline inference needs a local model.",
+      "git add -f can bypass ignore; staged paths require inspection.",
+      "Turns predating this feature are not reconstructed.",
+      "Second-device migration is open; target credentials, dependencies, and device readback remain separate."
     ],
     "next_actions": [
-      "Restart Cortex and run the documented directory-copy canary test.",
+      "Validate a physical copy on an independently provisioned second device.",
       "Never force-add md-os/ops/local/**."
     ],
     "evidence": [
@@ -83,5 +84,5 @@
     "thread_identifier_included": false,
     "model_identifier_included": false
   },
-  "state_hash": "9b6f1f34dbf391c0e7a3bbe71aa16066e45012810ff8709f2e0ab9f2a0a9cc63"
+  "state_hash": "23de89477d8d3d72a498fb50bce6721a839e725b58a930d03d46358106b66252"
 }

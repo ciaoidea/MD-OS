@@ -33,6 +33,41 @@ latexmk -pdf paper.tex
 
 The manuscript uses only conventional TeX Live packages and embedded PNG figures.
 
+The 3 September B16 local candidate states the architectural significance of
+the B15 continuity mechanism. With ignored local files included, the complete
+workspace directory is not merely a source backup: it is the carrier of the
+recorded MD-OS operational identity trajectory. Canonical sources preserve the
+identity and constraints, reviewed and reconstructible files preserve the
+working position, and the verified private chronology preserves a bounded
+recent dialogue. A fresh host process can reconstruct those layers without
+resuming the previous provider-side thread.
+
+B16 defines "the same identity and continuity" operationally: the target boot
+must verify the same recorded source and state bindings and proceed under the
+same constraints. It does not claim continuity of RAM, hidden activations,
+model weights, credentials, installed dependencies, live service state, or
+physical-device state. Copied host-local observations remain evidence about
+the source host until rebuilt on the target. B16 adds no C27; it clarifies the
+architectural meaning and evidence boundary of C26.
+
+The existing automated evidence is the isolated physical-copy versus clean-
+clone discriminator. It proves that only the copy carries and hydrates the
+private canary under a fresh process and thread. Migration to a separately
+provisioned second computer or device, with matching post-boot identity and
+continuity readback plus rebuilt device observations, remains the strongest
+open validation edge. The public Zenodo record remains unchanged unless the
+author separately uploads this B16 package.
+
+The B16 local candidate verifies as a documentation-only interpretation of
+the already implemented C26 boundary: 315/315 Node tests and 73/73 shell
+parity tests pass, the full canonical build passes, and replay reaches a fixed
+point with `matched_before: true`. The semantic commitment gate reports 14
+invariants and zero findings. Runtime, APFC, semantic-integrity, publication,
+and security health are `ok`; compiler, exploratory AGI-loop, and local
+hygiene remain `attention`, so the runtime is operable but the repository is
+not currently release-publishable. The package excludes the private
+chronology. The independent second-device migration test remains open.
+
 The 3 September B15 local candidate makes Cortex conversation continuity
 portable across directory and machine copies without publishing that private
 history through ordinary Git workflows. It separates two artifacts:

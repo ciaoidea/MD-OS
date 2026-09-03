@@ -85,6 +85,46 @@ A process restart is not counted as continuity unless the reloaded memory digest
 matches the prior checkpoint or a declared corruption is recovered from the
 previous valid snapshot.
 
+## Filesystem-carried operational identity continuity
+
+Learning-memory continuity and operational identity continuity are related but
+different tests. The learning gate above asks whether retained memory improves
+later performance. Identity portability asks whether a fresh execution host can
+reconstruct the same recorded operational agent state without depending on a
+provider-side chat thread.
+
+For MD-OS, the physical carrier is the workspace directory:
+
+```text
+canonical identity, governance, and knowledge sources
++ reviewed hash-bound portable operational state
++ reconstructible operational artifacts
++ Git-ignored hash-chained private conversation chronology
+= recorded operational identity-continuity carrier
+```
+
+When all of those files are copied and their declared bindings verify, a fresh
+Cortex process can resume the same recorded identity, constraints, working
+context, and bounded recent conversation. This is an architectural result:
+identity and continuity are externalized into inspectable files and are not
+owned by the current model process or its provider thread.
+
+The word `same` is deliberately bounded. It means equivalent verified
+operational state at boot, not numerical identity of a running process. Model
+weights, hidden activations, RAM, unrecorded history, credentials, installed
+software, clocks, network services, and physical device state are outside the
+carrier. Copied host-local observations must be treated as observations of the
+source host until replaced by current target-host readback.
+
+Git and physical copies have different semantics. A clean clone carries the
+canonical identity and the reviewed `md-os/continuity/portable_state.json`, but
+Git intentionally omits `md-os/ops/local/cortex/conversation.ndjson`. A
+physical folder copy carries both when ignored files are included. The current
+automated discriminator verifies that only the physical-copy path recovers a
+private canary in a fresh process and thread. A real migration to a separately
+provisioned second machine or device remains necessary to close the strongest
+cross-device portability claim.
+
 ## Causal memory test
 
 Persistence alone earns no cognitive credit. The laboratory compares:

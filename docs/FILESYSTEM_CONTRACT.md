@@ -125,6 +125,37 @@ audit, replay, package, and move between machines.
 | `.venv*/**` | local dependency env | no | no | no | no | yes |
 | `node_modules/**` | local dependency env | no | no | yes | no | yes |
 
+## Transport Semantics
+
+A physical directory copy and a Git transfer are different operating
+contracts:
+
+```text
+complete filesystem copy = tracked files + untracked files + ignored local files
+ordinary Git clone        = committed tracked files only
+```
+
+Therefore a complete copy that preserves ignored files carries the canonical
+identity, reviewed public state, reconstructible operational artifacts, and the
+private conversation chronology. A fresh Cortex process can verify those files
+and reconstruct equivalent recorded operational context without resuming a
+provider-side thread. An ordinary clone carries the canonical identity and the
+reviewed public `portable_state.json`, but it intentionally starts without the
+private chronology.
+
+This contract defines portability over recorded files and their verifier
+readback. It does not transfer a running process, model weights, hidden model
+state, RAM, credentials, installed dependencies, or current physical-device
+state. Host-local files copied from another machine remain source-host records;
+they do not become current target-host observations until the relevant
+discovery or connector readback is rebuilt. Copy tools and archives must also
+be configured to include hidden and ignored files if private continuity is
+intended.
+
+The implemented local copy-versus-clean-clone test verifies the file-transport
+distinction. Independent second-device execution with matching post-boot
+identity and continuity readback is a separate, still-open validation edge.
+
 ## Invariants
 
 - Source files define durable operating knowledge, schemas, builders, examples,

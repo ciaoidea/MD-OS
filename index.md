@@ -191,6 +191,32 @@ in `.gitignore`. The public `md-os/continuity/portable_state.json` remains only
 a reviewed operational summary and contains no raw conversation. Set
 `MDOS_PRIVATE_CONVERSATION=off` to disable private recording and hydration.
 
+### What a full-folder copy preserves
+
+With the ignored local files included, the workspace folder is the transport
+container for the recorded MD-OS identity and its operational continuity. A
+fresh host process can reconstruct the same declared identity and operating
+rules from canonical sources, the same reviewed working context from
+`portable_state.json`, and the bounded recent dialogue from the verified
+private chronology. The provider-side thread is not the carrier and does not
+need to be resumed.
+
+This is more than a source-code backup: the copied filesystem contains the
+inspectable state needed to continue the recorded operating trajectory. It is
+also narrower than a bit-for-bit transfer of a running mind. "Continue from
+where we were" means equivalence of the verified files, constraints, working
+state, and available recent dialogue at the next boot. It does not copy model
+weights, hidden activations, RAM, unrecorded exchanges, credentials, installed
+dependencies, or live device state. Host-local inventories copied from the old
+machine are historical input and must be rediscovered before they can count as
+current readback on the new machine.
+
+The automated evidence currently distinguishes a filesystem copy from a clean
+Git clone in isolated local workspaces: only the copy recovers a private
+canary. Repeating the migration on an independently provisioned second device
+and comparing the post-boot identity and continuity readback remains the
+strongest open portability test.
+
 The private chronology is private relative to GitHub, not invisible to the
 model service: the bounded excerpt must be sent to the configured Codex/model
 provider to reconstruct conversational context. Use a local model if the text

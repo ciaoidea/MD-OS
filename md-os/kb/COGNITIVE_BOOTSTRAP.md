@@ -302,6 +302,41 @@ human request, or import chat transcripts, model identifiers, thread
 identifiers, host paths, or credentials. Reject the entire snapshot if any
 binding fails.
 
+## Physical-Copy Identity Portability
+
+A complete physical copy of the workspace, including Git-ignored local files,
+is the transport path for recorded operational identity continuity. On the
+target machine, a fresh host process reconstructs rather than inherits a
+running process:
+
+```text
+verified canonical identity and operating rules
++ verified reviewed operational handoff and reconstructible state
++ verified bounded private conversation tail, when present
+-> fresh host process with equivalent recorded operational context
+```
+
+The identity remains grounded in canonical repository sources. The reviewed
+portable snapshot supplies non-canonical working context. The private
+chronology supplies bounded conversational continuity only after its complete
+hash chain verifies. Provider-side history is not required and remains an
+explicit `/resume` choice.
+
+Operational equivalence means that the target boot verifies and uses the same
+recorded identity, constraints, state bindings, and available recent dialogue.
+It does not mean continuity of RAM, hidden model activations, model weights,
+provider session state, credentials, installed dependencies, or physical
+device state. Copied host-local discovery artifacts describe the source host
+until the target host performs new discovery and readback.
+
+A clean Git clone is intentionally a weaker transfer: it carries canonical
+identity and the reviewed public handoff but not the private chronology. The
+current automated copy-versus-clone test verifies this transport distinction in
+isolated local workspaces. An independently provisioned second-machine or
+second-device migration, followed by matching post-boot identity and
+continuity readback, remains required for the strongest host-independence
+claim.
+
 Do not inject `md-os/ops/local/apfc/last_turn.md` or
 `md-os/ops/last_summary.md` during ordinary Cortex boot. They remain explicit
 diagnostic artifacts and may be read only when the current task actually asks
