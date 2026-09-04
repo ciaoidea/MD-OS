@@ -156,20 +156,27 @@ complete input line
 └── natural language     -> dynamic APFC context filter -> Codex App Server
 ```
 
-Before every natural-language `turn/start` or `turn/steer`, Cortex builds a
-bounded, hash-bound context contract. Its invariant baseline contains identity,
-cognitive bootstrap, compact operational core, conceptual orientation, active
-work, continuity, and the generated context-pack catalog even when the human
-wording shares no tokens with those files. Lexical matches to recent summaries
-are not imported automatically; host-local `last_turn.md` and `last_summary.md`
-remain explicit diagnostic artifacts. Health readback is advisory only. A verified
-`md-os/continuity/portable_state.json` adds reviewed clone-carried working
-context; invalid hashes reject the whole snapshot. For nontrivial claims or actions, the active
-turn must resolve the actual task dependencies through the catalog and current
-canonical readback, or report that its context is insufficient. The resulting
-context names included and omitted sources and preserves the original human
-request unchanged. Native shell commands remain direct and bypass this
-model-context path.
+Cortex separates persistent system state from model-visible working context.
+The first natural-language turn of a new App Server thread receives a compact,
+hash-bound operational bootstrap. Later turns in the same thread do not repeat
+identity, governance, affect, Unity telemetry, repository summaries, or the
+context-pack catalog. The current human request is the first semantic content,
+is preserved unchanged exactly once, and is followed only by current operational
+deltas such as unconsumed shell observations, an explicit active goal, or a
+correction.
+
+```text
+AVAILABLE                    persistent files, SQLite, graphs, identity, Unity
+CURRENTLY RELEVANT           candidates admitted for this task
+MODEL-VISIBLE NOW            the small bounded projection used by Codex
+```
+
+The one-time bootstrap is capped at 4 KiB. A reused turn with no pending shell
+observations has a 2 KiB auxiliary ceiling, and every ordinary turn has an
+8 KiB total auxiliary ceiling; these are maxima, not fill targets. Repository
+knowledge and old memory remain available through precise file reads and bounded
+search rather than being serialized automatically. Native shell commands remain
+direct and bypass this model-context path.
 
 This is a shell inside the shell, not a browser GUI or a restricted simulation.
 It preserves the actual current directory, persistent `cd`, `PWD`/`OLDPWD`,
@@ -179,14 +186,16 @@ Windows. Valid native commands bypass Codex completely.
 
 On the first natural-language request, `cortex` starts one Codex App Server
 process and a fresh Codex thread. It never searches or resumes provider-side
-Codex history during ordinary boot. When the workspace contains the verified
-private chronology at `md-os/ops/local/cortex/conversation.ndjson`, Cortex
-hydrates the fresh thread from a bounded recent tail. Every successful exchange
-appends the human input, any steering inputs, and the final assistant response.
-Hidden reasoning, tool traces, model ids, and Codex thread ids are excluded.
-Later turns reuse the live thread in the same process and workspace. Use
-`/resume` only when importing the latest provider-stored Codex conversation is
-an explicit choice; use `/new` to detach and start another fresh thread.
+Codex history during ordinary boot. A fresh thread prefers a verified compact
+operational handoff; otherwise it may hydrate at most the two most recent
+complete exchanges and at most 4 KiB from
+`md-os/ops/local/cortex/conversation.ndjson`. Older history remains searchable
+on demand. A live App Server thread relies on its own history and does not inject
+the same recent conversation again. Every successful exchange appends the human
+input, any steering inputs, and the final assistant response. Hidden reasoning,
+tool traces, model ids, and Codex thread ids are excluded. Use `/resume` only
+when importing provider-stored Codex history is an explicit choice; use `/new`
+to detach and start another fresh thread.
 
 This creates two deliberately different transfer paths. Copying or moving the
 whole folder with `cp -a`, `rsync -a`, an archive, or an equivalent file copy
@@ -295,18 +304,33 @@ accepts only exact text hunks inside the workspace and fails closed on stale
 preimages, path traversal, Git metadata, symlinks, renames, binary changes, and
 deletion. It performs no network operation and returns hash-bound readback.
 
-Before each natural-language turn, Cortex supplies a bounded APFC frame. The
-current human request remains the turn target and the sole query for advisory
-task-source selection, while a hash-bound invariant baseline remains present
-independently of lexical overlap. Cortex does not manufacture or persist a
-semantic `theme` or `focus` before the model has understood the request. An
-explicit Codex goal remains available as persistent context, but does not
-automatically replace the current human request; native thread continuity
-remains separate.
-After execution, a second JSON contract compares observable readback with the
+Cortex prepares a structured APFC runtime frame for every natural-language
+turn, but does not serialize the complete frame into the model prompt. Causal
+Unity state, governance tensors, approval decisions, identity continuity, and
+transition hashes remain active in authorization and verification outside the
+prompt. The model-visible packet contains the current request plus only the
+small projection needed for the decision. Cortex does not manufacture or
+persist a semantic `theme` or `focus` before the model has understood the
+request, and an explicit goal never replaces the request merely because it
+exists.
+
+After execution, a JSON receipt compares observable readback with the
 acceptance condition and records `pass`, `fail`, or `unknown`; successful
-execution alone is never treated as proof. The dynamic context is capped at
-12 KiB and starts no loop. When the model classifies a problem-relevant request as `critical_reflection`, the compact frame exposes `./cortex apfc cognitive reflect-intent <intent.json>`. An expected-versus-observed readback mismatch can likewise enter one bounded cycle through `./cortex apfc cognitive reflect-event <event.json>`. The deterministic routers reject matching readback, generic opinions, low-confidence classifications, and continuous autonomy. A verified correction may become a persistent cognitive anchor, while `unknown` readback creates no learned memory.
+execution alone is never treated as proof. Cheap deterministic output checks
+reject likely credential leakage and unsupported claims that a command, test,
+build, or replay succeeded without a matching observed receipt. They do not
+start a permanent second model call. Reflection and research mechanisms remain
+explicitly invocable, but are inactive in the ordinary hot path unless a
+declared contradiction, postcondition, or high-risk rule activates them.
+
+Inspect context construction without starting a model turn:
+
+```bash
+./cortex context inspect --request-file request.txt --reused-thread --json
+```
+
+Compact turn metrics are written outside the prompt to the Git-ignored
+`md-os/ops/local/cortex/context_metrics.ndjson` log.
 
 The recursive self-reflection surface makes one internally originated result
 return as an explicit self-question:
@@ -1645,14 +1669,29 @@ only current explicit cross-layer Markdown links and excludes every
 npm run cognition:correlation-probe
 ```
 
-At turn time, Cortex projects verified private chronology, APFCG, and semantic
-knowledge into a derived Git-ignored SQLite index. FTS selects old
-query-relevant episodes; sparse typed factors can add a bounded number of graph
-neighbors; and a source-bound context pack of at most 12 KiB enters the APFC
-context contract. The database is disposable retrieval support, not canonical
-memory or truth. Deleting it removes the accelerator, while the verified files
-remain able to rebuild it. Neither the SQLite file nor the private conversation
-chronology is included in Git, npm, the paper archive, or the Zenodo package.
+Private chronology, APFCG, and semantic knowledge remain available through a
+derived Git-ignored SQLite index, but ordinary turns do not query or inject it
+automatically. When the current task depends on a previous decision, correction,
+or historical fact, Codex can request a bounded read-only search:
+
+```bash
+./cortex memory search --query-file query.txt --limit 3 --max-chars 4096 --json
+```
+
+Zero results is a successful normal outcome. Every seed and expanded graph
+neighbor must independently pass current-query relevance; source type,
+verification status, recency, salience, or graph adjacency can rank already
+relevant candidates but cannot admit an irrelevant one. Ordinary episodic
+retrieval is driven by the recorded human input. Full assistant text remains in
+the canonical payload for audit and is searchable only through the explicit
+`--audit-assistant` path, so old assistant terminology cannot independently
+summon an episode.
+
+The database is disposable retrieval support, not canonical memory or truth.
+Deleting it removes the accelerator, while verified source files rebuild it
+automatically under the current schema and implementation revision. Neither the
+SQLite file nor the private conversation chronology is included in Git, npm,
+the paper archive, or the Zenodo package.
 
 The expected bounded readback is `law=induced`, `transform=verified`, and
 `unity=verified`, while production promotion and AGI support remain false.

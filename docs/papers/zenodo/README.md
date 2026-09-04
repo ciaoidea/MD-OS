@@ -14,7 +14,41 @@ Files:
 - `SHA256SUMS` — file-integrity manifest.
 - `MD-OS_CORTEX_Zenodo.zip` — upload-ready source, figures, bibliography, and definitive PDF.
 
-The B17 local candidate replaces the former embodied-robot architecture image
+The B18 local candidate repairs the boundary between persistent Cortex state
+and model-visible working context. It preserves filesystem state, canonical
+knowledge, SQLite memory, APFC and semantic graphs, identity continuity,
+Causal Unity, approval, evidence, replay, and explicitly invocable research
+mechanisms. It removes their automatic prompt occupancy: stable operational
+rules form a one-time thread bootstrap, ordinary turns carry the unchanged
+current request plus a small delta, and historical memory or repository
+knowledge is retrieved only when the active task needs it.
+
+B18 adds deterministic relevance admission before ranking, permits zero memory
+results, separates HUMAN-driven ordinary episodic retrieval from explicit
+ASSISTANT audit, requires every graph neighbor to pass independent relevance,
+and replaces stacked baseline/memory quotas with one auxiliary-context budget.
+For the measured request, auxiliary context falls from 11,482 characters
+(3,828 conservatively estimated tokens) to 769 characters (257 estimated
+tokens) on a new thread and 132 characters (44 estimated tokens) on a reused
+thread. The ordinary path remains one model call and injects zero historical
+memory nodes.
+
+Context minimization does not disable persistent identity, consciousness-event
+state, or Causal Unity authorization and transition closure. Tests verify that
+the same command and file actions fail closed when the active causal-state hash
+is corrupted, while research mechanisms remain available but absent from the
+ordinary prompt. The B18 source readback reports 339/339 passing Node tests,
+89/89 passing shell tests, passing syntax and canonical builds, and a 34-page
+PDF with resolved references. The final LaTeX log retains three overfull-vbox
+warnings on the float-only claim-table page; semantic gate remains 14/0 and
+replay reaches `matched_before: true`. Its current hash remains in generated
+local readback to avoid a recursive source-hash dependency.
+Runtime remains operable; compiler, exploratory AGI, APFC, and local-hygiene
+attention keep `publishable=false`. This is local-candidate evidence only. The
+public Zenodo record remains unchanged unless the author separately approves
+and uploads the rebuilt B18 package.
+
+The prior B17 local candidate replaced the former embodied-robot architecture image
 with the author-supplied `figures/fig05_cortex.png` conceptual visualization and
 uses the same asset in the public project README. The figure-provenance note
 records its exact hash. The image explains the APFC/affective-layer design
@@ -37,7 +71,7 @@ B17 also aligns the manuscript with three implemented bounded mechanisms:
 
 The SQLite index and private conversation chronology are not publication
 inputs and are excluded from the archive. The public Zenodo record remains
-unchanged unless the author separately uploads this B17 package.
+unchanged unless the author separately uploads an approved package.
 
 Current B17 readback reports 335/335 passing Node tests, 75/75 passing shell
 parity tests, a passing syntax check and full canonical build, a clean 33-page

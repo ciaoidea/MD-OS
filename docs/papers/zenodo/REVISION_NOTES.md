@@ -1,5 +1,40 @@
 # Revision notes
 
+This B18 local candidate aligns the public README, generated site index, paper,
+and migration record with the selective Cortex context architecture. The public
+Zenodo record remains unchanged.
+
+- Replaces repeated per-turn baseline serialization with a one-time compact
+  thread bootstrap keyed by thread, workspace, and source hash.
+- Makes the unchanged current human request the first semantic content and
+  excludes it from auxiliary-context budgets.
+- Records the 4 KiB bootstrap ceiling, 2 KiB ordinary reused-turn ceiling,
+  8 KiB total auxiliary ceiling, 4 KiB/three-node on-demand memory ceiling, and
+  two-exchange/4 KiB fresh-history ceiling as maxima rather than fill targets.
+- Stops automatic historical-memory injection on an ordinary live thread and
+  exposes bounded read-only `memory search` plus non-generative `context
+  inspect` diagnostics.
+- Changes memory admission so zero results are normal; source kind, diversity,
+  graph adjacency, epistemic status, recency, salience, and confidence cannot
+  bypass current-task relevance.
+- Separates full stored HUMAN/ASSISTANT chronology from HUMAN-driven ordinary
+  retrieval and keeps assistant-only terms available through an explicit audit
+  path.
+- Preserves Causal Unity authorization, state hashes, transition closure,
+  identity continuity, consciousness-event readback, and explicit research
+  runtimes outside repeated prompt prose.
+- Adds Git-ignored per-turn context metrics and deterministic output checks
+  without adding a permanent second LLM call.
+- Records measured auxiliary context of 11,482 to 769 characters for a fresh
+  thread and 11,482 to 132 for a reused thread, with one model call and zero
+  automatic memory nodes after migration.
+- Records 339/339 passing Node tests, 89/89 passing shell tests, successful
+  syntax and canonical builds, semantic gate 14/0, and fixed-point replay with
+  the exact current hash retained in generated local readback to avoid a
+  recursive source-hash dependency.
+- Classifies B18 as a local candidate. The external Zenodo record changes only
+  after a separate author-approved upload while the release gate permits it.
+
 This B17 local candidate aligns the public manuscript and README with the
 current Causal Unity, open affective-perception, sparse-correlation, and
 query-scoped cognitive-memory implementation while leaving the public Zenodo
