@@ -98,6 +98,28 @@ test('markdown graph anchors semantic shell documents through the shell entrypoi
   )));
 });
 
+test('markdown graph anchors portable migration records without assuming a KB layout', () => {
+  const workspace = makeWorkspace();
+  writeFile(path.join(workspace, 'README.md'), '# Root\n');
+  writeFile(path.join(workspace, 'md-os/kb/OPERATIONS.md'), '# Operations\n');
+  writeFile(
+    path.join(workspace, 'md-os/migrations/example/README.md'),
+    '# Portable migration\n',
+  );
+
+  const result = runGraph(workspace);
+  assert.equal(result.status, 0, result.stderr);
+
+  const graph = JSON.parse(fs.readFileSync(path.join(workspace, 'md-os/ops/markdown_graph.json'), 'utf8'));
+  const migration = graph.nodes.find((node) => node.path === 'md-os/migrations/example/README.md');
+  assert.equal(migration.structurally_connected, true);
+  assert.ok(graph.structural_links.some((edge) => (
+    edge.source === 'md-os/migrations/example/README.md'
+    && edge.target === 'md-os/kb/OPERATIONS.md'
+    && edge.reason === 'operations_entrypoint'
+  )));
+});
+
 test('semantic operational network treats deterministic readback nodes as generated', () => {
   const workspace = makeWorkspace();
   const sourceCoreNodes = [

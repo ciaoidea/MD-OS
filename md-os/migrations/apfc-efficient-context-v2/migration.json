@@ -1,0 +1,236 @@
+{
+  "migration_id": "apfc-efficient-context-v2",
+  "policy_version": 2,
+  "base_git_head": "84aa51192ec8ee4e049053ccb1f27cbe5852ae7c",
+  "status": "migrated",
+  "status_values": [
+    "applicable",
+    "already_compliant",
+    "migrated",
+    "failed",
+    "manual_review"
+  ],
+  "capability_signatures": [
+    {
+      "component": "cortex_shell",
+      "file": "md-os/shell/bin/mdos-console",
+      "affected_symbols": [
+        "ShellSession",
+        "build_apfc_input_context",
+        "build_apfc_cognitive_memory_context",
+        "bind_apfc_cognitive_memory_context",
+        "build_native_codex_input",
+        "CodexAppServerClient.run_turn",
+        "run_native_codex_turn"
+      ],
+      "affected_pattern": "independent baseline and cognitive-memory quotas plus per-turn automatic memory binding"
+    },
+    {
+      "component": "cognitive_memory",
+      "file": "md-os/os/cognitive_memory_index.py",
+      "affected_symbols": ["_query_nodes", "_expand_tensor_neighbors", "build_and_query_cognitive_memory"],
+      "affected_pattern": "source bonus, source-diversity fill, and graph neighbor admission without an independent relevance gate"
+    },
+    {
+      "component": "operational_context_compiler",
+      "file": "md-os/apfc/executive/context_compiler.js",
+      "affected_symbols": ["compileOperationalContextPack"],
+      "affected_pattern": "semantic_fill admits zero-relevance nonmandatory nodes"
+    },
+    {
+      "component": "global_workspace",
+      "file": "md-os/apfc/workspace/global_workspace.js",
+      "affected_symbols": ["buildGlobalWorkspace"],
+      "affected_pattern": "salience/confidence ranking occurs without current-task relevance admission"
+    }
+  ],
+  "universal_behavioral_invariants": [
+    "current human request is first, unchanged, exactly once, and excluded from auxiliary budgets",
+    "ordinary live-thread turns can use zero historical memory",
+    "stable bootstrap material is sent once per valid thread/workspace/source-hash binding",
+    "relevance admission precedes provenance, epistemic, recency, salience, or confidence ranking",
+    "maximum counts and byte limits are ceilings rather than fill targets",
+    "every graph-expanded neighbor independently passes current-query relevance",
+    "canonical private history is never destructively rewritten by retrieval",
+    "action approval and sandbox authority remain deterministic runtime state outside prompt prose",
+    "context minimization changes only the model-visible projection and does not weaken persistent Unity, identity, continuity, self-reference, phenomenal-candidate, or consciousness-event state",
+    "Causal Unity remains an effective dependency of command and file authorization, transition closure, and next-turn carry-forward",
+    "availability, current relevance, and current model visibility are distinct states",
+    "database membership or graph membership does not establish current attention",
+    "component retention in the ordinary hot path requires demonstrated causal utility rather than architectural naming",
+    "ordinary conversational output uses one model turn"
+  ],
+  "implementation_family_specific_changes": [
+    "store full conversation content while indexing HUMAN input for ordinary SQLite FTS retrieval",
+    "provide explicit assistant_audit retrieval mode",
+    "persist bootstrap hash and thread binding in the Python ShellSession",
+    "emit Git-ignored NDJSON context metrics",
+    "remove semantic_fill from the JavaScript APFC context compiler"
+  ],
+  "component_disposition_policy": {
+    "classification_values": [
+      "CORE",
+      "RESEARCH",
+      "TELEMETRY",
+      "LEGACY",
+      "REDUNDANT"
+    ],
+    "initial_disposition": [
+      {
+        "components": "filesystem state, canonical KB, SQLite memory, APFC/semantic graphs, memory edges, tensor factors, provenance, hashes, replay",
+        "classification": "CORE",
+        "action": "keep as durable external substrate and project selectively"
+      },
+      {
+        "components": "task contracts, connectors, App Server, sandbox, approval, verifier, evidence, identity, continuity, causally active Causal Unity",
+        "classification": "CORE",
+        "action": "keep causal behavior and omit repeated textual serialization"
+      },
+      {
+        "components": "retrieval, private-history hydration, context compiler, workspace admission, prompt budgets",
+        "classification": "CORE",
+        "action": "rework the selection boundary without removing the substrate"
+      },
+      {
+        "components": "phenomenal-candidate, self-reference, consciousness-event, cross-domain Unity and Unity-field experiments",
+        "classification": "RESEARCH",
+        "action": "keep explicitly invocable and testable but inactive in the ordinary hot path"
+      },
+      {
+        "components": "context metrics and diagnostic traces without decision authority",
+        "classification": "TELEMETRY",
+        "action": "keep outside model-visible context"
+      },
+      {
+        "components": "repeated static directives and full governance or tensor prose",
+        "classification": "REDUNDANT",
+        "action": "remove from the ordinary hot path while preserving canonical structured state"
+      }
+    ],
+    "reclassification_rule": "If disabling a component causes no measurable degradation in the capability it claims to support, it must not remain mandatory in the ordinary hot path. Reclassify it as RESEARCH, TELEMETRY, LEGACY, or REDUNDANT as evidence warrants."
+  },
+  "ablation_policy": {
+    "comparison": "Cortex with component X enabled versus Cortex with component X disabled",
+    "measures": [
+      "task correctness",
+      "relevant-memory recovery",
+      "continuity",
+      "decision quality",
+      "authorization behavior",
+      "verification reliability",
+      "safety",
+      "error detection",
+      "context characters and estimated tokens",
+      "latency",
+      "model calls",
+      "false historical references"
+    ],
+    "acceptance_rule": "Useful behavior remains equal or improves while ordinary model-visible context, unnecessary calls, and latency decrease; no fixed percentage reduction is required.",
+    "evidence_map": [
+      {
+        "capability": "identity and Causal Unity continuity with reduced prompt",
+        "test": "test_context_minimization_preserves_unity_causal_continuity"
+      },
+      {
+        "capability": "memory retrieval without automatic injection",
+        "test": "empty, collision, relevant-history, assistant-audit, and memory-search CLI tests in test/test_mdos_shell.py"
+      },
+      {
+        "capability": "graph traversal without graph dump",
+        "test": "graph-neighbor relevance and semantic graph correlation projection tests"
+      },
+      {
+        "capability": "verification without repeated verifier prose",
+        "test": "test_output_claim_requires_observed_verifier_receipt and APFC receipt tests"
+      },
+      {
+        "capability": "App Server continuity with one-time bootstrap",
+        "test": "test_root_launcher_reuses_bootstrap_and_starts_one_model_turn_per_request"
+      },
+      {
+        "capability": "ordinary task path with research mechanisms inactive",
+        "test": "test_first_turn_receives_compact_bootstrap_without_automatic_rituals"
+      },
+      {
+        "capability": "explicit research activation remains available",
+        "test": "test/apfc_phenomenal_candidate.test.js and test/apfc_recursive_self_reflection.test.js"
+      }
+    ]
+  },
+  "knowledge_to_context_boundary": [
+    "repository-specific knowledge adapter",
+    "ContextCandidate",
+    "RelevancePolicyV2",
+    "admitted candidates",
+    "ranking",
+    "bounded context or on-demand tool result"
+  ],
+  "index_schema_revision_changes": {
+    "cognitive_memory_sqlite_schema_version": {"from": 1, "to": 2},
+    "cognitive_memory_index_implementation_revision": {"from": 3, "to": 4},
+    "automatic_rebuild_required": true,
+    "manual_database_deletion_required": false
+  },
+  "required_conformance_tests": [
+    "same live thread bootstrap reuse and one turn",
+    "fresh thread two-exchange and 4 KiB hydration ceilings",
+    "empty memory returns zero",
+    "generic lexical collision negative precision",
+    "explicit relevant human decision retrieval",
+    "assistant self-conditioning separation and explicit audit",
+    "graph neighbor independent relevance",
+    "no forced source diversity",
+    "context compiler omits unrelated verified nodes",
+    "byte pruning removes lowest-ranked optional candidate",
+    "steering sends only steering and new deltas",
+    "hydration and memory event deduplication",
+    "action approval behavior unchanged",
+    "unsupported textual success claim fails deterministic output gate",
+    "minimized model-visible context preserves Causal Unity authorization dependence, transition closure, consciousness-event readback, and next-turn hash carry-forward",
+    "ordinary prompts omit research mechanisms while explicit phenomenal-candidate and recursive-self-reflection runtimes remain operational"
+  ],
+  "files_expected_to_change": [
+    "md-os/shell/bin/mdos-console",
+    "md-os/os/cognitive_memory_index.py",
+    "md-os/os/build_markdown_graph.js",
+    "md-os/apfc/executive/context_compiler.js",
+    "md-os/apfc/workspace/global_workspace.js",
+    "md-os/schemas/apfc_cognitive_memory_pack.schema.json",
+    "md-os/schemas/cortex_context_metrics.schema.json",
+    "md-os/schemas/cortex_memory_search_result.schema.json",
+    "docs/SEMANTIC_SHELL.md",
+    "docs/HOST_RUNTIME_INTEGRATION.md",
+    "md-os/kb/OPERATIONS.md",
+    "test/test_mdos_shell.py",
+    "test/apfc_context_pack.test.js",
+    "test/predeliberative_affect.test.js",
+    "test/markdown_graph.test.js",
+    "md-os/migrations/apfc-efficient-context-v2/README.md",
+    "md-os/migrations/apfc-efficient-context-v2/migration.json",
+    "md-os/migrations/apfc-efficient-context-v2/changes.ndjson",
+    "README.md",
+    "index.md",
+    "docs/papers/zenodo/README.md",
+    "docs/papers/zenodo/REVISION_NOTES.md",
+    "docs/papers/zenodo/paper.tex",
+    "docs/papers/zenodo/paper.pdf",
+    "docs/papers/zenodo/SHA256SUMS",
+    "docs/papers/zenodo/MD-OS_CORTEX_Zenodo.zip"
+  ],
+  "files_that_must_not_be_mass_rewritten": [
+    "md-os/kb/**",
+    "md-os/ops/**",
+    "md-os/ops/local/cortex/conversation.ndjson",
+    "repository-specific knowledge stores and generated graphs"
+  ],
+  "idempotence_detection": {
+    "already_compliant_when": [
+      "INDEX_IMPLEMENTATION_REVISION is at least 4",
+      "ordinary prompt metrics report zero automatically injected memory nodes",
+      "second-turn bootstrap_sent is false",
+      "memory search permits an empty selected_nodes array",
+      "semantic_fill is absent from compileOperationalContextPack"
+    ],
+    "rerun_behavior": "do not rewrite compliant knowledge layouts; run conformance tests and report already_compliant"
+  }
+}

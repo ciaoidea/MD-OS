@@ -299,6 +299,11 @@ function structuralTargetsFor(node, exactPathSet) {
     add('md-os/shell/MDOS_SHELL.md', 'semantic_shell_entrypoint');
   }
 
+  if (source.startsWith('md-os/migrations/')) {
+    add('README.md', 'repository_entrypoint');
+    add('md-os/kb/OPERATIONS.md', 'operations_entrypoint');
+  }
+
   if (source.startsWith('md-os/apfc/')) {
     add('README.md', 'repository_entrypoint');
     add('md-os/apfc/README.md', 'apfc_entrypoint');
