@@ -9,6 +9,7 @@
     "schema_version",
     "artifact_role",
     "status",
+    "retrieval_mode",
     "query_hash",
     "index_id",
     "index_hash",
@@ -19,6 +20,7 @@
     "index_rebuilt",
     "metrics",
     "selected_nodes",
+    "admission_trace",
     "selected_edges",
     "tensor_support",
     "criteria",
@@ -30,6 +32,7 @@
     "schema_version": { "const": 1 },
     "artifact_role": { "const": "apfc_cognitive_memory_context_pack" },
     "status": { "enum": ["verified", "empty"] },
+    "retrieval_mode": { "enum": ["ordinary", "assistant_audit"] },
     "query_hash": { "$ref": "#/$defs/hash" },
     "index_id": { "type": "string", "pattern": "^apfc_cognitive_memory_[a-f0-9]{20}$" },
     "index_hash": { "$ref": "#/$defs/hash" },
@@ -61,8 +64,33 @@
     },
     "selected_nodes": {
       "type": "array",
-      "maxItems": 12,
+      "maxItems": 3,
       "items": { "$ref": "#/$defs/node" }
+    },
+    "admission_trace": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_id", "candidate", "admission", "relevance_score",
+          "matched_informative_terms", "reason", "final_rank", "omission_reason"
+        ],
+        "properties": {
+          "node_id": { "type": "string", "minLength": 1 },
+          "candidate": { "enum": ["generated", "graph_neighbor"] },
+          "admission": { "enum": ["admitted", "rejected"] },
+          "relevance_score": { "type": "number", "minimum": 0 },
+          "matched_informative_terms": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "reason": { "type": "string", "minLength": 1 },
+          "final_rank": { "type": ["integer", "null"], "minimum": 1 },
+          "omission_reason": { "type": ["string", "null"] }
+        }
+      }
     },
     "selected_edges": {
       "type": "array",
@@ -117,7 +145,7 @@
         "content_hash": { "$ref": "#/$defs/hash" },
         "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
         "conversation_sequence": { "type": ["integer", "null"], "minimum": 1 },
-        "selection_reason": { "enum": ["fts5_query_match", "sparse_tensor_neighbor"] },
+        "selection_reason": { "enum": ["relevance_gate_match", "relevant_sparse_tensor_neighbor"] },
         "matched_terms": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
         "score": { "type": "number", "minimum": 0 },
         "excerpt": { "type": "string", "minLength": 1 }

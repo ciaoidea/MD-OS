@@ -104,6 +104,12 @@ function normalizedStatement(value) {
   return String(value || '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function provenanceRank(node) {
+  const sourceCount = Array.isArray(node.source_refs) ? node.source_refs.length : 0;
+  const hashBound = /^[a-f0-9]{64}$/.test(String(node.content_hash || '')) ? 1 : 0;
+  return hashBound + Math.min(sourceCount, 4);
+}
+
 function compileOperationalContextPack(graph, taskSpec, limits = {}) {
   assertApfcGraph(graph);
   const taskSpecId = shortText(taskSpec && taskSpec.task_spec_id);
@@ -115,6 +121,7 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
   const mandatory = new Set();
   const trace = [];
   const direct = new Set();
+  const optionalRanks = new Map();
   const nodeOverlays = new Map();
   const exactStatements = new Set([
     ...(taskSpec.constraints || []),
@@ -126,7 +133,18 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
     selected.add(nodeId);
     direct.add(nodeId);
     if (isMandatory) mandatory.add(nodeId);
-    trace.push({ node_id: nodeId, rule_id: ruleId, rank_tuple: [], included: true });
+    trace.push({
+      node_id: nodeId,
+      rule_id: ruleId,
+      candidate_generated: true,
+      relevance_score: null,
+      matched_informative_terms: [],
+      admission_reason: 'mandatory_task_dependency',
+      rank_tuple: [],
+      final_rank: null,
+      omission_reason: null,
+      included: true,
+    });
   };
 
   const taskNodes = graph.nodes.filter((node) => (
@@ -161,32 +179,23 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
         apfc_unmatched_preconditions: unmatched,
       },
     });
-    include(node.id, unmatched.length ? 'promoted_skill_inhibited' : 'promoted_skill_applicable');
-  }
-
-  const relatedEpisodes = graph.nodes.filter((node) => node.type === 'episode' && node.properties.task_type === taskSpec.task_type);
-  const successes = relatedEpisodes.filter((node) => node.lifecycle_status === 'completed' && node.epistemic_status === 'verified')
-    .sort((left, right) => String(right.created_at || '').localeCompare(String(left.created_at || '')) || left.id.localeCompare(right.id)).slice(0, 5);
-  const failures = relatedEpisodes.filter((node) => ['failed', 'blocked'].includes(node.lifecycle_status))
-    .sort((left, right) => String(right.created_at || '').localeCompare(String(left.created_at || '')) || left.id.localeCompare(right.id)).slice(0, 5);
-  for (const node of successes) include(node.id, 'recent_verified_success');
-  for (const node of failures) include(node.id, 'recent_failure_or_correction');
-
-  const oneHopTypes = new Set(['supported_by', 'evaluated_by', 'corrected_by', 'invalidated_by', 'supersedes']);
-  for (const seed of [...selected]) {
-    for (const edge of adjacency.get(seed) || []) if (oneHopTypes.has(edge.type)) include(edge.to, `distance_one_${edge.type}`);
   }
 
   const query = [taskSpec.goal, ...(taskSpec.constraints || [])].join(' ');
+  const queryTerms = new Set(tokenize(query));
   const candidateRows = graph.nodes.filter((node) => !selected.has(node.id)).map((node) => {
     const card = [node.label, node.type, node.properties && node.properties.domain, JSON.stringify(node.properties || {})].join(' ');
     const score = jaccard(query, card);
+    const matchedTerms = tokenize(card).filter((term) => queryTerms.has(term)).sort();
+    const admitted = score > 0 && matchedTerms.length > 0;
     return {
       node,
       score,
+      matchedTerms,
+      admitted,
       rank: [
         EPISTEMIC_RANK[node.epistemic_status] || 0,
-        direct.has(node.id) ? 1 : 0,
+        provenanceRank(node),
         node.type === 'skill' && node.lifecycle_status === 'promoted' ? 1 : 0,
         score,
         String(node.valid_from || node.created_at || ''),
@@ -202,10 +211,41 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
     || left.node.id.localeCompare(right.node.id)
   ));
 
+  let finalRank = 0;
   for (const row of candidateRows) {
-    if (selected.size >= maximumNodes) break;
-    selected.add(row.node.id);
-    trace.push({ node_id: row.node.id, rule_id: 'semantic_fill', rank_tuple: row.rank, included: true });
+    if (!row.admitted) {
+      trace.push({
+        node_id: row.node.id,
+        rule_id: 'relevance_policy_v2',
+        candidate_generated: true,
+        relevance_score: row.score,
+        matched_informative_terms: row.matchedTerms,
+        admission_reason: 'zero_relevance',
+        rank_tuple: row.rank,
+        final_rank: null,
+        omission_reason: 'relevance_gate',
+        included: false,
+      });
+      continue;
+    }
+    finalRank += 1;
+    const withinNodeBudget = selected.size < maximumNodes;
+    if (withinNodeBudget) {
+      selected.add(row.node.id);
+      optionalRanks.set(row.node.id, finalRank);
+    }
+    trace.push({
+      node_id: row.node.id,
+      rule_id: 'relevance_policy_v2',
+      candidate_generated: true,
+      relevance_score: row.score,
+      matched_informative_terms: row.matchedTerms,
+      admission_reason: 'informative_overlap',
+      rank_tuple: row.rank,
+      final_rank: finalRank,
+      omission_reason: withinNodeBudget ? null : 'node_budget',
+      included: withinNodeBudget,
+    });
   }
   const makePack = (ids) => {
     const selectedIds = [...ids].sort();
@@ -224,8 +264,16 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
       selected_node_ids: selectedIds,
       nodes,
       edges,
-      omissions: graph.nodes.filter((node) => !selectedSet.has(node.id)).map((node) => ({ node_id: node.id, selection_tier: 'budget', rank_tuple: [], exclusion_reason: 'node_or_byte_budget' })),
-      selection_trace: trace.filter((entry) => selectedSet.has(entry.node_id)).sort((left, right) => left.node_id.localeCompare(right.node_id) || left.rule_id.localeCompare(right.rule_id)),
+      omissions: graph.nodes.filter((node) => !selectedSet.has(node.id)).map((node) => {
+        const decision = trace.find((entry) => entry.node_id === node.id);
+        return {
+          node_id: node.id,
+          selection_tier: decision && decision.admission_reason === 'zero_relevance' ? 'relevance' : 'budget',
+          rank_tuple: decision ? decision.rank_tuple : [],
+          exclusion_reason: decision && decision.omission_reason ? decision.omission_reason : 'node_or_byte_budget',
+        };
+      }),
+      selection_trace: trace.slice().sort((left, right) => left.node_id.localeCompare(right.node_id) || left.rule_id.localeCompare(right.rule_id)),
       source_hashes: [...new Set(nodes.map((node) => node.content_hash))].sort(),
       serialized_bytes: 0,
       findings: [],
@@ -236,9 +284,16 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
   let pack = makePack(selected);
   if (mandatory.size > maximumNodes) throw new Error('APFC_CONTEXT_MANDATORY_NODE_BUDGET_EXCEEDED');
   while (pack.serialized_bytes > maximumBytes) {
-    const removable = [...selected].filter((id) => !mandatory.has(id)).sort().at(-1);
+    const removable = [...selected]
+      .filter((id) => !mandatory.has(id))
+      .sort((left, right) => (optionalRanks.get(right) || 0) - (optionalRanks.get(left) || 0))[0];
     if (!removable) throw new Error('APFC_CONTEXT_MANDATORY_BYTE_BUDGET_EXCEEDED');
     selected.delete(removable);
+    const decision = trace.find((entry) => entry.node_id === removable && entry.included);
+    if (decision) {
+      decision.included = false;
+      decision.omission_reason = 'byte_budget_lowest_ranked_optional';
+    }
     pack = makePack(selected);
   }
   assertContextPack(pack);

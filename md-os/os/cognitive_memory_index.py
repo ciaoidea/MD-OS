@@ -14,6 +14,7 @@ from collections import defaultdict
 from hashlib import sha256
 from pathlib import Path
 import json
+import math
 import os
 import re
 import sqlite3
@@ -21,16 +22,16 @@ import tempfile
 from typing import Any
 
 
-SCHEMA_VERSION = 1
-INDEX_IMPLEMENTATION_REVISION = 3
+SCHEMA_VERSION = 2
+INDEX_IMPLEMENTATION_REVISION = 4
 INDEX_RELATIVE_PATH = "md-os/ops/local/cortex/cognitive_memory.sqlite3"
 APFCG_RELATIVE_PATH = "md-os/ops/apfc/executive/graph.json"
 SEMANTIC_GRAPH_RELATIVE_PATH = "md-os/ops/semantic_knowledge_graph.json"
 MAX_SOURCE_BYTES = 16 * 1024 * 1024
 MAX_INDEXED_TEXT_CHARS = 96 * 1024
-MAX_CONTEXT_CHARS = 12 * 1024
-MAX_SELECTED_NODES = 12
-MAX_SELECTED_EDGES = 24
+MAX_CONTEXT_CHARS = 4 * 1024
+MAX_SELECTED_NODES = 3
+MAX_SELECTED_EDGES = 12
 MAX_LEXICAL_NEIGHBORS = 6
 
 HASH_PATTERN = re.compile(r"^[a-f0-9]{64}$")
@@ -148,6 +149,7 @@ CREATE TABLE memory_nodes (
   node_type TEXT NOT NULL,
   label TEXT NOT NULL,
   content TEXT NOT NULL,
+  retrieval_content TEXT NOT NULL,
   content_hash TEXT NOT NULL,
   epistemic_status TEXT NOT NULL,
   source_refs_json TEXT NOT NULL,
@@ -201,7 +203,7 @@ CREATE INDEX causal_unity_transition_status_idx ON causal_unity_transitions(cons
 CREATE VIRTUAL TABLE memory_fts USING fts5(
   node_id UNINDEXED,
   label,
-  content,
+  retrieval_content,
   tokenize = 'unicode61 remove_diacritics 2'
 );
 """
@@ -226,9 +228,9 @@ def _insert_node(connection: sqlite3.Connection, node: dict[str, Any]) -> None:
         """
         INSERT INTO memory_nodes (
           node_id, source_id, source_kind, domain_id, node_type, label,
-          content, content_hash, epistemic_status, source_refs_json,
+          content, retrieval_content, content_hash, epistemic_status, source_refs_json,
           payload_json, conversation_sequence, valid_from
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             node["node_id"],
@@ -238,6 +240,7 @@ def _insert_node(connection: sqlite3.Connection, node: dict[str, Any]) -> None:
             node["node_type"],
             node["label"],
             node["content"],
+            node.get("retrieval_content", node["content"]),
             node["content_hash"],
             node["epistemic_status"],
             _canonical_json(node["source_refs"]),
@@ -247,8 +250,8 @@ def _insert_node(connection: sqlite3.Connection, node: dict[str, Any]) -> None:
         ),
     )
     connection.execute(
-        "INSERT INTO memory_fts(node_id, label, content) VALUES (?, ?, ?)",
-        (node["node_id"], node["label"], node["content"]),
+        "INSERT INTO memory_fts(node_id, label, retrieval_content) VALUES (?, ?, ?)",
+        (node["node_id"], node["label"], node.get("retrieval_content", node["content"])),
     )
 
 
@@ -418,6 +421,7 @@ def _conversation_nodes(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "node_type": "conversation_episode",
                 "label": "Cortex exchange " + str(sequence),
                 "content": content,
+                "retrieval_content": "HUMAN\n" + "\n".join(human_inputs),
                 "content_hash": event_hash,
                 "epistemic_status": "quoted_history",
                 "source_refs": [f"md-os/ops/local/cortex/conversation.ndjson#{sequence}"],
@@ -950,12 +954,14 @@ def _query_nodes(
     connection: sqlite3.Connection,
     human_request: str,
     maximum_nodes: int,
-) -> list[dict[str, Any]]:
+    *,
+    retrieval_mode: str = "ordinary",
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     query_tokens = sorted(_tokens(human_request))[:32]
     if not query_tokens:
-        return []
+        return [], []
     fts_query = " OR ".join(f'"{token}"' for token in query_tokens)
-    rows = connection.execute(
+    rows = list(connection.execute(
         """
         SELECT n.*, bm25(memory_fts, 8.0, 1.0) AS fts_rank
         FROM memory_fts
@@ -965,32 +971,95 @@ def _query_nodes(
         LIMIT 256
         """,
         (fts_query,),
-    ).fetchall()
+    ).fetchall())
+    if retrieval_mode == "assistant_audit":
+        known = {str(row["node_id"]) for row in rows}
+        rows.extend(
+            row
+            for row in connection.execute(
+                "SELECT n.*, 0.0 AS fts_rank FROM memory_nodes AS n "
+                "WHERE n.source_kind = 'private_conversation' ORDER BY n.node_id"
+            ).fetchall()
+            if str(row["node_id"]) not in known
+        )
     query_set = set(query_tokens)
     normalized_request = " ".join(human_request.casefold().split())
+    corpus_rows = connection.execute(
+        "SELECT retrieval_content FROM memory_nodes"
+    ).fetchall()
+    corpus_size = max(1, len(corpus_rows))
+    document_frequency = {
+        term: sum(
+            1
+            for corpus_row in corpus_rows
+            if term in _tokens(str(corpus_row["retrieval_content"]))
+        )
+        for term in query_set
+    }
     candidates: list[dict[str, Any]] = []
+    trace: list[dict[str, Any]] = []
     for row in rows:
         content = str(row["content"])
-        node_tokens = _tokens(str(row["label"]) + " " + content)
-        overlap_tokens = sorted(query_set & node_tokens)
-        coverage = len(overlap_tokens) / len(query_set)
-        exact_bonus = 1.0 if normalized_request and normalized_request in content.casefold() else 0.0
-        source_bonus = {
-            "private_conversation": 0.25,
-            "semantic_knowledge": 0.15,
-            "apfcg": 0.10,
-        }.get(str(row["source_kind"]), 0.0)
-        score = exact_bonus + coverage + source_bonus + min(len(overlap_tokens), 8) * 0.03
         payload = json.loads(row["payload_json"])
+        retrieval_text = str(row["retrieval_content"])
+        if retrieval_mode == "assistant_audit" and row["source_kind"] == "private_conversation":
+            retrieval_text += "\n" + str(payload.get("assistant_response") or "")
+        node_tokens = _tokens(str(row["label"]) + " " + retrieval_text)
+        overlap_tokens = sorted(query_set & node_tokens)
+        informative_terms = [
+            term
+            for term in overlap_tokens
+            if document_frequency.get(term, corpus_size) / corpus_size <= 0.5
+        ]
+        distinctive_single = (
+            len(informative_terms) == 1
+            and len(informative_terms[0]) >= 4
+            and document_frequency.get(informative_terms[0], corpus_size)
+            <= max(1, math.floor(corpus_size * 0.2))
+        )
+        multi_term_match = len(overlap_tokens) >= 2
+        admitted = len(informative_terms) >= 2 or distinctive_single or multi_term_match
+        admitted_terms = informative_terms or (overlap_tokens if multi_term_match else [])
+        weighted_overlap = sum(
+            math.log((corpus_size + 1) / (document_frequency.get(term, 0) + 1)) + 1
+            for term in admitted_terms
+        )
+        query_weight = sum(
+            math.log((corpus_size + 1) / (document_frequency.get(term, 0) + 1)) + 1
+            for term in query_set
+        )
+        exact_bonus = (
+            1.0
+            if normalized_request and normalized_request in retrieval_text.casefold()
+            else 0.0
+        )
+        score = exact_bonus + (weighted_overlap / max(query_weight, 1.0))
+        trace.append(
+            {
+                "node_id": str(row["node_id"]),
+                "candidate": "generated",
+                "admission": "admitted" if admitted else "rejected",
+                "relevance_score": round(score, 6),
+                "matched_informative_terms": admitted_terms,
+                "reason": (
+                    "informative_overlap"
+                    if admitted
+                    else "insufficient_informative_overlap"
+                ),
+                "final_rank": None,
+                "omission_reason": None if admitted else "relevance_gate",
+            }
+        )
+        if not admitted:
+            continue
         if row["source_kind"] == "private_conversation":
             human_text = "\n".join(payload.get("human_inputs", []))
             assistant_text = str(payload.get("assistant_response") or "")
-            excerpt = (
-                "HUMAN: "
-                + _relevant_excerpt(human_text, query_set, 700)
-                + "\nASSISTANT: "
-                + _relevant_excerpt(assistant_text, query_set, 1350)
-            )
+            excerpt = "HUMAN: " + _relevant_excerpt(human_text, query_set, 1200)
+            if retrieval_mode == "assistant_audit":
+                excerpt += "\nASSISTANT: " + _relevant_excerpt(
+                    assistant_text, query_set, 1200
+                )
         else:
             excerpt = _relevant_excerpt(content, query_set, 1250)
         candidates.append(
@@ -1004,8 +1073,8 @@ def _query_nodes(
                 "content_hash": row["content_hash"],
                 "source_refs": json.loads(row["source_refs_json"]),
                 "conversation_sequence": row["conversation_sequence"],
-                "selection_reason": "fts5_query_match",
-                "matched_terms": overlap_tokens,
+                "selection_reason": "relevance_gate_match",
+                "matched_terms": admitted_terms,
                 "score": round(score, 6),
                 "excerpt": excerpt,
             }
@@ -1018,26 +1087,16 @@ def _query_nodes(
             item["node_id"],
         )
     )
-    selected: list[dict[str, Any]] = []
-    selected_ids: set[str] = set()
-    # Preserve source diversity before filling by score.
-    for source_kind in ("private_conversation", "semantic_knowledge", "apfcg"):
-        candidate = next(
-            (item for item in candidates if item["source_kind"] == source_kind),
-            None,
+    selected = candidates[:maximum_nodes]
+    selected_ids = {item["node_id"] for item in selected}
+    for rank, candidate in enumerate(candidates, 1):
+        decision = next(
+            item for item in trace if item["node_id"] == candidate["node_id"]
         )
-        if candidate and candidate["node_id"] not in selected_ids:
-            selected.append(candidate)
-            selected_ids.add(candidate["node_id"])
-    for candidate in candidates:
-        if len(selected) >= maximum_nodes:
-            break
-        if candidate["node_id"] in selected_ids:
-            continue
-        selected.append(candidate)
-        selected_ids.add(candidate["node_id"])
-    selected.sort(key=lambda item: (-item["score"], item["node_id"]))
-    return selected
+        decision["final_rank"] = rank
+        if candidate["node_id"] not in selected_ids:
+            decision["omission_reason"] = "node_limit"
+    return selected, trace
 
 
 def _expand_tensor_neighbors(
@@ -1045,6 +1104,7 @@ def _expand_tensor_neighbors(
     human_request: str,
     selected_nodes: list[dict[str, Any]],
     maximum_nodes: int,
+    admission_trace: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     if not selected_nodes or len(selected_nodes) >= maximum_nodes:
         return selected_nodes
@@ -1073,6 +1133,18 @@ def _expand_tensor_neighbors(
         [*selected_ids, *selected_ids, *selected_ids],
     ).fetchall()
     query_set = _tokens(human_request)
+    corpus_rows = connection.execute(
+        "SELECT retrieval_content FROM memory_nodes"
+    ).fetchall()
+    corpus_size = max(1, len(corpus_rows))
+    document_frequency = {
+        term: sum(
+            1
+            for corpus_row in corpus_rows
+            if term in _tokens(str(corpus_row["retrieval_content"]))
+        )
+        for term in query_set
+    }
     candidates: list[dict[str, Any]] = []
     seen: set[str] = set()
     for row in rows:
@@ -1081,14 +1153,49 @@ def _expand_tensor_neighbors(
             continue
         seen.add(node_id)
         content = str(row["content"])
-        matched_terms = sorted(query_set & _tokens(str(row["label"]) + " " + content))
+        matched_terms = sorted(
+            term
+            for term in query_set
+            if term in _tokens(str(row["label"]) + " " + str(row["retrieval_content"]))
+            and document_frequency.get(term, corpus_size) / corpus_size <= 0.5
+        )
+        distinctive_single = (
+            len(matched_terms) == 1
+            and len(matched_terms[0]) >= 4
+            and document_frequency.get(matched_terms[0], corpus_size)
+            <= max(1, math.floor(corpus_size * 0.2))
+        )
+        all_overlap = sorted(
+            query_set
+            & _tokens(str(row["label"]) + " " + str(row["retrieval_content"]))
+        )
+        multi_term_match = len(all_overlap) >= 2
+        admitted = len(matched_terms) >= 2 or distinctive_single or multi_term_match
+        admitted_terms = matched_terms or (all_overlap if multi_term_match else [])
+        admission_trace.append(
+            {
+                "node_id": node_id,
+                "candidate": "graph_neighbor",
+                "admission": "admitted" if admitted else "rejected",
+                "relevance_score": round(
+                    len(admitted_terms) / max(1, len(query_set)), 6
+                ),
+                "matched_informative_terms": admitted_terms,
+                "reason": (
+                    "independent_informative_overlap"
+                    if admitted
+                    else "graph_neighbor_zero_or_generic_overlap"
+                ),
+                "final_rank": None,
+                "omission_reason": None if admitted else "relevance_gate",
+            }
+        )
+        if not admitted:
+            continue
         payload = json.loads(row["payload_json"])
         if row["source_kind"] == "private_conversation":
-            excerpt = (
-                "HUMAN: "
-                + _relevant_excerpt("\n".join(payload.get("human_inputs", [])), query_set, 700)
-                + "\nASSISTANT: "
-                + _relevant_excerpt(str(payload.get("assistant_response") or ""), query_set, 1350)
+            excerpt = "HUMAN: " + _relevant_excerpt(
+                "\n".join(payload.get("human_inputs", [])), query_set, 1200
             )
         else:
             excerpt = _relevant_excerpt(content, query_set, 1250)
@@ -1103,9 +1210,9 @@ def _expand_tensor_neighbors(
                 "content_hash": row["content_hash"],
                 "source_refs": json.loads(row["source_refs_json"]),
                 "conversation_sequence": row["conversation_sequence"],
-                "selection_reason": "sparse_tensor_neighbor",
-                "matched_terms": matched_terms,
-                "score": round(0.01 + len(matched_terms) / max(1, len(query_set)), 6),
+                "selection_reason": "relevant_sparse_tensor_neighbor",
+                "matched_terms": admitted_terms,
+                "score": round(0.01 + len(admitted_terms) / max(1, len(query_set)), 6),
                 "excerpt": excerpt,
                 "_factor_status": row["factor_status"],
             }
@@ -1118,7 +1225,16 @@ def _expand_tensor_neighbors(
             item["node_id"],
         )
     )
-    return [*selected_nodes, *candidates[: maximum_nodes - len(selected_nodes)]]
+    admitted_neighbors = candidates[: maximum_nodes - len(selected_nodes)]
+    for rank, candidate in enumerate(admitted_neighbors, len(selected_nodes) + 1):
+        decision = next(
+            item
+            for item in admission_trace
+            if item["node_id"] == candidate["node_id"]
+            and item["candidate"] == "graph_neighbor"
+        )
+        decision["final_rank"] = rank
+    return [*selected_nodes, *admitted_neighbors]
 
 
 def _selected_relations(
@@ -1208,6 +1324,7 @@ def build_and_query_cognitive_memory(
     database_path: Path | None = None,
     maximum_chars: int = MAX_CONTEXT_CHARS,
     maximum_nodes: int = MAX_SELECTED_NODES,
+    retrieval_mode: str = "ordinary",
 ) -> tuple[dict[str, Any], str | None]:
     """Synchronize the derived index and retrieve one bounded context pack."""
     workspace = Path(workspace).resolve()
@@ -1217,6 +1334,8 @@ def build_and_query_cognitive_memory(
         raise ValueError("COGNITIVE_MEMORY_CONTEXT_BOUND_INVALID")
     if maximum_nodes < 1 or maximum_nodes > MAX_SELECTED_NODES:
         raise ValueError("COGNITIVE_MEMORY_NODE_BOUND_INVALID")
+    if retrieval_mode not in {"ordinary", "assistant_audit"}:
+        raise ValueError("COGNITIVE_MEMORY_RETRIEVAL_MODE_INVALID")
     relative_database = INDEX_RELATIVE_PATH
     path = database_path.resolve() if database_path else (workspace / relative_database).resolve()
     try:
@@ -1263,13 +1382,18 @@ def build_and_query_cognitive_memory(
             connection.close()
     connection = _open_index(path)
     try:
-        direct_limit = max(1, maximum_nodes - 2)
-        selected_nodes = _query_nodes(connection, human_request, direct_limit)
+        selected_nodes, admission_trace = _query_nodes(
+            connection,
+            human_request,
+            maximum_nodes,
+            retrieval_mode=retrieval_mode,
+        )
         selected_nodes = _expand_tensor_neighbors(
             connection,
             human_request,
             selected_nodes,
             maximum_nodes,
+            admission_trace,
         )
         selected_ids = [node["node_id"] for node in selected_nodes]
         selected_edges, selected_factors = _selected_relations(
@@ -1282,6 +1406,7 @@ def build_and_query_cognitive_memory(
         "schema_version": 1,
         "artifact_role": "apfc_cognitive_memory_context_pack",
         "status": "verified" if selected_nodes else "empty",
+        "retrieval_mode": retrieval_mode,
         "query_hash": _text_hash(human_request),
         "index_id": "apfc_cognitive_memory_" + build["index_hash"][:20],
         "index_hash": build["index_hash"],
@@ -1300,6 +1425,7 @@ def build_and_query_cognitive_memory(
         "index_rebuilt": rebuilt,
         "metrics": build["metrics"],
         "selected_nodes": selected_nodes,
+        "admission_trace": admission_trace,
         "selected_edges": selected_edges,
         "tensor_support": {
             "representation": "sparse_typed_relational_tensor_support",

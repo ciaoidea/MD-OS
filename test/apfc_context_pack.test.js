@@ -29,3 +29,99 @@ test('operational context preserves mandatory constraints and only enables exact
   assert.equal(selectedSkill.properties.apfc_execution_inhibited, false);
   assert.ok(pack.serialized_bytes <= 65536);
 });
+
+test('operational context does not fill unused capacity with unrelated verified nodes', () => {
+  const task = {
+    task_spec_id: 'task_selective_context',
+    created_at: '2026-09-04T00:00:00Z',
+    goal: 'Repair APFC retrieval precision',
+    task_type: 'software_repair',
+    constraints: [],
+    required_evidence: [],
+    actions: [],
+    risk_budget: { level: 'low' },
+  };
+  const records = [
+    { path: 'md-os/ops/tasks/task_selective_context.json', kind: 'task', data: task },
+    {
+      path: 'md-os/ops/episodes/ep_unrelated.json',
+      kind: 'episode',
+      data: {
+        episode_id: 'ep_unrelated',
+        title: 'Verified accounting export',
+        task_type: 'accounting',
+        status: 'completed',
+        epistemic_status: 'verified',
+        observations: ['Ledger export completed'],
+        actions: [],
+        outcomes: [],
+      },
+    },
+  ];
+  const graph = projectCanonicalSources(
+    records,
+    records.map((record) => ({ path: record.path, hash: 'b'.repeat(64) })),
+  );
+  const pack = compileOperationalContextPack(
+    graph,
+    task,
+    { maximum_nodes: 128, maximum_bytes: 65536 },
+  );
+  assert.equal(pack.nodes.some((node) => node.id.includes('ep_unrelated')), false);
+  assert.ok(pack.selection_trace.some((row) => (
+    row.included === false && row.admission_reason === 'zero_relevance'
+  )));
+  assert.ok(pack.selection_trace.every((row) => (
+    row.rank_tuple.length === 0 || Number.isInteger(row.rank_tuple[1])
+  )));
+});
+
+test('byte pruning removes the lowest-ranked optional candidate first', () => {
+  const task = {
+    task_spec_id: 'task_byte_pruning',
+    created_at: '2026-09-04T00:00:00Z',
+    goal: 'Repair alpha beta retrieval',
+    task_type: 'software_repair',
+    constraints: [], required_evidence: [], actions: [], risk_budget: { level: 'low' },
+  };
+  const episode = (id, title, epistemicStatus) => ({
+    path: `md-os/ops/episodes/${id}.json`,
+    kind: 'episode',
+    data: {
+      episode_id: id,
+      title,
+      task_type: 'history',
+      status: 'completed',
+      epistemic_status: epistemicStatus,
+      observations: [title],
+      actions: [], outcomes: [],
+    },
+  });
+  const records = [
+    { path: 'md-os/ops/tasks/task_byte_pruning.json', kind: 'task', data: task },
+    episode('ep_alpha', 'alpha retrieval repair', 'verified'),
+    episode('ep_beta', 'beta retrieval repair', 'hypothetical'),
+  ];
+  const graph = projectCanonicalSources(
+    records,
+    records.map((record) => ({ path: record.path, hash: 'c'.repeat(64) })),
+  );
+  const full = compileOperationalContextPack(
+    graph, task, { maximum_nodes: 128, maximum_bytes: 65536 },
+  );
+  const optional = full.selection_trace
+    .filter((row) => row.included && row.final_rank !== null)
+    .sort((left, right) => left.final_rank - right.final_rank);
+  assert.ok(optional.length >= 2);
+  const pruned = compileOperationalContextPack(
+    graph,
+    task,
+    { maximum_nodes: 128, maximum_bytes: full.serialized_bytes - 1 },
+  );
+  assert.ok(pruned.selected_node_ids.includes(optional[0].node_id));
+  assert.equal(pruned.selected_node_ids.includes(optional.at(-1).node_id), false);
+  assert.ok(pruned.selection_trace.some((row) => (
+    row.node_id === optional.at(-1).node_id
+      && row.omission_reason === 'byte_budget_lowest_ranked_optional'
+  )));
+});

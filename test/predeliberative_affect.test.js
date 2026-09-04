@@ -151,6 +151,30 @@ test('the portable contract requires open meaning and forbids fixed human or emo
   assert.equal(CONTRACT.representation_contract.prewritten_expressions, false);
 });
 
+test('global workspace admits only tokens relevant to the current task', () => {
+  const frame = {
+    current_task: 'repair APFC retrieval precision',
+    experience_tokens: [
+      {
+        token_id: 'irrelevant-high-salience',
+        label: 'urgent accounting export',
+        canonical_id: 'accounting',
+        salience: { score: 1 },
+        confidence: 1,
+      },
+      {
+        token_id: 'relevant-lower-salience',
+        label: 'APFC retrieval precision',
+        canonical_id: 'apfc_retrieval',
+        salience: { score: 0.2 },
+        confidence: 0.5,
+      },
+    ],
+  };
+  const workspace = buildGlobalWorkspace(frame, { limit: 5 });
+  assert.deepEqual(workspace.active_tokens, ['relevant-lower-salience']);
+});
+
 test('a source-bound proposal couples human meaning to self-state before workspace selection', () => {
   const result = appraise(source('rupture'));
   const state = result.affective_state;
