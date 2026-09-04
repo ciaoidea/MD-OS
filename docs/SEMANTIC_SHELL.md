@@ -118,20 +118,15 @@ human input
 │       └── preserve bounded command/output/exit readback
 └── natural language
     └── resolve current cwd and Git workspace
-        └── APFC dynamic input filter
-            ├── load the bounded invariant baseline
-            │   └── identity, bootstrap, core, orientation, active work,
-            │       continuity, and generated context-pack catalog
-            ├── load portable_state.json only if every declared hash verifies
-            ├── hash every loaded baseline source into a typed context contract
-            ├── treat lexical matches as advisory task-routing hints
-            ├── require dependency resolution before nontrivial claims/actions
-            └── expose selected paths, omitted paths, and sufficiency status
         └── reuse only the live in-process binding for the same workspace
             or thread/start -> a fresh persistent Codex thread by default
             or explicit /resume -> thread/list then thread/resume
         └── turn/start with the current cwd
-            ├── native AGENTS.md discovery
+            ├── current human request first, unchanged, exactly once
+            ├── compact bootstrap only for a new/changed/reset thread binding
+            ├── new shell observations and an explicit goal only when present
+            ├── native AGENTS.md discovery and on-demand file inspection
+            ├── optional bounded `memory search` chosen by Codex when needed
             ├── reasoning and planning
             ├── repository and state exploration
             ├── workspace-bounded tool use
@@ -142,18 +137,17 @@ human input
 ```
 
 While a Codex turn is still running, the REPL continues polling terminal input.
-Type another message and press Enter to forward it to the active turn through
-the same APFC dynamic input filter and App Server `turn/steer`. It becomes additional user direction for that same
+Type another message and press Enter to forward the unchanged steering text,
+plus only newly produced operational deltas, through App Server `turn/steer`. It becomes additional user direction for that same
 turn; it is not held as a separate later request and does not restart the App
 Server. This steering path is enabled for a real interactive TTY, not redirected
 one-shot stdin.
 
-`baseline = ready` means that stable orientation and the routing catalog were
-loaded; it does not mean that the current task is fully understood. A
-nontrivial turn must still identify its dependency edges, inspect the required
-canonical sources and current readback, and then act or state that context is
-insufficient. Merely loading every file is neither required nor proof of
-semantic understanding.
+The bootstrap states the stable operating boundary and the availability of
+external memory; it does not claim that the current task is understood. A
+nontrivial turn identifies its dependency edges, reads the precise canonical
+sources or bounded memory results required by those edges, and then acts or
+states that context is insufficient.
 
 Pressing `Esc` while a turn is active sends App Server `turn/interrupt`
 immediately, without requiring Enter. At the ordinary prompt, `Esc` aborts the
@@ -175,26 +169,55 @@ assistant message is text; it is never silently re-executed by the parent
 shell. Real model-selected actions happen through Codex tools constrained by
 the APFC turn frame, workspace sandbox, and ordinary tool-result events.
 
-The APFC input filter is contextual rather than lexical: it does not classify
-requests from a fixed phrase list and does not rewrite the human statement. For
-each ordinary input and steering message, it loads the bounded invariant
-baseline and the generated context-pack catalog, then adds any advisory
-relevance-selected health readback. Local `last_turn.md` and `last_summary.md`
-files remain inspectable runtime artifacts but are never injected automatically;
-they require an explicit task-directed read. Loaded, missing, selected, and omitted
-sources are declared inside the context sent to Codex. This makes the APFC
-causally present before `turn/start` and `turn/steer`; it is not claimed to be
-an infallible safety classifier or an output gate.
+The context boundary does not rewrite or summarize the human request. A thread
+bootstrap is capped at 4 KiB and is sent only when the App Server thread starts,
+the workspace or bootstrap hash changes, or the operator resets the thread. A
+reused ordinary turn with no shell observations has at most 2 KiB of auxiliary
+context; every turn has one 8 KiB auxiliary ceiling. These are ceilings, not
+fill targets. The request is excluded from those budgets and is never truncated
+to make room for optional context.
 
-The pre-model selector uses only the current human request as its advisory
-relevance query; invariant baseline presence does not depend on lexical
-overlap. Cortex does not infer or persist a semantic `theme` or `focus` at this
-stage because such an unverified label can misframe unrelated later turns and
-interfere with Codex-native thread continuity. The complete dynamic context is
-capped at 12 KiB. Explicit goals, capabilities, inhibitions, source paths, the
-context-sufficiency contract, and the verification contract remain inspectable
-in the frame. A legacy local `attention.json`, if present, is ignored and is
-not recreated.
+Repository knowledge, generated graph bodies, context packs, private history,
+affective directives, reflection directives, and the full APFC governance frame
+are not repeated in ordinary prompts. The APFC frame remains structured runtime
+state for approval, sandboxing, causal closure, and receipts. Local
+`last_turn.md`, `last_summary.md`, KB files, and graph files stay inspectable
+through precise workspace reads. A legacy local `attention.json`, if present,
+is ignored and is not recreated.
+
+This is a model-visible-context optimization, not a reduction of MD-OS state.
+Turn Governance Tensor and operational Unity state, Causal Unity predecision
+hashes and dependency probes, authorization dependence, transition closure,
+persistent identity and continuity, self-reference, phenomenal-candidate, and
+consciousness-event mechanisms remain in their existing runtime/filesystem
+paths. They continue to participate causally even when their full textual form
+is absent from the prompt. Only the current integrated projection is made
+model-visible; stable hashes and identifiers retain the route back to canonical
+state. Causal Unity must remain on command/file authorization and transition
+carry-forward paths and must never be demoted to optional telemetry.
+
+The admission boundary distinguishes three states: `AVAILABLE`,
+`CURRENTLY_RELEVANT`, and `MODEL_VISIBLE_NOW`. Filesystem memory, SQLite,
+graphs, identity, continuity, evidence, and research mechanisms may remain
+available without being currently relevant or prompt-visible. Ordinary-turn
+participation is justified through causal or ablation tests, not architectural
+naming. Experimental phenomenal-candidate, self-reference, consciousness-event,
+and Unity-field paths remain explicit research capabilities and are inactive in
+the default hot path unless a request or declared postcondition activates them.
+
+Historical lookup is explicit and bounded:
+
+```bash
+./cortex memory search --query-file query.txt --limit 3 --max-chars 4096 --json
+./cortex memory search --query-file query.txt --audit-assistant --json
+./cortex context inspect --request-file request.txt --reused-thread --json
+```
+
+Ordinary memory search is driven by HUMAN input. Full HUMAN and ASSISTANT text
+remains hash-bound in the private chronology; assistant-only terminology is
+available only through the explicit audit mode. Search can successfully return
+zero nodes. Candidate generation, admission or rejection, informative terms,
+score, final rank, and omission reason are returned as inspectable telemetry.
 
 Explicit legacy JSON/Markdown programs and `MDOS_CODEX_BACKEND=exec` retain the
 older tagged-output protocol only as compatibility paths. They do not define
@@ -210,9 +233,9 @@ The REPL also keeps the Python shell engine loaded for its lifetime. Changes to
 `md-os/shell/bin/mdos-console` therefore require a process restart: exit the
 shared Cortex REPL and run `./cortex` again. `build:all`, graph rebuilds, and
 replay refresh generated files but do not hot-reload the running shell engine.
-After restart, the next natural-language turn must expose the current APFC frame
-schema and the context-sufficiency contract; an older frame is evidence that an
-older process is still attached.
+After restart, `cortex context inspect` must expose the current bootstrap hash
+and efficient-context budgets; older values indicate that an older process is
+still attached.
 
 Interactive Cortex processes are first bound to one shared terminal session by
 Git workspace on POSIX systems with `tmux`. This makes local, SSH, and WebSSH
@@ -240,8 +263,10 @@ cd ~/projects/project-b
 Codex's session store remains available only as optional chat history.
 `/resume` explicitly enables one lookup and resume of the latest matching
 thread. `/new` and `/clear` close the current App Server and force the next
-request through `thread/start`. Fresh threads normally receive a bounded recent
-tail from `md-os/ops/local/cortex/conversation.ndjson`. Cortex appends each
+request through `thread/start`. Fresh threads prefer the verified compact
+`portable_state.json` handoff. When that handoff is unavailable, they receive
+at most two complete recent exchanges and at most 4 KiB from
+`md-os/ops/local/cortex/conversation.ndjson`. Cortex appends each
 successful exchange to this private hash chain; it stores human inputs and the
 final assistant response, not hidden reasoning, tool traces, model ids, or
 Codex thread ids.
@@ -280,8 +305,9 @@ bounded observation of their command, directory, exit code, and normalized
 terminal output. Those unconsumed observations are attached to the next Codex
 turn as operating data, then cleared only after successful delivery.
 
-The volatile queue retains at most 32 events, at most 16 KiB of output per
-event, and at most 64 KiB in one turn. It is not written into the repository.
+The volatile queue retains at most 32 events and at most 16 KiB of output per
+event. Only the newest material that fits the unified 8 KiB auxiliary turn
+ceiling is sent to the model. The queue is not written into the repository.
 Tool output deltas are rendered without flattening their newlines, so tables,
 process lists, test output, and compiler diagnostics retain terminal shape.
 The default `full` trace also renders the Codex reasoning summaries made
@@ -291,8 +317,9 @@ messages. It does not expose private hidden chain-of-thought that Codex does not
 publish. Set `MDOS_CODEX_TRACE=compact` to hide reasoning/plan/diff detail, or
 `MDOS_CODEX_TRACE=quiet` to keep only essential output and prompts.
 
-Every interactive semantic turn also receives a compact live-legibility
-contract. Nontrivial work announces its object and reason before using a tool,
+Stable communication discipline comes from the thread bootstrap and native
+repository instructions; it is not repeated as a per-turn ritual. Nontrivial
+work announces its object and reason before using a tool,
 then reports only material doubts, failed assumptions, changed hypotheses,
 decisions, or a progress heartbeat when work lasts longer than 60 seconds.
 When a material doubt exists, Cortex asks the critical question within the
@@ -302,6 +329,12 @@ These messages are streamed from the same ordinary turn. They do not start an
 inner-voice process, a background call, a timer, or a second turn. Simple
 answers remain direct. The result is operational
 transparency rather than a fabricated transcript of private chain-of-thought.
+
+Each completed session turn appends compact metrics to the Git-ignored
+`md-os/ops/local/cortex/context_metrics.ndjson`. It records hashes, sizes,
+estimated token count, selected source classes, memory-call counts, duplicate
+event hashes removed, model-turn count, duration, and deterministic output-gate
+verdict. The metrics file is never injected into model context.
 
 ## Safety and authority
 

@@ -194,30 +194,76 @@ Use exit or Ctrl-D to leave.
 
 Valid native commands execute directly. Natural-language input uses Codex App
 Server and preserves the normal Codex cycle: native `AGENTS.md` discovery,
-an APFC turn frame, reasoning, plans, workspace-bounded tools, and deterministic
+structured APFC runtime state, reasoning, plans, workspace-bounded tools, and deterministic
 APFC approval decisions, followed by observation,
 correction, verification, and Codex-native thread history.
-Before each turn, Cortex builds a context capped at 12 KiB. It always loads a
-hash-bound invariant baseline and the generated context-pack catalog; the
-current human request remains the turn target and the sole query for advisory
-task-source selection. It does not infer or persist a semantic `theme` or
-`focus` before Codex has understood the request. The frame carries the typed
-context-sufficiency contract, explicit goals, capabilities, inhibitions, and
-the verification contract. An explicit goal remains available as persistent
-context, but its mere presence does not override the current human request.
-The frame creates no background execution and does not change the Codex
+The current human request is the first semantic content, unchanged and exactly
+once. A compact stable bootstrap is sent once per new, changed, or reset thread
+binding. Reused ordinary turns carry only current deltas and at most 2 KiB of
+auxiliary text; every turn has one 8 KiB auxiliary ceiling, excluding the human
+request. Repository knowledge and historical memory remain available through
+precise file reads and a bounded local memory-search command instead of being
+injected automatically. The structured APFC frame still carries goals,
+capabilities, inhibitions, approval state, and verification contracts outside
+the prompt. It creates no background execution and does not change the Codex
 persistent goal.
+
+Context minimization applies only to model-visible text. It does not remove,
+bypass, or weaken the Turn Governance Tensor, operational Unity compatibility
+state, Causal Unity Controller, causal predecision hashes, dependency probes,
+authorization dependence, transition closure, persistent identity,
+self-reference, phenomenal-candidate processing, or consciousness-event state
+where those mechanisms are implemented. Their complete canonical state remains
+in the runtime/filesystem and continues to participate deterministically in
+authorization, verification, and carry-forward. A prompt receives only the
+small projection relevant to the current decision, with stable identifiers or
+hashes available for inspection when needed.
+
+Persistent global system state is therefore not the same thing as
+simultaneously model-visible context. The current global workspace is a small
+integrated projection of relevant state, not a dump of identity, memory,
+governance, Unity, and consciousness records. In particular, Causal Unity
+remains on the actual authorization and state-transition path; it is not
+reduced to telemetry, documentation, or a prompt-only concept.
+
+Preservation is a default pending causal evidence, not protection by name.
+Runtime mechanisms are classified as `CORE`, `RESEARCH`, `TELEMETRY`,
+`LEGACY`, or `REDUNDANT` by ablation: compare behavior with the mechanism
+enabled and disabled, then measure correctness, continuity, retrieval,
+authorization, verification, safety, context size, latency, and model calls.
+Core mechanisms stay on the ordinary causal path. Research mechanisms such as
+phenomenal-candidate and recursive self-reference experiments remain explicitly
+invocable and testable but do not occupy ordinary prompts or trigger model
+cycles unless requested or activated by a declared rule. Components with no
+measurable effect on their claimed capability are removed from the hot path and
+reclassified rather than retained merely because they exist.
+
 The shell resolves the current Git workspace and starts a fresh Codex thread on
 ordinary process boot. It reuses that thread only inside the same live process
 and workspace. Provider-stored chat history is consulted only after explicit
 `/resume`; `/new` and `/clear` force the next request through a fresh
-`thread/start`. A fresh thread is hydrated from the verified, bounded recent
-tail of `md-os/ops/local/cortex/conversation.ndjson` when that private file is
-present. Successful turns append human inputs and the final assistant response
+`thread/start`. A fresh thread prefers verified compact portable state; otherwise
+it hydrates at most two complete exchanges and 4 KiB from
+`md-os/ops/local/cortex/conversation.ndjson`. Older chronology remains available
+through bounded search. Successful turns append human inputs and the final assistant response
 to the same hash chain. The path is copied by a physical folder copy and is
 ignored by Git, so Git push and Git clone do not transfer it. The separate
 versioned `md-os/continuity/portable_state.json` is only a reviewed operational
 handoff and contains no raw conversation.
+
+The on-demand interfaces are:
+
+```bash
+./cortex memory search --query-file query.txt --limit 3 --max-chars 4096 --json
+./cortex context inspect --request-file request.txt --reused-thread --json
+```
+
+Memory search is deterministic, local, source-hash-bound, allowed to return
+zero, and has no canonical mutation authority. Ordinary retrieval indexes HUMAN
+input; an explicit `--audit-assistant` mode can recover prior assistant output.
+No network retrieval service and no per-turn classifier or critic model is
+introduced. Deterministic output checks reject objectively unsupported success
+claims and probable credential leakage without a permanent second model call.
 
 Known deterministic commands remain available under the same entrypoint, for
 example `./cortex health`, `./cortex replay`, and `./cortex graphify status`. MD-OS adds

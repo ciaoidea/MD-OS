@@ -123,18 +123,17 @@ Ordinary operating rule:
   `md-os/kb/CODEX_NATURAL_LANGUAGE_OPERATOR_MODEL.md`: turn prompt intent into
   bounded scope, durable artifacts, schemas/tests, command readback, replay,
   compiler rebuild, and concise final report
-- for every natural-language turn, distinguish invariant orientation from
-  task-specific sufficiency: load and hash the identity/bootstrap/core/current
-  operating baseline plus the generated context-pack catalog; treat lexical
-  source matches as advisory only; before a nontrivial claim or action, resolve
-  the real dependency edges against canonical sources and current readback or
-  report insufficient context
-- when private Cortex continuity is enabled, verify the complete conversation
-  hash chain before querying `md-os/ops/local/cortex/cognitive_memory.sqlite3`;
-  bind the query, index, source, pack, selected-node, selected-edge, and sparse
-  factor readback into the APFC context contract; treat SQLite as a disposable
-  local index and use the recent-tail fallback only when bounded retrieval is
-  empty or unavailable on a fresh thread
+- for every natural-language turn, put the unchanged current request first and
+  exclude it from one auxiliary budget; bootstrap stable operating rules once
+  per App Server thread binding, then send only current deltas; resolve
+  nontrivial dependency edges through precise canonical file reads or bounded
+  on-demand memory search instead of injecting the KB or baseline bodies
+- when private Cortex continuity is enabled, preserve and verify the complete
+  conversation hash chain but do not inject it into live-thread prompts;
+  prefer verified portable state on a fresh thread, otherwise hydrate at most
+  two complete exchanges and 4 KiB; use the disposable local SQLite index only
+  through bounded on-demand search, allow zero results, and keep ordinary
+  retrieval driven by HUMAN input while reserving ASSISTANT text for audit mode
 - read `md-os/ops/health_classification.md` before treating a global health
   `critical` as runtime failure; it separates runtime, compiler, AGI-loop,
   publication, security, and local-hygiene scopes without lowering severity
@@ -244,9 +243,9 @@ Ordinary operating rule:
   it, and the artifact must declare that it is not world-grounded epistemic unity
 - after changing `md-os/shell/bin/mdos-console`, exit the shared Cortex REPL and
   launch `./cortex` again; build and replay refresh generated state but cannot
-  hot-reload the already running Python engine, and the next turn must expose
-  the current frame schema plus context-sufficiency contract before the change
-  is considered active
+  hot-reload the already running Python engine, and `cortex context inspect`
+  must show the current bootstrap hash and efficient-context budgets before the
+  change is considered active
 - require the Causal Unity Controller on every APFC action path: prepare the
   hash-bound 9 x 6 predecision state, consume its exact hash and decision basis
   at authorization, require matching preauthorization for every mutating
