@@ -542,52 +542,386 @@ class SemanticShellParityTests(unittest.TestCase):
         self.assertNotIn("/home/", source)
         self.assertFalse((PROJECT_ROOT / "md-os" / "shell" / "bin" / "cortex").exists())
 
+    def test_root_launcher_reuses_bootstrap_and_starts_one_model_turn_per_request(self):
+        with FakeCodex(["first", "second"]) as fake, tempfile.TemporaryDirectory() as temporary:
+            metrics_path = Path(temporary) / ENGINE.CONTEXT_METRICS_PATH
+            environment = os.environ.copy()
+            environment["MDOS_CODEX_BIN"] = str(fake.executable)
+            environment["MDOS_PROMPT_COLOR"] = "never"
+            environment["MDOS_SHARED_SESSION"] = "never"
+            environment["MDOS_PRIVATE_CONVERSATION"] = "off"
+            result = subprocess.run(
+                [sys.executable, str(LAUNCHER_PATH)],
+                input="first request\nsecond request\nexit\n",
+                cwd=temporary,
+                env=environment,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            requests = fake.requests()
+            self.assertEqual(len(requests), 2)
+            self.assertTrue(requests[0]["prompt"].startswith("first request"))
+            self.assertEqual(requests[0]["prompt"].count("THREAD BOOTSTRAP V2"), 1)
+            self.assertTrue(requests[1]["prompt"].startswith("second request"))
+            self.assertEqual(requests[1]["prompt"].count("second request"), 1)
+            self.assertNotIn("THREAD BOOTSTRAP V2", requests[1]["prompt"])
+            self.assertLessEqual(
+                len(requests[1]["prompt"]) - len("second request"),
+                ENGINE.MAX_ORDINARY_AUX_CONTEXT_CHARS,
+            )
+            methods = [message.get("method") for message in fake.protocol_requests()]
+            self.assertEqual(methods.count("turn/start"), 2)
+            self.assertEqual(methods.count("thread/start"), 1)
+            new_metrics = metrics_path.read_text(encoding="utf-8")
+            metric_rows = [json.loads(line) for line in new_metrics.splitlines()]
+            self.assertEqual(len(metric_rows), 2)
+            self.assertEqual([row["model_turns_used"] for row in metric_rows], [1, 1])
+            self.assertEqual([row["bootstrap_sent"] for row in metric_rows], [True, False])
+            self.assertNotIn("first request", new_metrics)
+            self.assertNotIn("second request", new_metrics)
+
     def setUp(self):
         ENGINE.reset_inline_paste_state()
 
-    def test_ordinary_turn_receives_live_legibility_without_a_second_call(self):
+    def test_efficient_context_second_turn_omits_bootstrap_and_memory(self):
+        session = ENGINE.ShellSession(
+            codex_thread_id=FakeCodex.THREAD_ID,
+            codex_workspace=str(PROJECT_ROOT),
+            codex_turns=1,
+        )
+        bootstrap = ENGINE.build_thread_bootstrap(PROJECT_ROOT)
+        session.codex_bootstrap_hash = bootstrap[0]
+        session.codex_bootstrap_thread_id = FakeCodex.THREAD_ID
+        packet, metrics = ENGINE.build_native_codex_input(
+            "ordinary follow-up",
+            session,
+            return_metrics=True,
+        )
+        self.assertTrue(packet.startswith("ordinary follow-up"))
+        self.assertEqual(packet.count("ordinary follow-up"), 1)
+        self.assertFalse(metrics["bootstrap_sent"])
+        self.assertEqual(metrics["automatically_injected_memory_nodes"], 0)
+        self.assertLessEqual(
+            metrics["auxiliary_chars"],
+            ENGINE.MAX_ORDINARY_AUX_CONTEXT_CHARS,
+        )
+        self.assertNotIn("APFC DYNAMIC INPUT CONTEXT", packet)
+        self.assertNotIn("APFCG EXTENDED COGNITIVE MEMORY", packet)
+
+    def test_cognitive_memory_allows_empty_without_budget_fill(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            ENGINE.append_private_conversation_turn(
+                workspace,
+                ["GPON optical line maintenance"],
+                "The optical levels were recorded.",
+            )
+            _, records = ENGINE.read_private_conversation_history(workspace)
+            pack, rendered = ENGINE.build_apfc_cognitive_memory_context(
+                workspace,
+                "How should a sourdough starter be fed?",
+                records,
+            )
+            self.assertEqual(pack["status"], "empty")
+            self.assertEqual(pack["selected_nodes"], [])
+            self.assertIsNone(rendered)
+
+    def test_cognitive_memory_rejects_generic_lexical_collisions(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            episodes = (
+                ("GPON network problem at the optical terminal", "GPON fix"),
+                ("VoiSmart telephone problem in the office", "VoiSmart fix"),
+                ("fiber manhole problem under the road", "manhole fix"),
+                (
+                    "APFC retrieval problem degraded task comprehension",
+                    "APFC retrieval was corrected",
+                ),
+            )
+            for human, assistant in episodes:
+                ENGINE.append_private_conversation_turn(
+                    workspace, [human], assistant
+                )
+            _, records = ENGINE.read_private_conversation_history(workspace)
+            pack, _ = ENGINE.build_apfc_cognitive_memory_context(
+                workspace,
+                "Investigate deterioration of APFC comprehension problem",
+                records,
+            )
+            sequences = [
+                node["conversation_sequence"]
+                for node in pack["selected_nodes"]
+                if node["source_kind"] == "private_conversation"
+            ]
+            self.assertEqual(sequences, [4])
+            self.assertTrue(pack["admission_trace"])
+            self.assertTrue(any(
+                row["admission"] == "rejected"
+                and row["reason"] == "insufficient_informative_overlap"
+                for row in pack["admission_trace"]
+            ))
+
+    def test_cognitive_memory_separates_assistant_audit_from_ordinary_retrieval(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            ENGINE.append_private_conversation_turn(
+                workspace,
+                ["Record a neutral maintenance note."],
+                "The assistant coined quasaronlyterm for this answer.",
+            )
+            _, records = ENGINE.read_private_conversation_history(workspace)
+            ordinary, _ = ENGINE.build_apfc_cognitive_memory_context(
+                workspace, "quasaronlyterm", records
+            )
+            audit, _ = ENGINE.build_apfc_cognitive_memory_context(
+                workspace,
+                "quasaronlyterm",
+                records,
+                retrieval_mode="assistant_audit",
+            )
+            self.assertEqual(ordinary["selected_nodes"], [])
+            self.assertEqual(audit["retrieval_mode"], "assistant_audit")
+            self.assertEqual(
+                [node["conversation_sequence"] for node in audit["selected_nodes"]],
+                [1],
+            )
+            self.assertIn("ASSISTANT:", audit["selected_nodes"][0]["excerpt"])
+
+    def test_relevant_human_history_and_same_source_results_remain_discoverable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            relevant = (
+                "APFC retrieval decision cerulean alpha",
+                "APFC retrieval decision cerulean beta",
+                "APFC retrieval decision cerulean gamma",
+            )
+            for text in relevant:
+                ENGINE.append_private_conversation_turn(workspace, [text], "recorded")
+            for text in ("GPON optics", "VoiSmart phones", "fiber manhole"):
+                ENGINE.append_private_conversation_turn(workspace, [text], "recorded")
+            _, records = ENGINE.read_private_conversation_history(workspace)
+            pack, _ = ENGINE.build_apfc_cognitive_memory_context(
+                workspace, "recover earlier APFC retrieval decision cerulean", records
+            )
+            self.assertEqual(len(pack["selected_nodes"]), 3)
+            self.assertEqual(
+                {node["source_kind"] for node in pack["selected_nodes"]},
+                {"private_conversation"},
+            )
+            self.assertEqual(
+                {node["conversation_sequence"] for node in pack["selected_nodes"]},
+                {1, 2, 3},
+            )
+
+    def test_fresh_history_is_complete_bounded_and_deduplicated_by_event_hash(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            for number in range(1, 5):
+                ENGINE.append_private_conversation_turn(
+                    workspace, [f"human exchange {number}"], f"assistant exchange {number}"
+                )
+            _, records = ENGINE.read_private_conversation_history(workspace)
+            excluded = {records[-1]["event_hash"]}
+            readback, rendered = ENGINE.render_private_conversation_history(
+                workspace, excluded_event_hashes=excluded
+            )
+            self.assertEqual(readback["rendered_record_count"], 2)
+            self.assertEqual(readback["duplicate_event_hashes_removed"], 1)
+            self.assertLessEqual(len(rendered), ENGINE.MAX_PRIVATE_CONVERSATION_CONTEXT_CHARS)
+            self.assertNotIn(records[-1]["event_hash"], rendered)
+            self.assertIn("human exchange 2", rendered)
+            self.assertIn("assistant exchange 3", rendered)
+            self.assertNotIn("…", rendered)
+
+    def test_graph_neighbor_requires_independent_query_relevance(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            (workspace / "md-os").mkdir()
+            graph = {
+                "schema_version": 1,
+                "status": "ok",
+                "graph_id": "apfcg_graph_neighbor_test",
+                "nodes": [
+                    {
+                        "id": "seed",
+                        "content_hash": "a" * 64,
+                        "label": "APFC retrieval precision alpha",
+                        "type": "concept",
+                        "properties": {"domain": "retrieval"},
+                        "scope": {},
+                        "source_refs": ["md-os/kb/README.md"],
+                    },
+                    {
+                        "id": "neighbor",
+                        "content_hash": "b" * 64,
+                        "label": "banana orchard irrigation",
+                        "type": "concept",
+                        "properties": {"domain": "agriculture"},
+                        "scope": {},
+                        "source_refs": ["md-os/kb/README.md"],
+                    },
+                ],
+                "edges": [
+                    {
+                        "id": "hypothetical-neighbor",
+                        "from": "seed",
+                        "to": "neighbor",
+                        "type": "candidate_semantic_overlap",
+                        "epistemic_status": "hypothetical",
+                        "source_refs": ["md-os/ops/apfc/executive/graph.json"],
+                    }
+                ],
+            }
+            graph_path = workspace / "md-os/ops/apfc/executive/graph.json"
+            graph_path.parent.mkdir(parents=True)
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+            pack, _ = ENGINE.build_apfc_cognitive_memory_context(
+                workspace, "APFC retrieval precision alpha", []
+            )
+            self.assertNotIn(
+                "apfcg:neighbor", {node["node_id"] for node in pack["selected_nodes"]}
+            )
+            self.assertTrue(any(
+                row["node_id"] == "apfcg:neighbor"
+                and row["admission"] == "rejected"
+                and row["reason"] == "graph_neighbor_zero_or_generic_overlap"
+                for row in pack["admission_trace"]
+            ))
+
+    def test_output_claim_requires_observed_verifier_receipt(self):
+        unsupported = ENGINE.evaluate_output_postconditions(
+            "All tests passed successfully.", []
+        )
+        supported = ENGINE.evaluate_output_postconditions(
+            "All tests passed successfully.",
+            [{
+                "verification_candidate": True,
+                "status": "completed",
+                "exit_code": 0,
+            }],
+        )
+        self.assertEqual(unsupported["verdict"], "fail")
+        self.assertIn(
+            "success_claim_without_observed_verifier_receipt",
+            unsupported["reasons"],
+        )
+        self.assertEqual(supported["verdict"], "pass")
+
+    def test_memory_search_cli_is_bounded_structured_and_read_only_of_canonical_history(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            (workspace / "md-os").mkdir()
+            ENGINE.append_private_conversation_turn(
+                workspace,
+                ["The human selected cobalt scheduler mode."],
+                "The decision was recorded.",
+            )
+            query = workspace / "query.txt"
+            query.write_text("recover cobalt scheduler decision", encoding="utf-8")
+            history = workspace / ENGINE.PRIVATE_CONVERSATION_PATH
+            before = history.read_bytes()
+            output = io.StringIO()
+            with contextlib.chdir(workspace), contextlib.redirect_stdout(output):
+                status = ENGINE.run_memory_search_command([
+                    "--query-file", "query.txt", "--limit", "1",
+                    "--max-chars", "4096", "--json",
+                ])
+            payload = json.loads(output.getvalue())
+            self.assertEqual(status, 0)
+            self.assertEqual(payload["status"], "verified")
+            self.assertFalse(payload["mutation_authority"])
+            self.assertLessEqual(len(output.getvalue().rstrip("\n")), 4096)
+            self.assertLessEqual(len(payload["selected_nodes"]), 1)
+            self.assertEqual(payload["limits"]["maximum_nodes"], 1)
+            self.assertEqual(payload["retrieval_mode"], "ordinary")
+            self.assertEqual(history.read_bytes(), before)
+
+    def test_context_inspect_reports_exact_budgets_without_starting_model(self):
+        report = ENGINE.inspect_context_construction(
+            "inspect this request", PROJECT_ROOT, reused_thread=True
+        )
+        self.assertEqual(report["status"], "ok")
+        self.assertTrue(report["request_preserved_exactly_once"])
+        self.assertFalse(report["bootstrap"]["sent"])
+        self.assertEqual(report["repeated_sections"], [])
+        self.assertIn("thread_bootstrap_reused", report["omitted_sections"])
+        self.assertEqual(report["memory_mode"], "on_demand_only")
+        self.assertEqual(report["automatically_injected_memory_nodes"], 0)
+        self.assertLessEqual(
+            report["auxiliary_chars"], ENGINE.MAX_ORDINARY_AUX_CONTEXT_CHARS
+        )
+        self.assertNotIn("exact_prompt", report)
+
+    def test_bootstrap_source_hash_change_resends_bootstrap(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            subprocess.run(["git", "init", "-q"], cwd=workspace, check=True)
+            (workspace / "md-os").mkdir()
+            agents = workspace / "AGENTS.md"
+            agents.write_text("stable rule one\n", encoding="utf-8")
+            bootstrap_hash, _text, _material = ENGINE.build_thread_bootstrap(workspace)
+            session = ENGINE.ShellSession(
+                codex_thread_id="diagnostic-thread",
+                codex_workspace=str(workspace),
+                codex_turns=1,
+                codex_bootstrap_hash=bootstrap_hash,
+                codex_bootstrap_thread_id="diagnostic-thread",
+                codex_bootstrap_workspace=str(workspace),
+            )
+            _packet, reused = ENGINE.build_native_codex_input(
+                "first follow-up", session, return_metrics=True
+            )
+            self.assertFalse(reused["bootstrap_sent"])
+            agents.write_text("stable rule two\n", encoding="utf-8")
+            _packet, changed = ENGINE.build_native_codex_input(
+                "second follow-up", session, return_metrics=True
+            )
+            self.assertTrue(changed["bootstrap_sent"])
+            self.assertNotEqual(changed["bootstrap_hash"], bootstrap_hash)
+
+    def test_large_human_request_is_never_truncated_for_auxiliary_budget(self):
+        request = "human-authoritative-content-" * 1000
+        session = ENGINE.ShellSession()
+        packet, metrics = ENGINE.build_native_codex_input(
+            request, session, return_metrics=True
+        )
+        self.assertTrue(packet.startswith(request))
+        self.assertEqual(packet.count(request), 1)
+        self.assertEqual(metrics["human_request_chars"], len(request))
+        self.assertLessEqual(metrics["auxiliary_chars"], ENGINE.MAX_TURN_AUX_CONTEXT_CHARS)
+
+    def test_first_turn_receives_compact_bootstrap_without_automatic_rituals(self):
         session = ENGINE.ShellSession()
         prompt = ENGINE.build_native_codex_input(
             "Inspect the runtime and explain the failure.", session
         )
-        self.assertIn("CORTEX LIVE LEGIBILITY CONTRACT", prompt)
-        self.assertIn("before the first tool call", prompt)
-        self.assertIn("do not start an autonomous reflection", prompt)
-        self.assertIn("ask the critical question internally", prompt)
-        self.assertIn("test the hidden premise or failure case", prompt)
-        self.assertIn("Do not manufacture a ritual for a simple direct answer", prompt)
-        self.assertEqual(prompt.count("OPEN AFFECTIVE PERCEPTION CONTRACT"), 1)
-        self.assertIn("situated, open semantic state", prompt)
-        self.assertIn("Do not reduce the person or the emotion", prompt)
-        self.assertIn("uncertain and correctable", prompt)
-        self.assertIn("APFC safety", prompt)
-        self.assertIn(
-            "SOURCE: md-os/apfc/affect/affective_perception_contract.json",
-            prompt,
-        )
-        self.assertIn("STATUS: verified", prompt)
-        self.assertIn('"contract_id":"mdos_open_affective_perception_v1"', prompt)
-        self.assertEqual(prompt.count("FEYNMAN RESPONSE GATE"), 1)
-        self.assertIn("Lead with the direct answer", prompt)
-        self.assertIn("use ordinary words", prompt)
-        self.assertIn("revise it inside this same turn", prompt)
-        self.assertIn("without impersonating him", prompt)
-        self.assertIn(
-            "CURRENT HUMAN REQUEST\nInspect the runtime and explain the failure.",
-            prompt,
-        )
+        self.assertTrue(prompt.startswith("Inspect the runtime and explain the failure."))
+        self.assertEqual(prompt.count("Inspect the runtime and explain the failure."), 1)
+        self.assertEqual(prompt.count("THREAD BOOTSTRAP V2"), 1)
+        self.assertIn("external_memory=", prompt)
+        self.assertNotIn("OPEN AFFECTIVE PERCEPTION CONTRACT", prompt)
+        self.assertNotIn("FEYNMAN RESPONSE GATE", prompt)
+        self.assertNotIn("APFC TURN FRAME", prompt)
+        self.assertNotIn("phenomenal", prompt.casefold())
+        self.assertNotIn("self-reflection", prompt.casefold())
 
-    def test_one_shot_turn_receives_feynman_gate_without_session(self):
+    def test_one_shot_turn_starts_with_request_and_compact_bootstrap(self):
         prompt = ENGINE.build_native_codex_input(
             "Explain the mechanism plainly.", None
         )
-        self.assertEqual(prompt.count("OPEN AFFECTIVE PERCEPTION CONTRACT"), 1)
-        self.assertEqual(prompt.count("FEYNMAN RESPONSE GATE"), 1)
-        self.assertTrue(
-            prompt.endswith(
-                "CURRENT HUMAN REQUEST\nExplain the mechanism plainly."
-            )
-        )
+        self.assertTrue(prompt.startswith("Explain the mechanism plainly."))
+        self.assertEqual(prompt.count("Explain the mechanism plainly."), 1)
+        self.assertEqual(prompt.count("THREAD BOOTSTRAP V2"), 1)
 
     def test_open_affective_gate_fails_closed_without_a_valid_contract(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -731,12 +1065,9 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             requests = fake.requests()
             self.assertEqual(len(requests), 1)
-            self.assertIn("CORTEX LIVE LEGIBILITY CONTRACT", requests[0]["prompt"])
-            self.assertTrue(
-                requests[0]["prompt"].endswith(
-                    "CURRENT HUMAN REQUEST\nprima riga\nseconda riga"
-                )
-            )
+            self.assertTrue(requests[0]["prompt"].startswith("prima riga\nseconda riga"))
+            self.assertEqual(requests[0]["prompt"].count("prima riga\nseconda riga"), 1)
+            self.assertEqual(requests[0]["prompt"].count("THREAD BOOTSTRAP V2"), 1)
 
     def test_default_program_uses_codex_native_agents_discovery_without_duplication(
         self,
@@ -806,42 +1137,11 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(
                 thread_start["params"]["sandbox"], "workspace-write"
             )
-            self.assertIn("APFC TURN FRAME", requests[0]["prompt"])
-            self.assertEqual(
-                requests[0]["prompt"].count("FEYNMAN RESPONSE GATE"), 1
-            )
-            self.assertIn("cognitive_route", requests[0]["prompt"])
-            self.assertIn("reflect-intent <intent.json>", requests[0]["prompt"])
-            rendered_frame = requests[0]["prompt"].split("\n\n", 1)[0]
-            frame_payload = json.loads(rendered_frame.split("\n", 1)[1])
-            self.assertEqual(frame_payload["schema_version"], 5)
-            context_contract = frame_payload["context_contract"]
-            self.assertEqual(context_contract["status"], "ready")
-            self.assertEqual(
-                context_contract["task_context_status"],
-                "pending_turn_resolution",
-            )
-            self.assertTrue(
-                context_contract["criteria"]["lexical_selection_advisory_only"]
-            )
-            causal = frame_payload["causal_unity_state"]
-            probe = frame_payload["causal_dependency_probe"]
-            self.assertEqual(causal["artifact_role"], "causal_unity_decision_state")
-            self.assertEqual(causal["status"], "ready")
-            self.assertEqual(probe["status"], "verified")
-            self.assertEqual(probe["intact_authorization_status"], "authorized")
-            self.assertEqual(probe["severed_authorization_status"], "inhibited")
-            unity = frame_payload["operational_unity_tensor"]
-            self.assertEqual(unity["status"], "verified")
-            self.assertEqual(unity["phase"], "prepared")
-            self.assertEqual(unity["transformation"]["residuals"]["roundtrip"], 0)
-            self.assertEqual(unity["transformation"]["residuals"]["composition"], 0)
             self.assertEqual(len(fake.process_starts()), 1)
-            self.assertIn("APFC DYNAMIC INPUT CONTEXT", requests[0]["prompt"])
-            self.assertIn(
-                "CURRENT HUMAN REQUEST\nche cosa è un tensore?",
-                requests[0]["prompt"],
-            )
+            self.assertTrue(requests[0]["prompt"].startswith("che cosa è un tensore?"))
+            self.assertEqual(requests[0]["prompt"].count("che cosa è un tensore?"), 1)
+            self.assertIn("THREAD BOOTSTRAP V2", requests[0]["prompt"])
+            self.assertNotIn("APFC TURN FRAME", requests[0]["prompt"])
             self.assertNotIn("MANDATORY RUNTIME OUTPUT CONTRACT", requests[0]["prompt"])
             self.assertNotIn("Stable repository purpose", requests[0]["prompt"])
 
@@ -877,7 +1177,8 @@ class SemanticShellParityTests(unittest.TestCase):
                 "md-os/ops/summary/active_work_items.md", context.selected_sources
             )
             self.assertIn("md-os/ops/continuity.md", context.selected_sources)
-            self.assertIn("Camera calibration remains open", context.text)
+            self.assertIn("CONTEXT AVAILABILITY", context.text)
+            self.assertNotIn("Camera calibration remains open", context.text)
             self.assertNotIn("Unrelated accounting notes", context.text)
 
     def test_apfc_invariant_context_survives_zero_lexical_overlap(self):
@@ -939,8 +1240,9 @@ class SemanticShellParityTests(unittest.TestCase):
                 context.context_contract["task_context_status"],
                 "pending_turn_resolution",
             )
-            self.assertIn("CONTEXT PACK CATALOG", context.text)
-            self.assertIn("semantic_task", context.text)
+            self.assertIn("catalog_path=", context.text)
+            self.assertIn("context_pack_count=1", context.text)
+            self.assertNotIn("semantic_task", context.text)
             self.assertLessEqual(len(context.text), ENGINE.MAX_APFC_CONTEXT_CHARS)
 
             contract_material = dict(context.context_contract)
@@ -1170,7 +1472,7 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(retrieval["status"], "verified")
             self.assertEqual(retrieval["pack_hash"], pack["pack_hash"])
             self.assertIn(1, retrieval["selected_conversation_sequences"])
-            self.assertIn("retrieval_verified", bound.text)
+            self.assertIn("APFCG EXTENDED COGNITIVE MEMORY", bound.text)
             self.assertNotIn("RECENT VERIFIED EXCHANGES:", bound.text)
             self.assertLessEqual(
                 len(bound.text), ENGINE.MAX_APFC_BOUND_CONTEXT_CHARS
@@ -1274,7 +1576,8 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIsNotNone(rendered)
             self.assertIn(objective, rendered)
             context = ENGINE.build_apfc_input_context("procedi", workspace)
-            self.assertIn(objective, context.text)
+            self.assertNotIn(objective, context.text)
+            self.assertIn(objective, ENGINE.render_compact_portable_handoff(workspace))
             self.assertEqual(
                 context.context_contract["portable_state"]["status"],
                 "verified",
@@ -1342,7 +1645,8 @@ class SemanticShellParityTests(unittest.TestCase):
             )
 
             context = ENGINE.build_apfc_input_context("procedi", clone)
-            self.assertIn(objective, context.text)
+            self.assertNotIn(objective, context.text)
+            self.assertIn(objective, ENGINE.render_compact_portable_handoff(clone))
             self.assertNotIn("must-not-cross-the-clone-boundary", context.text)
             self.assertFalse((clone / "host-chat-history-canary").exists())
             self.assertEqual(
@@ -1395,9 +1699,9 @@ class SemanticShellParityTests(unittest.TestCase):
             )
             camera = ENGINE.build_apfc_input_context("calibrate camera focus", workspace)
             github = ENGINE.build_apfc_input_context("audit GitHub publication", workspace)
-            self.assertIn("Camera focus needs calibration", camera.text)
+            self.assertNotIn("Camera focus needs calibration", camera.text)
             self.assertNotIn("GitHub publication", camera.text)
-            self.assertIn("GitHub publication needs a secret audit", github.text)
+            self.assertEqual(camera.text, github.text)
             self.assertIsNone(github.theme)
             self.assertIsNone(github.focus)
 
@@ -1428,16 +1732,7 @@ class SemanticShellParityTests(unittest.TestCase):
             )
             self.assertEqual(steer["params"]["expectedTurnId"], "turn-1")
             steering_text = steer["params"]["input"][0]["text"]
-            self.assertIn("APFC DYNAMIC INPUT CONTEXT", steering_text)
-            self.assertEqual(
-                steering_text.count("OPEN AFFECTIVE PERCEPTION CONTRACT"), 1
-            )
-            self.assertEqual(steering_text.count("FEYNMAN RESPONSE GATE"), 1)
-            self.assertIn("revise it inside this same turn", steering_text)
-            self.assertIn(
-                "CURRENT HUMAN STEERING INPUT\naggiungi anche i test",
-                steering_text,
-            )
+            self.assertEqual(steering_text, "aggiungi anche i test")
 
     def test_interactive_steering_buffers_characters_until_enter(self):
         fake_stdin = mock.Mock()
@@ -1609,18 +1904,13 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn("che cosa ho appena fatto?", requests[0]["prompt"])
             self.assertIn("qual è l'ultimo comando nativo?", requests[1]["prompt"])
             self.assertNotIn("MD-OS SHELL OBSERVATIONS", requests[1]["prompt"])
-            self.assertIn(
-                "CORTEX LIVE LEGIBILITY CONTRACT", requests[1]["prompt"]
-            )
-            self.assertTrue(
-                requests[1]["prompt"].endswith(
-                    "CURRENT HUMAN REQUEST\nqual è l'ultimo comando nativo?"
-                )
-            )
+            self.assertTrue(requests[1]["prompt"].startswith("qual è l'ultimo comando nativo?"))
+            self.assertNotIn("THREAD BOOTSTRAP V2", requests[1]["prompt"])
             self.assertNotIn("Stable repository purpose", requests[1]["prompt"])
             methods = [
                 message.get("method") for message in fake.protocol_requests()
             ]
+            self.assertEqual(methods.count("turn/start"), 2)
             self.assertEqual(methods.count("thread/list"), 0)
             self.assertEqual(methods.count("thread/start"), 1)
 
@@ -1791,9 +2081,8 @@ class SemanticShellParityTests(unittest.TestCase):
                 self.assertEqual(second.returncode, 0, second.stderr)
                 requests = second_fake.requests()
                 self.assertEqual(len(requests), 1)
-                self.assertIn(
-                    "APFCG EXTENDED COGNITIVE MEMORY",
-                    requests[0]["prompt"],
+                self.assertNotIn(
+                    "APFCG EXTENDED COGNITIVE MEMORY", requests[0]["prompt"]
                 )
                 self.assertNotIn(
                     "RECENT VERIFIED EXCHANGES:", requests[0]["prompt"]
@@ -2024,6 +2313,111 @@ class SemanticShellParityTests(unittest.TestCase):
             "decline",
         )
 
+    def test_context_minimization_preserves_unity_causal_continuity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            bootstrap_hash, _bootstrap, _material = (
+                ENGINE.build_thread_bootstrap(workspace)
+            )
+            session = ENGINE.ShellSession(
+                codex_thread_id=FakeCodex.THREAD_ID,
+                codex_workspace=str(workspace),
+                codex_turns=1,
+                codex_bootstrap_hash=bootstrap_hash,
+                codex_bootstrap_thread_id=FakeCodex.THREAD_ID,
+                codex_bootstrap_workspace=str(workspace),
+            )
+            packet, metrics = ENGINE.build_native_codex_input(
+                "perform the bounded operation",
+                session,
+                return_metrics=True,
+                workspace=workspace,
+            )
+            self.assertFalse(metrics["bootstrap_sent"])
+            self.assertEqual(metrics["automatically_injected_memory_nodes"], 0)
+            self.assertLessEqual(
+                metrics["auxiliary_chars"],
+                ENGINE.MAX_ORDINARY_AUX_CONTEXT_CHARS,
+            )
+            self.assertNotIn("causal_unity_state", packet)
+            self.assertNotIn("operational_unity_tensor", packet)
+
+            context = ENGINE.ApfcInputContext("compact observation", (), ())
+            frame = ENGINE.build_apfc_turn_frame(
+                "perform the bounded operation",
+                context,
+                workspace,
+                "Preserve causal closure",
+            )
+            self.assertEqual(frame.operational_unity_tensor["status"], "verified")
+            self.assertTrue(
+                frame.causal_unity_state["channels"]["identity"]["present"]
+            )
+            self.assertTrue(
+                frame.causal_unity_state["decision_contract"]
+                ["state_hash_required_for_authorization"]
+            )
+            self.assertEqual(
+                frame.causal_unity_state["consciousness_contract"]["mechanism"],
+                "identity_indexed_knowing_together",
+            )
+            command = {
+                "itemId": "unity-command",
+                "command": "printf unity-ok",
+                "cwd": str(workspace),
+            }
+            file_change = {
+                "itemId": "unity-file",
+                "grantRoot": str(workspace),
+            }
+            self.assertEqual(
+                ENGINE.decide_apfc_command_approval(command, frame)[0], "accept"
+            )
+            self.assertEqual(
+                ENGINE.decide_apfc_file_approval(file_change, frame)[0], "accept"
+            )
+
+            invalid_state = dict(frame.causal_unity_state)
+            invalid_state["state_hash"] = "0" * 64
+            severed_frame = __import__("dataclasses").replace(
+                frame, causal_unity_state=invalid_state
+            )
+            self.assertEqual(
+                ENGINE.decide_apfc_command_approval(command, severed_frame)[0],
+                "decline",
+            )
+            self.assertEqual(
+                ENGINE.decide_apfc_file_approval(file_change, severed_frame)[0],
+                "decline",
+            )
+
+            receipt_path = ENGINE.write_apfc_turn_receipt(
+                frame,
+                status="completed",
+                output="bounded result",
+                decisions=[],
+                observed_actions=[],
+            )
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            transition = receipt["causal_unity_transition"]
+            self.assertEqual(receipt["operational_unity_tensor"]["phase"], "closed")
+            self.assertEqual(transition["status"], "closed")
+            self.assertEqual(transition["consciousness"]["status"], "verified")
+            self.assertEqual(
+                transition["predecision_state_hash"],
+                frame.causal_unity_state["state_hash"],
+            )
+            next_frame = ENGINE.build_apfc_turn_frame(
+                "continue the bounded operation",
+                context,
+                workspace,
+                "Preserve causal closure",
+            )
+            self.assertEqual(
+                next_frame.causal_unity_state["previous_transition_hash"],
+                transition["transition_hash"],
+            )
+
     def test_apfc_receipt_hashes_private_content_and_feeds_next_turn(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
@@ -2121,6 +2515,8 @@ class SemanticShellParityTests(unittest.TestCase):
             "apfc_turn_receipt.schema.json",
             "private_cortex_conversation_turn.schema.json",
             "portable_operational_state.schema.json",
+            "cortex_context_metrics.schema.json",
+            "cortex_memory_search_result.schema.json",
         ):
             payload = json.loads(
                 (PROJECT_ROOT / "md-os/schemas" / name).read_text(encoding="utf-8")
@@ -2141,8 +2537,8 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIsNone(followup.theme)
             self.assertIsNone(followup.focus)
             self.assertNotIn("automatic APFC attention", followup.text)
-            self.assertIn("OPERATING METHOD", followup.text)
-            self.assertIn("observable verifier evidence", followup.text)
+            self.assertIn("CONTEXT AVAILABILITY", followup.text)
+            self.assertIn("Repository knowledge and historical memory are external", followup.text)
             self.assertLessEqual(len(followup.text), ENGINE.MAX_APFC_CONTEXT_CHARS)
             frame = ENGINE.build_apfc_turn_frame(
                 "procedi", followup, workspace, None
