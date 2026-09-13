@@ -79,6 +79,10 @@ Canonical builders:
   `MDOS_SKIP_SOFTWARE_BOOTSTRAP=1` is set
 
 Ordinary operating rule:
+- for continuity across distinct problems, use
+  `md-os/kb/PERSISTENT_PROBLEM_NETWORK_MODEL.md`: persistent TaskSpec IDs,
+  compact problem cores, explicit relations, dependency review and separate
+  outcome verification; load only the relevant problem context
 - treat injected bootstrap prompts as setup, not as status requests; do not
   emit verbose startup readback or health caveats unless explicitly asked
 - write stable knowledge into `md-os/kb/`

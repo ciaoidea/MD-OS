@@ -37,6 +37,26 @@
     "rollback": { "type": "string", "minLength": 1 },
     "evals": { "type": "array", "items": { "type": "string" } },
     "source_episodes": { "type": "array", "items": { "type": "string" } },
+    "pattern_origin": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pattern_id", "pattern_hash", "source_outcomes", "program_signatures", "executable_cases"],
+      "properties": {
+        "pattern_id": { "type": "string", "pattern": "^anchor_[a-f0-9]{20}$" },
+        "pattern_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "source_outcomes": { "type": "array", "minItems": 1, "maxItems": 3, "items": {
+          "type": "object", "additionalProperties": false, "required": ["task_spec_id", "report_hash"],
+          "properties": { "task_spec_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
+            "report_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+        } },
+        "program_signatures": { "type": "array", "minItems": 1, "maxItems": 3,
+          "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" } },
+        "executable_cases": { "type": "array", "minItems": 1, "maxItems": 3, "items": {
+          "type": "object", "required": ["task_spec_id", "actions", "observation_targets", "acceptance_tests"],
+          "properties": { "task_spec_id": { "type": "string" }, "actions": { "type": "array" },
+            "observation_targets": { "type": "array" }, "acceptance_tests": { "type": "array" } }
+        } }
+      }
+    },
     "generality_claims": {
       "type": "array",
       "uniqueItems": true,

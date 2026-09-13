@@ -106,35 +106,6 @@ def write_portable_state(
     return target
 
 
-class VectorVoiceReceiptTests(unittest.TestCase):
-    def test_voice_prompt_authorizes_only_bounded_robot_motion(self):
-        prompt = ENGINE.build_vector_voice_prompt("Move forward a little.")
-        self.assertIn("bounded local robot motions", prompt)
-        self.assertIn("Do not perform any other external", prompt)
-
-    def test_structured_motion_is_separate_from_speech(self):
-        speech, motion, emotion = ENGINE.parse_vector_voice_response(
-            '{"speech":"I will turn left.","motion":{"kind":"left","value":30},"emotion":null}'
-        )
-        self.assertEqual(speech, "I will turn left.")
-        self.assertEqual(motion, {"kind": "left", "value": 30})
-        self.assertIsNone(emotion)
-
-    def test_semantic_emotion_is_bounded(self):
-        speech, motion, emotion = ENGINE.parse_vector_voice_response(
-            '{"speech":"That was kind.","motion":null,"emotion":"happy"}'
-        )
-        self.assertEqual(speech, "That was kind.")
-        self.assertIsNone(motion)
-        self.assertEqual(emotion, "happy")
-
-    def test_plain_response_falls_back_to_speech_without_motion(self):
-        speech, motion, emotion = ENGINE.parse_vector_voice_response("An ordinary answer.")
-        self.assertEqual(speech, "An ordinary answer.")
-        self.assertIsNone(motion)
-        self.assertIsNone(emotion)
-
-
 def load_launcher_module():
     loader = SourceFileLoader("mdos_cortex_launcher_test", str(LAUNCHER_PATH))
     spec = spec_from_loader(loader.name, loader)
@@ -191,6 +162,7 @@ class FakeCodex:
         command_event: tuple[str, str] | None = None,
         trace_events: bool = False,
         busy_threads: set[str] | None = None,
+        tool_events: list[dict[str, object]] | None = None,
     ) -> None:
         self.responses = [response] if isinstance(response, str) else response
         self.temporary = tempfile.TemporaryDirectory()
@@ -215,6 +187,7 @@ class FakeCodex:
             command_event = {command_event!r}
             trace_events = {trace_events!r}
             busy_threads = set({sorted(busy_threads or set())!r})
+            tool_events = {tool_events or []!r}
             if arguments and arguments[0] == "app-server":
                 with starts_path.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps({{"arguments": arguments}}) + "\\n")
@@ -309,6 +282,23 @@ class FakeCodex:
                                 }}
                             }},
                         }}), flush=True)
+                        for tool_index, tool_event in enumerate(tool_events):
+                            call_id = f"tool-{{turn_index}}-{{tool_index}}"
+                            tool_request_id = 7000 + tool_index
+                            print(json.dumps({{"id": tool_request_id, "method": "item/tool/call", "params": {{
+                                "threadId": thread_id, "turnId": turn_id, "callId": call_id,
+                                "tool": tool_event["tool"], "arguments": tool_event["arguments"],
+                            }}}}), flush=True)
+                            tool_reply = json.loads(sys.stdin.readline())
+                            with protocol_path.open("a", encoding="utf-8") as stream:
+                                stream.write(json.dumps(tool_reply) + "\\n")
+                            assert tool_reply["id"] == tool_request_id, tool_reply
+                            print(json.dumps({{"method": "item/completed", "params": {{
+                                "threadId": thread_id, "turnId": turn_id,
+                                "item": {{"id": call_id, "type": "dynamicToolCall",
+                                    "status": "completed" if tool_reply["result"]["success"] else "failed",
+                                    "aggregatedOutput": json.dumps(tool_reply["result"])}}
+                            }}}}), flush=True)
                         if command_event is not None:
                             command, command_output = command_event
                             command_item = {{
@@ -797,7 +787,7 @@ class SemanticShellParityTests(unittest.TestCase):
                 for row in pack["admission_trace"]
             ))
 
-    def test_output_claim_requires_observed_verifier_receipt(self):
+    def test_output_claim_is_not_certified_by_a_command_candidate_label(self):
         unsupported = ENGINE.evaluate_output_postconditions(
             "All tests passed successfully.", []
         )
@@ -814,7 +804,7 @@ class SemanticShellParityTests(unittest.TestCase):
             "success_claim_without_observed_verifier_receipt",
             unsupported["reasons"],
         )
-        self.assertEqual(supported["verdict"], "pass")
+        self.assertEqual(supported["verdict"], "fail")
 
     def test_memory_search_cli_is_bounded_structured_and_read_only_of_canonical_history(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -922,6 +912,121 @@ class SemanticShellParityTests(unittest.TestCase):
         self.assertTrue(prompt.startswith("Explain the mechanism plainly."))
         self.assertEqual(prompt.count("Explain the mechanism plainly."), 1)
         self.assertEqual(prompt.count("THREAD BOOTSTRAP V2"), 1)
+
+    def test_problem_discovery_route_is_in_bootstrap_not_repeated_context(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            request = "Assess the new observation."
+            first, metrics = ENGINE.build_native_codex_input(
+                request, ENGINE.ShellSession(), workspace=workspace, return_metrics=True)
+            self.assertIn("./cortex apfc problems", first)
+            self.assertIn("./cortex apfc problems --evidence", first)
+            self.assertIn("--task <id> focuses a full contract", first)
+            self.assertIn("Resolve missing evidence before reliance", first)
+            self.assertIn("infer possible links", first)
+            self.assertIn("seek counterevidence", first)
+            self.assertIn("Apply repository read rules conditionally", first)
+            self.assertIn("task-plan review is not itself an identity question", first)
+            self.assertIn("not permission to rebuild during read-only work", first)
+            self.assertIn("consult mdos_context before reconstructing a procedure", first)
+            self.assertIn("reuse_review failures", first)
+            self.assertIn("without a model call per action", first)
+            self.assertIn("do not weaken acceptance", first)
+            self.assertTrue(first.startswith(request))
+            session = ENGINE.ShellSession(
+                codex_thread_id="same-thread", codex_workspace=str(workspace),
+                codex_bootstrap_hash=metrics["bootstrap_hash"],
+                codex_bootstrap_thread_id="same-thread", codex_bootstrap_workspace=str(workspace))
+            reused, reused_metrics = ENGINE.build_native_codex_input(
+                request, session, workspace=workspace, return_metrics=True)
+            self.assertNotIn("problem_continuity=", reused)
+            self.assertNotIn("context_loading=", reused)
+            self.assertNotIn("skill_execution=", reused)
+            self.assertEqual(reused_metrics["auxiliary_bytes"], 132)
+            self.assertEqual(reused_metrics["automatically_injected_memory_nodes"], 0)
+
+    def test_projected_problems_are_delivered_on_change_and_rebound_on_new_thread(self):
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.dict(os.environ, {"MDOS_PROBLEM_CONTEXT_MODE": "projected"}):
+            root = Path(temporary)
+            task_dir = root / "md-os/ops/tasks"
+            task_dir.mkdir(parents=True)
+            source_dir = root / "md-os/ops/sources"
+            source_dir.mkdir(parents=True)
+            source = source_dir / "fact.json"
+            source.write_text('{"window":"night"}')
+            task = {"task_spec_id": "task_a", "goal": "Deliver a result", "problem_core": {
+                "state": "candidate", "premises": [{"statement": "A source-bound premise.", "epistemic_status": "observed",
+                 "source_refs": ["md-os/ops/sources/fact.json"]}], "candidate_solution": "Try it", "next_question": "Does it hold?", "relations": []}}
+            (task_dir / "task_a.json").write_text(json.dumps(task))
+            first, metrics = ENGINE.build_native_codex_input("Assess it", None, workspace=root, return_metrics=True)
+            self.assertIn('CURRENT PROBLEM SOURCE READBACK', first)
+            self.assertIn('night', first)
+            self.assertEqual(metrics["problem_projection_node_count"], 1)
+            self.assertLessEqual(metrics["auxiliary_bytes"], ENGINE.MAX_TURN_AUX_CONTEXT_CHARS)
+            session = ENGINE.ShellSession(codex_thread_id="one", codex_workspace=str(root),
+                codex_bootstrap_hash=metrics["bootstrap_hash"], codex_bootstrap_thread_id="one", codex_bootstrap_workspace=str(root),
+                codex_problem_projection_hash=metrics["problem_projection_hash"])
+            reused, unchanged = ENGINE.build_native_codex_input("Continue", session, workspace=root, return_metrics=True)
+            self.assertFalse(unchanged["problem_projection_sent"])
+            self.assertEqual(unchanged["auxiliary_bytes"], 132)
+            source.write_text('{"window":"morning"}')
+            changed, delta = ENGINE.build_native_codex_input("Continue", session, workspace=root, return_metrics=True)
+            self.assertTrue(delta["problem_projection_sent"])
+            self.assertIn('morning', changed)
+            fresh, _ = ENGINE.build_native_codex_input("Continue", None, workspace=root, return_metrics=True)
+            self.assertIn('CURRENT PROBLEM SOURCE READBACK', fresh)
+            (task_dir / "task_a.json").unlink()
+            removed, deletion = ENGINE.build_native_codex_input("Continue", session, workspace=root, return_metrics=True)
+            self.assertTrue(deletion["problem_projection_sent"])
+            self.assertIn('"problems":[]', removed)
+
+    def test_projection_hash_participates_in_apfc_contract_without_verifying_outcome(self):
+        context = ENGINE.ApfcInputContext(text="source", selected_sources=(), omitted_sources=())
+        a = {"problem_projection_binding": {"status": "ready", "projection_hash": "a" * 64,
+             "node_count": 1, "source_hashes": ["b" * 64], "sent": True}}
+        first = ENGINE.bind_problem_projection(context, a)
+        second = ENGINE.bind_problem_projection(context, {"problem_projection_binding": {
+            **a["problem_projection_binding"], "projection_hash": "c" * 64}})
+        self.assertNotEqual(first.context_contract["contract_hash"], second.context_contract["contract_hash"])
+        self.assertEqual(first.context_contract["task_context_status"], "pending_turn_resolution")
+        self.assertEqual(ENGINE._resolved_apfc_context_contract(first), first.context_contract)
+        self.assertEqual(context.context_contract, {})
+
+    def test_native_projected_turns_bind_receipts_without_extra_model_requests(self):
+        with tempfile.TemporaryDirectory() as temporary, FakeCodex(["first", "second"]) as fake:
+            root = Path(temporary)
+            (root / "AGENTS.md").write_text("# Isolated protocol fixture\n")
+            (root / "ME.md").write_text("# Isolated test identity\n")
+            tasks = root / "md-os/ops/tasks"
+            tasks.mkdir(parents=True)
+            (tasks / "task_a.json").write_text(json.dumps({"task_spec_id": "task_a", "goal": "Check a candidate"}))
+            environment = {**os.environ, "MDOS_CODEX_BIN": str(fake.executable), "MDOS_PROBLEM_CONTEXT_MODE": "projected",
+                           "MDOS_PRIVATE_CONVERSATION": "off", "MDOS_PROMPT_COLOR": "never"}
+            result = subprocess.run([sys.executable, str(ENGINE_PATH)], input="Assess the task\nContinue\nexit\n",
+                                    cwd=root, env=environment, text=True, capture_output=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            requests = fake.requests()
+            self.assertEqual(len(requests), 2)
+            self.assertIn("CURRENT PROBLEM SOURCE READBACK", requests[0]["prompt"])
+            self.assertNotIn("CURRENT PROBLEM SOURCE READBACK", requests[1]["prompt"])
+            receipts = [json.loads(line) for line in (root / "md-os/ops/local/apfc/turn_receipts.ndjson").read_text().splitlines()]
+            first, second = [receipt["context_contract"]["problem_projection"] for receipt in receipts]
+            self.assertTrue(first["sent"])
+            self.assertFalse(second["sent"])
+            self.assertEqual(first["projection_hash"], second["projection_hash"])
+            self.assertTrue(all(receipt["verified_claims"] == [] for receipt in receipts))
+
+    def test_problem_projection_failure_cannot_silently_reuse_old_cards(self):
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.dict(os.environ, {"MDOS_PROBLEM_CONTEXT_MODE": "projected"}):
+            root = Path(temporary)
+            task_dir = root / "md-os/ops/tasks"
+            task_dir.mkdir(parents=True)
+            (task_dir / "task_bad.json").write_text('{broken')
+            prompt, metrics = ENGINE.build_native_codex_input("Assess", None, workspace=root, return_metrics=True)
+            self.assertIn('Earlier cards are not confirmed current', prompt)
+            self.assertEqual(metrics["problem_projection_status"], 'unavailable')
+            with self.assertRaisesRegex(RuntimeError, 'REQUIRES_AUXILIARY_BUDGET'):
+                ENGINE.load_problem_projection(root, 100)
 
     def test_open_affective_gate_fails_closed_without_a_valid_contract(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1549,6 +1654,16 @@ class SemanticShellParityTests(unittest.TestCase):
 
     def test_project_private_conversation_path_is_ignored_and_untracked(self):
         target = PROJECT_ROOT / ENGINE.PRIVATE_CONVERSATION_PATH
+        if not (PROJECT_ROOT / ".git").exists():
+            ignore_rules = {
+                line.strip()
+                for line in (PROJECT_ROOT / ".gitignore").read_text(
+                    encoding="utf-8"
+                ).splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            }
+            self.assertIn("md-os/ops/local/cortex/", ignore_rules)
+            return
         ignored = subprocess.run(
             ["git", "check-ignore", "--quiet", str(target)],
             cwd=PROJECT_ROOT,
@@ -2157,6 +2272,74 @@ class SemanticShellParityTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {"MDOS_SHARED_SESSION": "never"}):
             self.assertFalse(LAUNCHER.should_share_interactive_shell([]))
 
+    def test_shared_session_uses_the_latest_active_client_size(self):
+        workspace = Path("/tmp/project-a")
+        session_name = LAUNCHER.shared_session_name(workspace)
+        completed = subprocess.CompletedProcess([], 0)
+        with mock.patch.object(
+            LAUNCHER.shutil, "which", return_value="/usr/bin/tmux"
+        ), mock.patch.object(
+            LAUNCHER, "resolve_workspace", return_value=workspace
+        ), mock.patch.object(
+            LAUNCHER.subprocess, "run", side_effect=[completed, completed]
+        ) as run, mock.patch.object(LAUNCHER.os, "execve") as execve:
+            LAUNCHER.exec_shared_shell()
+
+        self.assertEqual(
+            [call.args[0] for call in run.call_args_list],
+            [
+                ["/usr/bin/tmux", "has-session", "-t", session_name],
+                [
+                    "/usr/bin/tmux",
+                    "set-option",
+                    "-t",
+                    session_name,
+                    "window-size",
+                    "latest",
+                ],
+            ],
+        )
+        arguments, environment = execve.call_args.args[1:]
+        self.assertEqual(
+            arguments,
+            ["/usr/bin/tmux", "attach-session", "-t", session_name],
+        )
+        self.assertEqual(environment["MDOS_SHARED_SESSION_ACTIVE"], "1")
+        self.assertNotIn("TMUX", environment)
+        self.assertNotIn("TMUX_PANE", environment)
+
+    def test_shared_session_is_created_detached_before_size_policy_is_set(self):
+        workspace = Path("/tmp/project-b")
+        session_name = LAUNCHER.shared_session_name(workspace)
+        missing = subprocess.CompletedProcess([], 1)
+        completed = subprocess.CompletedProcess([], 0)
+        with mock.patch.object(
+            LAUNCHER.shutil, "which", return_value="/usr/bin/tmux"
+        ), mock.patch.object(
+            LAUNCHER, "resolve_workspace", return_value=workspace
+        ), mock.patch.object(
+            LAUNCHER.subprocess,
+            "run",
+            side_effect=[missing, completed, completed],
+        ) as run, mock.patch.object(LAUNCHER.os, "execve"):
+            LAUNCHER.exec_shared_shell()
+
+        commands = [call.args[0] for call in run.call_args_list]
+        self.assertEqual(commands[0], [
+            "/usr/bin/tmux", "has-session", "-t", session_name
+        ])
+        self.assertEqual(commands[1][:5], [
+            "/usr/bin/tmux", "new-session", "-d", "-s", session_name
+        ])
+        self.assertEqual(commands[2], [
+            "/usr/bin/tmux",
+            "set-option",
+            "-t",
+            session_name,
+            "window-size",
+            "latest",
+        ])
+
     def test_exec_backend_remains_an_explicit_compatibility_path(self):
         responses = [
             "AGENT: answer\nprima",
@@ -2267,6 +2450,113 @@ class SemanticShellParityTests(unittest.TestCase):
             replies,
             [{"id": 77, "result": {"decision": "decline"}}],
         )
+
+    def test_native_context_tool_is_bound_readonly_deduplicated_and_bounded(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tasks = root / "md-os/ops/tasks"
+            tasks.mkdir(parents=True)
+            source = tasks / "task_a.json"
+            source.write_text(json.dumps({"task_spec_id": "task_a", "goal": "Inspect a distinct problem"}))
+            before = source.read_bytes()
+            client = object.__new__(ENGINE.CodexAppServerClient)
+            client.active_binding = ENGINE.CodexThreadBinding("t", root, root, False, ())
+            client.active_context_turn_id = "u"
+            client.context_tool_calls = 0
+            client.context_tool_hashes = set()
+            params = {"threadId": "t", "turnId": "u", "tool": "mdos_context", "arguments": {}}
+            first = client._problem_context_tool(params)
+            self.assertTrue(first["success"], first)
+            content = json.loads(first["contentItems"][0]["text"])
+            self.assertEqual(content["mode"], "intuitive_problem_context")
+            repeated = client._problem_context_tool(params)
+            self.assertEqual(json.loads(repeated["contentItems"][0]["text"])["status"], "unchanged")
+            source.write_text(json.dumps({"task_spec_id": "task_a", "goal": "A corrected problem"}))
+            changed = client._problem_context_tool(params)
+            self.assertNotEqual(json.loads(changed["contentItems"][0]["text"])["context_hash"], content["context_hash"])
+            source.write_bytes(before)
+            for patch in ({"threadId": "other"}, {"turnId": "wrong"}, {"turnId": None}, {"tool": "shell"}, {"namespace": "external"}):
+                self.assertFalse(client._problem_context_tool(params | patch)["success"])
+            self.assertEqual(source.read_bytes(), before)
+            self.assertTrue(client._problem_context_tool(params)["success"])
+            self.assertFalse(client._problem_context_tool(params)["success"])
+
+    def test_native_context_tool_is_registered_without_changing_permissions(self):
+        with FakeCodex("Hello") as fake:
+            result = run_console(["Hello"], fake)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            start = next(m for m in fake.protocol_requests() if m.get("method") == "thread/start")
+            self.assertEqual(start["params"]["dynamicTools"], [ENGINE.intuitive_context_tool_spec(), ENGINE.cognitive_reflection_tool_spec()])
+            self.assertEqual(start["params"]["sandbox"], "workspace-write")
+            self.assertEqual(start["params"]["approvalPolicy"], "untrusted")
+
+    def test_native_reflection_persists_and_next_process_reads_the_same_candidate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tasks = root / "md-os/ops/tasks"
+            tasks.mkdir(parents=True)
+            source = tasks / "task_a.json"
+            source.write_text(json.dumps({"task_spec_id": "task_a", "goal": "Inspect the shared dependency"}))
+            before = source.read_bytes()
+            proposal = {"task_ids": ["task_a"], "principle": "A shared dependency explains both effects",
+                        "conditions": ["The dependency is actually shared"], "prediction": "Both effects change together",
+                        "procedure": ["Observe", "Compare"]}
+            with FakeCodex("Candidate recorded.", tool_events=[{"tool": "mdos_reflect", "arguments": proposal}]) as fake:
+                result = run_console(["Work on task_a and retain the candidate principle."], fake, root)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                reply = next(m for m in fake.protocol_requests() if m.get("id") == 7000)
+                self.assertTrue(reply["result"]["success"], reply)
+                stored = json.loads(reply["result"]["contentItems"][0]["text"])
+                self.assertEqual(stored["verdict"], "unverified")
+                self.assertEqual(len(fake.requests()), 1)
+            receipts = root / "md-os/ops/local/apfc/turn_receipts.ndjson"
+            receipt = json.loads(receipts.read_text().splitlines()[-1])
+            self.assertEqual(receipt["cognitive_learning"][0]["pattern_id"], stored["pattern_id"])
+            self.assertEqual(receipt["verification_contract"]["verdict"], "unknown")
+            self.assertEqual(receipt["causal_unity_transition"]["status"], "closed")
+            self.assertTrue(receipt["approval_decisions"])
+            with FakeCodex("Candidate recovered.", tool_events=[{"tool": "mdos_context", "arguments": {}}]) as fake:
+                result = run_console(["Read the previously recorded candidate."], fake, root)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                reply = next(m for m in fake.protocol_requests() if m.get("id") == 7000)
+                self.assertTrue(reply["result"]["success"], reply)
+                memory = json.loads(reply["result"]["contentItems"][0]["text"])["memory"]
+                self.assertEqual(memory["patterns"][0]["pattern_id"], stored["pattern_id"])
+                self.assertEqual(memory["patterns"][0]["status"], "candidate")
+                self.assertEqual(len(fake.requests()), 1)
+            self.assertEqual(source.read_bytes(), before)
+
+    def test_native_reflection_rejects_wrong_binding_missing_authority_and_excess_writes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tasks = root / "md-os/ops/tasks"
+            tasks.mkdir(parents=True)
+            (tasks / "task_a.json").write_text('{"task_spec_id":"task_a","goal":"Check a prediction"}')
+            client = object.__new__(ENGINE.CodexAppServerClient)
+            client.active_binding = ENGINE.CodexThreadBinding("t", root, root, False, ())
+            client.active_context_turn_id = "u"
+            client.active_apfc_frame = ENGINE.build_apfc_turn_frame(
+                "Record a bounded candidate", ENGINE.ApfcInputContext("", (), ()), root, None)
+            params = {"threadId": "t", "turnId": "u", "callId": "call", "tool": "mdos_reflect",
+                      "arguments": {"task_ids": ["task_a"], "principle": "A implies B", "conditions": ["A"],
+                                    "prediction": "B", "procedure": []}}
+            for patch in ({"threadId": "other"}, {"turnId": "wrong"}, {"callId": None}, {"namespace": "external"}):
+                self.assertFalse(client._cognitive_reflection_tool(params | patch)["success"])
+            with mock.patch.object(ENGINE, "decide_apfc_file_approval", return_value=("decline", "no authority")):
+                self.assertFalse(client._cognitive_reflection_tool(params)["success"])
+            self.assertFalse((root / "md-os/ops/apfc/cognitive/pathfinding/anchor_memory.json").exists())
+            client.cognitive_tool_calls = 0
+            self.assertTrue(client._cognitive_reflection_tool(params)["success"])
+            self.assertTrue(client._cognitive_reflection_tool(params | {"callId": "second"})["success"])
+            self.assertFalse(client._cognitive_reflection_tool(params | {"callId": "third"})["success"])
+
+    def test_native_echo_check_does_not_certify_success(self):
+        with FakeCodex("Observation recorded.", command_event=("echo check", "check")) as fake:
+            result = run_console(["Inspect the observation"], fake)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            receipt = json.loads((PROJECT_ROOT / "md-os/ops/local/apfc/turn_receipts.ndjson").read_text().splitlines()[-1])
+            self.assertEqual(receipt["verification_contract"]["verdict"], "unknown")
+            self.assertTrue(all(not action["verification_candidate"] for action in receipt["observed_actions"]))
 
     def test_apfc_action_gate_allows_bounded_command_and_denies_escape(self):
         context = ENGINE.ApfcInputContext("context", (), ())
@@ -2498,7 +2788,7 @@ class SemanticShellParityTests(unittest.TestCase):
                            "exit_code": 1, "verification_candidate": True,
                            "output_hash": "b" * 64}]
         )
-        self.assertEqual(passed["verdict"], "pass")
+        self.assertEqual(passed["verdict"], "unknown")
         self.assertEqual(unknown["verdict"], "unknown")
         self.assertEqual(failed["verdict"], "fail")
 

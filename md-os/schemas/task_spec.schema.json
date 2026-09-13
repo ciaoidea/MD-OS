@@ -20,15 +20,28 @@
     "observation_targets"
   ],
   "properties": {
+    "skill_reuse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_id", "skill_hash", "case_task_id"],
+      "properties": {
+        "skill_id": { "type": "string", "pattern": "^skill_pattern_[a-f0-9]{20}$" },
+        "skill_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "case_task_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" }
+      }
+    },
+    "problem_core": { "$ref": "problem_core.schema.json" },
     "schema_version": { "const": 1 },
     "task_spec_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
     "created_at": { "type": "string", "minLength": 1 },
     "goal": { "type": "string", "minLength": 1 },
     "task_type": { "type": "string" },
+    "verification_dependencies": { "type": "array", "maxItems": 256, "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^md-os/" } },
     "constraints": { "type": "array", "items": { "type": "string" } },
     "acceptance_tests": {
       "type": "array",
-      "items": { "$ref": "#/$defs/commandReference" }
+      "items": { "allOf": [ { "$ref": "#/$defs/commandReference" }, { "not": { "required": ["state_guards"] } } ] }
     },
     "risk_budget": { "type": "object" },
     "resource_budget": { "type": "object" },
@@ -86,8 +99,28 @@
         "connector_id": { "const": "terminal_executor" },
         "project_id": { "type": "string", "minLength": 1 },
         "command_id": { "type": "string", "minLength": 1 },
+        "state_guards": {
+          "type": "object", "additionalProperties": false, "minProperties": 1,
+          "properties": {
+            "before": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/stateGuard" } },
+            "after": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/stateGuard" } }
+          },
+          "anyOf": [
+            { "required": ["before"], "properties": { "before": { "minItems": 1 } } },
+            { "required": ["after"], "properties": { "after": { "minItems": 1 } } }
+          ]
+        },
         "expected_exit_status": { "type": "integer" }
       }
+    },
+    "stateGuard": {
+      "type": "object", "additionalProperties": false, "required": ["path", "exists"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^md-os/ops/" },
+        "exists": { "type": "boolean" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "if": { "required": ["sha256"] }, "then": { "properties": { "exists": { "const": true } } }
     }
   }
 }

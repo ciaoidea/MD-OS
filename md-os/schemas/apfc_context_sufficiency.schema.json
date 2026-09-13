@@ -62,6 +62,18 @@
         }
       }
     },
+    "problem_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "projection_hash", "node_count", "source_hashes", "sent"],
+      "properties": {
+        "status": { "enum": ["ready", "unavailable"] },
+        "projection_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "node_count": { "type": "integer", "minimum": 0 },
+        "source_hashes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" } },
+        "sent": { "type": "boolean" }
+      }
+    },
     "portable_state": {
       "type": "object",
       "additionalProperties": false,

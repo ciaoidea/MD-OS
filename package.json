@@ -53,6 +53,8 @@
     "requirements-tts.txt",
     "scripts/",
     "test/",
+    "!**/__pycache__/**",
+    "!**/*.pyc",
     "bootstrap-md-os-codex.sh",
     "session-recovery.sh"
   ],

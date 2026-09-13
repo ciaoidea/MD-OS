@@ -8,6 +8,14 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
 const { parseOptions, runPromote } = require('../md-os/os/agi_loop');
+const { buildProblemReadback } = require('../md-os/kernel/cognition/problem_core');
+const { validateOutcome } = require('../md-os/kernel/cognition/problem_outcome');
+const { readPatternMemory, buildNativeProblemContext } = require('../md-os/os/problem_context');
+const { expandCompactJson } = require('../md-os/os/problem_compaction');
+const { skillApplicability, resolveSkillProgram } = require('../md-os/kernel/cognition/pattern_skill');
+const { gateCandidate, runConsolidation } = require('../md-os/apfc/executive/consolidator');
+const { promotionTransaction } = require('../md-os/os/apfc_runtime');
+const { passingCandidate, passingEvaluation, minimalGraph } = require('./apfc_test_helpers');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 
@@ -184,6 +192,181 @@ test('legacy direct promotion is disabled and APFC remains the production promot
   assert.equal(parseOptions([]).promote, false);
   assert.equal(parseOptions(['--promote']).promote, true);
   assert.throws(() => runPromote(), /USE_APFC_PROMOTE/);
+});
+
+test('current outcome readback resolves only the exact independently verified contract and reopens stale evidence and dependencies', () => {
+  const workspace = initializeWorkspace();
+  const reference = writeRepairTaskSpec(workspace);
+  const payload = readPayload(runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', reference]));
+  const task = JSON.parse(fs.readFileSync(path.join(workspace, reference)));
+  const episode = JSON.parse(fs.readFileSync(path.join(workspace, payload.episode_file)));
+  const report = JSON.parse(fs.readFileSync(path.join(workspace, episode.verification_result_file)));
+  const options = { workspace_root: workspace };
+  assert.equal(buildProblemReadback([task], options)[0].resolution, 'resolved');
+  assert.equal(validateOutcome(workspace, { ...task, goal: 'A different original criterion' }, report).reason, 'task_contract_changed');
+  assert.equal(validateOutcome(workspace, task, { ...report, outcome: 'failed' }).reason, 'verification_report_changed');
+  const dependent = { task_spec_id: 'task_dependent', goal: 'Use the repaired CLI', problem_core: {
+    state: 'candidate', premises: [], relations: [{ task_spec_id: task.task_spec_id, relation: 'depends_on', basis: 'Required executable' }] } };
+  const artifact = path.join(workspace, task.required_evidence[0].path);
+  fs.writeFileSync(artifact, 'broken\n');
+  const rows = buildProblemReadback([task, dependent], options);
+  assert.equal(rows.find(item => item.task_spec_id === task.task_spec_id).resolution, 'unverified');
+  assert.equal(rows.find(item => item.task_spec_id === dependent.task_spec_id).review_required, true);
+  fs.writeFileSync(artifact, 'fixed\n');
+  assert.equal(buildProblemReadback([task], options)[0].resolution, 'resolved');
+  fs.renameSync(artifact, `${artifact}.old`);
+  fs.symlinkSync(`${artifact}.old`, artifact);
+  assert.equal(buildProblemReadback([task], options)[0].review_required, true);
+});
+
+test('native reflection stages actual episodes through existing holdout and promotion gates; stale support suspends cold-start reuse', () => {
+  const workspace = initializeWorkspace();
+  const firstRef = writeRepairTaskSpec(workspace);
+  const first = JSON.parse(fs.readFileSync(path.join(workspace, firstRef)));
+  // Guards are part of the learned ordered program, not supplied anew by the
+  // host at reuse time. Promotion evidence below remains a synthetic fixture.
+  first.actions[0].state_guards = { after: [{ path: first.required_evidence[0].path, exists: true,
+    sha256: require('node:crypto').createHash('sha256').update('fixed\n').digest('hex') }] };
+  writeJson(path.join(workspace, firstRef), first);
+  const second = JSON.parse(JSON.stringify(first));
+  second.task_spec_id = 'task_repair_second_fixture'; second.goal = 'Repair a second independent Node CLI';
+  second.actions[0].action_id = 'apply_second_repair';
+  second.actions[0].command_id = 'apply_second_fixture';
+  second.acceptance_tests[0].command_id = 'verify_second_fixture';
+  for (const target of [...second.required_evidence, ...second.observation_targets]) target.path = target.path.replace('result.txt', 'second.txt');
+  second.actions[0].state_guards.after[0].path = second.required_evidence[0].path;
+  const secondRef = `md-os/ops/tasks/${second.task_spec_id}.json`;
+  writeJson(path.join(workspace, secondRef), second);
+  const registryRef = path.join(workspace, 'md-os/ops/connectors/terminal_connector.json');
+  const registry = JSON.parse(fs.readFileSync(registryRef));
+  registry.commands.push(...registry.commands.slice(0, 2).map((command, index) => ({ ...command,
+    command_id: index ? 'verify_second_fixture' : 'apply_second_fixture', argv: command.argv.map(arg => arg.replaceAll('result.txt', 'second.txt')) })));
+  writeJson(registryRef, registry);
+  for (const ref of [firstRef, secondRef]) assert.equal(readPayload(runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', ref])).verdict, 'success');
+  const reflection = { task_ids: [first.task_spec_id, second.task_spec_id], principle: 'A repair requires an independently observed postcondition',
+    conditions: ['The registered action and independent test address the same target'],
+    prediction: 'The declared target contains the repaired output', procedure: ['Apply the registered repair', 'Check the independent acceptance test'] };
+  const result = spawnSync(process.execPath, [path.join(REPO_ROOT, 'md-os/os/apfc_cognitive_path_runtime.js'), 'record-turn'], {
+    cwd: workspace, encoding: 'utf8', input: JSON.stringify(reflection),
+    env: { ...process.env, MDOS_WORKSPACE_ROOT: workspace, MDOS_ROOT: path.join(workspace, 'md-os') } });
+  const staged = readPayload(result).skill_workflow;
+  assert.equal(staged.status, 'candidate');
+  const candidateFile = path.join(workspace, staged.candidate_file);
+  let candidate = JSON.parse(fs.readFileSync(candidateFile));
+  assert.throws(() => resolveSkillProgram(workspace, { skill_id: candidate.skill_id,
+    skill_hash: '0'.repeat(64), case_task_id: first.task_spec_id }, {}), /NOT_PROMOTED/);
+  const episodes = candidate.source_episodes.map(id => JSON.parse(fs.readFileSync(path.join(workspace, `md-os/ops/episodes/${id}.json`))));
+  const evaluation = passingEvaluation(candidate.skill_id);
+  const options = { workspace_root: workspace };
+  const noEval = gateCandidate(candidate, episodes, null, options);
+  assert.equal(noEval.status, 'blocked');
+  assert.equal(noEval.checks.current_pattern_source_outcomes, true);
+  assert.equal(noEval.checks.independent_eval_passed, false);
+  // Synthetic gate fixture only: these outcomes exercise the existing 30 x 3
+  // protocol. They are not a measured learning or model-intelligence result.
+  const fixture = passingCandidate(candidate.skill_id, candidate.source_episodes, evaluation.eval_id);
+  candidate = { ...candidate, evals: [evaluation.eval_id], sealed_evaluation: fixture.sealed_evaluation };
+  writeJson(candidateFile, candidate);
+  writeJson(path.join(workspace, `md-os/ops/evals/${evaluation.eval_id}.json`), evaluation);
+  const ops = path.join(workspace, 'md-os/ops'), apfc = path.join(ops, 'apfc/executive');
+  writeJson(path.join(apfc, 'graph.json'), minimalGraph());
+  const cycle = runConsolidation({ ops_root: ops, apfc_dir: apfc });
+  assert.equal(cycle.skill_candidates.find(item => item.skill_id === candidate.skill_id).gate.status, 'ok');
+  writeJson(path.join(apfc, 'status.json'), { release_gate: { promotion_blocked: false } });
+  promotionTransaction(candidate.skill_id, { ...options, ops_root: ops, apfc_dir: apfc, approve: true, rebuild: () => [] });
+  assert.equal(readPatternMemory(workspace, { maximum_bytes: 8192 }).patterns[0].skill.status, 'promoted');
+  const promoted = JSON.parse(fs.readFileSync(path.join(ops, `skills/promoted/${candidate.skill_id}.json`)));
+  const normalizedFirst = JSON.parse(fs.readFileSync(path.join(workspace, firstRef)));
+  assert.equal(skillApplicability(workspace, promoted, normalizedFirst).applicable, true);
+  assert.equal(skillApplicability(workspace, promoted, { ...normalizedFirst, actions: [] }).applicable, false);
+  const memoryCard = readPatternMemory(workspace, { maximum_bytes: 8192 }).patterns[0];
+  const nativeResponse = buildNativeProblemContext(workspace, { pattern_id: memoryCard.pattern_id, maximum_bytes: 32768 });
+  const nativeContext = nativeResponse.encoding ? expandCompactJson(nativeResponse.encoding) : nativeResponse;
+  assert.deepEqual(nativeContext.memory.patterns[0].skill.reuse, memoryCard.skill.reuse);
+  const reuse = { skill_id: memoryCard.skill.reuse.skill_id, skill_hash: memoryCard.skill.reuse.skill_hash,
+    case_task_id: first.task_spec_id };
+  const next = { ...normalizedFirst, task_spec_id: 'task_reuse_fresh_process',
+    goal: 'Repeat the known registered repair and independently check the current result',
+    actions: [], skill_reuse: reuse,
+    success_definition: { ...normalizedFirst.success_definition, observed_delta_required: false },
+    observation_targets: normalizedFirst.observation_targets.map(target => ({ ...target, required_change: false })) };
+  const program = resolveSkillProgram(workspace, reuse, next);
+  assert.deepEqual(program.actions, normalizedFirst.actions);
+  assert.throws(() => resolveSkillProgram(workspace, { ...reuse, skill_id: [reuse.skill_id] }, next), /REFERENCE_INVALID/);
+  assert.throws(() => resolveSkillProgram(workspace, { ...reuse, unexpected: true }, next), /REFERENCE_INVALID/);
+  assert.throws(() => resolveSkillProgram(workspace, { ...reuse, skill_hash: '0'.repeat(64) }, next), /VERSION_CHANGED/);
+  assert.throws(() => resolveSkillProgram(workspace, { ...reuse, case_task_id: 'task_missing' }, next), /CASE_NOT_FOUND/);
+  assert.throws(() => resolveSkillProgram(workspace, reuse, normalizedFirst), /SOURCE_TASK_OVERWRITE/);
+  assert.throws(() => resolveSkillProgram(workspace, reuse, { ...next, acceptance_tests: [] }), /PRECONDITIONS/);
+  assert.throws(() => resolveSkillProgram(workspace, reuse, { ...next, unknowns: ['Unestablished condition'] }), /PRECONDITIONS/);
+  assert.throws(() => resolveSkillProgram(workspace, reuse, { ...next, constraints: [] }), /PRECONDITIONS/);
+  assert.throws(() => resolveSkillProgram(workspace, reuse, { ...next, actions: [{ ...program.actions[0], command_id: 'different_command' }] }), /ACTIONS_CHANGED/);
+  const nextRef = `md-os/ops/tasks/${next.task_spec_id}.json`;
+  writeJson(path.join(workspace, nextRef), next);
+  // This is the public command in a fresh process, with no action list supplied
+  // by the host. The source skill provides the actual program, not just an ID
+  // in the episode. Governance fixture evidence is still synthetic.
+  const reused = readPayload(runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', nextRef]));
+  assert.equal(reused.verdict, 'success');
+  assert.equal(reused.action_receipts.length, program.actions.length);
+  const reusedEpisode = JSON.parse(fs.readFileSync(path.join(workspace, reused.episode_file)));
+  assert.deepEqual(reusedEpisode.task_spec.actions, program.actions);
+  const reusedReceipt = JSON.parse(fs.readFileSync(path.join(workspace, reused.action_receipts[0])));
+  assert.equal(reusedReceipt.execution_control.postconditions.passed, true);
+  assert.deepEqual(reusedEpisode.task_spec.skill_reuse, reuse);
+  assert.ok(reusedEpisode.task_spec.verification_dependencies.includes(program.source));
+  assert.deepEqual(reusedEpisode.plan.find(step => step.step_id === 'transactional_execution').skill_reuse, reuse);
+  assert.equal(reusedEpisode.plan.find(step => step.step_id === 'episode_commit').inputs.includes(promoted.skill_id), true);
+  const evalReadback = () => JSON.parse(fs.readFileSync(path.join(workspace, 'md-os/ops/evals/agi_eval_report.json')));
+  assert.equal(evalReadback().metrics.skill_reuse, 1);
+  assert.equal(readPatternMemory(workspace, { maximum_bytes: 8192 }).patterns[0].skill.status, 'promoted');
+  const independentFailure = { ...next, task_spec_id: 'task_reuse_independent_failure',
+    acceptance_tests: [{ ...next.acceptance_tests[0], command_id: 'always_fail_acceptance' }] };
+  const failureRef = `md-os/ops/tasks/${independentFailure.task_spec_id}.json`;
+  writeJson(path.join(workspace, failureRef), independentFailure);
+  const failedReuse = readPayload(runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', failureRef]));
+  assert.equal(failedReuse.verdict, 'failed');
+  assert.equal(failedReuse.action_receipts.length, program.actions.length);
+  assert.equal(evalReadback().metrics.skill_reuse, 1);
+  const reviewCard = readPatternMemory(workspace, { maximum_bytes: 8192 }).patterns[0].skill;
+  assert.equal(reviewCard.status, 'promoted'); // A different failed contract is not a universal refutation.
+  assert.equal(reviewCard.reuse_review.required, true);
+  assert.equal(reviewCard.reuse_review.failures[0].task_spec_id, independentFailure.task_spec_id);
+  const coldRead = spawnSync(process.execPath, ['-e',
+    'const m=require(process.argv[1]);process.stdout.write(JSON.stringify(m.buildNativeProblemContext(process.cwd(),{maximum_bytes:32768})))',
+    path.join(REPO_ROOT, 'md-os/os/problem_context.js')], { cwd: workspace, encoding: 'utf8' });
+  const coldPayload = readPayload(coldRead);
+  const coldContext = coldPayload.encoding ? expandCompactJson(coldPayload.encoding) : coldPayload;
+  assert.equal(coldContext.memory.patterns[0].skill.reuse_review.failures[0].task_spec_id, independentFailure.task_spec_id);
+  assert.throws(() => resolveSkillProgram(workspace, reuse, { ...independentFailure,
+    task_spec_id: 'task_same_failure_renamed' }), /COUNTEREXAMPLE_REQUIRES_REVIEW/);
+  const repeatedRef = 'md-os/ops/tasks/task_same_failure_renamed.json';
+  writeJson(path.join(workspace, repeatedRef), { ...independentFailure, task_spec_id: 'task_same_failure_renamed' });
+  const repeat = runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', repeatedRef]);
+  assert.notEqual(repeat.status, 0);
+  assert.match(`${repeat.stdout}\n${repeat.stderr}`, /COUNTEREXAMPLE_REQUIRES_REVIEW/);
+  assert.deepEqual(resolveSkillProgram(workspace, reuse, next).actions, program.actions);
+  const limited = { ...next, task_spec_id: 'task_reuse_budget_zero', resource_budget: { max_actions: 0 } };
+  const limitedRef = `md-os/ops/tasks/${limited.task_spec_id}.json`;
+  writeJson(path.join(workspace, limitedRef), limited);
+  const refused = readPayload(runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', limitedRef]));
+  assert.notEqual(refused.verdict, 'success');
+  assert.deepEqual(refused.action_receipts, []);
+  assert.equal(evalReadback().metrics.skill_reuse, 1);
+  const missing = { ...next, task_spec_id: 'task_reuse_without_acceptance', acceptance_tests: [] };
+  const missingRef = `md-os/ops/tasks/${missing.task_spec_id}.json`;
+  writeJson(path.join(workspace, missingRef), missing);
+  assert.notEqual(runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', missingRef]).status, 0);
+  fs.writeFileSync(path.join(workspace, first.required_evidence[0].path), 'regression\n');
+  assert.equal(readPatternMemory(workspace, { maximum_bytes: 8192 }).patterns[0].skill.status, 'suspended');
+  assert.equal(skillApplicability(workspace, promoted, normalizedFirst).applicable, false);
+  assert.throws(() => resolveSkillProgram(workspace, reuse, next), /SUSPENDED/);
+  // A stale source is rejected by the public execution path before actions.
+  writeJson(path.join(workspace, nextRef), next);
+  const staleRun = runScript(workspace, 'mdos.js', ['cognition', 'run-once', '--task-spec', nextRef]);
+  assert.notEqual(staleRun.status, 0);
+  assert.match(`${staleRun.stdout}\n${staleRun.stderr}`, /SKILL_REUSE_SUSPENDED/);
+  assert.equal(fs.readFileSync(path.join(workspace, first.required_evidence[0].path), 'utf8'), 'regression\n');
 });
 
 test('plain task remains unverified and cannot create or promote a skill', () => {

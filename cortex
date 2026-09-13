@@ -95,21 +95,55 @@ def exec_shared_shell() -> NoReturn:
     environment = os.environ.copy()
     environment["MDOS_SHARED_SESSION_ACTIVE"] = "1"
     command = [sys.executable, str(SHELL_ENGINE)]
-    tmux_arguments = [
-        tmux,
-        "new-session",
-        "-A",
-        "-s",
-        session_name,
-        "-c",
-        str(Path.cwd().resolve()),
-        *command,
-    ]
     # A WebSSH client may already be inside its transport tmux. Clearing TMUX
     # permits it to attach to the canonical inner Cortex session, which is also
     # reachable from a local terminal or a normal SSH login.
     environment.pop("TMUX", None)
     environment.pop("TMUX_PANE", None)
+
+    def tmux_control(arguments: list[str]) -> int:
+        try:
+            result = subprocess.run(
+                [tmux, *arguments],
+                check=False,
+                env=environment,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return 69
+        return result.returncode
+
+    if tmux_control(["has-session", "-t", session_name]) != 0:
+        created = tmux_control([
+            "new-session",
+            "-d",
+            "-s",
+            session_name,
+            "-c",
+            str(Path.cwd().resolve()),
+            *command,
+        ])
+        # A simultaneous launcher may have won the creation race.
+        if created != 0 and tmux_control(["has-session", "-t", session_name]) != 0:
+            print("ERROR: unable to create the shared Cortex session", file=sys.stderr)
+            raise SystemExit(69)
+
+    # A shared pane cannot have two widths at once. Let the client with the
+    # latest activity control it, so alternating between phone and desktop
+    # reflows the terminal instead of clipping the narrower screen.
+    if tmux_control([
+        "set-option",
+        "-t",
+        session_name,
+        "window-size",
+        "latest",
+    ]) != 0:
+        print("ERROR: unable to configure the shared Cortex session", file=sys.stderr)
+        raise SystemExit(69)
+
+    tmux_arguments = [tmux, "attach-session", "-t", session_name]
     os.execve(tmux, tmux_arguments, environment)
 
 

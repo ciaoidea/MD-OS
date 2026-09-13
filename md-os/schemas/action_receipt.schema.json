@@ -46,9 +46,31 @@
       }
     },
     "rollback": { "type": "object" },
-    "readback": { "type": "object" }
+    "readback": { "type": "object" },
+    "execution_control": {
+      "type": "object", "additionalProperties": false,
+      "required": ["attempted", "stop", "reason", "dependencies_unchanged", "preconditions", "postconditions"],
+      "properties": {
+        "attempted": { "type": "boolean" }, "stop": { "type": "boolean" },
+        "reason": { "enum": [null, "precondition_failed", "postcondition_failed", "command_failed", "execution_dependency_changed"] },
+        "dependencies_unchanged": { "type": "boolean" },
+        "preconditions": { "$ref": "#/$defs/guardResult" },
+        "postconditions": { "$ref": "#/$defs/guardResult" }
+      }
+    }
   },
   "$defs": {
+    "guardResult": {
+      "type": "object", "additionalProperties": false, "required": ["passed", "checks"],
+      "properties": {
+        "passed": { "type": "boolean" }, "skipped": { "type": "boolean" },
+        "checks": { "type": "array", "maxItems": 16, "items": {
+          "type": "object", "required": ["expected", "observed", "passed"],
+          "properties": { "expected": { "$ref": "task_spec.schema.json#/$defs/stateGuard" },
+            "observed": { "type": ["object", "null"] }, "passed": { "type": "boolean" }, "error": { "type": "string" } }
+        } }
+      }
+    },
     "stateSnapshot": {
       "type": "object",
       "required": ["hash", "targets"],

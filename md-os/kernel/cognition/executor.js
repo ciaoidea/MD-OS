@@ -14,6 +14,8 @@ const {
 } = require('../../os/lib/common');
 const { atomicWriteJsonLocked } = require('../../os/lib/fs_runtime');
 const { assertInsideMdos } = require('./task_compiler');
+const { commandBindings } = require('./problem_outcome');
+const { evaluateStateGuards } = require('./state_guard');
 
 const TERMINAL_CONNECTOR = path.resolve(__dirname, '..', '..', 'os', 'terminal_connector.js');
 
@@ -135,18 +137,29 @@ function receiptId(episodeId, actionId) {
   return `receipt_${suffix}_${String(actionId).replace(/[^a-zA-Z0-9_]+/g, '_').slice(0, 48)}`;
 }
 
-function executeActions({ episodeId, taskSpec, receiptsDir }) {
+function executeActions({ episodeId, taskSpec, receiptsDir, initialCommands }) {
   const receipts = [];
   fs.mkdirSync(receiptsDir, { recursive: true });
+  let commandHash;
+  try { commandHash = sha256Json(initialCommands || commandBindings(WORKSPACE_ROOT, taskSpec)); }
+  catch (_error) { commandHash = null; }
   for (const action of taskSpec.actions || []) {
     const id = receiptId(episodeId, action.action_id);
     const receiptFile = path.join(receiptsDir, `${id}.json`);
     const targets = (taskSpec.observation_targets || []).map((target) => ({ ...target }));
     const stateBefore = targets.map(fileSnapshot);
     const startedAt = nowIso();
+    let dependenciesUnchanged = false;
+    try { dependenciesUnchanged = commandHash !== null && commandHash === sha256Json(commandBindings(WORKSPACE_ROOT, taskSpec)); }
+    catch (_error) { /* An unreadable or changed registered program inhibits execution. */ }
+    const preconditions = evaluateStateGuards(action.state_guards?.before, WORKSPACE_ROOT);
+    const attempted = dependenciesUnchanged && preconditions.passed;
     let execution;
     try {
-      execution = runTerminalCommand(action);
+      execution = attempted ? runTerminalCommand(action) : {
+        invocation_status: null, exit_status: null, duration_ms: 0, payload: null,
+        stderr: dependenciesUnchanged ? 'ACTION_PRECONDITION_FAILED' : 'EXECUTION_DEPENDENCY_CHANGED',
+      };
     } catch (error) {
       execution = {
         invocation_status: null,
@@ -173,9 +186,14 @@ function executeActions({ episodeId, taskSpec, receiptsDir }) {
       };
     });
     const expected = action.expected_exit_status;
-    const completed = execution.invocation_status === 0 && execution.exit_status === expected;
+    const postconditions = attempted ? evaluateStateGuards(action.state_guards?.after, WORKSPACE_ROOT)
+      : { passed: false, checks: [], skipped: true };
+    const commandCompleted = attempted && execution.invocation_status === 0 && execution.exit_status === expected;
+    const completed = commandCompleted && postconditions.passed;
+    const stopReason = completed ? null : !dependenciesUnchanged ? 'execution_dependency_changed'
+      : !preconditions.passed ? 'precondition_failed' : !commandCompleted ? 'command_failed' : 'postcondition_failed';
     const artifacts = execution.payload
-      ? [execution.payload.artifact_file, execution.payload.snapshot_file].filter(Boolean)
+      ? [execution.payload.artifact_file, execution.payload.evidence_snapshot_file || execution.payload.snapshot_file].filter(Boolean)
       : [];
     const receipt = {
       schema_version: 1,
@@ -186,7 +204,7 @@ function executeActions({ episodeId, taskSpec, receiptsDir }) {
       input_hash: sha256Json(action),
       started_at: startedAt,
       completed_at: completedAt,
-      status: completed ? 'completed' : 'failed',
+      status: completed ? 'completed' : attempted ? 'failed' : 'blocked',
       exit_status: execution.exit_status,
       expected_exit_status: expected,
       artifacts,
@@ -205,6 +223,8 @@ function executeActions({ episodeId, taskSpec, receiptsDir }) {
       rollback: action.rollback && typeof action.rollback === 'object'
         ? action.rollback
         : { available: false, instructions: '' },
+      execution_control: { attempted, stop: !completed, reason: stopReason,
+        dependencies_unchanged: dependenciesUnchanged, preconditions, postconditions },
       readback: {
         invocation_status: execution.invocation_status,
         connector_result: execution.payload,
@@ -214,6 +234,7 @@ function executeActions({ episodeId, taskSpec, receiptsDir }) {
     };
     atomicWriteJsonLocked(receiptFile, receipt, { context: `action_receipt:${id}` });
     receipts.push({ ...receipt, file: rel(receiptFile) });
+    if (!completed) break;
   }
   return receipts;
 }

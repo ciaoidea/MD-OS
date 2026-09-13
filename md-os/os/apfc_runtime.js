@@ -10,12 +10,16 @@ const {
   assertSafeId,
   nowIso,
   printJson,
+  canonicalJson,
   sha256Json,
   sha256Text,
 } = require('./lib/common');
 const { atomicWriteJson, atomicWriteText, ensureDir, withFileLock } = require('./lib/fs_runtime');
 const { buildApfcGraph } = require('./build_apfc_graph');
-const { compileOperationalContextPack } = require('../apfc/executive/context_compiler');
+const { compileOperationalContextBundle, assertContextSelectionAudit } = require('../apfc/executive/context_compiler');
+const { problemContractHash } = require('../kernel/cognition/problem_core');
+const { readProblemContext, buildProblemProjection, buildIntuitiveContext } = require('./problem_context');
+const { previewProblemCompaction } = require('./problem_compaction');
 const { readEvents, reconcile, verifyEventChain } = require('../apfc/executive/event_recorder');
 const { runConsolidation } = require('../apfc/executive/consolidator');
 const { buildGraphifyFromFiles } = require('../apfc/executive/graphify_adapter');
@@ -60,15 +64,35 @@ function writeContextIndex(apfcDir) {
   ensureDir(dir);
   const packs = listJson(dir).filter((filePath) => !filePath.endsWith('index.json')).map((filePath) => readJsonSafe(filePath)).filter(Boolean)
     .sort((left, right) => left.context_pack_id.localeCompare(right.context_pack_id));
+  const previous = readJsonSafe(path.join(dir, 'index.json'));
+  const graph = readJsonSafe(path.join(apfcDir, 'graph.json'));
+  if (previous?.problem_graph_hash && previous.problem_graph_hash !== sha256Json(graph)) {
+    throw new Error('APFC_PROBLEM_INDEX_STALE_REBUILD_REQUIRED');
+  }
   const index = {
     schema_version: 1,
     updated_at: nowIso(),
     context_pack_count: packs.length,
+    ...(previous?.problems ? { problems: previous.problems, problem_graph_hash: previous.problem_graph_hash } : {}),
     packs: packs.map((pack) => ({ context_pack_id: pack.context_pack_id, task_spec_id: pack.task_spec_id, graph_id: pack.graph_id, status: pack.status, path: rel(path.join(dir, `${pack.context_pack_id}.json`)) })),
   };
   atomicWriteJson(path.join(dir, 'index.json'), index);
-  atomicWriteText(path.join(dir, 'index.md'), ['# APFC Context-Pack Index', '', `Packs: \`${index.context_pack_count}\``, '', ...index.packs.map((pack) => `- \`${pack.context_pack_id}\` — \`${pack.status}\``), ''].join('\n'));
+  atomicWriteText(path.join(dir, 'index.md'), ['# APFC Context-Pack Index', '', `Packs: \`${index.context_pack_count}\``, '',
+    'Problem identities, relations and review flags are retained in index.json. They do not certify task success.', '',
+    ...index.packs.map((pack) => `- \`${pack.context_pack_id}\` — \`${pack.status}\``), ''].join('\n'));
   return index;
+}
+
+function assertCurrentProblemSources(pack, workspaceRoot, mdosRoot) {
+  for (const node of pack.nodes.filter(item => item.type === 'goal' && item.properties.problem_contract_hash)) {
+    const source = node.source_refs[0].split('#')[0];
+    if (!/^md-os\/ops\/tasks\/task_[a-zA-Z0-9_]+\.json$/.test(source)) throw new Error('APFC_PROBLEM_SOURCE_INVALID');
+    const file = path.resolve(workspaceRoot, source);
+    const real = fs.realpathSync(file);
+    const relative = path.relative(fs.realpathSync(mdosRoot), real);
+    if (relative.startsWith('..') || path.isAbsolute(relative) || fs.lstatSync(file).isSymbolicLink()) throw new Error('APFC_PROBLEM_SOURCE_OUTSIDE_WORKSPACE');
+    if (node.properties.problem_contract_hash !== problemContractHash(readJson(real))) throw new Error('APFC_PROBLEM_CONTEXT_STALE_REBUILD_REQUIRED');
+  }
 }
 
 function compileContext(taskSpecPath, options = {}) {
@@ -80,10 +104,13 @@ function compileContext(taskSpecPath, options = {}) {
   const status = readJson(path.join(apfcDir, 'status.json'));
   if (status.status === 'critical') throw new Error('APFC_CONTEXT_BLOCKED_BY_CRITICAL_STATUS');
   const taskSpec = readJson(resolved);
-  const pack = compileOperationalContextPack(graph, taskSpec);
+  const { pack, selection_audit: audit } = compileOperationalContextBundle(graph, taskSpec);
+  assertCurrentProblemSources(pack, workspaceRoot, mdosRoot);
   const dir = path.join(apfcDir, 'context_packs');
   ensureDir(dir);
-  atomicWriteJson(path.join(dir, `${pack.context_pack_id}.json`), pack);
+  assertContextSelectionAudit(pack, audit);
+  atomicWriteJson(path.join(dir, pack.selection_audit.path), audit);
+  atomicWriteText(path.join(dir, `${pack.context_pack_id}.json`), canonicalJson(pack));
   atomicWriteText(path.join(dir, `${pack.context_pack_id}.md`), [
     '# APFC Task Context', '',
     `Context: \`${pack.context_pack_id}\``,
@@ -97,6 +124,30 @@ function compileContext(taskSpecPath, options = {}) {
   ].join('\n'));
   writeContextIndex(apfcDir);
   return { ok: true, mode: 'apfc_context', context_pack_id: pack.context_pack_id, status: pack.status, node_count: pack.nodes.length, serialized_bytes: pack.serialized_bytes, output: rel(path.join(dir, `${pack.context_pack_id}.json`), workspaceRoot) };
+}
+
+function readContextAudit(taskId, options = {}) {
+  if (!/^task_[a-zA-Z0-9_]+$/.test(taskId || '')) throw new Error('APFC_CONTEXT_AUDIT_TASK_INVALID');
+  const mdosRoot = options.mdos_root || MDOS_ROOT;
+  const apfcDir = options.apfc_dir || path.join(mdosRoot, 'ops', 'apfc', 'executive');
+  const dir = path.join(apfcDir, 'context_packs');
+  const graph = readJson(path.join(apfcDir, 'graph.json'));
+  const index = readJson(path.join(dir, 'index.json'));
+  const entries = index.packs.filter(item => item.task_spec_id === taskId);
+  if (entries.length !== 1 || !/^apfc_ctx_[a-zA-Z0-9_-]+_[a-f0-9]{10}$/.test(entries[0].context_pack_id)) throw new Error('APFC_CONTEXT_AUDIT_PACK_UNAVAILABLE');
+  const readBounded = relative => {
+    const file = path.join(dir, relative), actual = fs.realpathSync(file);
+    const inside = path.relative(fs.realpathSync(dir), actual);
+    if (inside.startsWith('..') || path.isAbsolute(inside) || fs.lstatSync(file).isSymbolicLink() || fs.statSync(file).size > 16777216) throw new Error('APFC_CONTEXT_AUDIT_SOURCE_INVALID');
+    return readJson(file);
+  };
+  const pack = readBounded(`${entries[0].context_pack_id}.json`);
+  if (pack.graph_content_hash !== sha256Json(graph) || pack.task_spec_id !== taskId
+      || !pack.selection_audit || pack.selection_audit.path !== `audit/${pack.context_pack_id}.json`) throw new Error('APFC_CONTEXT_AUDIT_STALE_OR_UNAVAILABLE');
+  const audit = readBounded(pack.selection_audit.path);
+  assertContextSelectionAudit(pack, audit);
+  assertCurrentProblemSources(pack, options.workspace_root || WORKSPACE_ROOT, mdosRoot);
+  return { ok: true, mode: 'apfc_context_audit', task_spec_id: taskId, scope: 'selection_explanation_not_task_success', selection_audit: audit };
 }
 
 function findCycleForSkill(apfcDir, skillId) {
@@ -220,6 +271,7 @@ function promotionTransaction(skillIdInput, options = {}) {
     const promotedPath = path.join(paths.promotedDir, `${skillId}.json`);
     const candidate = readJson(candidatePath);
     if (candidate.status !== 'promotable' || candidate.promotion_gate_status !== 'ok') throw new Error('APFC_PROMOTION_CANDIDATE_NOT_PROMOTABLE');
+    if (!require('../kernel/cognition/pattern_skill').patternSkillEvidence(paths.workspaceRoot, candidate).applicable) throw new Error('APFC_PROMOTION_PATTERN_EVIDENCE_STALE');
     if (evaluateCognitiveUnityClaims(candidate, { workspace_root: paths.workspaceRoot }).status !== 'ok') throw new Error('APFC_PROMOTION_COGNITIVE_UNITY_EVIDENCE_INVALID');
     if ((candidate.risk_level === 'high' || candidate.scope_risk === 'high') && !options.approve_high_risk) throw new Error('APFC_PROMOTION_HIGH_RISK_APPROVAL_REQUIRED');
     const cycleEntry = findCycleForSkill(paths.apfcDir, skillId);
@@ -367,6 +419,10 @@ function usage() {
     '  cortex apfc verify',
     '  cortex apfc reconcile',
     '  cortex apfc context --task-spec <md-os/ops/tasks/task_id.json>',
+    '  cortex apfc context-audit --task <task_id>',
+    '  cortex apfc problems [--evidence] [--task <task_id>] [--after <task_id>] [--maximum-bytes <n>]',
+    '  cortex apfc orient [--task <task_id>] [--after <task_id>] [--maximum-bytes <n>]',
+    '  cortex apfc compact-problem --task <task_id> --preview [--maximum-bytes <n>] [--proposal-stdin]',
     '  cortex apfc consolidate --run-once',
     '  cortex apfc promote <skill_candidate_id> --approve [--approve-high-risk]',
     '  cortex apfc rollback <promotion_receipt_id> --approve',
@@ -386,11 +442,54 @@ function main() {
   if (command === 'build') return printJson(buildApfcGraph());
   if (command === 'verify') return printJson(verifyRuntime());
   if (command === 'reconcile') return printJson(reconcile());
+  if (command === 'compact-problem') {
+    const allowed = new Set(['--task', '--preview', '--maximum-bytes', '--proposal-stdin']);
+    const seen = new Set();
+    for (let i = 0; i < args.length; i += 1) {
+      if (!allowed.has(args[i]) || seen.has(args[i])) throw new Error('PROBLEM_COMPACTION_ARGUMENT_INVALID');
+      const flag = args[i]; seen.add(flag);
+      if (['--task', '--maximum-bytes'].includes(flag) && (!args[++i] || args[i].startsWith('--'))) throw new Error('PROBLEM_COMPACTION_ARGUMENT_INVALID');
+    }
+    if (!seen.has('--task') || !seen.has('--preview')) throw new Error('PROBLEM_COMPACTION_PREVIEW_REQUIRED');
+    let proposal = null;
+    if (seen.has('--proposal-stdin')) {
+      // Read a bounded proposal only; it is never an executable command.
+      const buffer = Buffer.alloc(65537); let length = 0, count;
+      while (length < buffer.length && (count = fs.readSync(0, buffer, length, buffer.length - length, null)) > 0) length += count;
+      if (length > 65536) throw new Error('PROBLEM_COMPACTION_PROPOSAL_LIMIT');
+      proposal = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, length)));
+      if (!proposal || typeof proposal !== 'object' || Array.isArray(proposal)) throw new Error('PROBLEM_COMPACTION_PROPOSAL_INVALID');
+    }
+    return printJson(previewProblemCompaction(WORKSPACE_ROOT, {
+      task_id: optionValue(args, '--task'), proposal,
+      maximum_bytes: optionValue(args, '--maximum-bytes') === null ? 32768 : Number(optionValue(args, '--maximum-bytes')),
+    }));
+  }
+  if (command === 'orient') {
+    const taskId = optionValue(args, '--task');
+    const result = buildIntuitiveContext(WORKSPACE_ROOT, {
+      task_ids: taskId ? [taskId] : [], after: optionValue(args, '--after'),
+      maximum_bytes: optionValue(args, '--maximum-bytes') === null ? 12288 : Number(optionValue(args, '--maximum-bytes')),
+    });
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+    return;
+  }
+  if (command === 'problems') {
+    // Compact output is measured in this exact serialization, including LF.
+    const withEvidence = parseFlag(args, '--evidence');
+    const result = (withEvidence ? buildProblemProjection : readProblemContext)(WORKSPACE_ROOT, {
+      task_id: optionValue(args, '--task'), after: optionValue(args, '--after'),
+      maximum_bytes: optionValue(args, '--maximum-bytes') === null ? (withEvidence ? 6144 : 8192) : Number(optionValue(args, '--maximum-bytes')),
+    });
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+    return;
+  }
   if (command === 'context') {
     const taskSpec = optionValue(args, '--task-spec');
     if (!taskSpec) usage();
     return printJson(compileContext(taskSpec));
   }
+  if (command === 'context-audit') return printJson(readContextAudit(optionValue(args, '--task')));
   if (command === 'consolidate') {
     if (!parseFlag(args, '--run-once')) usage();
     return printJson(consolidateRuntime());
@@ -427,6 +526,7 @@ if (require.main === module) {
 
 module.exports = {
   compileContext,
+  readContextAudit,
   consolidateRuntime,
   governedTransition,
   promotionTransaction,

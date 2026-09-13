@@ -2,6 +2,7 @@
 'use strict';
 
 const { sha256Json, sha256Text, shortText } = require('../../os/lib/common');
+const { RELATIONS, normalizeProblemCore, problemContractHash, buildProblemReadback } = require('../../kernel/cognition/problem_core');
 
 const IDENTITY_VERSION = '5.0';
 const NODE_TYPES = new Set([
@@ -274,12 +275,26 @@ function riskOf(data) {
 function projectTask(state, record) {
   const data = record.data;
   if (!data || !data.task_spec_id || !data.goal) return;
+  const core = normalizeProblemCore(data.problem_core);
   const base = `${record.path}#`;
   const scope = taskScope(data);
   const goal = addNode(state, makeNode({
     type: 'goal', canonicalKey: `${base}/goal`, label: data.goal, sourceRefs: [`${base}/goal`], scope,
-    riskLevel: riskOf(data), createdAt: data.created_at, properties: { task_spec_id: data.task_spec_id, task_type: data.task_type || null },
+    riskLevel: riskOf(data), createdAt: data.created_at, properties: { task_spec_id: data.task_spec_id, task_type: data.task_type || null,
+      ...(core ? { problem_core: core, problem_contract_hash: problemContractHash(data),
+        acceptance_tests: data.acceptance_tests || [], success_definition: data.success_definition || null,
+        unknowns: data.unknowns || [], resolution: state.problems.get(data.task_spec_id)?.resolution || 'unverified',
+        review_required: state.problems.get(data.task_spec_id)?.review_required || false,
+        review_reasons: state.problems.get(data.task_spec_id)?.review_reasons || [] } : {}) },
   }), [`task:${data.task_spec_id}`, `goal:${data.task_spec_id}`]);
+  for (const [index, relation] of (core?.relations || []).entries()) state.pending.push(() => {
+    const targets = state.lookup.get(`task:${relation.task_spec_id}`) || [];
+    if (targets.length !== 1) throw new Error(`PROBLEM_RELATION_TARGET_UNRESOLVED: ${data.task_spec_id}:${relation.task_spec_id}`);
+    addEdge(state, { from: goal.id, type: RELATIONS[relation.relation], to: targets[0],
+      epistemic: 'hypothetical', sourceRefs: [`${base}/problem_core/relations/${index}`],
+      properties: { problem_relation: relation.relation, basis: relation.basis,
+        expected_contract_hash: relation.expected_contract_hash, grants_authority: false } });
+  });
   (data.constraints || []).forEach((value, index) => {
     const ref = `${base}/constraints/${index}`;
     const node = addNode(state, makeNode({ type: 'constraint', canonicalKey: ref, label: value, sourceRefs: [ref], scope, riskLevel: riskOf(data), createdAt: data.created_at, properties: { task_spec_id: data.task_spec_id, index, statement: String(value) } }));
@@ -417,8 +432,14 @@ function projectContextIndex(state, record) {
   }
 }
 
-function projectCanonicalSources(records, sourceManifest) {
-  const state = { nodes: new Map(), edges: new Map(), lookup: new Map(), pending: [], findings: [] };
+function projectCanonicalSources(records, sourceManifest, options = {}) {
+  const state = { nodes: new Map(), edges: new Map(), lookup: new Map(), pending: [], findings: [], problems: new Map() };
+  try {
+    state.problems = new Map(buildProblemReadback((records || []).filter(record => record.kind === 'task').map(record => record.data), options)
+      .map(problem => [problem.task_spec_id, problem]));
+  } catch (error) {
+    state.findings.push({ finding_id: 'problem_index_invalid', status: 'critical', source: 'task_specs', message: error.message });
+  }
   const handlers = {
     task: projectTask,
     episode: projectEpisode,

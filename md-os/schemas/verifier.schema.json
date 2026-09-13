@@ -11,6 +11,17 @@
     "outcome"
   ],
   "properties": {
+    "task_spec_id": { "type": "string" },
+    "task_spec_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "report_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "checked_at": { "type": "string" },
+    "verification_scope": { "const": "declared_local_contract" },
+    "binding_errors": { "type": "array", "items": { "type": "string" } },
+    "bindings": { "type": "array", "maxItems": 256, "items": {
+      "type": "object", "additionalProperties": false, "required": ["path", "exists", "sha256"],
+      "properties": { "path": { "type": "string" }, "exists": { "type": "boolean" },
+        "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" } }
+    } },
     "verifier_id": { "type": "string", "minLength": 1 },
     "status": { "enum": ["ok", "attention", "critical"] },
     "outcome": { "enum": ["verified", "unverified", "failed"] },

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_context_selection_audit.schema.json",
+  "title": "Rebuildable APFC context-selection detail, external to working context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mode", "context_pack_id", "graph_content_hash", "task_spec_hash", "selection_policy", "limits", "omissions", "selection_trace"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "mode": { "const": "apfc_context_selection_audit" },
+    "context_pack_id": { "type": "string", "pattern": "^apfc_ctx_[a-zA-Z0-9_-]+_[a-f0-9]{10}$" },
+    "graph_content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "task_spec_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "selection_policy": { "const": "relevance_policy_v2" },
+    "limits": {
+      "type": "object", "additionalProperties": false, "required": ["maximum_nodes", "maximum_bytes"],
+      "properties": { "maximum_nodes": { "type": "integer", "minimum": 1 }, "maximum_bytes": { "type": "integer", "minimum": 1 } }
+    },
+    "omissions": { "type": "array", "items": { "type": "object" } },
+    "selection_trace": { "type": "array", "items": { "type": "object" } }
+  }
+}

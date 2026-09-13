@@ -27,35 +27,126 @@
     "verification_contract"
   ],
   "properties": {
-    "schema_version": { "const": 5 },
-    "receipt_id": { "type": "string", "pattern": "^apfc_receipt_[a-f0-9]{20}$" },
-    "frame_id": { "type": "string", "pattern": "^apfc_turn_[a-f0-9]{20}$" },
-    "input_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "output_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "status": { "enum": ["completed", "interrupted", "failed"] },
-    "goal_present": { "type": "boolean" },
-    "attention_present": { "type": "boolean" },
-    "selected_sources": { "type": "array", "items": { "type": "string" } },
-    "omitted_sources": { "type": "array", "items": { "type": "string" } },
-    "context_contract": { "$ref": "apfc_context_sufficiency.schema.json" },
-    "approval_decisions": { "type": "array", "items": { "type": "object" } },
-    "observed_actions": { "type": "array", "items": { "type": "object" } },
-    "assistant_output_epistemic_status": { "const": "proposal" },
-    "verified_claims": { "type": "array", "items": { "type": "object" } },
-    "operational_unity_tensor": { "$ref": "apfc_operational_unity_tensor.schema.json" },
-    "causal_unity_state": { "$ref": "apfc_causal_unity_state.schema.json" },
-    "causal_dependency_probe": { "$ref": "apfc_causal_dependency_probe.schema.json" },
-    "causal_unity_transition": { "$ref": "apfc_causal_unity_transition.schema.json" },
+    "schema_version": {
+      "const": 5
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^apfc_receipt_[a-f0-9]{20}$"
+    },
+    "frame_id": {
+      "type": "string",
+      "pattern": "^apfc_turn_[a-f0-9]{20}$"
+    },
+    "input_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "output_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "interrupted",
+        "failed"
+      ]
+    },
+    "goal_present": {
+      "type": "boolean"
+    },
+    "attention_present": {
+      "type": "boolean"
+    },
+    "selected_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "omitted_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "context_contract": {
+      "$ref": "apfc_context_sufficiency.schema.json"
+    },
+    "approval_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "observed_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "assistant_output_epistemic_status": {
+      "const": "proposal"
+    },
+    "verified_claims": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "operational_unity_tensor": {
+      "$ref": "apfc_operational_unity_tensor.schema.json"
+    },
+    "causal_unity_state": {
+      "$ref": "apfc_causal_unity_state.schema.json"
+    },
+    "causal_dependency_probe": {
+      "$ref": "apfc_causal_dependency_probe.schema.json"
+    },
+    "causal_unity_transition": {
+      "$ref": "apfc_causal_unity_transition.schema.json"
+    },
     "verification_contract": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["expected_result", "verifier", "evidence", "verdict"],
+      "required": [
+        "expected_result",
+        "verifier",
+        "evidence",
+        "verdict"
+      ],
       "properties": {
-        "expected_result": { "const": "satisfy_current_human_request" },
-        "verifier": { "const": "independent_observable_readback" },
-        "evidence": { "type": "array", "items": { "type": "object" } },
-        "verdict": { "enum": ["pass", "fail", "unknown"] }
+        "expected_result": {
+          "const": "satisfy_current_human_request"
+        },
+        "verifier": {
+          "const": "independent_observable_readback"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "verdict": {
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ]
+        }
       }
+    },
+    "cognitive_learning": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object"
+      }
+    },
+    "epistemic_verification_scope": {
+      "const": "recorded_pattern_not_whole_turn"
     }
   }
 }

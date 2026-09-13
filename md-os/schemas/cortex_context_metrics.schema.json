@@ -54,6 +54,9 @@
       "uniqueItems": true
     },
     "automatically_injected_memory_node_count": { "const": 0 },
+    "problem_projection_sent": { "type": "boolean" },
+    "problem_projection_node_count": { "type": "integer", "minimum": 0 },
+    "problem_projection_status": { "enum": ["disabled", "ready", "unavailable"] },
     "on_demand_memory_calls": { "type": "integer", "minimum": 0 },
     "on_demand_memory_result_counts": {
       "type": "array",

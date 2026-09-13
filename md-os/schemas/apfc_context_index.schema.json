@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/apfc_context_index.schema.json",
+  "title": "Generated APFC context catalog and persistent problem readback",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "updated_at", "context_pack_count", "packs"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "updated_at": { "type": "string" },
+    "context_pack_count": { "type": "integer", "minimum": 0 },
+    "problem_graph_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "problems": {
+      "type": "array", "maxItems": 10000,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["task_spec_id", "task_spec_path", "goal", "contract_hash", "declared_state", "resolution", "unknown_count", "relations", "review_reasons", "review_required"],
+        "properties": {
+          "task_spec_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
+          "task_spec_path": { "type": "string", "pattern": "^md-os/ops/tasks/" },
+          "goal": { "type": "string", "minLength": 1 },
+          "contract_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "declared_state": { "enum": ["open", "suspended", "candidate"] },
+          "resolution": { "enum": ["unverified", "resolved", "failed"] },
+          "outcome_evidence": { "type": ["object", "null"] },
+          "unknown_count": { "type": "integer", "minimum": 0 },
+          "relations": { "$ref": "problem_core.schema.json#/properties/relations" },
+          "review_reasons": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+          "review_required": { "type": "boolean" }
+        }
+      }
+    },
+    "packs": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["context_pack_id", "task_spec_id", "graph_id", "status", "path"],
+        "properties": {
+          "context_pack_id": { "type": "string" }, "task_spec_id": { "type": "string" },
+          "graph_id": { "type": "string" }, "status": { "enum": ["ok", "attention", "critical"] },
+          "path": { "type": "string" }
+        }
+      }
+    }
+  },
+  "dependentRequired": { "problems": ["problem_graph_hash"], "problem_graph_hash": ["problems"] }
+}

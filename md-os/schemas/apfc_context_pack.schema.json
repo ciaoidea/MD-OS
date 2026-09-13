@@ -24,6 +24,18 @@
     "edges": { "type": "array", "items": { "type": "object" } },
     "omissions": { "type": "array", "items": { "type": "object" } },
     "selection_trace": { "type": "array", "items": { "type": "object" } },
+    "selection_audit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "path", "sha256", "candidate_count", "omitted_count", "retrieval_required_for_selection_details"],
+      "properties": {
+        "mode": { "const": "external" },
+        "path": { "type": "string", "pattern": "^audit/apfc_ctx_[a-zA-Z0-9_-]+_[a-f0-9]{10}\\.json$" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "candidate_count": { "type": "integer", "minimum": 0 },
+        "omitted_count": { "type": "integer", "minimum": 0 },
+        "retrieval_required_for_selection_details": { "const": true }
+      }
+    },
     "source_hashes": { "type": "array", "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" } },
     "serialized_bytes": { "type": "integer", "minimum": 0 },
     "findings": { "type": "array", "items": { "type": "object" } },
@@ -42,5 +54,8 @@
         "target_specific_skill_present": { "const": false }
       }
     }
-  }
+  },
+  "allOf": [
+    { "if": { "required": ["selection_audit"] }, "then": { "properties": { "selection_trace": { "maxItems": 0 }, "omissions": { "maxItems": 0 } } } }
+  ]
 }

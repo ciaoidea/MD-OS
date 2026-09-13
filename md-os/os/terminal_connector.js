@@ -2,6 +2,7 @@
 'use strict';
 
 const fs = require('fs');
+const { randomUUID } = require('crypto');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const {
@@ -148,7 +149,7 @@ function runCommand(profile, projectId, commandId) {
   ensureDir(ARTIFACTS_DIR);
   ensureDir(CONNECTOR_SNAPSHOTS_DIR);
 
-  const artifactBase = `${safeId(projectId)}__${safeId(commandId)}__${stamp}`;
+  const artifactBase = `${safeId(projectId)}__${safeId(commandId)}__${stamp}__${randomUUID()}`;
   const artifactPath = path.join(ARTIFACTS_DIR, `${artifactBase}.txt`);
   const artifactText = [
     `command_id: ${commandId}`,
@@ -212,6 +213,13 @@ function runCommand(profile, projectId, commandId) {
     ],
   };
   validateConnectorSnapshot(snapshot);
+  // The latest-source projection is mutable. Proof-carrying episodes need a
+  // distinct snapshot for each invocation so successful reuse does not revoke
+  // its own source evidence. The same connector snapshot schema applies.
+  const evidenceSnapshotPath = path.join(ARTIFACTS_DIR, `${artifactBase}.json`);
+  atomicWriteJsonLocked(evidenceSnapshotPath, snapshot, {
+    context: `terminal_evidence:${projectId}:${commandId}`,
+  });
   atomicWriteJsonLocked(snapshotPath, snapshot, {
     context: `terminal_snapshot:${projectId}:${commandId}`,
   });
@@ -224,6 +232,7 @@ function runCommand(profile, projectId, commandId) {
     exit_code: statusCode,
     duration_ms: finishedAt - startedAt,
     snapshot_file: rel(snapshotPath),
+    evidence_snapshot_file: rel(evidenceSnapshotPath),
     artifact_file: rel(artifactPath),
   });
 
@@ -235,6 +244,7 @@ function runCommand(profile, projectId, commandId) {
     exit_code: statusCode,
     duration_ms: finishedAt - startedAt,
     snapshot_file: rel(snapshotPath),
+    evidence_snapshot_file: rel(evidenceSnapshotPath),
     artifact_file: rel(artifactPath),
   });
 }

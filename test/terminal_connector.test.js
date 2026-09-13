@@ -59,6 +59,19 @@ test('terminal connector writes bounded snapshot inside workspace', () => {
   assert.equal(snapshot.signals.length, 1);
   assert.equal(snapshot.signals[0].connector_runtime.cwd, '.');
   assert.match(snapshot.signals[0].connector_runtime.output_sha256, /^[a-f0-9]{64}$/);
+  const first = JSON.parse(result.stdout.trim().split('\n').at(-1));
+  const evidencePath = path.join(workspace, first.evidence_snapshot_file);
+  const frozen = fs.readFileSync(evidencePath, 'utf8');
+  assert.deepEqual(JSON.parse(frozen), snapshot);
+  const repeated = runConnector(workspace, ['run', 'demo_project', 'node_version']);
+  assert.equal(repeated.status, 0, repeated.stderr);
+  const second = JSON.parse(repeated.stdout.trim().split('\n').at(-1));
+  assert.equal(first.snapshot_file, second.snapshot_file);
+  assert.notEqual(first.evidence_snapshot_file, second.evidence_snapshot_file);
+  assert.notEqual(first.artifact_file, second.artifact_file);
+  assert.equal(fs.readFileSync(evidencePath, 'utf8'), frozen);
+  assert.deepEqual(JSON.parse(fs.readFileSync(snapshotPath, 'utf8')),
+    JSON.parse(fs.readFileSync(path.join(workspace, second.evidence_snapshot_file), 'utf8')));
 });
 
 test('terminal connector rejects cwd outside workspace', () => {

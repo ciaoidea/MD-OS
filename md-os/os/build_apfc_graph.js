@@ -8,12 +8,14 @@ const {
   WORKSPACE_ROOT,
   nowIso,
   printJson,
+  canonicalJson,
   sha256Json,
   sha256Text,
 } = require('./lib/common');
 const { atomicWriteJson, atomicWriteText, ensureDir, withFileLock } = require('./lib/fs_runtime');
 const { assertApfcGraph, projectCanonicalSources } = require('../apfc/executive/graph_projector');
-const { compileOperationalContextPack } = require('../apfc/executive/context_compiler');
+const { compileOperationalContextBundle, assertContextSelectionAudit } = require('../apfc/executive/context_compiler');
+const { buildProblemReadback } = require('../kernel/cognition/problem_core');
 const { readEvents, verifyEventChain } = require('../apfc/executive/event_recorder');
 
 function listJson(dirPath) {
@@ -238,8 +240,7 @@ function rebuildContextPacks(graph, records, apfcDir, workspaceRoot) {
   const findings = [];
   for (const record of records.filter((item) => item.kind === 'task').sort((left, right) => left.path.localeCompare(right.path))) {
     try {
-      const pack = compileOperationalContextPack(graph, record.data);
-      packs.push(pack);
+      packs.push(compileOperationalContextBundle(graph, record.data));
     } catch (error) {
       findings.push({
         finding_id: `context_${sha256Text(`${record.path}:${error.message}`).slice(0, 12)}`,
@@ -250,20 +251,35 @@ function rebuildContextPacks(graph, records, apfcDir, workspaceRoot) {
     }
   }
   const expected = new Set(['index.json', 'index.md']);
-  for (const pack of packs) {
+  const auditDir = path.join(contextDir, 'audit');
+  ensureDir(auditDir);
+  const expectedAudits = new Set();
+  for (const { pack, selection_audit: audit } of packs) {
+    assertContextSelectionAudit(pack, audit);
+    expectedAudits.add(`${pack.context_pack_id}.json`);
+    atomicWriteJson(path.join(auditDir, `${pack.context_pack_id}.json`), audit);
     expected.add(`${pack.context_pack_id}.json`);
     expected.add(`${pack.context_pack_id}.md`);
-    atomicWriteJson(path.join(contextDir, `${pack.context_pack_id}.json`), pack);
+    // Persist the exact serialization measured by the working-context budget.
+    atomicWriteText(path.join(contextDir, `${pack.context_pack_id}.json`), canonicalJson(pack));
     atomicWriteText(path.join(contextDir, `${pack.context_pack_id}.md`), renderContextPackMarkdown(pack));
   }
   for (const entry of fs.readdirSync(contextDir, { withFileTypes: true })) {
     if (entry.isFile() && /\.(json|md)$/.test(entry.name) && !expected.has(entry.name)) fs.unlinkSync(path.join(contextDir, entry.name));
   }
+  // Only replace known generated audit artifacts; never touch source memory.
+  for (const entry of fs.readdirSync(auditDir, { withFileTypes: true })) {
+    if (entry.isFile() && /^apfc_ctx_[a-zA-Z0-9_-]+_[a-f0-9]{10}\.json$/.test(entry.name) && !expectedAudits.has(entry.name)) fs.unlinkSync(path.join(auditDir, entry.name));
+  }
   const index = {
     schema_version: 1,
     updated_at: nowIso(),
     context_pack_count: packs.length,
-    packs: packs.map((pack) => ({
+    problem_graph_hash: sha256Json(graph),
+    problems: buildProblemReadback(records.filter(record => record.kind === 'task').map(record => record.data), { workspace_root: workspaceRoot }).map(problem => ({
+      ...problem, task_spec_path: records.find(record => record.kind === 'task' && record.data.task_spec_id === problem.task_spec_id).path,
+    })),
+    packs: packs.map(({ pack }) => ({
       context_pack_id: pack.context_pack_id,
       task_spec_id: pack.task_spec_id,
       graph_id: pack.graph_id,
@@ -272,7 +288,11 @@ function rebuildContextPacks(graph, records, apfcDir, workspaceRoot) {
     })).sort((left, right) => left.context_pack_id.localeCompare(right.context_pack_id)),
   };
   atomicWriteJson(path.join(contextDir, 'index.json'), index);
-  atomicWriteText(path.join(contextDir, 'index.md'), ['# APFC Context-Pack Index', '', `Packs: \`${index.context_pack_count}\``, '', ...index.packs.map((pack) => `- \`${pack.context_pack_id}\` — \`${pack.status}\``), ''].join('\n'));
+  atomicWriteText(path.join(contextDir, 'index.md'), ['# APFC Context-Pack Index', '', `Packs: \`${index.context_pack_count}\``, '',
+    '## Persistent problems', '',
+    'Declared states and dependency review are not independent task verification. Read the TaskSpec and verifier evidence before a success claim.', '',
+    ...index.problems.map(problem => `- [${problem.task_spec_id}](${path.relative(contextDir, path.join(workspaceRoot, problem.task_spec_path)).replace(/\\/g, '/')}) — ${problem.declared_state}; resolution: ${problem.resolution}; review required: ${problem.review_required}; ${problem.goal}`), '',
+    '## Context packs', '', ...index.packs.map((pack) => `- \`${pack.context_pack_id}\` — \`${pack.status}\``), ''].join('\n'));
   return { index, findings };
 }
 
@@ -288,7 +308,7 @@ function buildApfcGraph(options = {}) {
       source_manifest_hash: sha256Json(loaded.manifestEntries),
       sources: loaded.manifestEntries,
     };
-    let graph = projectCanonicalSources(loaded.records, manifest.sources);
+    let graph = projectCanonicalSources(loaded.records, manifest.sources, { workspace_root: workspaceRoot });
     const findings = [...loaded.findings, ...graph.findings];
     let eventCheck = { ok: true, event_count: 0, last_sequence: 0, last_event_hash: '0'.repeat(64) };
     try { eventCheck = verifyEventChain(readEvents(path.join(apfcDir, 'events.ndjson'))); } catch (error) {

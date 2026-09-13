@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/problem_core.schema.json",
+  "title": "Bounded working core inside a persistent TaskSpec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "premises", "relations"],
+  "properties": {
+    "state": { "enum": ["open", "suspended", "candidate"] },
+    "premises": {
+      "type": "array", "maxItems": 32,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["statement", "epistemic_status", "source_refs"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1, "maxLength": 2048 },
+          "epistemic_status": { "enum": ["hypothetical", "observed"] },
+          "source_refs": { "type": "array", "maxItems": 16, "items": { "type": "string", "minLength": 1, "maxLength": 1024 } }
+        },
+        "allOf": [{ "if": { "properties": { "epistemic_status": { "const": "observed" } } }, "then": { "properties": { "source_refs": { "minItems": 1 } } } }]
+      }
+    },
+    "candidate_solution": { "type": ["string", "null"], "minLength": 1, "maxLength": 4096 },
+    "next_question": { "type": ["string", "null"], "minLength": 1, "maxLength": 2048 },
+    "relations": {
+      "type": "array", "maxItems": 32,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["task_spec_id", "relation", "basis"],
+        "properties": {
+          "task_spec_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
+          "relation": { "enum": ["depends_on", "contradicts", "analogous_to"] },
+          "basis": { "type": "string", "minLength": 1, "maxLength": 2048 },
+          "expected_contract_hash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}

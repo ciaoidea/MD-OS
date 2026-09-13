@@ -18,6 +18,8 @@ const { appendJournal } = require('./lib/journal');
 const { compileTaskSpec } = require('../kernel/cognition/task_compiler');
 const { executeActions } = require('../kernel/cognition/executor');
 const { verifyTaskOutcome } = require('../kernel/cognition/verifier');
+const { commandBindings } = require('../kernel/cognition/problem_outcome');
+const { skillApplicability, resolveSkillProgram } = require('../kernel/cognition/pattern_skill');
 const {
   evaluateCognitiveUnityClaims,
   summarizeCognitiveUnityRegistry,
@@ -298,10 +300,11 @@ function loadSkillRegistry() {
   };
 }
 
-function relevantSkills(registry, taskType) {
+function relevantSkills(registry, taskType, taskSpec) {
   return registry.runtime_eligible_promoted_skills
     .filter((skill) => skill.status === 'promoted'
-      && (skill.domain === taskType || (skill.task_types || []).includes(taskType)))
+      && (skill.domain === taskType || (skill.task_types || []).includes(taskType))
+      && skillApplicability(WORKSPACE_ROOT, skill, taskSpec).applicable)
     .slice(0, 5);
 }
 
@@ -326,6 +329,7 @@ function buildPlan({ taskType, contextPackId, riskLevel, capabilities, skills, t
       actor: 'transaction_executor',
       action: 'execute_declared_connector_actions',
       inputs: (taskSpec.actions || []).map((action) => action.action_id),
+      ...(taskSpec.skill_reuse ? { skill_reuse: taskSpec.skill_reuse } : {}),
       expected_readback: 'action_receipts_with_state_delta',
     },
     {
@@ -665,10 +669,14 @@ function buildEpisode(options) {
   const contextPackId = contextPackForTask(taskType, options.context_pack_id);
   const contextPack = loadContextPack(contextPackId);
   const registry = loadSkillRegistry();
-  const skills = relevantSkills(registry, taskType);
+  const skills = relevantSkills(registry, taskType, taskSpec);
+  if (taskSpec.skill_reuse) {
+    const { skill } = resolveSkillProgram(WORKSPACE_ROOT, taskSpec.skill_reuse, taskSpec);
+    if (!skills.some(item => item.skill_id === skill.skill_id)) skills.unshift(skill);
+  }
   const capabilities = relevantCapabilities(runtime, task, taskType);
   const tools = toolsForTask(taskType, options.allowed_tools);
-  const id = episodeId(task, now);
+  const id = episodeId(task, new Date().toISOString());
   const taskSpecPath = path.resolve(WORKSPACE_ROOT, taskCompilation.task_spec_file);
   fs.mkdirSync(TASKS_DIR, { recursive: true });
   atomicWriteJson(taskSpecPath, taskSpec);
@@ -681,8 +689,14 @@ function buildEpisode(options) {
     taskSpec,
   });
   const policyBlocked = riskLevel === 'high' && !options.allow_high_risk;
+  let initialCommands;
+  try { initialCommands = commandBindings(WORKSPACE_ROOT, taskSpec); }
+  catch (_error) { initialCommands = [{ binding_error: 'unavailable_before_execution' }]; }
+  // Recheck the live source after compilation and immediately before entering
+  // the normal executor. Reuse never bypasses policy, budgets or acceptance.
+  if (taskSpec.skill_reuse) resolveSkillProgram(WORKSPACE_ROOT, taskSpec.skill_reuse, taskSpec);
   const actionReceipts = taskCompilation.verifiable && !policyBlocked
-    ? executeActions({ episodeId: id, taskSpec, receiptsDir: ACTION_RECEIPTS_DIR })
+    ? executeActions({ episodeId: id, taskSpec, receiptsDir: ACTION_RECEIPTS_DIR, initialCommands })
     : [];
   const verification = verifyTaskOutcome({
     episodeId: id,
@@ -690,6 +704,7 @@ function buildEpisode(options) {
     taskCompilation,
     actionReceipts,
     policyBlocked,
+    initialCommands,
   });
   fs.mkdirSync(VERIFICATIONS_DIR, { recursive: true });
   const verificationFile = path.join(VERIFICATIONS_DIR, `${verification.verification_id}.json`);
@@ -1083,7 +1098,7 @@ function buildSkillRegistry(skills) {
   const runtimeEligible = annotatedPromoted.filter((skill) => Boolean(
     skill.promotion_receipt_id
     && skill.source_consolidation_cycle_id
-    && skill.promotion_evidence_hash,
+    && skill.promotion_evidence_hash && skillApplicability(WORKSPACE_ROOT, skill).applicable,
   ));
   const annotatedCandidates = skills.candidates.map(annotateUnity);
   const cognitiveUnity = summarizeCognitiveUnityRegistry(
@@ -1153,7 +1168,13 @@ function buildEvalReport({ episodes, skills, failureIndex }) {
       autonomy_horizon: totalEpisodes ? 'single_cycle_minutes' : 'not_measured',
       semantic_drift: failureIndex.failure_class_counts.semantic_conflict || 0,
       claim_contradictions: 0,
-      skill_reuse: skills.promoted.filter((skill) => Boolean(skill.promotion_receipt_id && skill.source_consolidation_cycle_id && skill.promotion_evidence_hash)).reduce((sum, skill) => sum + Math.max(0, (skill.source_episodes || []).length - 1), 0),
+      // Training/source episodes are not reuse. Count recorded successful
+      // transactions whose actual action program came from an explicit skill.
+      skill_reuse: episodes.filter((episode) => episode.verdict === 'success'
+        && episode.task_spec?.skill_reuse
+        && (episode.actions || []).length > 0
+        && episode.actions.length === episode.task_spec.actions.length
+        && episode.actions.every(action => action.status === 'completed')).length,
       promoted_skill_count: skills.promoted.length,
       runtime_eligible_promoted_skill_count: skills.promoted.filter((skill) => Boolean(skill.promotion_receipt_id && skill.source_consolidation_cycle_id && skill.promotion_evidence_hash)).length,
       candidate_skill_count: skills.candidates.length,

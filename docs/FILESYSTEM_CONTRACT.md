@@ -61,6 +61,9 @@ audit, replay, package, and move between machines.
 | `md-os/ops/releases/self/proposals/*.json` | live/source self-release proposal | yes | case-dependent | no | case-dependent | no |
 | `md-os/ops/episodes/*.{json,md}` | live learning episode memory | evidence | case-dependent | no | no | maybe |
 | `md-os/ops/tasks/*.json` | live cognitive TaskSpec | evidence | case-dependent | no | no | maybe |
+| `md-os/ops/apfc/executive/context_packs/index.{json,md}` | generated context catalog and persistent-problem dependency readback | no | no | yes | no | no |
+| `md-os/ops/apfc/executive/context_packs/apfc_ctx_*.{json,md}` | generated working context with mandatory graph closure and hash-bound selection-audit reference | no | no | yes | no | no |
+| `md-os/ops/apfc/executive/context_packs/audit/apfc_ctx_*.json` | generated selection and omission detail, recoverable outside working context | no | no | yes | no | no |
 | `md-os/ops/action_receipts/*.json` | live transactional action receipt | evidence | case-dependent | no | no | maybe |
 | `md-os/ops/verifications/*.json` | live independent VerificationResult | evidence | case-dependent | no | no | maybe |
 | `md-os/ops/trajectories/*.json` | live learning trajectory | evidence | case-dependent | no | no | maybe |

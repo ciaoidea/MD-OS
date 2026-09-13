@@ -3,6 +3,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { normalizeProblemCore } = require('./problem_core');
+const { resolveSkillProgram } = require('./pattern_skill');
+const { normalizeStateGuards } = require('./state_guard');
 const {
   MDOS_ROOT,
   WORKSPACE_ROOT,
@@ -76,6 +79,7 @@ function normalizeCommandReference(value, label, index) {
   if (!Number.isInteger(expectedExitStatus)) {
     throw new Error(`INVALID_EXPECTED_EXIT_STATUS: ${commandId}`);
   }
+  if (value.state_guards !== undefined && label !== 'actions') throw new Error('STATE_GUARDS_ACTION_ONLY');
   return {
     ...value,
     [`${label.slice(0, -1)}_id`]: assertSafeId(
@@ -86,6 +90,7 @@ function normalizeCommandReference(value, label, index) {
     project_id: projectId,
     command_id: commandId,
     expected_exit_status: expectedExitStatus,
+    ...(value.state_guards === undefined ? {} : { state_guards: normalizeStateGuards(value.state_guards, WORKSPACE_ROOT) }),
   };
 }
 
@@ -152,8 +157,15 @@ function compileTaskSpec({ task = '', taskSpecPath = '', createdAt }) {
     throw new Error('TASK_AND_TASK_SPEC_GOAL_MISMATCH');
   }
 
-  const actions = objectArray(raw.actions, 'actions', (item, index) => normalizeCommandReference(item, 'actions', index));
+  let actions = objectArray(raw.actions, 'actions', (item, index) => normalizeCommandReference(item, 'actions', index));
   const acceptanceTests = objectArray(raw.acceptance_tests, 'acceptance_tests', (item, index) => normalizeCommandReference(item, 'acceptance_tests', index));
+  const reused = raw.skill_reuse === undefined ? null : resolveSkillProgram(WORKSPACE_ROOT, raw.skill_reuse, {
+    ...raw, actions, acceptance_tests: acceptanceTests,
+    constraints: stringArray(raw.constraints, 'constraints'), unknowns: stringArray(raw.unknowns, 'unknowns'),
+  });
+  if (reused) actions = objectArray(reused.actions, 'actions', (item, index) => normalizeCommandReference(item, 'actions', index));
+  if (actions.reduce((count, action) => count + (action.state_guards?.before.length || 0)
+    + (action.state_guards?.after.length || 0), 0) > 64) throw new Error('STATE_GUARDS_TASK_BUDGET');
   const requiredEvidence = objectArray(raw.required_evidence, 'required_evidence', normalizeEvidence);
   const observationTargets = objectArray(raw.observation_targets, 'observation_targets', normalizeObservationTarget);
   assertUnique(actions, 'action_id', 'action_id');
@@ -196,6 +208,10 @@ function compileTaskSpec({ task = '', taskSpecPath = '', createdAt }) {
     risk_budget: riskBudget,
     resource_budget: resourceBudget,
     required_evidence: requiredEvidence,
+    verification_dependencies: [...new Set([
+      ...stringArray(raw.verification_dependencies, 'verification_dependencies').map(value => normalizeMdosPath(value, 'verification_dependency')),
+      ...(reused ? [reused.source] : []),
+    ])],
     unknowns: stringArray(raw.unknowns, 'unknowns'),
     success_definition: {
       ...successInput,
@@ -205,7 +221,9 @@ function compileTaskSpec({ task = '', taskSpecPath = '', createdAt }) {
       required_evidence_must_exist: requiredEvidence.length > 0,
     },
     actions,
+    ...(reused ? { skill_reuse: { ...raw.skill_reuse } } : {}),
     observation_targets: observationTargets,
+    ...(raw.problem_core === undefined ? {} : { problem_core: normalizeProblemCore(raw.problem_core) }),
   };
 
   const findings = [];

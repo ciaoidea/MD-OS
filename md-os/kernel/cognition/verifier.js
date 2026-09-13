@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 
-const { sha256Json, shortText } = require('../../os/lib/common');
+const { sha256Json, shortText, WORKSPACE_ROOT } = require('../../os/lib/common');
 const { fileSnapshot, runTerminalCommand } = require('./executor');
+const { sealOutcome } = require('./problem_outcome');
+const { guardReadbackPassed } = require('./state_guard');
 
 function check(checkId, status, message, evidence = []) {
   return {
@@ -13,7 +15,7 @@ function check(checkId, status, message, evidence = []) {
   };
 }
 
-function verifyTaskOutcome({ episodeId, taskSpec, taskCompilation, actionReceipts, policyBlocked = false }) {
+function verifyTaskOutcome({ episodeId, taskSpec, taskCompilation, actionReceipts = [], policyBlocked = false, initialCommands }) {
   const checks = [];
   const acceptanceResults = [];
   const evidence = [];
@@ -42,7 +44,14 @@ function verifyTaskOutcome({ episodeId, taskSpec, taskCompilation, actionReceipt
     checks.push(check('policy_gate', 'ok', 'The bounded transaction passed its pre-execution risk gate.'));
   }
 
-  const failedReceipts = (actionReceipts || []).filter((receipt) => receipt.status !== 'completed');
+  const failedReceipts = actionReceipts.filter((receipt, index) => receipt.status !== 'completed'
+    || receipt.episode_id !== episodeId || receipt.action_id !== taskSpec.actions[index]?.action_id
+    || receipt.input_hash !== sha256Json(taskSpec.actions[index] || {})
+    || receipt.execution_control?.stop || !guardReadbackPassed(taskSpec.actions[index] || {}, receipt));
+  const stopped = actionReceipts.find(receipt => receipt.execution_control?.stop);
+  if (stopped) checks.push(check('execution_stopped', 'critical',
+    `The procedure stopped at ${stopped.action_id}: ${stopped.execution_control.reason}. Remaining actions were not authorized by this execution.`,
+    [stopped.file]));
   if (!taskCompilation.verifiable && (taskSpec.actions || []).length) {
     checks.push(check(
       'action_receipts_complete',
@@ -125,7 +134,7 @@ function verifyTaskOutcome({ episodeId, taskSpec, taskCompilation, actionReceipt
         observed_exit_status: execution.exit_status,
         status: passed ? 'passed' : 'failed',
         artifacts: execution.payload
-          ? [execution.payload.artifact_file, execution.payload.snapshot_file].filter(Boolean)
+          ? [execution.payload.artifact_file, execution.payload.evidence_snapshot_file || execution.payload.snapshot_file].filter(Boolean)
           : [],
         readback: execution.payload,
         stderr: shortText(execution.stderr || ''),
@@ -174,7 +183,7 @@ function verifyTaskOutcome({ episodeId, taskSpec, taskCompilation, actionReceipt
   const hasCritical = checks.some((item) => item.status === 'critical');
   const hasAttention = checks.some((item) => item.status === 'attention');
   const outcome = hasCritical ? 'failed' : hasAttention ? 'unverified' : 'verified';
-  return {
+  return sealOutcome({
     schema_version: 1,
     verification_id: `verification_${sha256Json({ episodeId, checks, acceptanceResults }).slice(0, 16)}`,
     episode_id: episodeId,
@@ -186,7 +195,7 @@ function verifyTaskOutcome({ episodeId, taskSpec, taskCompilation, actionReceipt
     acceptance_results: acceptanceResults,
     action_receipt_ids: (actionReceipts || []).map((receipt) => receipt.action_receipt_id),
     evidence: Array.from(new Set(evidence.filter(Boolean))).sort(),
-  };
+  }, taskSpec, actionReceipts, WORKSPACE_ROOT, initialCommands);
 }
 
 module.exports = {

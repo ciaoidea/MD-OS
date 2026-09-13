@@ -74,6 +74,11 @@ function assertContextPack(pack) {
     throw new Error('APFC_CONTEXT_PACK_SELECTED_IDS_INVALID');
   }
   const selected = new Set(nodeIds);
+  if (pack.mandatory_node_ids.some(id => !selected.has(id))) throw new Error('APFC_CONTEXT_PACK_MANDATORY_NODE_MISSING');
+  if (pack.selection_audit && (pack.selection_audit.mode !== 'external'
+    || pack.selection_trace.length || pack.omissions.length
+    || pack.selection_audit.path !== `audit/${pack.context_pack_id}.json`
+    || !/^[a-f0-9]{64}$/.test(pack.selection_audit.sha256))) throw new Error('APFC_CONTEXT_PACK_AUDIT_REFERENCE_INVALID');
   for (const edge of pack.edges || []) {
     if (!selected.has(edge.from) || !selected.has(edge.to)) throw new Error(`APFC_CONTEXT_PACK_EDGE_ENDPOINT_MISSING: ${edge.id}`);
   }
@@ -110,12 +115,15 @@ function provenanceRank(node) {
   return hashBound + Math.min(sourceCount, 4);
 }
 
-function compileOperationalContextPack(graph, taskSpec, limits = {}) {
+function compileOperationalContextInternal(graph, taskSpec, limits = {}, externalAudit = false) {
   assertApfcGraph(graph);
   const taskSpecId = shortText(taskSpec && taskSpec.task_spec_id);
   if (!taskSpecId || !shortText(taskSpec.goal)) throw new Error('APFC_OPERATIONAL_CONTEXT_TASK_CONTRACT_INVALID');
   const maximumNodes = Number.isFinite(limits.maximum_nodes) ? limits.maximum_nodes : 128;
   const maximumBytes = Number.isFinite(limits.maximum_bytes) ? limits.maximum_bytes : 65536;
+  const graphContentHash = graphHash(graph);
+  const taskSpecHash = sha256Json(taskSpec);
+  const contextPackId = `apfc_ctx_${taskSpecId}_${graphContentHash.slice(0, 10)}`;
   const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
   const selected = new Set();
   const mandatory = new Set();
@@ -130,6 +138,7 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
 
   const include = (nodeId, ruleId, isMandatory = false) => {
     if (!nodeMap.has(nodeId)) return;
+    if (selected.has(nodeId) && (!isMandatory || mandatory.has(nodeId))) return;
     selected.add(nodeId);
     direct.add(nodeId);
     if (isMandatory) mandatory.add(nodeId);
@@ -157,11 +166,23 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
     const list = adjacency.get(edge.from) || [];
     list.push(edge);
     adjacency.set(edge.from, list);
+    if (edge.type === 'contradicted_by') {
+      const reverse = adjacency.get(edge.to) || [];
+      reverse.push({ ...edge, from: edge.to, to: edge.from });
+      adjacency.set(edge.to, reverse);
+    }
   }
-  const mandatoryRelationTypes = new Set(['requires', 'constrained_by', 'executed_via', 'verified_by', 'invalidated_by', 'rolled_back_to']);
-  for (const seed of [...mandatory]) {
+  const mandatoryRelationTypes = new Set(['requires', 'constrained_by', 'executed_via', 'verified_by', 'invalidated_by', 'rolled_back_to', 'contradicted_by']);
+  // A separate problem may supply a premise for this one. Resolve the whole
+  // declared chain, including cycles, instead of just one adjacency hop.
+  const dependencyQueue = [...mandatory];
+  for (let index = 0; index < dependencyQueue.length; index += 1) {
+    const seed = dependencyQueue[index];
     for (const edge of adjacency.get(seed) || []) {
-      if (mandatoryRelationTypes.has(edge.type)) include(edge.to, `mandatory_${edge.type}`, true);
+      if (mandatoryRelationTypes.has(edge.type) && !mandatory.has(edge.to)) {
+        include(edge.to, `mandatory_${edge.type}`, true);
+        dependencyQueue.push(edge.to);
+      }
     }
   }
 
@@ -247,38 +268,58 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
       included: withinNodeBudget,
     });
   }
+  let selectionAudit = null;
   const makePack = (ids) => {
     const selectedIds = [...ids].sort();
     const selectedSet = new Set(selectedIds);
     const nodes = selectedIds.map((id) => nodeOverlays.get(id) || nodeMap.get(id));
     const edges = graph.edges.filter((edge) => selectedSet.has(edge.from) && selectedSet.has(edge.to)).sort((left, right) => left.id.localeCompare(right.id));
+    const omissions = graph.nodes.filter((node) => !selectedSet.has(node.id)).map((node) => {
+      const decision = trace.find((entry) => entry.node_id === node.id);
+      return {
+        node_id: node.id,
+        selection_tier: decision && decision.admission_reason === 'zero_relevance' ? 'relevance' : 'budget',
+        rank_tuple: decision ? decision.rank_tuple : [],
+        exclusion_reason: decision && decision.omission_reason ? decision.omission_reason : 'node_or_byte_budget',
+      };
+    });
+    const selectionTrace = trace.slice().sort((left, right) => left.node_id.localeCompare(right.node_id) || left.rule_id.localeCompare(right.rule_id));
+    selectionAudit = {
+      schema_version: 1, mode: 'apfc_context_selection_audit', context_pack_id: contextPackId,
+      graph_content_hash: graphContentHash, task_spec_hash: taskSpecHash,
+      selection_policy: 'relevance_policy_v2', limits: { maximum_nodes: maximumNodes, maximum_bytes: maximumBytes },
+      omissions, selection_trace: selectionTrace,
+    };
     const base = {
       schema_version: 1,
-      context_pack_id: `apfc_ctx_${taskSpecId}_${graphHash(graph).slice(0, 10)}`,
+      context_pack_id: contextPackId,
       graph_id: graph.graph_id,
-      graph_content_hash: graphHash(graph),
+      graph_content_hash: graphContentHash,
       task_spec_id: taskSpecId,
-      task_spec_hash: sha256Json(taskSpec),
+      task_spec_hash: taskSpecHash,
       status: graph.status === 'critical' ? 'critical' : graph.status,
       mandatory_node_ids: [...mandatory].sort(),
       selected_node_ids: selectedIds,
       nodes,
       edges,
-      omissions: graph.nodes.filter((node) => !selectedSet.has(node.id)).map((node) => {
-        const decision = trace.find((entry) => entry.node_id === node.id);
-        return {
-          node_id: node.id,
-          selection_tier: decision && decision.admission_reason === 'zero_relevance' ? 'relevance' : 'budget',
-          rank_tuple: decision ? decision.rank_tuple : [],
-          exclusion_reason: decision && decision.omission_reason ? decision.omission_reason : 'node_or_byte_budget',
-        };
-      }),
-      selection_trace: trace.slice().sort((left, right) => left.node_id.localeCompare(right.node_id) || left.rule_id.localeCompare(right.rule_id)),
+      omissions: externalAudit ? [] : omissions,
+      selection_trace: externalAudit ? [] : selectionTrace,
+      ...(externalAudit ? { selection_audit: {
+        mode: 'external', path: `audit/${contextPackId}.json`, sha256: sha256Json(selectionAudit),
+        candidate_count: selectionTrace.length, omitted_count: omissions.length,
+        retrieval_required_for_selection_details: true,
+      } } : {}),
       source_hashes: [...new Set(nodes.map((node) => node.content_hash))].sort(),
       serialized_bytes: 0,
       findings: [],
     };
-    base.serialized_bytes = Buffer.byteLength(canonicalJson(base), 'utf8');
+    // The counter itself contributes bytes; converge its digit width before
+    // enforcing the budget instead of undercounting a serialized zero.
+    let actualBytes = Buffer.byteLength(canonicalJson(base), 'utf8');
+    while (base.serialized_bytes !== actualBytes) {
+      base.serialized_bytes = actualBytes;
+      actualBytes = Buffer.byteLength(canonicalJson(base), 'utf8');
+    }
     return base;
   };
   let pack = makePack(selected);
@@ -297,7 +338,36 @@ function compileOperationalContextPack(graph, taskSpec, limits = {}) {
     pack = makePack(selected);
   }
   assertContextPack(pack);
-  return pack;
+  if (externalAudit) assertContextSelectionAudit(pack, selectionAudit);
+  return { pack, selection_audit: selectionAudit };
+}
+
+// Keep the inline API for compatibility and matched baseline comparisons.
+function compileOperationalContextPack(graph, taskSpec, limits = {}) {
+  return compileOperationalContextInternal(graph, taskSpec, limits, false).pack;
+}
+
+// The OS persists both artifacts; only the working pack consumes its context
+// budget. At identical selection every node/edge and audit row is retained;
+// under smaller budgets the existing policy still prunes only optional nodes.
+function compileOperationalContextBundle(graph, taskSpec, limits = {}) {
+  return compileOperationalContextInternal(graph, taskSpec, limits, true);
+}
+
+function assertContextSelectionAudit(pack, audit) {
+  assertContextPack(pack);
+  const reference = pack.selection_audit;
+  if (!reference || !audit || audit.schema_version !== 1 || audit.mode !== 'apfc_context_selection_audit'
+      || reference.sha256 !== sha256Json(audit)
+      || audit.context_pack_id !== pack.context_pack_id || audit.graph_content_hash !== pack.graph_content_hash
+      || audit.task_spec_hash !== pack.task_spec_hash || !Array.isArray(audit.selection_trace) || !Array.isArray(audit.omissions)
+      || audit.selection_trace.length !== reference.candidate_count || audit.omissions.length !== reference.omitted_count) throw new Error('APFC_CONTEXT_SELECTION_AUDIT_INVALID');
+  const included = audit.selection_trace.filter(row => row.included).map(row => row.node_id).sort();
+  const excluded = audit.selection_trace.filter(row => !row.included).map(row => row.node_id).sort();
+  if (canonicalJson(included) !== canonicalJson(pack.selected_node_ids)
+      || canonicalJson(excluded) !== canonicalJson(audit.omissions.map(row => row.node_id).sort())
+      || new Set([...included, ...excluded]).size !== included.length + excluded.length) throw new Error('APFC_CONTEXT_SELECTION_AUDIT_PARTITION_INVALID');
+  return true;
 }
 
 function compileContextPack(graph, taskSpec) {
@@ -389,8 +459,10 @@ function flatRetrieveSkills(graph, taskSpec, count) {
 
 module.exports = {
   assertContextPack,
+  assertContextSelectionAudit,
   compileContextPack,
   compileOperationalContextPack,
+  compileOperationalContextBundle,
   enumerateShortestPaths,
   flatRetrieveSkills,
   graphHash,

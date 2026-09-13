@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://md-os.local/schemas/problem_compaction.schema.json",
+  "title": "Read-only problem compaction preview; never a success verdict",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mode", "task_spec_id", "status", "writes", "resolution", "automatic_reuse", "source", "network", "representation", "changes", "risks", "verification", "metrics"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "mode": { "const": "problem_compaction_preview" },
+    "task_spec_id": { "$ref": "#/$defs/taskId" },
+    "status": { "enum": ["lossless_verified", "semantic_candidate", "rejected", "insufficient_evidence"] },
+    "writes": { "const": false },
+    "resolution": { "const": "unverified" },
+    "automatic_reuse": { "const": false },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "contract_hash"],
+      "properties": { "path": { "$ref": "#/$defs/taskPath" }, "sha256": { "$ref": "#/$defs/hash" }, "contract_hash": { "$ref": "#/$defs/hash" } }
+    },
+    "network": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["hash", "scope"],
+          "properties": { "hash": { "$ref": "#/$defs/hash" }, "scope": { "const": "not_loaded_budget_exceeded" } }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["hash", "scope", "affected_problem_ids", "unrelated_problem_count", "relations", "problems", "evidence"],
+          "properties": {
+            "hash": { "$ref": "#/$defs/hash" }, "scope": { "const": "declared_relations_only" },
+            "affected_problem_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/taskId" } },
+            "unrelated_problem_count": { "type": "integer", "minimum": 0 },
+            "relations": {
+              "type": "array", "items": {
+                "type": "object", "additionalProperties": false,
+                "required": ["from", "task_spec_id", "relation", "basis", "expected_contract_hash"],
+                "properties": {
+                  "from": { "$ref": "#/$defs/taskId" }, "task_spec_id": { "$ref": "#/$defs/taskId" },
+                  "relation": { "enum": ["depends_on", "contradicts", "analogous_to"] }, "basis": { "type": "string" },
+                  "expected_contract_hash": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] }
+                }
+              }
+            },
+            "problems": {
+              "type": "array", "items": {
+                "type": "object", "additionalProperties": false,
+                "required": ["task_spec_id", "source_path", "contract_hash", "declared_state", "resolution", "review_required", "review_reasons"],
+                "properties": {
+                  "task_spec_id": { "$ref": "#/$defs/taskId" }, "source_path": { "$ref": "#/$defs/taskPath" }, "contract_hash": { "$ref": "#/$defs/hash" },
+                  "declared_state": { "enum": ["open", "suspended", "candidate"] }, "resolution": { "const": "unverified" },
+                  "review_required": { "type": "boolean" }, "review_reasons": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            },
+            "evidence": {
+              "type": "array", "maxItems": 256, "items": {
+                "oneOf": [
+                  { "type": "object", "additionalProperties": false, "required": ["path", "status"], "properties": { "path": { "type": "string" }, "status": { "const": "unavailable" } } },
+                  { "type": "object", "additionalProperties": false, "required": ["path", "status", "sha256"], "properties": { "path": { "type": "string" }, "status": { "const": "bound" }, "sha256": { "$ref": "#/$defs/hash" } } }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "representation": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/representation" }] },
+    "changes": {
+      "type": "array", "maxItems": 64, "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["pointer", "summary", "reason", "original_sha256", "source_ref", "evidence_status"],
+        "properties": {
+          "pointer": { "$ref": "#/$defs/summaryPointer" }, "summary": { "type": "string", "minLength": 1, "maxLength": 4096 },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 2048 }, "original_sha256": { "$ref": "#/$defs/hash" },
+          "source_ref": { "type": "string" }, "evidence_status": { "const": "model_proposal_only" }
+        }
+      }
+    },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scope", "round_trip", "semantic_equivalence", "outcome"],
+      "properties": {
+        "scope": { "enum": ["exact_json_reconstruction_only", "structure_and_source_bindings_only"] },
+        "round_trip": { "type": "boolean" }, "semantic_equivalence": { "const": "not_evaluated" }, "outcome": { "const": "not_evaluated" }
+      }
+    },
+    "metrics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["original_json_bytes", "representation_bytes", "output_bytes", "total_token_saving"],
+      "properties": {
+        "original_json_bytes": { "type": "integer", "minimum": 0 }, "representation_bytes": { "type": "integer", "minimum": 0 },
+        "output_bytes": { "type": "integer", "minimum": 0 }, "total_token_saving": { "type": "null" }
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "status": { "const": "lossless_verified" } } }, "then": { "properties": { "verification": { "properties": { "round_trip": { "const": true }, "scope": { "const": "exact_json_reconstruction_only" } } }, "representation": { "$ref": "#/$defs/representation" } } } },
+    { "if": { "properties": { "status": { "const": "rejected" } } }, "then": { "properties": { "representation": { "type": "null" } } } }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "taskId": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
+    "taskPath": { "type": "string", "pattern": "^md-os/ops/tasks/task_[a-zA-Z0-9_]+\\.json$" },
+    "summaryPointer": { "type": "string", "pattern": "^/(goal|constraints/[0-9]+|unknowns/[0-9]+|problem_core/(candidate_solution|next_question|premises/[0-9]+/statement))$" },
+    "representation": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["format", "body"], "properties": { "format": { "const": "json" }, "body": {} } },
+        {
+          "type": "object", "additionalProperties": false, "required": ["format", "body", "shared"],
+          "properties": {
+            "format": { "const": "json-shared-v1" }, "body": {},
+            "shared": {
+              "type": "array", "minItems": 1, "items": {
+                "type": "object", "additionalProperties": false, "required": ["at", "value"],
+                "properties": { "at": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string", "pattern": "^/" } }, "value": {} }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "proposal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "source_hash", "network_hash", "changes"],
+      "properties": {
+        "schema_version": { "const": 1 }, "source_hash": { "$ref": "#/$defs/hash" }, "network_hash": { "$ref": "#/$defs/hash" },
+        "changes": {
+          "type": "array", "minItems": 1, "maxItems": 64, "items": {
+            "type": "object", "additionalProperties": false, "required": ["pointer", "summary", "reason"],
+            "properties": { "pointer": { "$ref": "#/$defs/summaryPointer" }, "summary": { "type": "string", "minLength": 1, "maxLength": 4096 }, "reason": { "type": "string", "minLength": 1, "maxLength": 2048 } }
+          }
+        }
+      }
+    }
+  }
+}

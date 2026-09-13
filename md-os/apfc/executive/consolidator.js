@@ -144,6 +144,8 @@ function gateCandidate(candidate, supportingEpisodes, evaluation, options = {}) 
   const holdout = normalizedHoldout(candidate, evaluation);
   const unityGate = evaluateCognitiveUnityClaims(candidate, options);
   const checks = {
+    ...(candidate.pattern_origin ? { current_pattern_source_outcomes: Boolean(options.workspace_root
+      && require('../../kernel/cognition/pattern_skill').patternSkillEvidence(options.workspace_root, candidate).applicable) } : {}),
     schema_valid: Boolean(candidate.skill_id && candidate.title && Array.isArray(candidate.procedure) && candidate.procedure.length),
     two_verified_source_episodes: verified.length >= 2,
     distinct_task_specs: taskIds.length >= 2,
@@ -166,6 +168,7 @@ function gateCandidate(candidate, supportingEpisodes, evaluation, options = {}) 
     ...unityGate.criteria,
   };
   const blockedKeys = ['two_verified_source_episodes', 'distinct_task_specs', 'distinct_action_input_hashes', 'sealed_holdout', 'minimum_30_cases', 'three_trials', 'two_cold_starts', 'rollback_rehearsal', 'complete_provenance', 'rollback_declared', 'relative_transformation_report_hash_valid', 'underlying_evidence_files_valid', 'cross_domain_transformation_verified', 'tensor_transformation_law_verified', 'controls_and_contamination_verified', 'causal_reuse_verified', 'cognitive_unity_state_hash_valid', 'cognitive_unity_state_verified'];
+  blockedKeys.push('current_pattern_source_outcomes');
   const failed = Object.entries(checks).filter(([, passed]) => !passed).map(([key]) => key);
   return {
     status: failed.length ? (failed.some((key) => blockedKeys.includes(key)) ? 'blocked' : 'rejected') : 'ok',
