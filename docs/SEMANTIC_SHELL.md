@@ -308,14 +308,23 @@ turn as operating data, then cleared only after successful delivery.
 The volatile queue retains at most 32 events and at most 16 KiB of output per
 event. Only the newest material that fits the unified 8 KiB auxiliary turn
 ceiling is sent to the model. The queue is not written into the repository.
-Tool output deltas are rendered without flattening their newlines, so tables,
-process lists, test output, and compiler diagnostics retain terminal shape.
-The default `full` trace also renders the Codex reasoning summaries made
-available by the protocol, plan updates, commands and command input/output,
-file changes and diffs, MCP progress, web searches, approvals, and agent
-messages. It does not expose private hidden chain-of-thought that Codex does not
-publish. Set `MDOS_CODEX_TRACE=compact` to hide reasoning/plan/diff detail, or
-`MDOS_CODEX_TRACE=quiet` to keep only essential output and prompts.
+The default `MDOS_CODEX_TRACE=quiet` streams assistant answers while hiding
+agent tool labels, tool output deltas, completed-command output, progress,
+reasoning summaries, plans and diffs. Approval requests and actionable
+connection/security errors remain visible. Commands explicitly entered by the
+operator still show their normal shell output. The provider still receives
+tool results, and authorization and receipt checks are unchanged.
+Set `MDOS_CODEX_TRACE=compact` to inspect tool activity, or `full` to include
+available reasoning summaries, plans and diffs. Diagnostic command output
+preserves line breaks. No additional diagnostic transcript is persisted.
+
+For a prior decision or conversation, use `./cortex memory search "relevant terms"`.
+This returns bounded JSON; `--json` remains accepted. `memory search --help`
+works without reading memory. Workspace-confined `--query-file <path>` remains
+supported. Empty results are normal; mixed text/file inputs and invalid limits
+are rejected. Search never edits canonical history, although it may refresh its
+derived local index. The startup hint includes executable syntax and is bound
+to the memory-interface version, without automatically loading history.
 
 Stable communication discipline comes from the thread bootstrap and native
 repository instructions; it is not repeated as a per-turn ritual. Nontrivial
@@ -382,7 +391,7 @@ configuration by default. Optional overrides are explicit:
 | `MDOS_REASONING_EFFORT` | select a supported effort; default: inherit Codex configuration |
 | `MDOS_CODEX_BACKEND` | `app-server` (native persistent path) or `exec` compatibility mode |
 | `MDOS_CODEX_BIN` | override the `codex` executable, primarily for testing |
-| `MDOS_CODEX_TRACE` | `full` (default), `compact`, or `quiet` event rendering |
+| `MDOS_CODEX_TRACE` | `quiet` (default), `compact`, or `full` event rendering |
 | `MDOS_CODEX_COLOR` | `auto` (default), `always`, or `never` for Codex event and answer colors |
 | `MDOS_PROMPT_COLOR` | `auto`, `always`, or `never` |
 | `NO_COLOR` | disable automatic prompt and Codex colors |

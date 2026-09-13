@@ -1953,7 +1953,7 @@ class SemanticShellParityTests(unittest.TestCase):
         with FakeCodex(
             "Process inspection complete.",
             command_event=("ps -eo pid,comm", "PID COMMAND\n1 init\n2 worker\n"),
-        ) as fake:
+        ) as fake, mock.patch.dict(os.environ, {"MDOS_CODEX_TRACE": "compact"}):
             result = run_console(["show the processes"], fake)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("PID COMMAND\n1 init\n2 worker\n", result.stdout)
@@ -1961,7 +1961,9 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertIn("CODEX COMMAND: ps -eo pid,comm", result.stderr)
 
     def test_full_trace_renders_reasoning_plan_and_diff_readback(self):
-        with FakeCodex("Verified.", trace_events=True) as fake:
+        with FakeCodex("Verified.", trace_events=True) as fake, mock.patch.dict(
+            os.environ, {"MDOS_CODEX_TRACE": "full"}
+        ):
             result = run_console(["inspect and verify"], fake)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("CODEX REASONING:\nInspecting the workspace.", result.stderr)
@@ -2006,7 +2008,7 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertEqual(len(fake.process_starts()), 1)
             self.assertNotIn("effort", requests[0]["params"])
             self.assertNotIn("effort", requests[1]["params"])
-            self.assertEqual(requests[0]["params"]["summary"], "auto")
+            self.assertEqual(requests[0]["params"]["summary"], "none")
             self.assertEqual(
                 requests[0]["params"]["threadId"], FakeCodex.THREAD_ID
             )

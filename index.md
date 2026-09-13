@@ -280,11 +280,12 @@ operational fusion point, not a replacement for either layer.
 The volatile observation queue is not written into tracked files. Codex keeps
 optional resumable thread history outside the repository, but MD-OS neither
 uses it for ordinary boot nor copies raw chat into Git. Clone-carried
-operational continuity comes only from the reviewed portable snapshot. Tool
-output is streamed without flattening line breaks. The
-default `MDOS_CODEX_TRACE=full` view also shows available reasoning summaries,
-plans, commands, diffs, tools, and progress; `compact` and `quiet`
-reduce that readback. `MDOS_CODEX_COLOR=auto` restores terminal-aware ANSI
+operational continuity comes only from the reviewed portable snapshot.
+The default `MDOS_CODEX_TRACE=quiet` streams assistant answers without agent
+tool chatter or raw command output. Approval prompts and actionable errors
+remain visible; explicitly entered shell commands retain their normal output.
+Use `compact` for tool diagnostics or `full` for available reasoning summaries,
+plans and diffs. `MDOS_CODEX_COLOR=auto` restores terminal-aware ANSI
 color for agent answers and structured Codex events; `always` and `never`
 override detection, while `NO_COLOR` disables it.
 
@@ -1675,6 +1676,9 @@ automatically. When the current task depends on a previous decision, correction,
 or historical fact, Codex can request a bounded read-only search:
 
 ```bash
+./cortex memory search "relevant terms" --limit 3 --max-chars 4096 --json
+./cortex memory search --help
+# File-based queries remain supported:
 ./cortex memory search --query-file query.txt --limit 3 --max-chars 4096 --json
 ```
 
