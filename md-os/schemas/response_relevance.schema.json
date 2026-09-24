@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Response relevance policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "rules"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "contract_id": {
+      "const": "response_relevance_v1"
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_binding",
+        "context_boundary",
+        "evidence_fit",
+        "absence_limit",
+        "response_check",
+        "execution_scope"
+      ],
+      "properties": {
+        "request_binding": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "pattern": "^[\\x00-\\x7F]*\\S[\\x00-\\x7F]*$"
+        },
+        "context_boundary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "pattern": "^[\\x00-\\x7F]*\\S[\\x00-\\x7F]*$"
+        },
+        "evidence_fit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "pattern": "^[\\x00-\\x7F]*\\S[\\x00-\\x7F]*$"
+        },
+        "absence_limit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "pattern": "^[\\x00-\\x7F]*\\S[\\x00-\\x7F]*$"
+        },
+        "response_check": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "pattern": "^[\\x00-\\x7F]*\\S[\\x00-\\x7F]*$"
+        },
+        "execution_scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "pattern": "^[\\x00-\\x7F]*\\S[\\x00-\\x7F]*$"
+        }
+      }
+    }
+  }
+}

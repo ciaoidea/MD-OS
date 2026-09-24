@@ -198,6 +198,16 @@ knowledge and old memory remain available through precise file reads and bounded
 search rather than being serialized automatically. Native shell commands remain
 direct and bypass this model-context path.
 
+Ordinary chat and active-turn steering apply a bounded
+[response relevance contract](md-os/shell/RESPONSE_RELEVANCE.md). It binds the
+answer to the current request and appropriate evidence, preserves explicit
+topic changes, and distinguishes missing evidence from a negative finding.
+Thread creation and explicit resume also merge this policy into the effective
+developer instructions while preserving existing configuration. The contract is
+generic English engineering policy; it contains no case history or entity names.
+It does not retrieve memory automatically or independently verify a model's
+reasoning. Restart an existing Cortex shell to load the updated engine.
+
 This is a shell inside the shell, not a browser GUI or a restricted simulation.
 It preserves the actual current directory, persistent `cd`, `PWD`/`OLDPWD`,
 host-style prompt, line editing, Tab completion, pipes, redirections,
@@ -1710,6 +1720,30 @@ retrieval is driven by the recorded human input. Full assistant text remains in
 the canonical payload for audit and is searchable only through the explicit
 `--audit-assistant` path, so old assistant terminology cannot independently
 summon an episode.
+
+Dated retrieval can continue across multiple pages of verified chronology:
+
+```bash
+# Example date; replace it with the date required by the current request.
+./cortex memory search --date 2030-01-15 --limit 3 --json
+# If page.has_more is true, use the returned page.next_after sequence:
+./cortex memory search --date 2030-01-15 --after 3 --limit 3 --json
+```
+
+The `3` after `--after` is only an example: use the actual cursor returned by the
+preceding call. Each call returns at most three nodes; `page.total_matches`
+counts matching records and `page.returned_count` counts the nodes actually
+returned. Continue while `page.has_more` is true. The cursor advances only over
+returned records, including when the output budget reduces the page size.
+An optional query filters the dated records. This route includes assistant text
+as quoted history, not independently verified evidence. Empty results establish
+only that the current request has no matches; they do not prove absent history.
+Canonical chronology is verified before retrieval and is never rewritten.
+
+Pagination applies to dated retrieval. Ordinary lexical search keeps its existing
+bounds, and collecting multiple nodes does not establish coherent or correct
+reasoning by itself. See [memory pagination](md-os/shell/MEMORY_PAGINATION.md)
+for date handling, output limits and cursor semantics.
 
 The database is disposable retrieval support, not canonical memory or truth.
 Deleting it removes the accelerator, while verified source files rebuild it

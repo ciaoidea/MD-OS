@@ -210,6 +210,8 @@ class FakeCodex:
                         )
                     elif method == "initialized":
                         continue
+                    elif method == "config/read":
+                        print(json.dumps({{"id": request_id, "result": {{"config": {{}}}}}}), flush=True)
                     elif method == "thread/list":
                         cwd_filter = message["params"].get("cwd", [])
                         if isinstance(cwd_filter, str):
@@ -942,7 +944,8 @@ class SemanticShellParityTests(unittest.TestCase):
             self.assertNotIn("problem_continuity=", reused)
             self.assertNotIn("context_loading=", reused)
             self.assertNotIn("skill_execution=", reused)
-            self.assertEqual(reused_metrics["auxiliary_bytes"], 132)
+            self.assertLessEqual(reused_metrics["auxiliary_bytes"], ENGINE.MAX_ORDINARY_AUX_CONTEXT_CHARS)
+            self.assertIn("RESPONSE RELEVANCE CONTRACT", reused)
             self.assertEqual(reused_metrics["automatically_injected_memory_nodes"], 0)
 
     def test_projected_problems_are_delivered_on_change_and_rebound_on_new_thread(self):
@@ -968,7 +971,8 @@ class SemanticShellParityTests(unittest.TestCase):
                 codex_problem_projection_hash=metrics["problem_projection_hash"])
             reused, unchanged = ENGINE.build_native_codex_input("Continue", session, workspace=root, return_metrics=True)
             self.assertFalse(unchanged["problem_projection_sent"])
-            self.assertEqual(unchanged["auxiliary_bytes"], 132)
+            self.assertLessEqual(unchanged["auxiliary_bytes"], ENGINE.MAX_ORDINARY_AUX_CONTEXT_CHARS)
+            self.assertIn("RESPONSE RELEVANCE CONTRACT", reused)
             source.write_text('{"window":"morning"}')
             changed, delta = ENGINE.build_native_codex_input("Continue", session, workspace=root, return_metrics=True)
             self.assertTrue(delta["problem_projection_sent"])
@@ -1847,7 +1851,7 @@ class SemanticShellParityTests(unittest.TestCase):
             )
             self.assertEqual(steer["params"]["expectedTurnId"], "turn-1")
             steering_text = steer["params"]["input"][0]["text"]
-            self.assertEqual(steering_text, "aggiungi anche i test")
+            self.assertEqual(steering_text, ENGINE.build_relevance_steering_input("aggiungi anche i test"))
 
     def test_interactive_steering_buffers_characters_until_enter(self):
         fake_stdin = mock.Mock()
