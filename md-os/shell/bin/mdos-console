@@ -4743,7 +4743,7 @@ def write_apfc_turn_receipt(
 
 @contextmanager
 def interactive_turn_terminal():
-    """Buffer steering without echo so streamed output cannot overwrite input."""
+    """Keep queued input visible while the terminal buffers it until Enter."""
     global STEERING_INPUT_BUFFER
     if termios is None or not sys.stdin.isatty():
         yield
@@ -4752,8 +4752,7 @@ def interactive_turn_terminal():
     try:
         original = termios.tcgetattr(descriptor)
         configured = termios.tcgetattr(descriptor)
-        configured[3] |= termios.ICANON
-        configured[3] &= ~termios.ECHO
+        configured[3] |= termios.ICANON | termios.ECHO
         if hasattr(termios, "ECHONL"):
             configured[3] &= ~termios.ECHONL
         configured[6][termios.VEOL] = STEERING_INTERRUPT.encode()

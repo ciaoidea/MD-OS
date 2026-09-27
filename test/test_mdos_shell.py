@@ -1872,7 +1872,7 @@ class SemanticShellParityTests(unittest.TestCase):
             ENGINE.STEERING_INPUT_BUFFER = ""
 
     @unittest.skipIf(ENGINE.termios is None, "POSIX terminal controls unavailable")
-    def test_active_turn_terminal_keeps_ordinary_keys_canonical(self):
+    def test_active_turn_terminal_shows_input_before_enter_and_keeps_it_canonical(self):
         master, slave = os.openpty()
         stdin = os.fdopen(os.dup(slave), "r", encoding="utf-8", errors="replace")
         try:
@@ -1880,11 +1880,14 @@ class SemanticShellParityTests(unittest.TestCase):
                 with ENGINE.interactive_turn_terminal():
                     attributes = ENGINE.termios.tcgetattr(slave)
                     self.assertTrue(attributes[3] & ENGINE.termios.ICANON)
-                    self.assertFalse(attributes[3] & ENGINE.termios.ECHO)
+                    self.assertTrue(attributes[3] & ENGINE.termios.ECHO)
                     if hasattr(ENGINE.termios, "ECHONL"):
                         self.assertFalse(attributes[3] & ENGINE.termios.ECHONL)
 
                     os.write(master, b"a")
+                    visible, _, _ = ENGINE.select.select([master], [], [], 0.2)
+                    self.assertEqual(visible, [master])
+                    self.assertIn(b"a", os.read(master, 4096))
                     readable, _, _ = ENGINE.select.select([slave], [], [], 0.05)
                     self.assertEqual(readable, [])
 
@@ -1899,6 +1902,51 @@ class SemanticShellParityTests(unittest.TestCase):
                     self.assertEqual(
                         os.read(slave, 4096), ENGINE.STEERING_INTERRUPT.encode()
                     )
+        finally:
+            stdin.close()
+            os.close(master)
+            os.close(slave)
+
+    @unittest.skipIf(ENGINE.termios is None, "POSIX terminal controls unavailable")
+    def test_visible_steering_preserves_editing_utf8_and_input_during_output(self):
+        master, slave = os.openpty()
+        stdin = os.fdopen(os.dup(slave), "r", encoding="utf-8")
+        original = ENGINE.termios.tcgetattr(slave)
+        try:
+            with mock.patch.object(ENGINE.sys, "stdin", stdin):
+                with ENGINE.interactive_turn_terminal():
+                    erase = original[6][ENGINE.termios.VERASE]
+                    if isinstance(erase, int):
+                        erase = bytes([erase])
+                    os.write(master, b"bozzaX" + erase + " già".encode())
+                    readable, _, _ = ENGINE.select.select([master], [], [], 0.2)
+                    self.assertEqual(readable, [master])
+                    visible = os.read(master, 4096)
+                    self.assertIn(b"bozza", visible)
+                    self.assertIn("già".encode(), visible)
+                    self.assertIsNone(ENGINE.read_interactive_steering_line())
+                    # Interleaved output must never become part of the queued input.
+                    os.write(slave, b"\r\nCortex: still working\r\n")
+                    os.write(master, " pronta\r".encode())
+                    ENGINE.select.select([slave], [], [], 0.2)
+                    self.assertEqual(ENGINE.read_interactive_steering_line(), "bozza già pronta")
+                self.assertEqual(ENGINE.termios.tcgetattr(slave), original)
+        finally:
+            stdin.close()
+            os.close(master)
+            os.close(slave)
+
+    @unittest.skipIf(ENGINE.termios is None, "POSIX terminal controls unavailable")
+    def test_visible_steering_restores_original_terminal_on_failure(self):
+        master, slave = os.openpty()
+        stdin = os.fdopen(os.dup(slave), "r", encoding="utf-8")
+        original = ENGINE.termios.tcgetattr(slave)
+        try:
+            with mock.patch.object(ENGINE.sys, "stdin", stdin):
+                with self.assertRaisesRegex(RuntimeError, "synthetic failure"):
+                    with ENGINE.interactive_turn_terminal():
+                        raise RuntimeError("synthetic failure")
+            self.assertEqual(ENGINE.termios.tcgetattr(slave), original)
         finally:
             stdin.close()
             os.close(master)

@@ -133,10 +133,10 @@ compatibility fallback.
 
 You can add direction while Codex is still working: type the follow-up and press
 Enter. Cortex forwards it immediately to the active App Server turn through
-`turn/steer`, matching Codex's intermediate-message behavior. While output is
-streaming, terminal echo is disabled so partially typed input cannot mix with
-the output. After Enter, Cortex confirms the complete short input or `[paste]`
-for a long input on its own line.
+`turn/steer`, matching Codex's intermediate-message behavior. While Cortex is
+working, terminal echo keeps the additional text visible as you type. Input
+remains buffered until Enter; Backspace edits it and Esc interrupts the active
+turn. The original terminal settings are restored when the turn ends.
 
 Codex slash commands are recognized directly. Use `/help` for the full catalog;
 core commands including `/goal`, `/compact`, `/rename`, `/fork`, `/new`,

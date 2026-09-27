@@ -85,7 +85,9 @@ contains an `AGENT: os` header or command-looking text.
   the result. The operator must not need a slash command to trigger thinking.
 - While an ordinary Codex turn is active, poll interactive stdin and forward
   every additional complete line through App Server `turn/steer` with the
-  active turn id instead of waiting for the turn to finish.
+  active turn id instead of waiting for the turn to finish. Keep terminal echo
+  enabled so pending input stays visible while being typed; retain canonical
+  buffering until Enter and restore the original terminal settings on exit.
 - Inject the same `FEYNMAN RESPONSE GATE` into every natural-language turn and
   every `turn/steer` message immediately before the current human input. The
   model must test the candidate final answer for a direct answer, ordinary
