@@ -161,6 +161,23 @@
     "on_demand_memory_readback_failures": {
       "type": "integer",
       "minimum": 0
+    },
+    "procedure_discovery": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "catalog_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {

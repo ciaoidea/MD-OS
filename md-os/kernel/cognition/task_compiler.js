@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+const { checkProcedureBinding } = require('./procedure_binding');
 
 const fs = require('fs');
 const path = require('path');
@@ -166,6 +167,7 @@ function compileTaskSpec({ task = '', taskSpecPath = '', createdAt }) {
   if (reused) actions = objectArray(reused.actions, 'actions', (item, index) => normalizeCommandReference(item, 'actions', index));
   if (actions.reduce((count, action) => count + (action.state_guards?.before.length || 0)
     + (action.state_guards?.after.length || 0), 0) > 64) throw new Error('STATE_GUARDS_TASK_BUDGET');
+  const procedureReadback = checkProcedureBinding(WORKSPACE_ROOT, raw.procedure_binding);
   const requiredEvidence = objectArray(raw.required_evidence, 'required_evidence', normalizeEvidence);
   const observationTargets = objectArray(raw.observation_targets, 'observation_targets', normalizeObservationTarget);
   assertUnique(actions, 'action_id', 'action_id');
@@ -211,6 +213,9 @@ function compileTaskSpec({ task = '', taskSpecPath = '', createdAt }) {
     verification_dependencies: [...new Set([
       ...stringArray(raw.verification_dependencies, 'verification_dependencies').map(value => normalizeMdosPath(value, 'verification_dependency')),
       ...(reused ? [reused.source] : []),
+      // Private/other maintained sources are bound by procedure_binding itself;
+      // the ordinary evidence index retains its narrower filesystem boundary.
+      ...(procedureReadback && /^md-os\/(?:ops\/(?!local\/)|kb\/|os\/|kernel\/|modules\/)/.test(procedureReadback.source_ref) ? [procedureReadback.source_ref] : []),
     ])],
     unknowns: stringArray(raw.unknowns, 'unknowns'),
     success_definition: {
@@ -221,6 +226,7 @@ function compileTaskSpec({ task = '', taskSpecPath = '', createdAt }) {
       required_evidence_must_exist: requiredEvidence.length > 0,
     },
     actions,
+    ...(procedureReadback ? { procedure_binding: { ...raw.procedure_binding } } : {}),
     ...(reused ? { skill_reuse: { ...raw.skill_reuse } } : {}),
     observation_targets: observationTargets,
     ...(raw.problem_core === undefined ? {} : { problem_core: normalizeProblemCore(raw.problem_core) }),

@@ -16,7 +16,7 @@ class ResponseRelevanceTests(unittest.TestCase):
         with patch.object(client, '_request', return_value={'config': {'developer_instructions': 'Preserve the existing operator rule.'}}) as request:
             params = client._thread_params(Path('/tmp'), Path('/tmp'))
         request.assert_called_once_with('config/read', {'cwd': '/tmp', 'includeLayers': False})
-        self.assertEqual(params['developerInstructions'], 'Preserve the existing operator rule.\n\n' + ENGINE.render_response_relevance_contract()[0])
+        self.assertEqual(params['developerInstructions'], 'Preserve the existing operator rule.\n\n' + ENGINE.render_response_relevance_contract()[0] + '\n\n' + ENGINE.PROCEDURE_POLICY)
         self.assertEqual(params['approvalPolicy'], 'untrusted')
         self.assertEqual(params['sandbox'], 'workspace-write')
         with patch.object(client, '_request', return_value={}):

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Workspace-bound procedure source and operation binding; not permission or outcome proof",
+  "type": "object", "additionalProperties": false,
+  "required": ["procedure_id", "source_hash", "definition_hash", "workspace_hash", "operation"],
+  "properties": {
+    "procedure_id": {"type": "string", "pattern": "^proc_[a-f0-9]{20}$"},
+    "source_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "definition_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "workspace_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "operation": {"type": "string", "minLength": 1, "maxLength": 120}
+  }
+}

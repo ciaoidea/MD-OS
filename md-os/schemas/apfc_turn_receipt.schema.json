@@ -147,6 +147,16 @@
     },
     "epistemic_verification_scope": {
       "const": "recorded_pattern_not_whole_turn"
+    },
+    "procedure_selection": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "procedure_turn.schema.json"
+        }
+      ]
     }
   }
 }

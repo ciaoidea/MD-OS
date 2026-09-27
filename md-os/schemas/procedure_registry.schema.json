@@ -1,0 +1,22 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "title":"Explicit maintained procedure references, workspace-local private overlay supported",
+ "type":"object","additionalProperties":false,"required":["schema_version","procedures"],
+ "properties":{"schema_version":{"const":1},"procedures":{"type":"array","maxItems":1024,"items":{"$ref":"#/$defs/descriptor"}}},
+ "$defs":{
+  "descriptor":{"type":"object","additionalProperties":false,"required":["source_ref"],"properties":{
+   "source_ref":{"type":"string","pattern":"^md-os/.+\\.(md|json)$"},"title":{"type":"string","maxLength":200},
+   "description":{"type":"string","maxLength":2048},"aliases":{"type":"array","maxItems":32,"items":{"type":"string","maxLength":120}},
+   "operations":{"type":"array","maxItems":32,"items":{"$ref":"#/$defs/operation"}}
+  }},
+  "operation":{"type":"object","additionalProperties":false,"required":["operation_id","effect"],"properties":{
+   "operation_id":{"type":"string","pattern":"^[a-zA-Z0-9_-]{1,80}$"},
+   "effect":{"enum":["read","prepare","write","unknown"]},
+   "verification_status":{"enum":["unverified","observed","verified","stale","revoked"]},
+   "evidence_refs":{"type":"array","maxItems":32,"items":{"type":"string"}},
+   "state_guards":{"type":"array","maxItems":16,"items":{"type":"object","additionalProperties":false,"required":["path","exists"],"properties":{
+    "path":{"type":"string","pattern":"^md-os/"},"exists":{"type":"boolean"},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}
+   }}}
+  }}
+ }
+}

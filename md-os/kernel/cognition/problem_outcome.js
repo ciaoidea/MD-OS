@@ -129,6 +129,8 @@ function validateOutcome(root, task, report) {
     if (report.outcome !== 'verified' || report.status !== 'ok' || !report.checks?.length
       || report.checks.some(check => check.status !== 'ok')
       || results.some(result => result.status !== 'passed' || result.observed_exit_status !== result.expected_exit_status)) return fail('verification_not_passed');
+    try { require('./procedure_binding').checkProcedureBinding(root, task.procedure_binding, { conditions: false }); }
+    catch (_error) { return fail('procedure_source_or_definition_changed'); }
     return { resolution: 'resolved', review_required: false, reason: null, verification_id: report.verification_id,
       report_hash: hash, checked_at: report.checked_at, scope: report.verification_scope };
   } catch (error) { return fail(error.message); }

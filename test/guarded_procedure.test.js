@@ -37,9 +37,10 @@ function action(command, guards) {
     expected_exit_status: 0, ...(guards ? { state_guards: guards } : {}) };
 }
 
-function run(root, actions) {
+function run(root, actions, procedureBinding) {
   write(root, 'md-os/ops/tasks/task_guarded.json', { schema_version: 1, task_spec_id: 'task_guarded',
     goal: 'Run the registered guarded fixture', constraints: [], unknowns: [], actions,
+    ...(procedureBinding ? { procedure_binding: procedureBinding } : {}),
     acceptance_tests: [{ ...action('accept'), acceptance_test_id: 'independent_acceptance' }],
     observation_targets: [], required_evidence: [], success_definition: { observed_delta_required: false } });
   // A fresh process exercises the real compiler, connector, executor and
@@ -127,4 +128,68 @@ test('guard contracts reject ambiguous, unbounded and escaping inputs', () => {
   fs.symlinkSync(path.join(root, RESULT), path.join(root, alias));
   assert.throws(() => normalizeStateGuards({ after: [{ path: alias, exists: true }] }, root), /ALIAS/);
   assert.equal(evaluateStateGuards([{ path: alias, exists: true }], root).passed, false);
+});
+
+
+function selectedProcedure(root, source, operations) {
+  write(root, source, '# Aster preparation\nPrepare then consume under the declared conditions.');
+  write(root, source.includes('/local/') ? 'md-os/ops/local/cortex/procedure_registry.json' : 'md-os/procedures/registry.json',
+    { schema_version: 1, procedures: [{ source_ref: source, operations }] });
+  const python = `import sys,json
+sys.path.insert(0,sys.argv[1])
+import procedure_memory as p
+s=p.ProcedureSession(sys.argv[2],'Aster');c=s.initial['candidates'][0]
+a={k:c[k] for k in ('procedure_id','source_hash')}
+s.call({'action':'read',**a})
+v=s.call({'action':'select',**a,'operation':'prepare','applicability':'synthetic preparation test'})
+print(json.dumps(v['procedure_binding']))`;
+  const selection = spawnSync('python3', ['-B', '-c', python, path.join(ROOT, 'md-os/os'), root], { encoding: 'utf8' });
+  assert.equal(selection.status, 0, selection.stderr);
+  return JSON.parse(selection.stdout);
+}
+
+test('a procedure condition changing between actions blocks the next registered command', () => {
+  const root = setup();
+  const binding = selectedProcedure(root, 'md-os/ops/sources/manual/aster.md',
+    [{ operation_id: 'prepare', effect: 'prepare', state_guards: [{ path: RESULT, exists: false }] }]);
+  const result = run(root, [action('prepare'), action('consume')], binding);
+  assert.equal(result.receipts[0].status, 'completed');
+  assert.equal(result.receipts[1].status, 'blocked');
+  assert.match(result.receipts[1].readback.procedure_binding.reason, /PROCEDURE_STATE_CHANGED/);
+  assert.equal(result.receipts[1].execution_control.attempted, false);
+  assert.equal(fs.existsSync(path.join(root, 'md-os/ops/artifacts/consumed.txt')), false);
+  assert.equal(result.verification.outcome, 'failed');
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('private source binding verifies without treating a consumed precondition as a failed postcondition', () => {
+  const root = setup();
+  const source = 'md-os/ops/local/procedures/aster.md';
+  const binding = selectedProcedure(root, source,
+    [{ operation_id: 'prepare', effect: 'prepare', state_guards: [{ path: RESULT, exists: false }] }]);
+  const result = run(root, [action('prepare')], binding);
+  assert.equal(result.receipts[0].status, 'completed');
+  assert.equal(result.verification.outcome, 'verified');
+  assert.equal(result.current.resolution, 'resolved');
+  write(root, source, '# Aster changed procedure');
+  const check = `const p=require(process.argv[1]);console.log(JSON.stringify(p.validateOutcome(process.argv[2],JSON.parse(process.argv[3]),JSON.parse(process.argv[4]))))`;
+  const current = spawnSync(process.execPath, ['-e', check, path.join(ROOT, 'md-os/kernel/cognition/problem_outcome.js'), root,
+    JSON.stringify(result.task), JSON.stringify(result.verification)], { encoding: 'utf8' });
+  assert.equal(current.status, 0, current.stderr);
+  assert.equal(JSON.parse(current.stdout).reason, 'procedure_source_or_definition_changed');
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('changing a private procedure during the last action cannot produce a verified outcome', () => {
+  const root = setup(), source = 'md-os/ops/local/procedures/aster.md';
+  const binding = selectedProcedure(root, source, [{ operation_id: 'prepare', effect: 'prepare' }]);
+  const registry = JSON.parse(fs.readFileSync(path.join(root, 'md-os/ops/connectors/terminal_connector.json')));
+  registry.commands.find(c => c.command_id === 'prepare').argv = ['node', '-e',
+    "require('fs').writeFileSync('ops/local/procedures/aster.md','# Aster altered')"];
+  write(root, 'md-os/ops/connectors/terminal_connector.json', registry);
+  const result = run(root, [action('prepare')], binding);
+  assert.equal(result.receipts[0].status, 'completed');
+  assert.equal(result.verification.outcome, 'failed');
+  assert.equal(result.verification.checks.find(c => c.check_id === 'procedure_source_current').status, 'critical');
+  fs.rmSync(root, { recursive: true, force: true });
 });

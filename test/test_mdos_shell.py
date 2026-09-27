@@ -1851,7 +1851,7 @@ class SemanticShellParityTests(unittest.TestCase):
             )
             self.assertEqual(steer["params"]["expectedTurnId"], "turn-1")
             steering_text = steer["params"]["input"][0]["text"]
-            self.assertEqual(steering_text, ENGINE.build_relevance_steering_input("aggiungi anche i test"))
+            self.assertEqual(steering_text, ENGINE.build_relevance_steering_input("aggiungi anche i test") + "\n\n" + ENGINE.PROCEDURE_POLICY)
 
     def test_interactive_steering_buffers_characters_until_enter(self):
         fake_stdin = mock.Mock()
@@ -2090,6 +2090,10 @@ class SemanticShellParityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             cwd = str(Path(temporary).resolve())
             existing = "01900000-0000-7000-8000-000000000077"
+            marker = ENGINE.procedure_thread_marker(Path(cwd), existing)
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps({"schema_version": 1, "interface_version": 1,
+                "workspace_hash": ENGINE.procedure_memory_module().digest(cwd)}))
             with FakeCodex(
                 "resumed answer",
                 existing_threads={cwd: existing},
@@ -2228,6 +2232,10 @@ class SemanticShellParityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             cwd = str(Path(temporary).resolve())
             busy = "01900000-0000-7000-8000-000000000099"
+            marker = ENGINE.procedure_thread_marker(Path(cwd), busy)
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps({"schema_version": 1, "interface_version": 1,
+                "workspace_hash": ENGINE.procedure_memory_module().digest(cwd)}))
             with FakeCodex(
                 "fallback works",
                 existing_threads={cwd: busy},
@@ -2492,7 +2500,7 @@ class SemanticShellParityTests(unittest.TestCase):
             result = run_console(["Hello"], fake)
             self.assertEqual(result.returncode, 0, result.stderr)
             start = next(m for m in fake.protocol_requests() if m.get("method") == "thread/start")
-            self.assertEqual(start["params"]["dynamicTools"], [ENGINE.intuitive_context_tool_spec(), ENGINE.cognitive_reflection_tool_spec()])
+            self.assertEqual(start["params"]["dynamicTools"], [ENGINE.procedure_tool_spec(), ENGINE.intuitive_context_tool_spec(), ENGINE.cognitive_reflection_tool_spec()])
             self.assertEqual(start["params"]["sandbox"], "workspace-write")
             self.assertEqual(start["params"]["approvalPolicy"], "untrusted")
 

@@ -77,6 +77,8 @@ identity and compatibility release line. The human-facing system overview is
 - [MASTER_CLOSURE_DISCIPLINE_MODEL.md](MASTER_CLOSURE_DISCIPLINE_MODEL.md)
 - [SCIENTIFIC_VALIDATION_METHOD_MODEL.md](SCIENTIFIC_VALIDATION_METHOD_MODEL.md)
 - [OPERATIONS.md](OPERATIONS.md)
+- [Procedure discovery and reuse](../shell/PROCEDURE_REUSE.md) — maintained-source
+  discovery, complete review, operation binding, verification and gate coverage.
 - [RUNTIME_DISCIPLINE_MODEL.md](RUNTIME_DISCIPLINE_MODEL.md)
 - [MD_OS_PRO_REASONING_MODE.md](MD_OS_PRO_REASONING_MODE.md)
 - [NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md](NATURAL_LANGUAGE_AGENTIC_SUBSTRATE_LAYER.md)

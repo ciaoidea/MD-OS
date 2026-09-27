@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+const { checkProcedureBinding } = require('./procedure_binding');
 
 const fs = require('fs');
 const path = require('path');
@@ -153,12 +154,16 @@ function executeActions({ episodeId, taskSpec, receiptsDir, initialCommands }) {
     try { dependenciesUnchanged = commandHash !== null && commandHash === sha256Json(commandBindings(WORKSPACE_ROOT, taskSpec)); }
     catch (_error) { /* An unreadable or changed registered program inhibits execution. */ }
     const preconditions = evaluateStateGuards(action.state_guards?.before, WORKSPACE_ROOT);
-    const attempted = dependenciesUnchanged && preconditions.passed;
+    let procedureReadback = null;
+    try { procedureReadback = checkProcedureBinding(WORKSPACE_ROOT, taskSpec.procedure_binding); }
+    catch (error) { procedureReadback = { status: 'rejected', reason: error.message }; }
+    const procedureCurrent = !procedureReadback || procedureReadback.status === 'current';
+    const attempted = dependenciesUnchanged && preconditions.passed && procedureCurrent;
     let execution;
     try {
       execution = attempted ? runTerminalCommand(action) : {
         invocation_status: null, exit_status: null, duration_ms: 0, payload: null,
-        stderr: dependenciesUnchanged ? 'ACTION_PRECONDITION_FAILED' : 'EXECUTION_DEPENDENCY_CHANGED',
+        stderr: !procedureCurrent ? 'PROCEDURE_BINDING_REJECTED' : dependenciesUnchanged ? 'ACTION_PRECONDITION_FAILED' : 'EXECUTION_DEPENDENCY_CHANGED',
       };
     } catch (error) {
       execution = {
@@ -190,7 +195,7 @@ function executeActions({ episodeId, taskSpec, receiptsDir, initialCommands }) {
       : { passed: false, checks: [], skipped: true };
     const commandCompleted = attempted && execution.invocation_status === 0 && execution.exit_status === expected;
     const completed = commandCompleted && postconditions.passed;
-    const stopReason = completed ? null : !dependenciesUnchanged ? 'execution_dependency_changed'
+    const stopReason = completed ? null : (!dependenciesUnchanged || !procedureCurrent) ? 'execution_dependency_changed'
       : !preconditions.passed ? 'precondition_failed' : !commandCompleted ? 'command_failed' : 'postcondition_failed';
     const artifacts = execution.payload
       ? [execution.payload.artifact_file, execution.payload.evidence_snapshot_file || execution.payload.snapshot_file].filter(Boolean)
@@ -230,6 +235,7 @@ function executeActions({ episodeId, taskSpec, receiptsDir, initialCommands }) {
         connector_result: execution.payload,
         stderr: execution.stderr,
         duration_ms: execution.duration_ms,
+        procedure_binding: procedureReadback,
       },
     };
     atomicWriteJsonLocked(receiptFile, receipt, { context: `action_receipt:${id}` });

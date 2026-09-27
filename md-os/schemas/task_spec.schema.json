@@ -23,42 +23,121 @@
     "skill_reuse": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["skill_id", "skill_hash", "case_task_id"],
+      "required": [
+        "skill_id",
+        "skill_hash",
+        "case_task_id"
+      ],
       "properties": {
-        "skill_id": { "type": "string", "pattern": "^skill_pattern_[a-f0-9]{20}$" },
-        "skill_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "case_task_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" }
+        "skill_id": {
+          "type": "string",
+          "pattern": "^skill_pattern_[a-f0-9]{20}$"
+        },
+        "skill_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "case_task_id": {
+          "type": "string",
+          "pattern": "^task_[a-zA-Z0-9_]+$"
+        }
       }
     },
-    "problem_core": { "$ref": "problem_core.schema.json" },
-    "schema_version": { "const": 1 },
-    "task_spec_id": { "type": "string", "pattern": "^task_[a-zA-Z0-9_]+$" },
-    "created_at": { "type": "string", "minLength": 1 },
-    "goal": { "type": "string", "minLength": 1 },
-    "task_type": { "type": "string" },
-    "verification_dependencies": { "type": "array", "maxItems": 256, "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^md-os/" } },
-    "constraints": { "type": "array", "items": { "type": "string" } },
+    "problem_core": {
+      "$ref": "problem_core.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task_spec_id": {
+      "type": "string",
+      "pattern": "^task_[a-zA-Z0-9_]+$"
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_type": {
+      "type": "string"
+    },
+    "verification_dependencies": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^md-os/"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "acceptance_tests": {
       "type": "array",
-      "items": { "allOf": [ { "$ref": "#/$defs/commandReference" }, { "not": { "required": ["state_guards"] } } ] }
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/commandReference"
+          },
+          {
+            "not": {
+              "required": [
+                "state_guards"
+              ]
+            }
+          }
+        ]
+      }
     },
-    "risk_budget": { "type": "object" },
-    "resource_budget": { "type": "object" },
+    "risk_budget": {
+      "type": "object"
+    },
+    "resource_budget": {
+      "type": "object"
+    },
     "required_evidence": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["evidence_id", "path", "must_exist"],
+        "required": [
+          "evidence_id",
+          "path",
+          "must_exist"
+        ],
         "properties": {
-          "evidence_id": { "type": "string", "minLength": 1 },
-          "path": { "type": "string", "pattern": "^md-os/" },
-          "must_exist": { "type": "boolean" },
-          "sha256": { "type": ["string", "null"] }
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^md-os/"
+          },
+          "must_exist": {
+            "type": "boolean"
+          },
+          "sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       }
     },
-    "unknowns": { "type": "array", "items": { "type": "string" } },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "success_definition": {
       "type": "object",
       "required": [
@@ -68,59 +147,155 @@
         "required_evidence_must_exist"
       ],
       "properties": {
-        "acceptance_tests_required": { "const": true },
-        "all_acceptance_tests_must_pass": { "const": true },
-        "observed_delta_required": { "type": "boolean" },
-        "required_evidence_must_exist": { "type": "boolean" }
+        "acceptance_tests_required": {
+          "const": true
+        },
+        "all_acceptance_tests_must_pass": {
+          "const": true
+        },
+        "observed_delta_required": {
+          "type": "boolean"
+        },
+        "required_evidence_must_exist": {
+          "type": "boolean"
+        }
       }
     },
     "actions": {
       "type": "array",
-      "items": { "$ref": "#/$defs/commandReference" }
+      "items": {
+        "$ref": "#/$defs/commandReference"
+      }
     },
     "observation_targets": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["target_id", "path", "required_change"],
+        "required": [
+          "target_id",
+          "path",
+          "required_change"
+        ],
         "properties": {
-          "target_id": { "type": "string", "minLength": 1 },
-          "path": { "type": "string", "pattern": "^md-os/" },
-          "required_change": { "type": "boolean" }
+          "target_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^md-os/"
+          },
+          "required_change": {
+            "type": "boolean"
+          }
         }
       }
+    },
+    "procedure_binding": {
+      "$ref": "procedure_binding.schema.json"
     }
   },
   "$defs": {
     "commandReference": {
       "type": "object",
-      "required": ["connector_id", "project_id", "command_id", "expected_exit_status"],
+      "required": [
+        "connector_id",
+        "project_id",
+        "command_id",
+        "expected_exit_status"
+      ],
       "properties": {
-        "connector_id": { "const": "terminal_executor" },
-        "project_id": { "type": "string", "minLength": 1 },
-        "command_id": { "type": "string", "minLength": 1 },
+        "connector_id": {
+          "const": "terminal_executor"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "state_guards": {
-          "type": "object", "additionalProperties": false, "minProperties": 1,
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
           "properties": {
-            "before": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/stateGuard" } },
-            "after": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/stateGuard" } }
+            "before": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "$ref": "#/$defs/stateGuard"
+              }
+            },
+            "after": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "$ref": "#/$defs/stateGuard"
+              }
+            }
           },
           "anyOf": [
-            { "required": ["before"], "properties": { "before": { "minItems": 1 } } },
-            { "required": ["after"], "properties": { "after": { "minItems": 1 } } }
+            {
+              "required": [
+                "before"
+              ],
+              "properties": {
+                "before": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "after"
+              ],
+              "properties": {
+                "after": {
+                  "minItems": 1
+                }
+              }
+            }
           ]
         },
-        "expected_exit_status": { "type": "integer" }
+        "expected_exit_status": {
+          "type": "integer"
+        }
       }
     },
     "stateGuard": {
-      "type": "object", "additionalProperties": false, "required": ["path", "exists"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "exists"
+      ],
       "properties": {
-        "path": { "type": "string", "pattern": "^md-os/ops/" },
-        "exists": { "type": "boolean" },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "path": {
+          "type": "string",
+          "pattern": "^md-os/ops/"
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
       },
-      "if": { "required": ["sha256"] }, "then": { "properties": { "exists": { "const": true } } }
+      "if": {
+        "required": [
+          "sha256"
+        ]
+      },
+      "then": {
+        "properties": {
+          "exists": {
+            "const": true
+          }
+        }
+      }
     }
   }
 }

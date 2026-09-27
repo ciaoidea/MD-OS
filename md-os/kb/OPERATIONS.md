@@ -79,6 +79,10 @@ Canonical builders:
   `MDOS_SKIP_SOFTWARE_BOOTSTRAP=1` is set
 
 Ordinary operating rule:
+- before choosing operational tools, discover maintained procedures through
+  `mdos_procedure` or `cortex procedure search`; follow
+  [Procedure discovery and reuse](../shell/PROCEDURE_REUSE.md) for source review,
+  operation-specific conditions, TaskSpec binding and actual gate coverage
 - for continuity across distinct problems, use
   `md-os/kb/PERSISTENT_PROBLEM_NETWORK_MODEL.md`: persistent TaskSpec IDs,
   compact problem cores, explicit relations, dependency review and separate

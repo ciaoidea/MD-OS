@@ -5,6 +5,7 @@ const { sha256Json, shortText, WORKSPACE_ROOT } = require('../../os/lib/common')
 const { fileSnapshot, runTerminalCommand } = require('./executor');
 const { sealOutcome } = require('./problem_outcome');
 const { guardReadbackPassed } = require('./state_guard');
+const { checkProcedureBinding } = require('./procedure_binding');
 
 function check(checkId, status, message, evidence = []) {
   return {
@@ -178,6 +179,17 @@ function verifyTaskOutcome({ episodeId, taskSpec, taskCompilation, actionReceipt
       continue;
     }
     checks.push(check(`task_spec_${finding.code.toLowerCase()}`, finding.severity, finding.message));
+  }
+
+  // Preconditions may legitimately be consumed by the operation. At closure,
+  // recheck source/definition freshness; postconditions belong to the verifier.
+  if (taskSpec.procedure_binding !== undefined) {
+    try {
+      checkProcedureBinding(WORKSPACE_ROOT, taskSpec.procedure_binding, { conditions: false });
+      checks.push(check('procedure_source_current', 'ok', 'The selected procedure source and definition are still current.'));
+    } catch (error) {
+      checks.push(check('procedure_source_current', 'critical', error.message));
+    }
   }
 
   const hasCritical = checks.some((item) => item.status === 'critical');

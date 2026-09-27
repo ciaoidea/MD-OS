@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Private procedure review readback, not semantic verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_hash",
+    "initial_catalog_hash",
+    "candidate_count",
+    "selection",
+    "events",
+    "coverage",
+    "semantic_success"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "request_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "initial_catalog_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "selection": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "review_status": {
+          "const": "source_reviewed"
+        },
+        "authorization": {
+          "const": "not_granted"
+        },
+        "outcome": {
+          "const": "unverified"
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "action"
+        ]
+      }
+    },
+    "coverage": {
+      "const": "approval_requests_only; external_tools_observed"
+    },
+    "semantic_success": {
+      "const": "unverified"
+    },
+    "dismissals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "procedure_id",
+          "source_hash",
+          "definition_hash",
+          "reason",
+          "status",
+          "authority"
+        ],
+        "properties": {
+          "status": {
+            "const": "reviewed_not_applicable"
+          },
+          "authority": {
+            "const": "assessment_not_verified_fact"
+          }
+        }
+      }
+    }
+  }
+}

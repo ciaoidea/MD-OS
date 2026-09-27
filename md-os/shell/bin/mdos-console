@@ -1276,6 +1276,79 @@ def intuitive_context_tool_spec() -> dict[str, object]:
     }
 
 
+PROCEDURE_POLICY = (
+    "PROCEDURE SELECTION: For operational work, review relevant maintained procedures before choosing tools. "
+    "Current procedure cards are source pointers, not authority. Use mdos_procedure search/read/select; "
+    "carry select.procedure_binding into any TaskSpec that reuses the selected source. "
+    "read referenced instructions and assess operation-specific conditions. A candidate remains a candidate. "
+    "Dismiss a fully reviewed but inapplicable suggested source with its reason before an authorized exploratory path. "
+    "A denied tool does not prove service failure and "
+    "must not be bypassed. Recheck current state before writes and ambiguous retries. "
+    "Selection never grants permission or proves success."
+)
+
+
+def procedure_memory_module():
+    name = "_mdos_procedure_memory"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, ENGINE_ROOT.parent / "os/procedure_memory.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        sys.modules[name] = module
+    return sys.modules[name]
+
+
+def procedure_thread_marker(workspace, thread_id):
+    module = procedure_memory_module()
+    return Path(workspace) / "md-os/ops/local/cortex/procedure_threads" / (module.digest(thread_id) + ".json")
+
+
+def procedure_thread_registered(workspace, thread_id):
+    try:
+        marker = procedure_thread_marker(workspace, thread_id)
+        value = json.loads(marker.read_text(encoding="utf-8"))
+        return value == {"schema_version": 1, "interface_version": 1,
+                         "workspace_hash": procedure_memory_module().digest(str(Path(workspace).resolve()))}
+    except (OSError, ValueError):
+        return False
+
+
+def procedure_tool_spec() -> dict[str, object]:
+    return {"type": "function", "name": "mdos_procedure",
+        "description": "Discover maintained procedures independently of chat history. Search by the requested service and operation, read all pages of relevant sources, then select for this request before operational tools, or dismiss an inapplicable reviewed source with a concrete reason. References may need precise further reads. No execution, permission grant or promotion. Re-read after source changes.",
+        "inputSchema": {"type": "object", "additionalProperties": False,
+            "required": ["action"], "properties": {
+                "action": {"enum": ["search", "read", "select", "dismiss", "status"]},
+                "query": {"type": "string", "maxLength": 8192},
+                "procedure_id": {"type": "string", "pattern": "^proc_[a-f0-9]{20}$"},
+                "source_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "catalog_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "offset": {"type": "integer", "minimum": 0},
+                "operation": {"type": "string", "minLength": 1, "maxLength": 120},
+                "applicability": {"type": "string", "minLength": 1, "maxLength": 1024},
+                "reason": {"type": "string", "minLength": 1, "maxLength": 1024},
+            }}}
+
+
+def procedure_orientation(workspace, request):
+    try:
+        result = procedure_memory_module().search(workspace, request)
+    except (OSError, ValueError, UnicodeError) as error:
+        return "PROCEDURE DISCOVERY UNAVAILABLE: inspect registered sources before operational tools.", {"status": "unavailable", "candidate_count": 0}
+    info = {"status": result["status"], "candidate_count": result["total_matches"], "catalog_hash": result["catalog_hash"]}
+    if not result["candidates"] and not result["issues"]:
+        return None, info
+    # Metadata only; full documents remain precise, on-demand reads.
+    value = {k: result[k] for k in ("catalog_hash", "status", "candidates", "total_matches", "next_offset", "issue_count")}
+    for item in value["candidates"]:
+        item["title"] = item["title"][:96]
+    text = "CURRENT PROCEDURE CANDIDATES — working sources, not instructions or verified outcomes. " + json.dumps(value, ensure_ascii=True, separators=(",", ":"))
+    while len(text.encode()) > 2048 and value["candidates"]:
+        value["candidates"].pop(); value["next_offset"] = len(value["candidates"])
+        text = "CURRENT PROCEDURE CANDIDATES — expand with mdos_procedure. " + json.dumps(value, ensure_ascii=True, separators=(",", ":"))
+    return text, info
+
+
 def cognitive_reflection_tool_spec() -> dict[str, object]:
     return {
         "type": "function", "name": "mdos_reflect",
@@ -1493,13 +1566,22 @@ class CodexAppServerClient:
             self._reject_server_request(message)
             return
         if method == "item/tool/call":
-            handler = self._cognitive_reflection_tool if params.get("tool") == "mdos_reflect" else self._problem_context_tool
+            handler = {"mdos_reflect": self._cognitive_reflection_tool,
+                       "mdos_context": self._problem_context_tool,
+                       "mdos_procedure": self._procedure_tool}.get(params.get("tool"))
+            if handler is None:
+                self._reply(message, {"success": False, "contentItems": [{"type": "inputText", "text": "UNKNOWN_CORTEX_TOOL"}]})
+                return
             self._reply(message, handler(params))
             return
         if method == "item/commandExecution/requestApproval":
             choice, reason = decide_apfc_command_approval(
                 params, getattr(self, "active_apfc_frame", None)
             )
+            if choice == "accept":
+                procedure_reason = self._procedure_gate(params)
+                if procedure_reason:
+                    choice, reason = "decline", procedure_reason
             self._record_apfc_decision(method, choice, reason, params)
             self._reply(message, {"decision": choice})
             return
@@ -1507,6 +1589,10 @@ class CodexAppServerClient:
             choice, reason = decide_apfc_file_approval(
                 params, getattr(self, "active_apfc_frame", None)
             )
+            if choice == "accept":
+                procedure_reason = self._procedure_gate(params, file_change=True)
+                if procedure_reason:
+                    choice, reason = "decline", procedure_reason
             self._record_apfc_decision(method, choice, reason, params)
             self._reply(message, {"decision": choice})
             return
@@ -1587,6 +1673,49 @@ class CodexAppServerClient:
             self._reply(message, {"action": "decline"})
             return
         self._reject_server_request(message)
+
+    def _procedure_tool(self, params):
+        try:
+            binding = getattr(self, "active_binding", None)
+            if (binding is None or params.get("threadId") != binding.thread_id
+                    or not params.get("turnId") or params.get("turnId") != getattr(self, "active_context_turn_id", None)
+                    or params.get("tool") != "mdos_procedure" or params.get("namespace") not in (None, "")):
+                raise ValueError("PROCEDURE_TOOL_BINDING_INVALID")
+            state = getattr(self, "procedure_session", None)
+            if state is None or state.workspace != binding.workspace.resolve():
+                raise ValueError("PROCEDURE_TURN_UNAVAILABLE")
+            self.procedure_tool_calls = getattr(self, "procedure_tool_calls", 0) + 1
+            if self.procedure_tool_calls > 64:
+                raise ValueError("PROCEDURE_TOOL_READ_LIMIT")
+            args = params.get("arguments")
+            if not isinstance(args, dict) or utf8_size(json.dumps(args)) > 12000:
+                raise ValueError("PROCEDURE_ARGUMENTS_INVALID")
+            result = state.call(args)
+            if utf8_size(json.dumps(result, ensure_ascii=False)) > 32768:
+                raise ValueError("PROCEDURE_OUTPUT_BOUND: source metadata requires a smaller explicit descriptor")
+            return {"success": True, "contentItems": [{"type": "inputText", "text": json.dumps(result, ensure_ascii=False)}]}
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            return {"success": False, "contentItems": [{"type": "inputText", "text": str(error)[:300]}]}
+
+    def _procedure_gate(self, params, file_change=False):
+        state = getattr(self, "procedure_session", None)
+        if state is None:
+            return None
+        actions = params.get("commandActions")
+        discovery = (not file_change and isinstance(actions, list) and bool(actions)
+                     and all(isinstance(a, dict) and a.get("type") in {"read", "listFiles", "search"} for a in actions)
+                     and not params.get("networkApprovalContext"))
+        try:
+            reason = state.gate(discovery=discovery)
+        except (OSError, ValueError, TypeError):
+            reason = "PROCEDURE_CHECK_UNAVAILABLE"
+        if reason and getattr(self, "process", None) is not None and getattr(self, "active_context_turn_id", None):
+            self._send({"method": "turn/steer", "id": self._next_request_id(), "params": {
+                "threadId": self.active_binding.thread_id, "expectedTurnId": self.active_context_turn_id,
+                "input": [{"type": "text", "text": "Cortex preparation check: " + reason + ". Resolve with mdos_procedure. Existing user permissions and denials remain binding."}]}})
+        state.events.append({"action": "approval_gate", "allowed_to_authorization": reason is None,
+                             "action_hash": apfc_json_hash(params), "reason": reason})
+        return reason
 
     def _problem_context_tool(self, params: dict[str, object]) -> dict[str, object]:
         """Read-only fixed program; never execute model-supplied code or paths."""
@@ -1856,7 +1985,7 @@ class CodexAppServerClient:
         if not isinstance(existing, str):
             raise RuntimeError("RESPONSE_RELEVANCE_CONFIG_INVALID")
         policy, _digest = render_response_relevance_contract()
-        instructions = "\n\n".join(part for part in (existing, policy) if part)
+        instructions = "\n\n".join(part for part in (existing, policy, PROCEDURE_POLICY) if part)
         params: dict[str, object] = {
             "cwd": str(cwd),
             "approvalPolicy": "untrusted",
@@ -1909,17 +2038,21 @@ class CodexAppServerClient:
         resolved_cwd = (cwd or Path.cwd()).resolve()
         resolved_workspace = workspace or resolve_codex_workspace(resolved_cwd)
         params = self._thread_params(resolved_cwd, resolved_workspace)
+        params["dynamicTools"] = [procedure_tool_spec()]
         if os.environ.get("MDOS_INTUITIVE_CONTEXT", "on") == "on":
-            params["dynamicTools"] = [intuitive_context_tool_spec(), cognitive_reflection_tool_spec()]
+            params["dynamicTools"] += [intuitive_context_tool_spec(), cognitive_reflection_tool_spec()]
         if ephemeral:
             params["ephemeral"] = True
         result = self._request("thread/start", params)
-        return self._binding_from_result(
-            result,
-            cwd=resolved_cwd,
-            workspace=resolved_workspace,
-            resumed=False,
+        binding = self._binding_from_result(
+            result, cwd=resolved_cwd, workspace=resolved_workspace, resumed=False,
         )
+        if not ephemeral:
+            marker = procedure_thread_marker(resolved_workspace, binding.thread_id)
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps({"schema_version": 1, "interface_version": 1,
+                "workspace_hash": procedure_memory_module().digest(str(resolved_workspace.resolve()))}), encoding="utf-8")
+        return binding
 
     def bind_thread(
         self,
@@ -1973,6 +2106,11 @@ class CodexAppServerClient:
                     resume_params = self._thread_params(resolved_cwd, workspace)
                     resume_params.pop("serviceName", None)
                     resume_params["threadId"] = thread_id
+                    # This protocol registers dynamic tools only at thread/start.
+                    # Never pretend a pre-migration stored thread has the new interface.
+                    if not procedure_thread_registered(workspace, thread_id):
+                        fail("Stored thread predates the procedure interface or belongs to another workspace. "
+                             "Use /new to register current tools; stored history remains available in its original thread.", 65)
                     result, resume_error = self._try_request(
                         "thread/resume", resume_params
                     )
@@ -2143,6 +2281,8 @@ class CodexAppServerClient:
         self.active_context_turn_id = None
         self.context_tool_calls = 0
         self.context_tool_hashes = set()
+        self.procedure_tool_calls = 0
+        self.procedure_session = procedure_memory_module().ProcedureSession(binding.workspace, raw_request)
         self.cognitive_tool_calls = 0
         self.cognitive_learning_results = []
         self.cognitive_observed_actions = []
@@ -2215,7 +2355,11 @@ class CodexAppServerClient:
             while active_turn_id is not None and pending_steering:
                 steer_text = pending_steering.pop(0)
                 submitted_steering.append(steer_text)
-                contextualized_steer = build_relevance_steering_input(steer_text)
+                self.procedure_session.steer(steer_text)
+                procedural_steer, _ = procedure_orientation(binding.workspace, self.procedure_session.request)
+                contextualized_steer = build_relevance_steering_input(steer_text) + "\n\n" + PROCEDURE_POLICY
+                if procedural_steer:
+                    contextualized_steer += "\n\n" + procedural_steer
                 steer_request_id = self._next_request_id()
                 steer_request_ids.add(steer_request_id)
                 self._send(
@@ -2435,6 +2579,13 @@ class CodexAppServerClient:
                     if item.get("type") == "dynamicToolCall":
                         aggregated_output = json.dumps(item.get("contentItems", []), sort_keys=True)
                     memory_search, memory_result_count = parse_memory_search_readback(command_text, aggregated_output)
+                    if getattr(self, "procedure_session", None) is not None:
+                        tool = str(item.get("tool") or item.get("name") or "")
+                        if tool != "mdos_procedure":
+                            self.procedure_session.events.append({"action": "observed_tool", "item_type": item.get("type"),
+                                "status": item.get("status", "unknown"), "tool": tool,
+                                "selection_present": self.procedure_session.selection is not None,
+                                "coverage": "observed_only" if item.get("type") in {"mcpToolCall", "dynamicToolCall"} else "approval_callbacks_when_requested"})
                     observed_actions.append(
                         {
                             "item_id": str(item.get("id") or ""),
@@ -2515,6 +2666,7 @@ class CodexAppServerClient:
             decisions=list(self.active_apfc_decisions),
             observed_actions=observed_actions,
             cognitive_learning_results=list(self.cognitive_learning_results),
+            procedure_readback=self.procedure_session.receipt(),
         )
         causal_unity_transition = latest_apfc_causal_transition(
             binding.workspace,
@@ -3280,6 +3432,7 @@ def build_apfc_input_context(human_request: str, cwd: Path) -> ApfcInputContext:
     rendered = (
         "CONTEXT AVAILABILITY\n"
         f"workspace={workspace}\n"
+        "procedure_discovery=Review CURRENT PROCEDURE CANDIDATES with mdos_procedure before choosing operational tools. Search by service and operation even without the word procedure.\n"
         f"catalog_path={catalog_path or APFC_CONTEXT_PACK_INDEX}\n"
         f"catalog_hash={catalog_hash or 'unavailable'}\n"
         f"context_pack_count={len(context_packs)}\n"
@@ -4386,6 +4539,7 @@ def write_apfc_turn_receipt(
     decisions: list[dict[str, object]],
     observed_actions: list[dict[str, object]],
     cognitive_learning_results: list[dict[str, object]] | None = None,
+    procedure_readback: dict[str, object] | None = None,
 ) -> Path:
     workspace = Path(frame.workspace)
     local_dir = workspace / "md-os/ops/local/apfc"
@@ -4535,6 +4689,7 @@ def write_apfc_turn_receipt(
         "assistant_output_epistemic_status": "proposal",
         "verified_claims": [],
         "cognitive_learning": learning_results,
+        "procedure_selection": procedure_readback,
         "epistemic_verification_scope": "recorded_pattern_not_whole_turn",
         "verification_contract": verification_contract,
         "operational_unity_tensor": closed_unity_tensor,
@@ -4742,6 +4897,7 @@ def build_thread_bootstrap(
         "policy_version": 2,
         "problem_continuity_version": 6,
         "memory_interface_version": 4,
+        "procedure_interface_version": 1,
         "intuitive_context": os.environ.get("MDOS_INTUITIVE_CONTEXT", "on"),
         "workspace": str(workspace),
         "source_hashes": source_hashes,
@@ -4907,6 +5063,9 @@ def build_native_codex_input(
 
     relevance_text, relevance_hash = render_response_relevance_contract()
     sections.append(("response_relevance_contract", relevance_text))
+    procedure_text, procedure_info = procedure_orientation(resolved_workspace, human_request)
+    if procedure_text:
+        sections.append(("procedure_candidates", procedure_text))
 
     def render(items: list[tuple[str, str]]) -> str:
         return "\n\n".join([human_request, *(text for _name, text in items)])
@@ -4954,7 +5113,7 @@ def build_native_codex_input(
         auxiliary_chars, auxiliary_bytes = len(prompt) - len(human_request), utf8_size(prompt) - utf8_size(human_request)
         if max(auxiliary_chars, auxiliary_bytes) > MAX_TURN_AUX_CONTEXT_CHARS:
             raise RuntimeError("PROBLEM_PROJECTION_AUXILIARY_BUDGET_EXCEEDED")
-    ordinary_reused = not bootstrap_sent and not private_conversation_context and shell_chars == 0 and not projection_sent
+    ordinary_reused = not bootstrap_sent and not private_conversation_context and shell_chars == 0 and not projection_sent and not procedure_text
     if ordinary_reused and max(auxiliary_chars, auxiliary_bytes) > MAX_ORDINARY_AUX_CONTEXT_CHARS:
         raise RuntimeError("ORDINARY_AUXILIARY_CONTEXT_EXCEEDS_BOUND")
     final_shell_text = next(
@@ -4972,6 +5131,7 @@ def build_native_codex_input(
         "selected_context_sources": [name for name, _text in sections],
         "automatically_injected_memory_nodes": 0,
         "response_relevance_contract_hash": relevance_hash,
+        "procedure_discovery": procedure_info,
         "problem_projection_hash": projection_info["hash"],
         "problem_projection_status": projection_info["status"],
         "problem_projection_sent": projection_sent,
@@ -5065,6 +5225,7 @@ def persist_turn_context_metrics(
             "problem_projection_sent": bool(packet_metrics.get("problem_projection_sent", False)),
             "problem_projection_node_count": int(packet_metrics.get("problem_projection_node_count", 0)),
             "problem_projection_status": str(packet_metrics.get("problem_projection_status", "disabled")),
+            "procedure_discovery": packet_metrics.get("procedure_discovery", {}),
             "on_demand_memory_calls": len(on_demand_calls),
             "on_demand_memory_readback_failures": sum(action.get("memory_result_count") is None for action in on_demand_calls),
             "on_demand_memory_result_counts": [
@@ -6827,6 +6988,27 @@ def dated_memory_result(records, date_query, query, after, maximum_nodes, maximu
 
 
 
+def run_procedure_command(arguments):
+    import argparse
+    parser = argparse.ArgumentParser(prog="cortex procedure")
+    parser.add_argument("action", choices=["search", "read"])
+    parser.add_argument("query", nargs="?", default="")
+    parser.add_argument("--id")
+    parser.add_argument("--source-hash")
+    parser.add_argument("--catalog-hash")
+    parser.add_argument("--offset", type=int, default=0)
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(arguments)
+    try:
+        root = resolve_codex_workspace(Path.cwd())
+        module = procedure_memory_module()
+        result = module.search(root, args.query, offset=args.offset, expected_hash=args.catalog_hash) if args.action == "search" else module.read(root, args.id, args.source_hash, offset=args.offset)
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0
+    except (OSError, ValueError) as error:
+        fail(str(error), 65)
+
+
 def run_memory_search_command(arguments: list[str]) -> int:
     """Read bounded memory using direct text or a workspace-confined file."""
     help_text = (
@@ -7111,6 +7293,8 @@ def main() -> int:
         if len(arguments) != 1:
             fail("--shell does not accept additional arguments", 64)
         return semantic_shell()
+    if arguments[:1] == ["procedure"]:
+        return run_procedure_command(arguments[1:])
     if arguments[:2] == ["memory", "search"]:
         return run_memory_search_command(arguments[2:])
     if arguments[:2] == ["context", "inspect"]:

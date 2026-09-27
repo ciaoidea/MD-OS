@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Private workspace-bound dynamic procedure tool registration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "interface_version",
+    "workspace_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "interface_version": {
+      "const": 1
+    },
+    "workspace_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

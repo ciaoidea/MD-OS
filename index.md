@@ -172,8 +172,8 @@ MODEL-VISIBLE NOW            the small bounded projection used by Codex
 ```
 
 The one-time bootstrap is capped at 4 KiB. A reused turn with no pending shell
-observations has a 2 KiB auxiliary ceiling, and every ordinary turn has an
-8 KiB total auxiliary ceiling; these are maxima, not fill targets. Repository
+observations or procedure cards has a 2 KiB auxiliary ceiling. Relevant procedure
+cards add at most 2 KiB; every ordinary turn retains an 8 KiB total auxiliary ceiling; these are maxima, not fill targets. Repository
 knowledge and old memory remain available through precise file reads and bounded
 search rather than being serialized automatically. Native shell commands remain
 direct and bypass this model-context path.
@@ -215,6 +215,36 @@ computer. A Git commit, push, or clone does not carry that file: the entire
 in `.gitignore`. The public `md-os/continuity/portable_state.json` remains only
 a reviewed operational summary and contains no raw conversation. Set
 `MDOS_PRIVATE_CONVERSATION=off` to disable private recording and hydration.
+
+### Reuse maintained procedures before choosing tools
+
+For operational requests, Cortex now discovers relevant manuals, candidate and
+promoted skills, and working patterns independently of conversation history.
+It prepares a small set of source cards before the model selects tools, so an
+unlinked procedure can be found without adding the word “procedure” to a request.
+Use `./cortex procedure search "Aster status" --json` to inspect this discovery
+locally, without a model call.
+
+The native `mdos_procedure` tool separates search, complete source reading and
+selection for the current request. Selection records the operation and its
+applicability; source, metadata, request or workspace changes require renewed
+review. A reviewed source that does not fit can be dismissed with a reason,
+allowing authorized exploration. Candidates retain their existing status. Operation definitions
+can distinguish reads from writes and declare current-state checks.
+
+Cortex enforces this preparation on the command and file approval requests it
+receives. A TaskSpec carrying the selected procedure binding is checked by the
+compiler, before every registered action, and for source freshness at verification.
+Native external tools without an approval callback remain observed rather than
+universally intercepted. Reviewing a procedure grants no permission and does not
+prove the result: authorization and outcome verification remain separate.
+
+Restart an already running Cortex console after updating. Stored threads created
+before this interface require `/new`, since the host registers dynamic tools at
+thread creation; their original provider history is preserved. Private procedure
+overlays and review receipts stay in the Git-ignored local runtime directory.
+See [Procedure discovery and reuse](md-os/shell/PROCEDURE_REUSE.md) for contracts,
+limits, commands, migration behavior and regression coverage.
 
 ### What a full-folder copy preserves
 

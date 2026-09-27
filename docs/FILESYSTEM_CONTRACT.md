@@ -39,6 +39,10 @@ audit, replay, package, and move between machines.
 | `md-os/ops/local/cortex/cognitive_memory.sqlite3` | derived APFCG/FTS/sparse-factor retrieval index | local cache | no | yes | never | yes |
 | `md-os/kb/imports/*/{README,SOURCE_MANIFEST,KNOWLEDGE_NODES,RELATIONS,IDENTITY_FRAME,OPERATING_BINDING}.md` | canonical imported knowledge source | yes | yes | no | yes | no |
 | `md-os/kb/imports/*/canonical_import.json` | canonical imported knowledge source metadata | yes | yes | no | yes | no |
+| `md-os/procedures/registry.json` | optional maintained procedure descriptors | source references | yes | no | privacy-reviewed | no |
+| `md-os/ops/local/cortex/procedure_registry.json` | explicit private procedure overlay | local source references | no | no | never | yes |
+| `md-os/ops/local/cortex/procedure_threads/*.json` | workspace-bound dynamic-tool registration markers | local runtime metadata | no | no | never | yes |
+| `md-os/ops/local/apfc/turn_receipts.ndjson` | private turn readback including procedure review and coverage | evidence | no | no | never | yes |
 | `md-os/schemas/*.schema.json` | source schema | yes | yes | no | yes | no |
 | `md-os/shell/**` | source semantic-shell runtime, programs, and host-shell adapters | yes | yes | no | yes | no |
 | `md-os/os/**` | source runtime code | yes | yes | no | yes | no |
