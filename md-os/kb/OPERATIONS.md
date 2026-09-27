@@ -132,12 +132,14 @@ Ordinary operating rule:
   per App Server thread binding, then send only current deltas; resolve
   nontrivial dependency edges through precise canonical file reads or bounded
   on-demand memory search instead of injecting the KB or baseline bodies
-- when private Cortex continuity is enabled, preserve and verify the complete
-  conversation hash chain but do not inject it into live-thread prompts;
-  prefer verified portable state on a fresh thread, otherwise hydrate at most
-  two complete exchanges and 4 KiB; use the disposable local SQLite index only
-  through bounded on-demand search, allow zero results, and keep ordinary
-  retrieval driven by HUMAN input while reserving ASSISTANT text for audit mode
+- retrieve private conversation on demand when the task requires history.
+  Before retrieval, verify the
+  complete hash chain across the original file and any sealed segments.
+  Use `cortex memory search` for bounded results, lexical index-bound pages or
+  dated sequence pages. A changed source must not silently reuse cached text;
+  rebuild the semantic graph before relying on excluded stale sources. SQLite
+  remains a derived index. Fresh-thread handoff policy is instance-specific;
+  see `md-os/shell/MEMORY_PAGINATION.md` for storage and upgrade requirements.
 - read `md-os/ops/health_classification.md` before treating a global health
   `critical` as runtime failure; it separates runtime, compiler, AGI-loop,
   publication, security, and local-hygiene scopes without lowering severity

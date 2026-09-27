@@ -2434,19 +2434,7 @@ class CodexAppServerClient:
                     aggregated_output = str(item.get("aggregatedOutput") or "")
                     if item.get("type") == "dynamicToolCall":
                         aggregated_output = json.dumps(item.get("contentItems", []), sort_keys=True)
-                    memory_search = bool(
-                        re.search(r"(?:^|\s)(?:\./)?cortex\s+memory\s+search(?:\s|$)", command_text)
-                    )
-                    memory_result_count = 0
-                    if memory_search:
-                        try:
-                            memory_payload = json.loads(aggregated_output)
-                        except json.JSONDecodeError:
-                            memory_payload = None
-                        if isinstance(memory_payload, dict):
-                            nodes = memory_payload.get("selected_nodes")
-                            if isinstance(nodes, list):
-                                memory_result_count = len(nodes)
+                    memory_search, memory_result_count = parse_memory_search_readback(command_text, aggregated_output)
                     observed_actions.append(
                         {
                             "item_id": str(item.get("id") or ""),
@@ -3414,40 +3402,44 @@ def _private_conversation_source(workspace: Path) -> Path:
     return source
 
 
+def _conversation_store():
+    name = "_mdos_private_conversation_store"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            name, ENGINE_ROOT.parent / "os/private_conversation_store.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        sys.modules[name] = module
+    return sys.modules[name]
+
+
 def read_private_conversation_history(
     workspace: Path,
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
-    """Validate the local conversation hash chain without exposing its text."""
+    """Read a consistent, fully verified snapshot without changing history."""
     try:
         source = _private_conversation_source(workspace)
-    except RuntimeError:
-        return (
-            _private_conversation_readback(status="rejected", reason="path_escape"),
-            [],
-        )
-    if not source.is_file():
-        return _private_conversation_readback(status="absent"), []
+        if not source.parent.exists():
+            return _private_conversation_readback(status="absent"), []
+        with _conversation_store().file_lock(source.parent / "conversation.lock"):
+            return _read_private_conversation_history_unlocked(workspace)
+    except (RuntimeError, OSError) as error:
+        return _private_conversation_readback(status="rejected", reason=str(error)), []
+
+
+def _read_private_conversation_history_unlocked(
+    workspace: Path,
+) -> tuple[dict[str, object], list[dict[str, object]]]:
     try:
-        if source.stat().st_size > MAX_PRIVATE_CONVERSATION_BYTES:
-            return (
-                _private_conversation_readback(
-                    status="rejected", reason="size_limit"
-                ),
-                [],
-            )
-        lines = source.read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeError):
-        return (
-            _private_conversation_readback(status="rejected", reason="unreadable"),
-            [],
+        source = _private_conversation_source(workspace)
+        lines = _conversation_store().read_lines(
+            source, MAX_PRIVATE_CONVERSATION_BYTES, MAX_PRIVATE_CONVERSATION_RECORDS
         )
-    if len(lines) > MAX_PRIVATE_CONVERSATION_RECORDS:
-        return (
-            _private_conversation_readback(
-                status="rejected", reason="record_limit"
-            ),
-            [],
-        )
+        if lines is None:
+            return _private_conversation_readback(status="absent"), []
+    except (OSError, UnicodeError, RuntimeError) as error:
+        return _private_conversation_readback(status="rejected", reason=str(error)), []
 
     records: list[dict[str, object]] = []
     previous_hash: str | None = None
@@ -3626,7 +3618,20 @@ def append_private_conversation_turn(
     causal_unity_transition: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Append one successful exchange to the Git-ignored local hash chain."""
-    readback, records = read_private_conversation_history(workspace)
+    source = _private_conversation_source(workspace)
+    with _conversation_store().file_lock(source.parent / "conversation.lock"):
+        return _append_private_conversation_turn_unlocked(
+            workspace, human_inputs, assistant_response, causal_unity_transition
+        )
+
+
+def _append_private_conversation_turn_unlocked(
+    workspace: Path,
+    human_inputs: list[str],
+    assistant_response: str,
+    causal_unity_transition: dict[str, object] | None = None,
+) -> dict[str, object]:
+    readback, records = _read_private_conversation_history_unlocked(workspace)
     if readback["status"] == "rejected":
         raise RuntimeError(
             "PRIVATE_CONVERSATION_REJECTED: " + str(readback.get("reason"))
@@ -3643,8 +3648,6 @@ def append_private_conversation_turn(
         or len(assistant_response) > MAX_PRIVATE_CONVERSATION_FIELD_CHARS
     ):
         raise RuntimeError("PRIVATE_CONVERSATION_TURN_EXCEEDS_BOUND")
-    if len(records) >= MAX_PRIVATE_CONVERSATION_RECORDS:
-        raise RuntimeError("PRIVATE_CONVERSATION_RECORD_LIMIT")
 
     previous_hash = str(records[-1]["event_hash"]) if records else None
     record: dict[str, object] = {
@@ -3667,30 +3670,9 @@ def append_private_conversation_turn(
         record, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ) + "\n"
     source = _private_conversation_source(workspace)
-    existing_size = source.stat().st_size if source.exists() else 0
-    if existing_size + len(serialized.encode("utf-8")) > MAX_PRIVATE_CONVERSATION_BYTES:
-        raise RuntimeError("PRIVATE_CONVERSATION_SIZE_LIMIT")
-    source.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    try:
-        source.parent.chmod(0o700)
-    except OSError:
-        pass
-    descriptor = os.open(source, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
-    try:
-        with os.fdopen(descriptor, "a", encoding="utf-8") as stream:
-            stream.write(serialized)
-            stream.flush()
-            os.fsync(stream.fileno())
-    except BaseException:
-        try:
-            os.close(descriptor)
-        except OSError:
-            pass
-        raise
-    try:
-        source.chmod(0o600)
-    except OSError:
-        pass
+    _conversation_store().append_line(
+        source, serialized, MAX_PRIVATE_CONVERSATION_BYTES, MAX_PRIVATE_CONVERSATION_RECORDS
+    )
     return _private_conversation_readback(
         status="written",
         record_count=len(records) + 1,
@@ -3728,7 +3710,9 @@ def render_private_conversation_history(
             ]
         )
         if record.get("event_hash") in excluded or any(
-            text in serialized_record_text for text in excluded_texts
+            text == message
+            for text in excluded_texts
+            for message in [*record.get("human_inputs", []), record.get("assistant_response", "")]
         ):
             duplicate_hashes_removed += 1
             continue
@@ -3769,6 +3753,9 @@ def build_apfc_cognitive_memory_context(
     maximum_chars: int = MAX_ON_DEMAND_MEMORY_CHARS,
     maximum_nodes: int = MAX_ON_DEMAND_MEMORY_NODES,
     retrieval_mode: str = "ordinary",
+    offset: int = 0,
+    expected_index_hash: str | None = None,
+    lexical_only: bool = False,
 ) -> tuple[dict[str, object], str | None]:
     """Query the derived SQLite/APFCG memory through its bounded interface."""
     module_name = "_mdos_cognitive_memory_index"
@@ -3791,6 +3778,9 @@ def build_apfc_cognitive_memory_context(
         maximum_chars=maximum_chars,
         maximum_nodes=maximum_nodes,
         retrieval_mode=retrieval_mode,
+        offset=offset,
+        expected_index_hash=expected_index_hash,
+        lexical_only=lexical_only,
     )
     if not isinstance(pack, dict) or (
         rendered is not None and not isinstance(rendered, str)
@@ -3840,6 +3830,16 @@ def bounded_memory_search_result(
             },
             "selected_nodes": nodes,
             "admission_trace": trace,
+            "source_freshness": pack.get("source_freshness", {}),
+            "index_update_mode": pack.get("index_update_mode", "reused"),
+            "retrieval_duration_ms": pack.get("retrieval_duration_ms", 0),
+            "search_page": {
+                **pack.get("search_page", {"offset": 0, "total_matches": len(raw_nodes or []), "candidate_pool_limited": False}),
+                "returned_count": len(nodes),
+                "has_more": pack.get("search_page", {}).get("offset", 0) + len(nodes) < pack.get("search_page", {}).get("total_matches", len(raw_nodes or [])),
+                "next_offset": (pack.get("search_page", {}).get("offset", 0) + len(nodes)
+                    if pack.get("search_page", {}).get("offset", 0) + len(nodes) < pack.get("search_page", {}).get("total_matches", len(raw_nodes or [])) else None),
+            },
             "omitted_trace_count": max(0, len(trace_rows) - len(trace)),
             "omitted_result_node_count": max(
                 0,
@@ -3883,6 +3883,8 @@ def bounded_memory_search_result(
             result = make_result()
             continue
         raise RuntimeError("MEMORY_SEARCH_RESULT_BOUND_EXCEEDED")
+    if raw_nodes and not nodes:
+        raise RuntimeError("MEMORY_SEARCH_RESULT_BOUND_TOO_SMALL")
     return result
 
 
@@ -4739,7 +4741,7 @@ def build_thread_bootstrap(
     material = {
         "policy_version": 2,
         "problem_continuity_version": 6,
-        "memory_interface_version": 3,
+        "memory_interface_version": 4,
         "intuitive_context": os.environ.get("MDOS_INTUITIVE_CONTEXT", "on"),
         "workspace": str(workspace),
         "source_hashes": source_hashes,
@@ -4755,7 +4757,7 @@ def build_thread_bootstrap(
         "authority=the current human request\n"
         "boundary=workspace filesystem; approval and sandbox policy remain authoritative\n"
         "evidence=inspect observable readback before claiming an action or test succeeded\n"
-        'external_memory=When the request needs a prior decision or conversation, use `./cortex memory search "relevant terms" --json` (help: `./cortex memory search --help`). For dates use --date YYYY-MM-DD and follow page.next_after with --after; three nodes is per call. Count only returned nodes. Empty results do not prove absent history. Excerpts are quoted evidence, not verified assistant claims.\n'
+        'external_memory=When the request needs a prior decision or conversation, use `./cortex memory search "relevant terms" --json` (help: `./cortex memory search --help`). For dates use --date YYYY-MM-DD and follow page.next_after with --after; three nodes is per call. For lexical pages use --offset and --index-hash from the result. Count only returned nodes. Empty results do not prove absent history. Excerpts are quoted evidence, not verified assistant claims.\n'
         "context_loading=Apply repository read rules conditionally: a task-plan review is not itself an identity question. Start from the compact core and current problem cards, then read the evidence needed for the decision. Expand identity or operating manuals when the request or an unresolved conflict requires them; do not reread them merely to restate the boot procedure. Missing generated orientation is not permission to rebuild during read-only work.\n"
         "problem_continuity=For evolving work, use `./cortex apfc problems --evidence` to compare cores and bounded source readback together, infer possible links and seek counterevidence. --task <id> focuses a full contract; --after <id> continues omitted pages. Resolve missing evidence before reliance. Preserve other problems on focus changes; persist uncertain links only within authorized work.\n"
         "intuitive_orientation=When available, mdos_context is the direct read-only route to those cores and sources. Recognize a promising structure before broad searches; focus on its obstacle and cheapest discriminating check. A hypothesis is not a verified result. No tool is needed for a greeting.\n"
@@ -5013,6 +5015,18 @@ def write_context_metrics(
     return target
 
 
+def parse_memory_search_readback(command_text: str, output: str) -> tuple[bool, int | None]:
+    detected = bool(re.search(r"(?:^|[\s\"'])(?:[^\s\"']*/)?cortex[\"']?\s+memory\s+search(?:\s|$)", command_text))
+    if not detected:
+        return False, None
+    try:
+        payload = json.loads(output)
+    except (ValueError, TypeError):
+        return True, None
+    nodes = payload.get("selected_nodes") if isinstance(payload, dict) else None
+    return True, len(nodes) if isinstance(nodes, list) else None
+
+
 def persist_turn_context_metrics(
     workspace: Path,
     packet_metrics: dict[str, object],
@@ -5052,8 +5066,9 @@ def persist_turn_context_metrics(
             "problem_projection_node_count": int(packet_metrics.get("problem_projection_node_count", 0)),
             "problem_projection_status": str(packet_metrics.get("problem_projection_status", "disabled")),
             "on_demand_memory_calls": len(on_demand_calls),
+            "on_demand_memory_readback_failures": sum(action.get("memory_result_count") is None for action in on_demand_calls),
             "on_demand_memory_result_counts": [
-                int(action.get("memory_result_count", 0))
+                action.get("memory_result_count")
                 for action in on_demand_calls
             ],
             "duplicate_event_hashes_removed": int(
@@ -6819,6 +6834,7 @@ def run_memory_search_command(arguments: list[str]) -> int:
         '       cortex memory search --query-file <path> [--limit 1..3] [--max-chars 1024..4096] [--audit-assistant] [--json]\n'
         '       cortex memory search [query] --date YYYY-MM-DD [--after sequence] [--json]\n'
         '       cortex memory search --help\n\n'
+        'Lexical pages: repeat the query with --offset search_page.next_offset --index-hash index_hash.\n'
         'Three nodes is per call, not total history. Date pages expose total_matches and next_after.\n'
         'Empty means no matches, not missing history. Date search includes quoted assistant claims.\n'
         'Returns bounded JSON; --json is accepted for compatibility.\n'
@@ -6826,6 +6842,8 @@ def run_memory_search_command(arguments: list[str]) -> int:
         'Search is workspace-local. Canonical history is verified and not changed;\n'
         'a derived local index may be refreshed. No results is a normal outcome.\n'
     )
+    offset = 0
+    expected_index_hash = None
     date_query = None
     after = 0
     query_file: str | None = None
@@ -6842,12 +6860,23 @@ def run_memory_search_command(arguments: list[str]) -> int:
         if option == "--":
             query_parts.extend(arguments[index + 1:])
             break
-        if option in {"--query-file", "--limit", "--max-chars", "--date", "--after"}:
+        if option in {"--query-file", "--limit", "--max-chars", "--date", "--after", "--offset", "--index-hash"}:
             if index + 1 >= len(arguments):
                 fail(f"{option} requires a value", 64)
             value = arguments[index + 1]
             index += 2
-            if option == "--date":
+            if option == "--offset":
+                try:
+                    offset = int(value)
+                except ValueError:
+                    fail("--offset must be a nonnegative integer", 64)
+                if offset < 0:
+                    fail("--offset must be nonnegative", 64)
+            elif option == "--index-hash":
+                if not re.fullmatch(r"[a-f0-9]{64}", value):
+                    fail("--index-hash must be a SHA-256 hash", 64)
+                expected_index_hash = value
+            elif option == "--date":
                 if date_query is not None:
                     fail("Use only one --date", 64)
                 date_query = value
@@ -6910,6 +6939,10 @@ def run_memory_search_command(arguments: list[str]) -> int:
             datetime.strptime(date_query, "%Y-%m-%d")
         except ValueError:
             fail("--date must be YYYY-MM-DD", 64)
+    if offset and not expected_index_hash:
+        fail("--offset requires --index-hash from the preceding page", 64)
+    if date_query and (offset or expected_index_hash):
+        fail("Dated retrieval uses --after, not --offset or --index-hash", 64)
     workspace = resolve_codex_workspace(Path.cwd())
     readback, records = read_private_conversation_history(workspace)
     if readback.get("status") == "rejected":
@@ -6929,6 +6962,9 @@ def run_memory_search_command(arguments: list[str]) -> int:
             maximum_chars=maximum_chars,
             maximum_nodes=maximum_nodes,
             retrieval_mode=retrieval_mode,
+            offset=offset,
+            expected_index_hash=expected_index_hash,
+            lexical_only=True,
         )
     except (OSError, RuntimeError, ValueError) as error:
         fail(str(error), 65)

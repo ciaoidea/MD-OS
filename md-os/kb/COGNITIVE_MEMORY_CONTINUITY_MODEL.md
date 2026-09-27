@@ -109,14 +109,36 @@ context, and bounded query-relevant conversation. This is an architectural resul
 identity and continuity are externalized into inspectable files and are not
 owned by the current model process or its provider thread.
 
-At each Cortex turn, the verified chronology is projected into the local,
-Git-ignored `cognitive_memory.sqlite3` index together with APFCG and the
-semantic knowledge graph. FTS finds older episodes relevant to the current
-request, sparse typed factors preserve the selected cross-domain links, and a
-12 KiB maximum pack enters the APFC context. If no semantic match exists on a
-fresh thread, Cortex falls back to the verified recent tail. The database is
-derived and disposable: deleting it removes the accelerator, not the source
-memory, and the next turn rebuilds it from verified files.
+When the current request needs historical context, bounded memory search
+projects verified chronology, APFCG and the semantic knowledge graph into the
+local, Git-ignored `cognitive_memory.sqlite3` index. FTS and explicit relevance
+filters select up to three nodes per call, within a 4,096-character result
+budget. Lexical pages use an index-bound offset; dated pages use sequence
+cursors. Empty or partial results never establish absent history. The ordinary
+prompt advertises retrieval rather than automatically injecting lexical
+matches. Fresh-thread handoff and recent-tail policy remains instance-specific.
+
+Source file hashes participate in cache invalidation. A source changed since
+the semantic graph was built is excluded until that graph is rebuilt; it is
+not silently replaced by stale cached text. A procedural query may rank a
+relevant maintained source above imported history without promoting its
+epistemic status. Local term statistics are indexed once. Refreshes update
+changed nodes and FTS entries; relational rankings are recomputed globally to
+preserve equivalence with a full rebuild. The database is disposable, and the
+next search recreates it from source files if absent.
+
+Chronology readers and writers share an OS process lock. Capacity limits apply
+per segment; rollover seals files in a self-hashed manifest while preserving
+the original bytes and global predecessor chain. No turn is deleted or
+summarized by rollover. Missing segments, partial writes and failed hashes
+reject the read instead of silently repairing history. See
+`md-os/shell/MEMORY_PAGINATION.md` for limits and upgrade requirements.
+
+Search results expose source freshness, update mode and retrieval time. Turn
+metrics distinguish an empty result from unavailable/unparseable search output.
+Command-event instrumentation does not count every direct file read. Local
+timings and auxiliary token estimates are not measurements of whole-workflow
+provider cost, retrieval accuracy, or independent task success.
 
 The word `same` is deliberately bounded. It means equivalent verified
 operational state at boot, not numerical identity of a running process. Model

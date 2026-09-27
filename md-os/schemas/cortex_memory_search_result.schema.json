@@ -132,6 +132,75 @@
           "minimum": 1
         }
       }
+    },
+    "search_page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "offset",
+        "total_matches",
+        "candidate_pool_limited",
+        "returned_count",
+        "has_more",
+        "next_offset"
+      ],
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_matches": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidate_pool_limited": {
+          "type": "boolean"
+        },
+        "returned_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "has_more": {
+          "type": "boolean"
+        },
+        "next_offset": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        }
+      }
+    },
+    "source_freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checked_count",
+        "excluded_stale_count"
+      ],
+      "properties": {
+        "checked_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded_stale_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "index_update_mode": {
+      "enum": [
+        "full",
+        "incremental",
+        "reused"
+      ]
+    },
+    "retrieval_duration_ms": {
+      "type": "integer",
+      "minimum": 0
     }
   },
   "$defs": {

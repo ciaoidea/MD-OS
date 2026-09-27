@@ -14,6 +14,9 @@ from collections import defaultdict
 from hashlib import sha256
 from pathlib import Path
 import json
+import importlib.util
+import sys
+import time
 import math
 import os
 import re
@@ -23,7 +26,7 @@ from typing import Any
 
 
 SCHEMA_VERSION = 2
-INDEX_IMPLEMENTATION_REVISION = 4
+INDEX_IMPLEMENTATION_REVISION = 6
 INDEX_RELATIVE_PATH = "md-os/ops/local/cortex/cognitive_memory.sqlite3"
 APFCG_RELATIVE_PATH = "md-os/ops/apfc/executive/graph.json"
 SEMANTIC_GRAPH_RELATIVE_PATH = "md-os/ops/semantic_knowledge_graph.json"
@@ -113,6 +116,7 @@ def _source_fingerprint(
     conversation_records: list[dict[str, Any]],
     apfcg_hash: str | None,
     semantic_hash: str | None,
+    source_bindings: dict[str, str] | None = None,
 ) -> str:
     return _json_hash(
         {
@@ -123,8 +127,27 @@ def _source_fingerprint(
             ],
             "apfcg_source_hash": apfcg_hash,
             "semantic_graph_source_hash": semantic_hash,
+            "live_source_bindings": source_bindings or {},
         }
     )
+
+
+def _semantic_source_bindings(workspace, graph):
+    """A cached graph alone cannot attest that its canonical files are current."""
+    bindings = {}
+    for node in (graph or {}).get("nodes", []):
+        relative = node.get("path") if isinstance(node, dict) else None
+        if not isinstance(relative, str) or not relative.startswith("md-os/"):
+            continue
+        if relative.startswith("md-os/ops/local/"):
+            continue
+        source = _safe_workspace_path(workspace, relative)
+        try:
+            bindings[relative] = (_file_hash(source) if source is not None
+                and source.is_file() and source.stat().st_size <= MAX_SOURCE_BYTES else "unavailable")
+        except OSError:
+            bindings[relative] = "unavailable"
+    return bindings
 
 
 def _schema_sql() -> str:
@@ -156,6 +179,11 @@ CREATE TABLE memory_nodes (
   payload_json TEXT NOT NULL,
   conversation_sequence INTEGER,
   valid_from TEXT
+);
+CREATE TABLE memory_terms (
+  node_id TEXT NOT NULL REFERENCES memory_nodes(node_id),
+  term TEXT NOT NULL,
+  PRIMARY KEY (term, node_id)
 );
 CREATE TABLE memory_edges (
   edge_id TEXT PRIMARY KEY,
@@ -218,8 +246,18 @@ def _insert_source(
     canonical: bool,
 ) -> None:
     connection.execute(
-        "INSERT INTO sources VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO sources VALUES (?, ?, ?, ?, ?) ON CONFLICT(source_id) DO UPDATE SET source_kind=excluded.source_kind, source_path=excluded.source_path, source_hash=excluded.source_hash, canonical=excluded.canonical",
         (source_id, source_kind, source_path, source_hash, int(canonical)),
+    )
+
+
+def _node_values(node):
+    return (
+        node["node_id"], node["source_id"], node["source_kind"], node["domain_id"],
+        node["node_type"], node["label"], node["content"],
+        node.get("retrieval_content", node["content"]), node["content_hash"],
+        node["epistemic_status"], _canonical_json(node["source_refs"]),
+        _canonical_json(node["payload"]), node.get("conversation_sequence"), node.get("valid_from"),
     )
 
 
@@ -232,26 +270,15 @@ def _insert_node(connection: sqlite3.Connection, node: dict[str, Any]) -> None:
           payload_json, conversation_sequence, valid_from
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (
-            node["node_id"],
-            node["source_id"],
-            node["source_kind"],
-            node["domain_id"],
-            node["node_type"],
-            node["label"],
-            node["content"],
-            node.get("retrieval_content", node["content"]),
-            node["content_hash"],
-            node["epistemic_status"],
-            _canonical_json(node["source_refs"]),
-            _canonical_json(node["payload"]),
-            node.get("conversation_sequence"),
-            node.get("valid_from"),
-        ),
+        _node_values(node),
     )
     connection.execute(
         "INSERT INTO memory_fts(node_id, label, retrieval_content) VALUES (?, ?, ?)",
         (node["node_id"], node["label"], node.get("retrieval_content", node["content"])),
+    )
+    connection.executemany(
+        "INSERT INTO memory_terms(node_id,term) VALUES (?,?)",
+        [(node["node_id"], term) for term in sorted(_tokens(node.get("retrieval_content", node["content"])))],
     )
 
 
@@ -827,7 +854,28 @@ def _build_database(
         try:
             connection.execute("PRAGMA journal_mode = DELETE")
             connection.execute("PRAGMA synchronous = FULL")
-            connection.executescript(_schema_sql())
+            incremental = False
+            if path.is_file():
+                try:
+                    old = _open_index(path)
+                    try:
+                        old_meta = dict(old.execute("SELECT key,value FROM metadata"))
+                        if (old_meta.get("implementation_revision") == str(INDEX_IMPLEMENTATION_REVISION)
+                                and old.execute("PRAGMA quick_check").fetchone()[0] == "ok"):
+                            old.backup(connection)
+                            incremental = True
+                    finally:
+                        old.close()
+                except sqlite3.Error:
+                    incremental = False
+            if not incremental:
+                connection.executescript(_schema_sql())
+            else:
+                connection.execute("PRAGMA foreign_keys = ON")
+                # Relation rankings are global: rebuild them even when only nodes change.
+                connection.execute("DELETE FROM tensor_factors")
+                connection.execute("DELETE FROM memory_edges")
+                connection.execute("DELETE FROM causal_unity_transitions")
             conversation_hash = (
                 str(conversation_records[-1]["event_hash"])
                 if conversation_records
@@ -865,22 +913,30 @@ def _build_database(
                 workspace, semantic_graph
             )
             all_nodes = conversation_nodes + apfcg_nodes + semantic_nodes
-            for node in sorted(all_nodes, key=lambda item: item["node_id"]):
-                _insert_node(connection, node)
+            old_nodes = {row[0]: tuple(row) for row in connection.execute("SELECT * FROM memory_nodes")} if incremental else {}
+            new_nodes = {node["node_id"]: node for node in all_nodes}
+            changed = {node_id for node_id, node in new_nodes.items() if old_nodes.get(node_id) != _node_values(node)}
+            for node_id in (set(old_nodes) - set(new_nodes)) | (changed & set(old_nodes)):
+                connection.execute("DELETE FROM memory_terms WHERE node_id=?", (node_id,))
+                connection.execute("DELETE FROM memory_fts WHERE node_id=?", (node_id,))
+                connection.execute("DELETE FROM memory_nodes WHERE node_id=?", (node_id,))
+            for node_id in sorted(changed):
+                _insert_node(connection, new_nodes[node_id])
             for record in conversation_records:
                 _insert_causal_unity_transition(connection, record)
             all_edges = apfcg_edges + semantic_edges + _lexical_edges(all_nodes)
             for edge in sorted(all_edges, key=lambda item: item["edge_id"]):
                 _insert_edge(connection, edge)
-            index_hash = _logical_index_hash(connection)
+            index_hash = _json_hash({"logical_index": _logical_index_hash(connection), "source_fingerprint": fingerprint})
             metadata = {
                 "schema_version": str(SCHEMA_VERSION),
+                "implementation_revision": str(INDEX_IMPLEMENTATION_REVISION),
                 "source_fingerprint": fingerprint,
                 "index_hash": index_hash,
                 "apfcg_graph_id": apfcg_id or "",
             }
             connection.executemany(
-                "INSERT INTO metadata(key, value) VALUES (?, ?)",
+                "INSERT OR REPLACE INTO metadata(key, value) VALUES (?, ?)",
                 sorted(metadata.items()),
             )
             connection.commit()
@@ -913,6 +969,8 @@ def _build_database(
             pass
         return {
             "rebuilt": True,
+            "update_mode": "incremental" if incremental else "full",
+            "updated_nodes": len(changed),
             "index_hash": index_hash,
             "apfcg_graph_id": apfcg_id,
             "metrics": metrics,
@@ -956,6 +1014,7 @@ def _query_nodes(
     maximum_nodes: int,
     *,
     retrieval_mode: str = "ordinary",
+    offset: int = 0,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     query_tokens = sorted(_tokens(human_request))[:32]
     if not query_tokens:
@@ -984,18 +1043,15 @@ def _query_nodes(
         )
     query_set = set(query_tokens)
     normalized_request = " ".join(human_request.casefold().split())
-    corpus_rows = connection.execute(
-        "SELECT retrieval_content FROM memory_nodes"
-    ).fetchall()
-    corpus_size = max(1, len(corpus_rows))
+    corpus_size = max(1, connection.execute("SELECT count(*) FROM memory_nodes").fetchone()[0])
     document_frequency = {
-        term: sum(
-            1
-            for corpus_row in corpus_rows
-            if term in _tokens(str(corpus_row["retrieval_content"]))
-        )
+        term: connection.execute("SELECT count(*) FROM memory_terms WHERE term=?", (term,)).fetchone()[0]
         for term in query_set
     }
+    procedural_request = bool(query_set & {
+        "procedure", "procedura", "preparazione", "preparation", "diagnostica",
+        "diagnostics", "workflow", "istruzioni", "instructions",
+    })
     candidates: list[dict[str, Any]] = []
     trace: list[dict[str, Any]] = []
     for row in rows:
@@ -1029,11 +1085,21 @@ def _query_nodes(
             for term in query_set
         )
         exact_bonus = (
-            1.0
+            0.25
             if normalized_request and normalized_request in retrieval_text.casefold()
             else 0.0
         )
         score = exact_bonus + (weighted_overlap / max(query_weight, 1.0))
+        # Prefer a relevant maintained operating source for procedural questions.
+        # This affects retrieval only, never evidence status or permission.
+        source_refs = json.loads(row["source_refs_json"])
+        maintained_source = row["source_kind"] == "semantic_knowledge" and any(
+            ref.startswith(("md-os/kb/", "md-os/ops/sources/manual/", "md-os/ops/skills/"))
+            and "/imports/" not in ref for ref in source_refs
+        )
+        if procedural_request and maintained_source and len(overlap_tokens) >= 2:
+            score += 0.65 + 0.3 * len(query_set & _tokens(str(row["label"]))) / max(1, len(query_set))
+
         trace.append(
             {
                 "node_id": str(row["node_id"]),
@@ -1087,7 +1153,7 @@ def _query_nodes(
             item["node_id"],
         )
     )
-    selected = candidates[:maximum_nodes]
+    selected = candidates[offset:offset + maximum_nodes]
     selected_ids = {item["node_id"] for item in selected}
     for rank, candidate in enumerate(candidates, 1):
         decision = next(
@@ -1316,7 +1382,29 @@ def _render_pack(pack: dict[str, Any], maximum_chars: int) -> str:
     return rendered
 
 
-def build_and_query_cognitive_memory(
+def build_and_query_cognitive_memory(workspace, human_request, conversation_records, **options):
+    workspace = Path(workspace).resolve()
+    target = options.get("database_path")
+    target = Path(target).resolve() if target else (workspace / INDEX_RELATIVE_PATH).resolve()
+    if not target.is_relative_to(workspace):
+        raise ValueError("COGNITIVE_MEMORY_DATABASE_PATH_ESCAPE")
+    name = "_mdos_private_conversation_store"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name("private_conversation_store.py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        sys.modules[name] = module
+    started = time.monotonic()
+    with sys.modules[name].file_lock(target.with_suffix(".lock"), timeout=60):
+        pack, rendered = _build_and_query_cognitive_memory(workspace, human_request, conversation_records, **options)
+    pack["retrieval_duration_ms"] = round((time.monotonic() - started) * 1000)
+    pack.pop("pack_hash", None)
+    pack["pack_hash"] = _json_hash(pack)
+    rendered = _render_pack(pack, options.get("maximum_chars", MAX_CONTEXT_CHARS)) if pack["selected_nodes"] else None
+    return pack, rendered
+
+
+def _build_and_query_cognitive_memory(
     workspace: Path,
     human_request: str,
     conversation_records: list[dict[str, Any]],
@@ -1325,6 +1413,9 @@ def build_and_query_cognitive_memory(
     maximum_chars: int = MAX_CONTEXT_CHARS,
     maximum_nodes: int = MAX_SELECTED_NODES,
     retrieval_mode: str = "ordinary",
+    offset: int = 0,
+    expected_index_hash: str | None = None,
+    lexical_only: bool = False,
 ) -> tuple[dict[str, Any], str | None]:
     """Synchronize the derived index and retrieve one bounded context pack."""
     workspace = Path(workspace).resolve()
@@ -1346,8 +1437,9 @@ def build_and_query_cognitive_memory(
     semantic_graph, semantic_hash = _read_json_object(
         workspace, SEMANTIC_GRAPH_RELATIVE_PATH
     )
+    source_bindings = _semantic_source_bindings(workspace, semantic_graph)
     fingerprint = _source_fingerprint(
-        conversation_records, apfcg_hash, semantic_hash
+        conversation_records, apfcg_hash, semantic_hash, source_bindings
     )
     rebuilt = False
     if not _database_is_current(path, fingerprint):
@@ -1368,6 +1460,8 @@ def build_and_query_cognitive_memory(
             metadata = dict(connection.execute("SELECT key, value FROM metadata"))
             build = {
                 "rebuilt": False,
+                "update_mode": "reused",
+                "updated_nodes": 0,
                 "index_hash": metadata["index_hash"],
                 "apfcg_graph_id": metadata.get("apfcg_graph_id") or None,
                 "metrics": {
@@ -1380,6 +1474,10 @@ def build_and_query_cognitive_memory(
             }
         finally:
             connection.close()
+    if expected_index_hash is not None and expected_index_hash != build["index_hash"]:
+        raise ValueError("COGNITIVE_MEMORY_CURSOR_STALE: restart from offset zero")
+    if offset < 0:
+        raise ValueError("COGNITIVE_MEMORY_OFFSET_INVALID")
     connection = _open_index(path)
     try:
         selected_nodes, admission_trace = _query_nodes(
@@ -1387,6 +1485,7 @@ def build_and_query_cognitive_memory(
             human_request,
             maximum_nodes,
             retrieval_mode=retrieval_mode,
+            offset=offset,
         )
         selected_nodes = _expand_tensor_neighbors(
             connection,
@@ -1394,7 +1493,7 @@ def build_and_query_cognitive_memory(
             selected_nodes,
             maximum_nodes,
             admission_trace,
-        )
+        ) if offset == 0 and not lexical_only else selected_nodes
         selected_ids = [node["node_id"] for node in selected_nodes]
         selected_edges, selected_factors = _selected_relations(
             connection, selected_ids
@@ -1407,6 +1506,19 @@ def build_and_query_cognitive_memory(
         "artifact_role": "apfc_cognitive_memory_context_pack",
         "status": "verified" if selected_nodes else "empty",
         "retrieval_mode": retrieval_mode,
+        "search_page": {
+            "offset": offset,
+            "total_matches": max(offset + len(selected_nodes), sum(row.get("candidate") == "generated" and row.get("admission") == "admitted" for row in admission_trace)),
+            "candidate_pool_limited": sum(row.get("candidate") == "generated" for row in admission_trace) >= 256,
+        },
+        "source_freshness": {
+            "checked_count": len(source_bindings),
+            "excluded_stale_count": sum(
+                source_bindings.get(node.get("path")) != node.get("content_hash")
+                for node in (semantic_graph or {}).get("nodes", [])
+                if isinstance(node, dict) and node.get("path") in source_bindings
+            ),
+        },
         "query_hash": _text_hash(human_request),
         "index_id": "apfc_cognitive_memory_" + build["index_hash"][:20],
         "index_hash": build["index_hash"],
@@ -1423,6 +1535,8 @@ def build_and_query_cognitive_memory(
         ),
         "apfcg_graph_id": build["apfcg_graph_id"],
         "index_rebuilt": rebuilt,
+        "index_update_mode": build["update_mode"],
+        "index_updated_node_count": build["updated_nodes"],
         "metrics": build["metrics"],
         "selected_nodes": selected_nodes,
         "admission_trace": admission_trace,

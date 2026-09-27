@@ -123,7 +123,7 @@ class MemoryChatInterfaceTests(unittest.TestCase):
         _, text, material = ENGINE.build_thread_bootstrap(self.workspace)
         self.assertIn('./cortex memory search "relevant terms" --json', text)
         self.assertIn("./cortex memory search --help", text)
-        self.assertEqual(material["memory_interface_version"], 2)
+        self.assertEqual(material["memory_interface_version"], 4)
         self.assertLessEqual(len(text.encode()), ENGINE.MAX_THREAD_BOOTSTRAP_CHARS)
 
     def test_quiet_chat_hides_command_delta_fallback_and_diagnostics(self):

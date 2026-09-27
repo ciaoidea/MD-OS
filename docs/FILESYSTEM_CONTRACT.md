@@ -34,6 +34,8 @@ audit, replay, package, and move between machines.
 | `md-os/kb/**/*.md` | source knowledge | yes | yes | no | yes | no |
 | `md-os/continuity/portable_state.json` | reviewed portable operational handoff | working context | yes | no | privacy-reviewed | no |
 | `md-os/ops/local/cortex/conversation.ndjson` | private hash-chained conversation chronology | local working context | no | no | never | yes |
+| `md-os/ops/local/cortex/conversation-segments/*.ndjson` | continuation segments of private chronology | local working context | no | no | never | yes |
+| `md-os/ops/local/cortex/conversation.segments.json` | hash-bound sealed-segment manifest | local continuity metadata | no | no | never | yes |
 | `md-os/ops/local/cortex/cognitive_memory.sqlite3` | derived APFCG/FTS/sparse-factor retrieval index | local cache | no | yes | never | yes |
 | `md-os/kb/imports/*/{README,SOURCE_MANIFEST,KNOWLEDGE_NODES,RELATIONS,IDENTITY_FRAME,OPERATING_BINDING}.md` | canonical imported knowledge source | yes | yes | no | yes | no |
 | `md-os/kb/imports/*/canonical_import.json` | canonical imported knowledge source metadata | yes | yes | no | yes | no |
@@ -172,9 +174,10 @@ identity and continuity readback is a separate, still-open validation edge.
   working context. It excludes transcripts and host, model, and thread
   identifiers; its self-hash and identity-source hashes must verify before
   import.
-- Private conversational continuity lives only in
-  `md-os/ops/local/cortex/conversation.ndjson`. A physical folder copy carries
-  it; Git ignores it. Its hash chain must verify before a bounded semantic
+- Private conversational continuity lives in
+  `md-os/ops/local/cortex/conversation.ndjson` and, after rollover, its
+  `conversation-segments/` files and `conversation.segments.json` manifest.
+  A physical copy must carry the complete Cortex local directory; Git ignores it. Its hash chain must verify before a bounded semantic
   selection or recent-tail fallback enters a model turn. The derived local
   SQLite index may accelerate this selection, but it is disposable and has no
   authority. The chronology contains human inputs and final assistant
